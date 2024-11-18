@@ -1,0 +1,33 @@
+# dropdown_options.py
+
+# Options pour l'onglet "Lieu de travail"
+work_location_options = [
+    "", "CGI", "Demande CGI TLT", "Exceptionel TLT", "N/A", "Ponctuel TLT", "Regulier TLT",
+    "Site client", "Vélo Site CGI", "Vélo Site client"
+]
+
+# Options pour l'onglet "Informations CGI"
+cgi_options = ["", "N/A", "Oui", "Non"]
+
+# Options pour l'onglet "Informations CGI- ligne pause dejeuner"
+cgi_options_dejeuner = ["", "1"]
+
+# Options pour l'onglet "Planning de travail"
+work_schedule_options = [
+    "", "En mission", "Formation IA", "Conseiller Prud’Homal", "Vacances (Congés payés)", "Temps compensatoire", "Maladie", 
+    "Congé pour examen / etudes", "Congé déménagement", "Congé pour décès famille", "Accident de travail", 
+    "Congé pour juré/témoin", "Congé militaire", "Congé mariage/PACS", "Congé de paternité", "Congé naissance enfant", 
+    "Congé solidarité familiale", "Congé administratif", "Retour progressif au travail", "Absc non autoriséee non payée", 
+    "Congé sans solde", "Congé examen prénatal", "Congé mariage/PACS enfant", "Congé de parentalité payé", 
+    "Congé de parentalité non payé", "Travaux passagers", "Avant-vente", "Général et administration", 
+    "Compl temps partiel / activite", "Formation", "Formation Animation", "Jour férié", "RTT Q1", 
+    "RTT non payée (Q2)", "Enfant malade Alsace-Moseille", "Bénéficiaire don de congé", "Abs. autorisée non rémunérée", 
+    "CPF/VAE/Bilan compé. Payé", "CPF/VAE/Bilan compé. non payé", "Maladie professionnelle", "Accident de trajet", 
+    "Grossesse patho. pré-natale", "Grossesse patho. post-natale", "Elu d'état", "Congé recherche d'emploi", 
+    "Heures déplacements récup", "Dispense Spe Rem", "Repos Hebdo/Quotidien", "Congé d'accompagnement", 
+    "Enfant – Annonce patho/handi", "Soin handicap", "Formation syndicale (CFESES)", "RQTH - Dossier", "PDPMA", 
+    "Jours CET", "Mandataire sécurité sociale", "CET Retraite", "Congé deuil parental", "Prés. parent requis enf<12 ans", 
+    "Congé enfant hospitalisé", "Mécénat de compétences", "Interr spontanée de grossesse", "Conseiller du salarié", 
+    "Congé Formation conseiller CPH", "Défenseur syndical", "Formation Défenseur syndical", "Congé enfant malade non payé", 
+    "Assesseur judiciaire SS"
+]
