@@ -1,4 +1,4 @@
-# remplir_informations_supp_france.py
+# fonctions_selenium_utils.py
 
 # Import des bibliothèques nécessaires
 import configparser
