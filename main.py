@@ -17,12 +17,10 @@ from encryption_utils import supprimer_memoire_partagee_securisee
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 from multiprocessing import shared_memory
-from read_or_write_file_config_ini import get_runtime_config_path, read_config_ini, write_config_ini
+from read_or_write_file_config_ini_utils import get_runtime_config_path, read_config_ini, write_config_ini
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
-# # Fichier de configuration
-# CONFIG_FILE = 'config.ini'
 
 # Jours de la semaine
 JOURS_SEMAINE__DICT = {'lundi': '', 'mardi': '', 'mercredi': '', 'jeudi': '', 'vendredi': '', 'samedi': '', 'dimanche': ''}
@@ -42,6 +40,15 @@ ADDITIONAL_SECTIONS = [
     'additional_information_half_day_worked',
     'additional_information_lunch_break_duration'
 ]
+
+# Sections pour les Informations projet
+DEFAULT_PROJECT_INFORMATION = {
+    'project_code':'',
+    'activity_code':'',
+    'category_code':'',
+    'sub_category_code':'',
+    'billing_action':''
+}
 
 # Correspondances entre les noms affichés et les noms dans config.ini
 ADDITIONAL_SECTION_LABELS = {
@@ -180,14 +187,10 @@ def run_psatime_with_credentials(cle_aes, login_var, mdp_var):
         supprimer_memoire_partagee_securisee(memoire_cle)
         print("[FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier main.")
 
+
 def run_psatime():
     # Fermez la fenêtre graphique
     menu.destroy()
-    # Lancez le script `saisie_automatiser_psatime.py`
-    # print("Lancement de saisie_automatiser_psatime.py avec le chemin du fichier temporaire.")
-    # subprocess.Popen(["python", "-Xfrozen_modules=off", "saisie_automatiser_psatime.py", temp_file_path])
-    # subprocess.Popen(["python", "-Xfrozen_modules=off", "saisie_automatiser_psatime.py"])
-    # memoire_cle, memoire_mdp, memoire_nom = subprocess.Popen([sys.executable, "-Xfrozen_modules=off", saisie_automatiser_psatime.main()])
     print("Lancement de la fonction main de saisie_automatiser_psatime.py")
     import saisie_automatiser_psatime # Import de saisie_automatiser_psatime.py comme module
     saisie_automatiser_psatime.main()
@@ -202,28 +205,196 @@ def filter_combobox_on_enter(event, combobox, all_values):
     if filtered_values:
         combobox.event_generate('<Down>')  # Ouvre le menu déroulant
 
-# Vérification de l'existence des sections et ajout de valeurs par défaut si elles sont manquantes
+
 def check_and_initialize_section(configuration, section, defaults):
+    """Vérification de l'existence des sections et ajout de valeurs par défaut si elles sont manquantes"""
     if not configuration.has_section(section):
         configuration.add_section(section)
     for key, value in defaults.items():
         if not configuration.has_option(section, key):
             configuration.set(section, key, value)
 
-# Fonction pour valider le formet de la date avant la sauvegarde
+
 def validate_data(date):
+    """Valide le format de la date (jj/mm/aaaa) si une valeur est fournie."""
     date_cible = date.get()
 
-    # Validation du format de date cible
+    # Si la date est vide ou None, considérer comme valide
+    if date_cible in (None, "", "None"):
+        return True
+
+    # si une valeur est fournie, Validation du format de date cible.
     date_pattern = re.compile(r'^\d{2}/\d{2}/\d{4}$')
-    if date_cible and not date_pattern.match(date_cible):
+    if not date_pattern.match(date_cible):
         messagebox.showerror("Erreur", "La date cible doit être au format jj/mm/aaaa")
         return False
+    else:
+        return True
 
-    return True
+
+def seperator_ttk(menu, orient='horizontal', fill='x', padx=10, pady=5):
+    separator = ttk.Separator(menu, orient=orient)
+    separator.pack(fill=fill, padx=padx, pady=pady)
+
+
+def create_basic_StringVar(value="", default=""):
+    return tk.StringVar(value=value if value else default)
+
+
+def create_structured_StringVar(config, section, key, default="", index=None):
+    value = config[section].get(key, default)
+    if index is not None and ',' in value:
+        value = value.split(',')[index]
+    return tk.StringVar(value=value)
+
+
+def create_structured_BooleanVar(config, section, key, default=False):
+    """Crée un tk.BooleanVar basé sur une valeur dans la configuration."""
+    value = default
+    if config.has_section(section) and config.has_option(section, key):
+        try:
+            value = config.getboolean(section, key)
+        except ValueError:
+            pass  # Garde la valeur par défaut si la conversion échoue
+    return tk.BooleanVar(value=value)
+
+
+def create_tab(notebook, title, style="Modern.TFrame", padding=20):
+    """Crée un onglet (ttk.Frame) et l'ajoute à un ttk.Notebook."""
+    tab_frame = ttk.Frame(notebook, style=style, padding=padding)
+    notebook.add(tab_frame, text=title)
+    return tab_frame
+
+
+def create_Title_label_with_grid(frame, text, row, col, style='Title.TLabel', padx=5, pady=5, sticky="w"):
+    """Crée un Label et le place dans le cadre donné."""
+    title_label = ttk.Label(frame, text=text, style=style)
+    title_label.grid(row=row, column=col, padx=padx, pady=pady, sticky=sticky)
+    return title_label
+
+
+def create_a_frame(parent, style="Modern.TFrame", side=None, fill="both", expand=True, padx=0, pady=0, padding=None):
+    """Crée un ttk.Frame avec des paramètres configurables et le positionne avec `pack`."""
+    frame = ttk.Frame(parent, style=style, padding=padding)
+    frame.pack(side=side, fill=fill, expand=expand, padx=padx, pady=pady)
+    return frame
+
+
+def create_labeled_frame(parent, text="", style="Parametres.TLabelframe", side=None, fill="both", expand=True, padx=0, pady=0, padding=None):
+    """Crée un ttk.LabelFrame avec un texte et le positionne avec `pack`."""
+    label_frame = ttk.LabelFrame(parent, text=text, style=style, padding=padding)
+    label_frame.pack(side=side, fill=fill, expand=expand, padx=padx, pady=pady)
+    return label_frame
+
+
+def create_Modern_label_with_pack(frame, text, style="Modern.TLabel", side=None, padx=0, pady=0, sticky=None):
+    """"""
+    modern_label_pack = ttk.Label(frame, text=text, style=style)
+    modern_label_pack.pack(side=side, padx=padx, pady=pady, sticky=sticky)
+    return modern_label_pack
+
+
+def create_Modern_entry_with_pack(frame, var, width=20, style="Settings.TEntry", side=None, padx=0, pady=0):
+    """"""
+    modern_entry_pack = ttk.Entry(frame, textvariable=var, width=width, style=style)
+    modern_entry_pack.pack(side=side, padx=padx, pady=pady)
+    return modern_entry_pack
+
+
+def create_Modern_checkbox_with_pack(parent, var, style_checkbox="Modern.TCheckbutton", side=None, padx=0, pady=0):
+    """Crée une case à cocher avec l'option .pack."""
+    checkbox = ttk.Checkbutton(parent, variable=var, style=style_checkbox)
+    checkbox.pack(side=side, padx=padx, pady=pady)
+    return checkbox
+
+
+def create_Modern_label_with_grid(frame, text, row, col, style="Modern.TLabel", padx=5, pady=5, sticky="w"):
+    """Crée un Label et le place dans le cadre donné."""
+    modern_label_grid = ttk.Label(frame, text=text, style=style)
+    modern_label_grid.grid(row=row, column=col, padx=padx, pady=pady, sticky=sticky)
+    return modern_label_grid
+
+
+def create_Modern_entry_with_grid(frame, var, row, col, width=20, style="Modern.TEntry", padx=5, pady=5):
+    """Crée un Entry lié à une variable et le place dans le cadre donné."""
+    modern_entry_grid = ttk.Entry(frame, textvariable=var, width=width, style=style)
+    modern_entry_grid.grid(row=row, column=col, padx=padx, pady=pady)
+    return modern_entry_grid
+
+
+def create_Modern_entry_with_grid_for_password(frame, var, row, col, width=20, style="Modern.TEntry", padx=5, pady=5):
+    """Crée un Entry lié à une variable et le place dans le cadre donné."""
+    modern_entry_grid_for_password = ttk.Entry(frame, textvariable=var,  show='*', width=width, style=style)
+    modern_entry_grid_for_password.grid(row=row, column=col, padx=padx, pady=pady)
+    return modern_entry_grid_for_password
+
+
+def create_combobox(frame, var, values, row, col, width=20, style="Modern.TCombobox", state="normal", padx=5, pady=8):
+    """Crée une Combobox liée à une variable et la place dans le cadre donné."""
+    modern_combobox_grid = ttk.Combobox(frame, textvariable=var, values=values, width=width, style=style, state=state)
+    modern_combobox_grid.grid(row=row, column=col, padx=padx, pady=pady)
+    return modern_combobox_grid
+
+
+def create_button_with_style(frame, text, command, style="Modern.TButton", side=None, fill=None, padx=None, pady=None, ipady=None):
+    """Crée un bouton ttk avec un style et l'ajoute au parent avec `.pack`."""
+    button = ttk.Button(frame, text=text, command=command, style=style)
+    button.pack(side=side, fill=fill, padx=padx, pady=pady, ipady=ipady)
+    return button
+
+
+def create_button_without_style(frame, text, command, side=None, fill="x", padx=20, pady=5, ipady=5):
+    """Crée un bouton tk sans style et l'ajoute au parent avec `.pack`."""
+    button = tk.Button(frame, text=text, command=command)
+    button.pack(side=side, fill=fill, padx=padx, pady=pady, ipady=ipady)
+    return button
+
+
+def update_mission_frame_visibility(frame, active_mission_days):
+    """Affiche ou masque le cadre des informations de mission en fonction de `active_mission_days`."""
+    if active_mission_days:  # Si un ou plusieurs jours ont "En mission"
+        frame.grid()  # Affiche le cadre
+    else:
+        frame.grid_remove()  # Masque le cadre si aucun jour n'a "En mission"
+
+
+def handle_mission_selection(event, combo, frame, day, active_mission_days):
+    """Ajoute ou retire un jour de la liste `active_mission_days`."""
+    print(f"Événement déclenché par : {event.widget}")  # Affiche la Combobox déclenchant l'événement
+    print(f"Type d'événement : {event.type}")  # Affiche le type d'événement
+    if combo.get() == "En mission":
+        if day not in active_mission_days:  # Ajouter uniquement si non présent
+            active_mission_days.append(day)
+    else:
+        if day in active_mission_days:  # Retirer uniquement si présent
+            active_mission_days.remove(day)
+    # Mettre à jour l'affichage du cadre
+    update_mission_frame_visibility(frame, active_mission_days)
+
+
+# Fonction pour attacher correctement les événements
+def attach_event(combo, current_day, mission_frame, active_mission_days):
+    """Attache l'événement pour gérer la sélection des items."""
+    combo.bind("<<ComboboxSelected>>", 
+               lambda event: handle_mission_selection(event, combo, mission_frame, current_day, active_mission_days))
+
 
 # Fonction pour sauvegarder les modifications dans config.ini
-def save_config(fichier_configuration_ini, date_cible, debug_mode, work_schedule, additional_info, work_location, main_configuration, cle_aes):
+def save_config(elements):
+    fichier_configuration_ini   = elements[0]
+    date_cible                  = elements[1] 
+    debug_mode                  = elements[2]
+    work_schedule               = elements[3]
+    additional_info             = elements[4]
+    work_location               = elements[5]
+    main_configuration          = elements[6]
+    cle_aes                     = elements[7]
+    project_code_var            = elements[8]
+    activity_code_var           = elements[9]
+    category_code_var           = elements[10]
+    sub_category_code_var       = elements[11] 
+    billing_action_var          = elements[12]
+    
     messagebox.showinfo("Sauvegarde en cours", "Veuillez patienter pendant que la configuration est sauvegardée.")
     if not validate_data(date_cible):
         return
@@ -250,8 +421,13 @@ def save_config(fichier_configuration_ini, date_cible, debug_mode, work_schedule
             fichier_configuration_ini['work_location_am'][day] = var[0].get()
             fichier_configuration_ini['work_location_pm'][day] = var[1].get()
 
-        # # Sauvegarder dans le fichier config.ini
-        # write_config_ini(CONFIG_FILE, fichier_configuration_ini)
+        # Enregistrer les informations de mission
+        fichier_configuration_ini['project_information']['project_code'] = project_code_var.get()
+        fichier_configuration_ini['project_information']['activity_code'] = activity_code_var.get()
+        fichier_configuration_ini['project_information']['category_code'] = category_code_var.get()
+        fichier_configuration_ini['project_information']['sub_category_code'] = sub_category_code_var.get()
+        fichier_configuration_ini['project_information']['billing_action'] = billing_action_var.get()
+
         # Sauvegarder dans le fichier config.ini
         write_config_ini(fichier_configuration_ini)
     
@@ -265,8 +441,6 @@ def save_config(fichier_configuration_ini, date_cible, debug_mode, work_schedule
 # --------------------- CODE PRINCIPALE --------------------------------------- #
 # ----------------------------------------------------------------------------- #
 def start_configuration(cle_aes):
-    # # Initialisation de la configuration
-    # config_ini = read_config_ini(CONFIG_FILE)
     # Initialisation de la configuration
     config_ini = read_config_ini()
 
@@ -278,6 +452,9 @@ def start_configuration(cle_aes):
     # Initialiser les sections additionnelles pour "Informations CGI"
     for section in ADDITIONAL_SECTIONS:
         check_and_initialize_section(config_ini, section, DEFAULT_WORK_SCHEDULE)
+
+    # Section pour les Informations projet
+    check_and_initialize_section(config_ini, 'project_information', DEFAULT_PROJECT_INFORMATION)
 
     # Initialiser les sections pour le lieu de travail matin et après-midi
     check_and_initialize_section(config_ini, 'work_location_am', DEFAULT_WORK_LOCATION_AM)
@@ -300,38 +477,32 @@ def start_configuration(cle_aes):
     # ----------------------------------------------------------------------------- #
     # -------------------------- ONGLET PARAMETRES ------------------------------ #
     # ----------------------------------------------------------------------------- #
-    settings_frame = ttk.Frame(notebook, style='Modern.TFrame', padding=20)
-    notebook.add(settings_frame, text="Paramètres")
+    settings_frame = create_tab(notebook, title="Paramètres")
 
     # Création d'un conteneur principal avec deux colonnes : Paramètres / Notes
-    main_container = ttk.Frame(settings_frame, style='Modern.TFrame')
-    main_container.pack(fill='both', expand=True, padx=10, pady=10)
+    main_container = create_a_frame(settings_frame, padx=10, pady=10)
 
     #---------------------------------------------#
     #-- Colonne gauche pour l'onglet paramètres --#
-    left_frame = ttk.LabelFrame(main_container, text="Paramètres:", style='Parametres.TLabelframe')
-    left_frame.pack(side='left', fill='both', expand=True, padx=(0, 20), pady=0)
+    left_frame = create_labeled_frame(main_container, side='left', text="Paramètres:", padx=(0, 20))
 
     # Variables
-    date_cible_var = tk.StringVar(value=config_ini['settings'].get('date_cible', ''))
-    debug_mode_var = tk.BooleanVar(value=config_ini['settings'].getboolean('debug_mode', False))
-    # Sousmettre_mode_var = tk.BooleanVar(value=config_ini['settings'].getboolean('debug_mode', False))
+    date_cible_var = create_structured_StringVar(config_ini, 'settings', 'date_cible')
+    debug_mode_var = create_structured_BooleanVar(config_ini, 'settings', 'debug_mode')
+    # Sousmettre_mode_var = create_structured_BooleanVar(config_ini, 'settings', 'soumettre_mode')
 
     # Container pour les champs de saisie ou cocher/decocher
-    fields_container = ttk.Frame(left_frame, style='Modern.TFrame', padding=(15, 5, 15, 15))
-    fields_container.pack(fill='both', expand=True)
+    fields_container = create_a_frame(left_frame, padding=(15, 5, 15, 15))
 
     # Date cible
-    date_label_frame = ttk.Frame(fields_container, style='Modern.TFrame')
-    date_label_frame.pack(fill='x', pady=(0, 15))
-    date_entry = ttk.Label(date_label_frame, text="Date cible (jj/mm/aaaa):", style='Modern.TLabel').pack(side='left', padx=5)
-    date_entry = ttk.Entry(date_label_frame, textvariable=date_cible_var, width=20,style='Settings.TEntry').pack(side='left', padx=5)
-
+    date_label_frame = create_a_frame(fields_container, fill="x", expand=False, pady=(0, 15))
+    date_entry = create_Modern_label_with_pack(date_label_frame, text="Date cible (jj/mm/aaaa):", side='left', padx=5) # on cree une variable pour le focus
+    date_entry = create_Modern_entry_with_pack(date_label_frame, date_cible_var, side='left', padx=5)
+    
     # Mode debug
-    debug_frame = ttk.Frame(fields_container, style='Modern.TFrame')
-    debug_frame.pack(fill='x', pady=(0, 10))
-    ttk.Label(debug_frame, text="Mode Debug:", style='Modern.TLabel').pack(side='left', padx=5)
-    ttk.Checkbutton(debug_frame, variable=debug_mode_var, style='Modern.TCheckbutton').pack(side='left', padx=5)
+    debug_frame = create_a_frame(fields_container, fill="x", expand=False, pady=(0, 10))
+    create_Modern_label_with_pack(debug_frame, text="Mode Debug:", side='left', padx=5)
+    create_Modern_checkbox_with_pack(debug_frame, debug_mode_var, side="left", padx=5)
     
     # Mode Soumettre directement -- > todo
     # debug_frame = ttk.Frame(fields_container, style='Modern.TFrame')
@@ -341,8 +512,7 @@ def start_configuration(cle_aes):
 
     #---------------------------------------------#
     #-- Colonne droite pour l'onglet paramètres --#
-    right_frame = ttk.LabelFrame(main_container, text="Notes:", style='Parametres.TLabelframe')
-    right_frame.pack(side='right', fill='both', expand=True, padx=(0, 20), pady=0)
+    right_frame = create_labeled_frame(main_container, text="Notes:", side='right', padx=(0, 20))
 
     # les notes
     notes_text = tk.Text(right_frame,
@@ -355,139 +525,150 @@ def start_configuration(cle_aes):
                         pady=10)
     notes_text.pack(fill='both', expand=True)
 
-    notes_text.insert('1.0', 
-                        "- La date peut être vide ou 'None'.\n"
-                        "- Si, c'est vide ou 'None',\n"
-                        "L'outil sélectionnera automatiquement\n"
-                        "le prochain samedi comme date. Si\n"
-                        "nous sommes un samedi, il garde ce jour.\n\n"
-                        "Vous pouvez aussi modifier\n"
-                        "directement le fichier config.ini")
+    notes_text.insert('1.0',
+                        "Gestion de la Date : \n" 
+                        "  - La date peut être 'vide' ou 'None'.\n"
+                        "  - Si, c'est 'vide' ou 'None',\n"
+                        "    l'outil sélectionnera le prochain samedi comme date.\n"
+                        "  - Si nous sommes un samedi, il garde ce jour.\n\n"
+                        "Gestion du fichier config.ini : \n"
+                        "  - Vous pouvez directemennt le modifier\n"
+                        "    sans passer par la configuration\n\n"
+                        "Si vous êtes en mission :\n"
+                        "  - dans l'onglet : 'Planning de travail'\n"
+                        "  - selectionner : 'En mission'\n"
+                        "    un nouveau cadre apparaît afin de remplir,\n"
+                        "    les informations de la mission.\n")
     notes_text.config(state='disabled')
 
     # ----------------------------------------------------------------------------- #
-    # ---------------------- ONGLET PLANNING DE TRAVAIL ------------------------- #
+    # ---------------------- ONGLET PLANNING DE TRAVAIL --------------------------- #
     # ----------------------------------------------------------------------------- #
-    work_schedule_frame = ttk.Frame(notebook, style='Modern.TFrame', padding=20)
-    notebook.add(work_schedule_frame, text="Planning de travail")
+    work_schedule_frame = create_tab(notebook, title="Planning de travail")
 
     # En-têtes
-    ttk.Label(work_schedule_frame, text="Jour", style='Title.TLabel').grid(row=0, column=0, padx=5, pady=10)
-    ttk.Label(work_schedule_frame, text="Description", style='Title.TLabel').grid(row=0, column=1, padx=5, pady=10)
-    ttk.Label(work_schedule_frame, text="Heures travaillées", style='Title.TLabel').grid(row=0, column=2, padx=5, pady=10)
+    create_Title_label_with_grid(work_schedule_frame, text=f"Jour", row=0, col=0, padx=5, pady=10, sticky=None)
+    create_Title_label_with_grid(work_schedule_frame, text=f"Description", row=0, col=1, padx=5, pady=10, sticky=None)
+    create_Title_label_with_grid(work_schedule_frame, text=f"Heures travaillées", row=0, col=2, padx=5, pady=10, sticky=None)
 
-    work_schedule_vars = {}
+    work_schedule_vars = {} # Liste pour stocker les descriptions de tous les jours
+    active_mission_days = []  # Contient les jours ayant "En mission"
+    
+    # Création d'un cadre pour les informations de mission
+    mission_frame = ttk.LabelFrame(work_schedule_frame, text="Informations de mission", style='Parametres.TLabelframe')
+    mission_frame.grid(row=1, column=3, rowspan=len(JOURS_SEMAINE__LIST), padx=10, pady=10, sticky='n')
+    mission_frame.grid_remove()  # Masqué par défaut
+    
+    # Variables pour les champs d'information de la mission
+    project_code_var        = create_structured_StringVar(config_ini, 'project_information', 'project_code')
+    activity_code_var       = create_structured_StringVar(config_ini, 'project_information', 'activity_code')
+    category_code_var       = create_structured_StringVar(config_ini, 'project_information', 'category_code')
+    sub_category_code_var   = create_structured_StringVar(config_ini, 'project_information', 'sub_category_code')
+    billing_action_var      = create_structured_StringVar(config_ini, 'project_information', 'billing_action')
+
+    # Champs pour les informations de mission
+    create_Modern_label_with_grid(mission_frame, text=f"Project Code:", row=0, col=0, padx=5, pady=5)
+    create_Modern_entry_with_grid(mission_frame, project_code_var, row=0, col=1, padx=5, pady=5)
+    create_Modern_label_with_grid(mission_frame, text=f"Activity Code:", row=1, col=0, padx=5, pady=5)
+    create_Modern_entry_with_grid(mission_frame, activity_code_var, row=1, col=1, padx=5, pady=5)
+    create_Modern_label_with_grid(mission_frame, text=f"Category Code:", row=2, col=0, padx=5, pady=5)
+    create_Modern_entry_with_grid(mission_frame, category_code_var, row=2, col=1, padx=5, pady=5)
+    create_Modern_label_with_grid(mission_frame, text=f"Sub Category Code:", row=3, col=0, padx=5, pady=5)
+    create_Modern_entry_with_grid(mission_frame, sub_category_code_var, row=3, col=1, padx=5, pady=5)
+    create_Modern_label_with_grid(mission_frame, text=f"Billing Action:", row=4, col=0, padx=5, pady=5)
+    create_Modern_entry_with_grid(mission_frame, billing_action_var, row=4, col=1, padx=5, pady=5)
+
 
     for i, day in enumerate(JOURS_SEMAINE__LIST, start=1):
-        ttk.Label(work_schedule_frame, text=day.capitalize(), style='Modern.TLabel').grid(row=i, column=0, padx=5, pady=8, sticky='w')
-        
-        desc_var = StringVar(value=config_ini['work_schedule'].get(day, '').split(',')[0])
-        desc_combo = ttk.Combobox(work_schedule_frame, 
-                                textvariable=desc_var, 
-                                values=work_schedule_options, 
-                                state="normal", 
-                                width=30,
-                                style='Modern.TCombobox')
-        desc_combo.grid(row=i, column=1, padx=5, pady=8)
-        
-        # Attacher l'événement pour la recherche dynamique
-        desc_combo.bind('<Return>', lambda event, combo=desc_combo, values=work_schedule_options: filter_combobox_on_enter(event, combo, values))
+        create_Modern_label_with_grid(work_schedule_frame, text=day.capitalize(), row=i, col=0, padx=5, pady=8)
+
+        desc_var = create_structured_StringVar(config_ini, 'work_schedule', day, index=0)
+        desc_combo = create_combobox(work_schedule_frame, var=desc_var, values=work_schedule_options, row=i, col=1, width=30)
 
         hours_value = ','.join(config_ini['work_schedule'].get(day, '').split(',')[1:])
-        hours_var = tk.StringVar(value=hours_value)
-        hours_entry = ttk.Entry(work_schedule_frame, 
-                            textvariable=hours_var, 
-                            width=15,
-                            style='Modern.TEntry')
-        hours_entry.grid(row=i, column=2, padx=5, pady=8)
+        hours_var = create_basic_StringVar(hours_value)
+        create_Modern_entry_with_grid(work_schedule_frame, var=hours_var, row=i, col=2, padx=5, pady=8)
 
         work_schedule_vars[day] = (desc_var, hours_var)
+        
+        # Attacher l'événement pour la recherche dynamique
+        desc_combo.bind('<Return>', 
+                        lambda event, combo=desc_combo, values=work_schedule_options: 
+                        filter_combobox_on_enter(event, combo, values))
 
+        # Vérifier si la valeur initiale est "En mission" pour afficher le cadre
+        if desc_var.get() == "En mission":
+            if day not in active_mission_days:
+                active_mission_days.append(day)
+
+        # Appeler `attach_event` pour chaque combobox masqué / demasqué l'encadrer Mission
+        attach_event(desc_combo, day, mission_frame, active_mission_days)  
+
+    # Vérifier l'état initial du cadre des informations de mission
+    update_mission_frame_visibility(mission_frame, active_mission_days)
+    
     # ----------------------------------------------------------------------------- #
-    # ---------------------- ONGLET INFORMATIONS CGI ---------------------------- #
+    # ---------------------- ONGLET INFORMATIONS CGI ------------------------------ #
     # ----------------------------------------------------------------------------- #
-    additional_info_frame = ttk.Frame(notebook, style='Modern.TFrame', padding=20)
-    notebook.add(additional_info_frame, text="Informations CGI")
+    additional_info_frame = create_tab(notebook, title="Informations CGI")
 
     # En-têtes
-    ttk.Label(additional_info_frame, text="Jour", style='Title.TLabel').grid(row=0, column=0, padx=5, pady=10)
+    create_Title_label_with_grid(additional_info_frame, text=f"Jour", row=0, col=0, padx=5, pady=10, sticky=None)
+    
     for col, section in enumerate(ADDITIONAL_SECTIONS, start=1):
         section_name = ADDITIONAL_SECTION_LABELS[section]
-        ttk.Label(additional_info_frame, text=section_name, style='Title.TLabel').grid(row=0, column=col, padx=5, pady=10)
+        create_Title_label_with_grid(additional_info_frame, text=section_name, row=0, col=col, padx=5, pady=10, sticky=None)
 
     additional_info_vars = {}
     for i, day in enumerate(JOURS_SEMAINE__LIST, start=1):
-        ttk.Label(additional_info_frame, text=day.capitalize(), style='Modern.TLabel').grid(row=i, column=0, padx=5, pady=8, sticky='w')
+        create_Modern_label_with_grid(additional_info_frame, text=day.capitalize(), row=i, col=0, padx=5, pady=8)
+        
         additional_info_vars[day] = {}
 
         for col, section in enumerate(ADDITIONAL_SECTIONS, start=1):
-            var = StringVar(value=config_ini[section].get(day, ''))
+            var = create_structured_StringVar(config_ini, section, day)
             if section == "additional_information_lunch_break_duration":
-                combo = ttk.Combobox(additional_info_frame, 
-                    textvariable=var, 
-                    values=cgi_options_dejeuner, 
-                    state="readonly", 
-                    width=20,
-                    style='Modern.TCombobox')
+                create_combobox(additional_info_frame, var, values=cgi_options_dejeuner, row=i, col=col, state="readonly", padx=5, pady=5)
             else:
-                combo = ttk.Combobox(additional_info_frame, 
-                                    textvariable=var, 
-                                    values=cgi_options, 
-                                    state="readonly", 
-                                    width=20,
-                                    style='Modern.TCombobox')
-            combo.grid(row=i, column=col, padx=5, pady=8)
+                create_combobox(additional_info_frame, var, values=cgi_options, row=i, col=col, state="readonly", padx=5, pady=5)
+            
             additional_info_vars[day][section] = var
 
     # ----------------------------------------------------------------------------- #
     # ---------------------- ONGLET LIEU DE TRAVAIL ------------------------------- #
     # ----------------------------------------------------------------------------- #
-    work_location_frame = ttk.Frame(notebook, style='Modern.TFrame', padding=20)
-    notebook.add(work_location_frame, text="Lieu de travail")
+    work_location_frame = create_tab(notebook, title="Lieu de travail")
 
     # En-têtes
-    ttk.Label(work_location_frame, text="Jour", style='Title.TLabel').grid(row=0, column=0, padx=5, pady=10)
-    ttk.Label(work_location_frame, text="Matin", style='Title.TLabel').grid(row=0, column=1, padx=5, pady=10)
-    ttk.Label(work_location_frame, text="Après-midi", style='Title.TLabel').grid(row=0, column=2, padx=5, pady=10)
+    create_Title_label_with_grid(work_location_frame, text=f"Jour", row=0, col=0, padx=5, pady=10, sticky=None)
+    create_Title_label_with_grid(work_location_frame, text=f"Matin", row=0, col=1, padx=5, pady=10, sticky=None)
+    create_Title_label_with_grid(work_location_frame, text=f"Après-midi", row=0, col=2, padx=5, pady=10, sticky=None)
 
     work_location_vars = {}
 
     for i, day in enumerate(JOURS_SEMAINE__LIST, start=1):
-        ttk.Label(work_location_frame, text=day.capitalize(), style='Modern.TLabel').grid(row=i, column=0, padx=5, pady=8, sticky='w')
+        create_Modern_label_with_grid(work_location_frame, text=day.capitalize(), row=i, col=0, padx=5, pady=8)
         
-        morning_var = StringVar(value=config_ini['work_location_am'].get(day, ''))
-        afternoon_var = StringVar(value=config_ini['work_location_pm'].get(day, ''))
-
-        morning_combo = ttk.Combobox(work_location_frame, 
-                                    textvariable=morning_var, 
-                                    values=work_location_options, 
-                                    state="readonly", 
-                                    width=20,
-                                    style='Modern.TCombobox')
-        morning_combo.grid(row=i, column=1, padx=5, pady=8)
-
-        afternoon_combo = ttk.Combobox(work_location_frame, 
-                                    textvariable=afternoon_var, 
-                                    values=work_location_options, 
-                                    state="readonly", 
-                                    width=20,
-                                    style='Modern.TCombobox')
-        afternoon_combo.grid(row=i, column=2, padx=5, pady=8)
+        morning_var = create_structured_StringVar(config_ini, 'work_location_am', day)
+        afternoon_var = create_structured_StringVar(config_ini, 'work_location_pm', day)
+        create_combobox(work_location_frame, morning_var, work_location_options, row=i, col=1, state="readonly")
+        create_combobox(work_location_frame, afternoon_var, work_location_options, row=i, col=2, state="readonly")
 
         work_location_vars[day] = (morning_var, afternoon_var)
 
     # ----------------------------------------------------------------------------- #
     # -------------------------- BOUTON SAUVEGARDER ------------------------------- #
     # ----------------------------------------------------------------------------- #
-    button_frame = ttk.Frame(configuration, style='Modern.TFrame')
-    button_frame.pack(side=tk.BOTTOM, pady=20)
-
-    save_button = ttk.Button(button_frame, 
-                            text="Sauvegarder", 
-                            style='Modern.TButton',
-                            command=lambda: save_config(config_ini, date_cible_var, debug_mode_var,
-                                                     work_schedule_vars, additional_info_vars, work_location_vars, configuration, cle_aes))
-    save_button.pack()
+    button_frame = create_a_frame(configuration, side=tk.BOTTOM, pady=20)
+    
+    elements_to_save_it = [
+                        config_ini, date_cible_var, debug_mode_var, work_schedule_vars,
+                        additional_info_vars, work_location_vars, configuration, cle_aes,
+                        project_code_var, activity_code_var, category_code_var, 
+                        sub_category_code_var, billing_action_var
+                        ]
+    
+    create_button_with_style(button_frame, text="Sauvegarder", command=lambda: save_config(elements_to_save_it),)
 
     # Focus initial sur le champ parametre
     date_entry = settings_frame.winfo_children()[-1]
@@ -506,46 +687,38 @@ def main_menu(cle_aes):
     # Désactiver le redimensionnement (largeur et hauteur)
     menu.resizable(False, False)
     menu.geometry("400x300")
-    login_var = tk.StringVar(value="")  # Valeur par défaut
-    mdp_var = tk.StringVar(value="")
+    login_var = create_basic_StringVar("")
+    mdp_var = create_basic_StringVar("")
     
     # Titre principal
     tk.Label(menu, text="Program PSATime Auto", font=("Segoe UI", 14)).pack(pady=10)
     
-    # # Séparateur
-    # separator = ttk.Separator(menu, orient='horizontal')
-    # separator.pack(fill='x', pady=10)
-    
     # Champs d'identifiants
-    credentials_frame = ttk.LabelFrame(menu, text="Identifiants", style='Parametres.TLabelframe', padding=(10, 5))
-    credentials_frame.pack(fill='both', expand=True, padx=20, pady=10)
-
+    credentials_frame = create_labeled_frame(menu, text="Identifiants", padx=20, pady=10, padding=(10, 5))
+    
     # pour le login
-    ttk.Label(credentials_frame, text="Login:", style='Modern.TLabel').grid(row=0, column=0, sticky='w', padx=5, pady=5)
-    login_entry = ttk.Entry(credentials_frame, textvariable=login_var, width=30, style='Modern.TEntry')
-    login_entry.grid(row=0, column=1, padx=5, pady=5, sticky='w')
-    ttk.Label(credentials_frame, text="@cgi.com", style='Modern.TLabel').grid(row=0, column=2, sticky='w', padx=5, pady=5)
+    create_Modern_label_with_grid(credentials_frame, text=f"Login:", row=0, col=0)
+    login_entry = create_Modern_entry_with_grid(credentials_frame, var=login_var, row=0, col=1)
+    create_Modern_label_with_grid(credentials_frame, text=f"@cgi.com", row=0, col=2)
 
     # pour le mot de passe
-    ttk.Label(credentials_frame, text="Mot de passe:", style='Modern.TLabel').grid(row=1, column=0, sticky='w', padx=5, pady=5)
-    mdp_entry = ttk.Entry(credentials_frame, textvariable=mdp_var, show='*', width=30, style='Modern.TEntry')
-    mdp_entry.grid(row=1, column=1, padx=5, pady=5, sticky='w')
+    create_Modern_label_with_grid(credentials_frame, text=f"Mot de passe:", row=1, col=0)
+    create_Modern_entry_with_grid_for_password(credentials_frame, var=mdp_var, row=1, col=1)
     
     # menu : Lancer votre PSATime
-    launch_button = tk.Button(menu, text="Lancer votre PSATime", command=lambda: run_psatime())
-    launch_button.pack(fill='x', padx=20, pady=5, ipady=5)
+    launch_button = create_button_without_style(menu, text="Lancer votre PSATime", command=lambda: run_psatime())
+
     # menu : Configurer le lancement
-    config_button = tk.Button(menu, text="Configurer le lancement", command=lambda: [menu.destroy(), start_configuration(cle_aes)])
-    config_button.pack(fill='x', padx=20, pady=5, ipady=5)
-    
+    create_button_without_style(menu, text="Configurer le lancement", command=lambda: [menu.destroy(), start_configuration(cle_aes)])
+
     # Signature en bas à droite
     color_grey = "grey"
     color_bleu_acier_doux ="#5f6a73"  # Bleu acier doux
     color_bleu_clair ="#4b9cd3"  # Bleu clair
     police_segoe_script = "Segoe Script"
     police_lucida_calligraphy = "Lucida Calligraphy"
-    separator = ttk.Separator(menu, orient='horizontal')
-    separator.pack(fill='x', padx=10, pady=5)
+    
+    seperator_ttk(menu, orient='horizontal', fill='x', padx=10, pady=5)
 
     signature_label = tk.Label(menu, text="Développé par Frédéric",
                             font=(police_lucida_calligraphy, 8, "italic"), fg=color_bleu_acier_doux)
@@ -563,7 +736,7 @@ def main_menu(cle_aes):
     time.sleep(10)
 
 if __name__ == "__main__":
-    multiprocessing.freeze_support()
+    multiprocessing.freeze_support() #afin de contouner un probléme avec Pyinstaller et les multi processus
     try: 
         # Générer une clé AES-256
         cle_aes = generer_cle_aes(TAILLE_CLE)
