@@ -18,6 +18,8 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 from multiprocessing import shared_memory
 from read_or_write_file_config_ini_utils import get_runtime_config_path, read_config_ini, write_config_ini
+from logger_utils import setup_logs, write_log, close_logs
+
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
@@ -736,11 +738,24 @@ def main_menu(cle_aes):
     time.sleep(10)
 
 if __name__ == "__main__":
-    multiprocessing.freeze_support() #afin de contouner un probléme avec Pyinstaller et les multi processus
+    log_file = setup_logs()
+    write_log(f"Démarrage du programme", log_file, "INFO")
+    multiprocessing.freeze_support() # contouner un probléme avec Pyinstaller et les multi processus
     try: 
-        # Générer une clé AES-256
         cle_aes = generer_cle_aes(TAILLE_CLE)
-        # print(f"Clé AES-256 générée : {cle_aes.hex()}")
-        main_menu(cle_aes) # Lancer le menu principal
+        # write_log(f"Clé AES-256 générée", log_file, "DEBUG")
+        # write_log(f"test_niveau_de_log", log_file, "WARNING")
+        # write_log(f"test_niveau_de_log", log_file, "ERROR")
+        # write_log(f"test_niveau_de_log", log_file, "CRITICAL")
+        # write_log(f"test_niveau_de_log", log_file, "INCONNU")
+        
+        # # Vérification du fichier généré
+        # with open(log_file, "r") as f:
+        #     content = f.read()
+        #     print(content)  # Afficher le contenu du fichier pour vérification
+        
+        main_menu(cle_aes)
     except Exception as e:
-        print(f"Erreur : {e}")
+        write_log(f"Erreur rencontrée : {str(e)}", log_file, "ERROR")
+    finally:
+        close_logs(log_file)
