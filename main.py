@@ -183,8 +183,8 @@ def run_psatime_with_credentials(cle_aes, login_var, mdp_var, log_file):
         nom_utilisateur_chiffre = chiffrer_donnees(login, cle_aes, log_file=log_file)
         mot_de_passe_chiffre = chiffrer_donnees(password, cle_aes, log_file=log_file)
         memoire_cle = stocker_en_memoire_partagee(MEMOIRE_PARTAGEE_CLE, cle_aes, log_file=log_file)
-        write_log(f"Taille des données chiffrées du nom d'utilisateur : {len(nom_utilisateur_chiffre)}", log_file, "DEBUG")
-        write_log(f"Taille des données chiffrées du mot de passe : {len(mot_de_passe_chiffre)}", log_file, "DEBUG")
+        write_log(f"Taille des données chiffrées du nom d'utilisateur : {len(nom_utilisateur_chiffre)}", log_file, "CRITICAL")
+        write_log(f"Taille des données chiffrées du mot de passe : {len(mot_de_passe_chiffre)}", log_file, "CRITICAL")
         
         if not login or not password:
             messagebox.showerror("Erreur", "Veuillez entrer votre login et mot de passe.")
@@ -197,7 +197,7 @@ def run_psatime_with_credentials(cle_aes, login_var, mdp_var, log_file):
         memoire_mdp.buf[:len(mot_de_passe_chiffre)] = mot_de_passe_chiffre
 
         write_log(f"Clé et données chiffrées stockées dans la mémoire partagée.", log_file, "DEBUG")
-        write_log(f"Lancement de PSATime avec login: {login}@cgi.com et mot de passe.", log_file, "INFO")
+        write_log(f"Lancement de PSATime avec login: {login}@cgi.com et mot de passe.", log_file, "DEBUG")
 
         run_psatime(log_file)
     except Exception as e:
