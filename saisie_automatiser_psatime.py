@@ -123,9 +123,9 @@ DESCRIPTIONS = [
 if DEBUG_MODE:
     # Afficher les configurations chargées (facultatif, pour le debug)
     write_log("Chargement des configurations...", LOG_FILE, "DEBUG")
-    write_log(f"--> Login : {ENCRYPTED_LOGIN} - pas visible, normal", LOG_FILE, "DEBUG")
-    write_log(f"--> Password : {ENCRYPTED_MDP} - pas visible, normal", LOG_FILE, "DEBUG")
-    write_log(f"--> URL : {URL}", LOG_FILE, "DEBUG")
+    write_log(f"--> Login : {ENCRYPTED_LOGIN} - pas visible, normal", LOG_FILE, "CRITICAL")
+    write_log(f"--> Password : {ENCRYPTED_MDP} - pas visible, normal", LOG_FILE, "CRITICAL")
+    write_log(f"--> URL : {URL}", LOG_FILE, "CRITICAL")
     write_log(f"--> Date cible : {DATE_CIBLE}", LOG_FILE, "DEBUG")
     
     write_log(f"Planning de travail de la semaine:", LOG_FILE, "DEBUG")
@@ -325,11 +325,15 @@ def main():
         if element_present:
             click_element_without_wait(driver, By.ID, "PT_SIDE$PIMG")
 
-
         # Attendre que l'iframe soit chargé avant de basculer
         element_present = wait_for_element(driver, By.ID, "main_target_win0", timeout=DEFAULT_TIMEOUT)
         if element_present:
             switched_to_iframe = switch_to_iframe_by_id_or_name(driver, "main_target_win0")  # Remplace par l'ID exact de l'iframe
+        
+        # Attendre que le DOM soit stable
+        wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
+        # chargé le DOM de page
+        wait_for_dom_ready(driver, LONG_TIMEOUT)
 
         if switched_to_iframe:
             # Attendre que l'élément "EX_TIME_ADD_VW_PERIOD_END_DT" soit présent dans l'iframe
@@ -349,6 +353,15 @@ def main():
                     else:
                         write_log("Aucune modification nécessaire, date actuelle conservée.", LOG_FILE, "DEBUG")
 
+
+            # Attendre que le DOM soit stable
+            wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
+            # chargé le DOM de page
+            wait_for_dom_ready(driver, LONG_TIMEOUT)
+            
+            program_break_time(1, "Veuillez patienter. Court délai pour stabilisation du DOM")
+            print()
+            
             # Verifier la présence et Cliquer sur le bouton "Ajout"
             element_present = wait_for_element(driver, By.ID, "PTS_CFG_CL_WRK_PTS_ADD_BTN", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
             if element_present:
