@@ -6,10 +6,12 @@ DEFAULT_LOG_DIR = "logs"
 HTML_FORMAT = "html"
 TXT_FORMAT = "txt"
 COLUMN_WIDTHS = {"timestamp": "10%", "level": "6%", "message": "84%"}
+ROW_HEIGHT = "20px"
+FONT_SIZE = "12px"
+PADDING = "2px"
 LOG_LEVELS = {"INFO": 10, "DEBUG": 20, "WARNING": 30, "ERROR": 40, "CRITICAL": 50}
-LOG_LEVEL_FILTER = "DEBUG"  # Niveau maxi des logs à écrire
+LOG_LEVEL_FILTER = "INFO"  # Niveau maxi des logs à écrire
 DEBUG_MODE = True  # Si désactivé, seuls les logs INFO seront écrits
-
 
 def setup_logs(log_dir=DEFAULT_LOG_DIR, log_format=HTML_FORMAT):
     """
@@ -94,8 +96,10 @@ def get_html_style():
             }}
             th, td {{
                 border: 1px solid black;
-                padding: 8px;
+                padding: {PADDING};
                 text-align: left;
+                height: {ROW_HEIGHT};
+                font-size: {FONT_SIZE};
             }}
             th {{
                 background-color: #f2f2f2;
