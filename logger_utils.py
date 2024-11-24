@@ -11,7 +11,7 @@ FONT_SIZE = "12px"
 PADDING = "2px"
 LOG_LEVELS = {"INFO": 10, "DEBUG": 20, "WARNING": 30, "ERROR": 40, "CRITICAL": 50}
 LOG_LEVEL_FILTER = "INFO"  # Niveau maxi des logs à écrire
-DEBUG_MODE = True  # Si désactivé, seuls les logs INFO seront écrits
+DEBUG_MODE = False
 
 def setup_logs(log_dir=DEFAULT_LOG_DIR, log_format=HTML_FORMAT):
     """
@@ -150,22 +150,29 @@ def write_log(
     try:
         # Vérifier si le niveau de log est valide
         if level not in LOG_LEVELS:
-            debug_print(f"Niveau non valide ignoré : {level}")  # Log pour niveau inconnu
+            if DEBUG_MODE:
+                debug_print(f"Niveau non valide ignoré : {level}")  # Log pour niveau inconnu
             return
 
         # Appliquer le filtre de niveau (gère les niveaux supérieurs ou égaux à LOG_LEVEL_FILTER)
         if LOG_LEVELS[level] > LOG_LEVELS[LOG_LEVEL_FILTER]:
-            debug_print(f"Niveau ignoré par filtre : {level}")  # Log pour niveau filtré
+            if DEBUG_MODE:
+                debug_print(f"Niveau ignoré par filtre : {level}")  # Log pour niveau filtré
             return
 
-        # Si le mode DEBUG est désactivé, n'afficher que les logs INFO
-        if not DEBUG_MODE:
-            if level != "INFO":
-                debug_print(f"Niveau ignoré - seul INFO est affiché : {level}")
-                return
+        # Securité supplementaire pour les logs: Si le mode DEBUG est désactivé, n'afficher que les logs INFO
+        # if not DEBUG_MODE:
+        #     if level != "INFO":
+        #         # debug_print(f"Niveau ignoré - seul INFO est affiché : {level}")
+        #         return
 
         # Si on passe ici, le niveau est autorisé
-        debug_print(f"Écriture dans le fichier pour : {level}")
+        if DEBUG_MODE:
+            # Vérifiez l'encodage du message (débogage)
+            log_message = f"<tr><td>{datetime.now()}</td><td>{level}</td><td>{message}</td></tr>\n"
+
+        if DEBUG_MODE:
+            debug_print(f"Écriture dans le fichier pour : {level}")
 
         # Rotation du fichier si nécessaire
         if should_rotate(log_file, max_size_mb):
@@ -183,16 +190,18 @@ def write_log(
                 initialize_html_log_file(log_file)
             
             # Ajout du message
-            with open(log_file, "a") as f:
-                debug_print(f"Ajout dans le fichier HTML : {message}")
+            with open(log_file, "a", encoding="utf-8") as f:
+                if DEBUG_MODE:
+                    debug_print(f"Ajout dans le fichier HTML : {message}")
                 f.write(log_message)
                 if auto_close:
                     f.write("</table>")
 
         else:  # Format texte brut
             log_message = f"[{timestamp}] {level}: {message}\n"
-            with open(log_file, "a") as f:
-                debug_print(f"Ajout dans le fichier TXT : {message}")
+            with open(log_file, "a", encoding="utf-8") as f:
+                if DEBUG_MODE:
+                    debug_print(f"Ajout dans le fichier TXT : {message}")
                 f.write(log_message)
 
     except OSError as e:
