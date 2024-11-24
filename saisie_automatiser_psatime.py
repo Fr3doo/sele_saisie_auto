@@ -22,6 +22,7 @@ from fonctions_selenium_utils import click_element_without_wait, controle_insert
 from fonctions_selenium_utils import detecter_et_verifier_contenu, effacer_et_entrer_valeur, modifier_date_input, ouvrir_navigateur_sur_ecran_principal
 from fonctions_selenium_utils import remplir_champ_texte, selectionner_option_menu_deroulant_type_select, send_keys_to_element, switch_to_default_content
 from fonctions_selenium_utils import switch_to_iframe_by_id_or_name, trouver_ligne_par_description, verifier_champ_jour_rempli, wait_for_dom_ready, wait_for_element, wait_until_dom_is_stable
+from logger_utils import write_log
 from read_or_write_file_config_ini_utils import read_config_ini
 from remplir_informations_supp_utils import traiter_description
 
@@ -29,8 +30,9 @@ from remplir_informations_supp_utils import traiter_description
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
 
-# Charger le fichier de configuration
-config = read_config_ini()
+from main import get_log_file
+LOG_FILE = get_log_file()
+config = read_config_ini(LOG_FILE)
 
 # Extraction des informations de connexion
 ENCRYPTED_LOGIN = config.get('credentials', 'login')
@@ -42,7 +44,8 @@ DATE_CIBLE = config.get('settings', 'date_cible')
 if DATE_CIBLE.lower() == 'none' or DATE_CIBLE.strip() == '':
     DATE_CIBLE = None
 
-DEBUG_MODE = config.get('settings', 'debug_mode').lower() == 'true'
+# DEBUG_MODE = config.get('settings', 'debug_mode').lower() == 'true'
+DEBUG_MODE = True
 
 # Récupérer la liste, split, nettoie les espaces et les double quote
 LISTE_ITEMS_DESCRIPTIONS = [item.strip().strip('"') for item in config.get('settings', 'liste_items_planning').split(",")]
@@ -119,33 +122,39 @@ DESCRIPTIONS = [
 
 if DEBUG_MODE:
     # Afficher les configurations chargées (facultatif, pour le debug)
-    print("Connexion:")
-    print(f"--> Login : {ENCRYPTED_LOGIN}")
-    print(f"--> Password : {ENCRYPTED_MDP}")
-    print("\nParamètres:")
-    print(f"--> URL : {URL}")
-    print(f"--> Date cible: {DATE_CIBLE}")
-    print("\nPlanning de travail de la semaine:")
+    write_log("Chargement des configurations...", LOG_FILE, "DEBUG")
+    write_log(f"--> Login : {ENCRYPTED_LOGIN} - pas visible, normal", LOG_FILE, "DEBUG")
+    write_log(f"--> Password : {ENCRYPTED_MDP} - pas visible, normal", LOG_FILE, "DEBUG")
+    write_log(f"--> URL : {URL}", LOG_FILE, "DEBUG")
+    write_log(f"--> Date cible : {DATE_CIBLE}", LOG_FILE, "DEBUG")
+    
+    write_log(f"Planning de travail de la semaine:", LOG_FILE, "DEBUG")
     for day, (activity, hours) in JOURS_DE_TRAVAIL.items():
-        print(f"--> '{day}': ('{activity}', '{hours}')")
-    print("\nInfos_supp_cgi_periode_repos_respectee:")
+        write_log(f"--> '{day}': ('{activity}', '{hours}')", LOG_FILE, "DEBUG")
+        
+    write_log(f"Infos_supp_cgi_periode_repos_respectee:", LOG_FILE, "DEBUG")
     for day, status in INFORMATIONS_SUPPLEMENTAIRES_PERIODE_REPOS_RESPECTEE.items():
-        print(f"--> '{day}': '{status}'")
-    print("\nInfos_supp_cgi_horaire_travail_effectif:")    
+        write_log(f"--> '{day}': '{status}'", LOG_FILE, "DEBUG")
+        
+    write_log(f"Infos_supp_cgi_horaire_travail_effectif:", LOG_FILE, "DEBUG")
     for day, status in INFORMATIONS_SUPPLEMENTAIRES_HORAIRE_TRAVAIL_EFFECTIF.items():
-        print(f"--> '{day}': '{status}'")
-    print("\nInfos_supp_cgi_demi_journee_travaillee:")
+        write_log(f"--> '{day}': '{status}'", LOG_FILE, "DEBUG")
+        
+    write_log(f"Planning de travail de la semaine:", LOG_FILE, "DEBUG")
     for day, status in INFORMATIONS_SUPPLEMENTAIRES_PLUS_DEMI_JOURNEE_TRAVAILLEE.items():
-        print(f"--> '{day}': '{status}'")
-    print("\nInfos_supp_cgi_duree_pause_dejeuner:")    
+        write_log(f"--> '{day}': '{status}'", LOG_FILE, "DEBUG")
+        
+    write_log(f"Infos_supp_cgi_duree_pause_dejeuner:", LOG_FILE, "DEBUG") 
     for day, status in INFORMATIONS_SUPPLEMENTAIRES_DUREE_PAUSE_DEJEUNER.items():
-        print(f"--> '{day}': '{status}'")
-    print("\nLieu de travail Matin:")
+        write_log(f"--> '{day}': '{status}'", LOG_FILE, "DEBUG")
+        
+    write_log(f"Lieu de travail Matin:", LOG_FILE, "DEBUG")
     for day, location in LIEU_DU_TRAVAIL_MATIN.items():
-        print(f"--> '{day}': '{location}'")
-    print("\nLieu de travail Apres-midi:")
+        write_log(f"--> '{day}': '{location}'", LOG_FILE, "DEBUG")
+        
+    write_log(f"Lieu de travail Apres-midi:", LOG_FILE, "DEBUG")
     for day, location in LIEU_DU_TRAVAIL_APRES_MIDI.items():
-        print(f"--> '{day}': '{location}'")
+        write_log(f"--> '{day}': '{location}'", LOG_FILE, "DEBUG")
 
 CHOIX_USER = True # true pour créer une nouvelle feuille de temps
 DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut
@@ -193,8 +202,12 @@ def program_break_time(memorization_time, affichage_text):
         duree_restante_avant_lancement -= 1
 
 
-def seprateur_menu_affichage():
-    print("*************************************************************")
+def seprateur_menu_affichage_log():
+    write_log(f"*************************************************************", LOG_FILE, "INFO")
+
+
+def seprateur_menu_affichage_console():
+    print(f"*************************************************************")
 
 
 def get_next_saturday_if_not_saturday(date_str):
@@ -223,9 +236,9 @@ def ajouter_jour_a_jours_remplis(jour, jours_remplis):
 def afficher_message_insertion(jour, valeur, tentative, message):
     """Affiche un message d'insertion de la valeur."""
     if message == "tentative d'insertion n°":
-        print(f"Valeur '{valeur}' confirmée pour le jour '{jour}' ({message}{tentative + 1})")
+        write_log(f"Valeur '{valeur}' confirmée pour le jour '{jour}' ({message}{tentative + 1})", LOG_FILE, "DEBUG")
     else:
-        print(f"Valeur '{valeur}' confirmée pour le jour '{jour}' {message})")
+        write_log(f"Valeur '{valeur}' confirmée pour le jour '{jour}' {message})", LOG_FILE, "DEBUG")
         
 # ------------------------------------------------------------------------------------------------------------------ #
 # -------------------------------------------- CODE PRINCIPAL ------------------------------------------------------ #
@@ -235,34 +248,35 @@ def main():
     memoire_mdp = None
     memoire_cle = None
     taille_nom = None
+    
+    if not LOG_FILE:
+        print("Fichier de log introuvable.")
+        return
+    
+    write_log(f"Démarrage de saisie_automatiser_psatime", LOG_FILE, "INFO")
+    write_log(f"Chemin du fichier log : {LOG_FILE}", LOG_FILE, "DEBUG")
+    
     try:
         # Récupérer la clé depuis la mémoire partagée
-        memoire_cle, cle_aes = recuperer_de_memoire_partagee(MEMOIRE_PARTAGEE_CLE, TAILLE_CLE)
-        # print(f"Clé AES-256 récupérée : {cle_aes.hex()}")
+        memoire_cle, cle_aes = recuperer_de_memoire_partagee(MEMOIRE_PARTAGEE_CLE, TAILLE_CLE, log_file=LOG_FILE)
+        write_log(f"Clé AES-256 récupérée : {cle_aes.hex()}", LOG_FILE, "CRITICAL")
 
         # Récupérer les données chiffrées depuis la mémoire partagée
         memoire_nom = shared_memory.SharedMemory(name="memoire_nom")
         taille_nom = len(bytes(memoire_nom.buf).rstrip(b"\x00"))
         nom_utilisateur_chiffre = bytes(memoire_nom.buf[:taille_nom])
-        # print(f"Taille récupérée pour le nom d'utilisateur chiffré : {len(nom_utilisateur_chiffre)}")
+        write_log(f"Taille récupérée pour le nom d'utilisateur chiffré : {len(nom_utilisateur_chiffre)}", LOG_FILE, "CRITICAL")
 
         memoire_mdp = shared_memory.SharedMemory(name="memoire_mdp")
         taille_mdp = len(bytes(memoire_mdp.buf).rstrip(b"\x00"))
         mot_de_passe_chiffre = bytes(memoire_mdp.buf[:taille_mdp])
-        # print(f"Taille récupérée pour le mot de passe chiffré : {len(mot_de_passe_chiffre)}")
+        write_log(f"Taille récupérée pour le mot de passe chiffré : {len(mot_de_passe_chiffre)}", LOG_FILE, "CRITICAL")
 
          # Vérification des données en mémoire partagée
         if not memoire_nom or not memoire_mdp or not memoire_cle:
-            print("ERREUR : La mémoire partagée n'a pas été initialisée correctement. Assurez-vous que les identifiants ont été chiffrés.")
+            write_log(f"La mémoire partagée n'a pas été initialisée correctement. Assurez-vous que les identifiants ont été chiffrés", LOG_FILE, "ERROR")
             sys.exit(1)
                 
-        # Déchiffrer les données
-        nom_utilisateur = dechiffrer_donnees(nom_utilisateur_chiffre, cle_aes)
-        mot_de_passe = dechiffrer_donnees(mot_de_passe_chiffre, cle_aes)
-
-        # print(f"Nom d'utilisateur déchiffré : {nom_utilisateur}")
-        # print(f"Mot de passe déchiffré : {mot_de_passe}")
-        
         # Démarrer le navigateur
         driver = ouvrir_navigateur_sur_ecran_principal(
             plein_ecran=False,
@@ -278,8 +292,15 @@ def main():
         wait_for_dom_ready(driver, LONG_TIMEOUT)
         
         # Connexion
+        # Déchiffrer les données
+        nom_utilisateur = dechiffrer_donnees(nom_utilisateur_chiffre, cle_aes, log_file=LOG_FILE)
+        mot_de_passe = dechiffrer_donnees(mot_de_passe_chiffre, cle_aes, log_file=LOG_FILE)
         send_keys_to_element(driver, By.ID, "userid", nom_utilisateur)
         send_keys_to_element(driver, By.ID, "pwd", mot_de_passe)
+        nom_utilisateur = None
+        mot_de_passe = None
+        write_log(f"Nom d'utilisateur déchiffré : {nom_utilisateur}", LOG_FILE, "CRITICAL")
+        write_log(f"Mot de passe déchiffré : {mot_de_passe}", LOG_FILE, "CRITICAL")
         send_keys_to_element(driver, By.ID, "pwd", Keys.RETURN)
         
         # Attendre que le DOM soit stable
@@ -326,7 +347,7 @@ def main():
                     if new_date_value != current_date_value:
                         modifier_date_input(date_input, new_date_value, "Date modifiée au prochain samedi")
                     else:
-                        print("Aucune modification nécessaire, date actuelle conservée.")
+                        write_log("Aucune modification nécessaire, date actuelle conservée.", LOG_FILE, "DEBUG")
 
             # Verifier la présence et Cliquer sur le bouton "Ajout"
             element_present = wait_for_element(driver, By.ID, "PTS_CFG_CL_WRK_PTS_ADD_BTN", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
@@ -350,13 +371,14 @@ def main():
                         # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur de modifier la date
                         click_element_without_wait(driver, By.ID, "#ICOK")
                         if alerte == alertes[0]:
-                            print("\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)\n"
-                                "--> Modifier la date du PSATime dans le fichier ini. Le programme va s'arreter.")
+                            write_log(f"\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)\n"
+                                "--> Modifier la date du PSATime dans le fichier ini. Le programme va s'arreter.", LOG_FILE, "INFO")
+
 
                         # Arrêter le script. Utilisez sys.exit() pour une sortie propre
                         sys.exit()
                 else:
-                    print("Date validée avec succès.")
+                    write_log("Date validée avec succès.", LOG_FILE, "DEBUG")
         
         # Attendre que le DOM soit stable
         wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
@@ -455,13 +477,13 @@ def main():
                                     break
 
                             except StaleElementReferenceException:
-                                print(f"Référence obsolète pour '{jour}', tentative {attempt + 1}")
+                                write_log(f"Référence obsolète pour '{jour}', tentative {attempt + 1}", LOG_FILE, "DEBUG")
                             
                             attempt += 1
 
                         # Si toutes les tentatives échouent, indiquer un message d'échec
                         if attempt == max_attempts:
-                            print(f"Échec de l'insertion de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {max_attempts} tentatives.")
+                            write_log(f"Échec de l'insertion de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {max_attempts} tentatives.", LOG_FILE, "DEBUG")
 
             elif description_cible and est_en_mission(description_cible) and jour not in jours_remplis:
                 # Cas où description_cible est "En mission", on écrit directement dans les IDs spécifiques sans utiliser `description_cible`
@@ -494,24 +516,24 @@ def main():
                                 break
 
                         except StaleElementReferenceException:
-                            print(f"Référence obsolète pour '{jour}', tentative {attempt + 1}")
+                            write_log(f"Référence obsolète pour '{jour}', tentative {attempt + 1}", LOG_FILE, "DEBUG")
                         
                         attempt += 1
 
                     # Si toutes les tentatives échouent, indiquer un message d'échec
                     if attempt == max_attempts:
-                        print(f"Échec de l'insertion de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {max_attempts} tentatives.")
+                        write_log(f"Échec de l'insertion de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {max_attempts} tentatives.", LOG_FILE, "DEBUG")
         
         # Vérifie si "En mission" est présent
         contains_en_mission = any(value[0] == "En mission" for value in JOURS_DE_TRAVAIL.values())
         if contains_en_mission:
-            print("Contient 'En mission' :", contains_en_mission)
+            write_log(f"Contient 'En mission' : {contains_en_mission}", LOG_FILE, "INFO")
             
             # Boucle sur les IDs pour insérer les valeurs correspondantes
             for id in LISTES_ID_INFORMATIONS_MISSION:
                 key = ID_TO_KEY_MAPPING[id]  # Récupérer la clé associée
                 valeur_a_remplir = INFORMATIONS_PROJET_MISSION[key]  # Récupérer la valeur associée
-                print(f"Traitement de l'élément : {key} avec ID : {id} et valeur : {valeur_a_remplir}")
+                write_log(f"Traitement de l'élément : {key} avec ID : {id} et valeur : {valeur_a_remplir}", LOG_FILE, "DEBUG")
                 attempt = 0
                 
                 # Vérifier la présence de l'élément
@@ -522,7 +544,7 @@ def main():
                         try:
                             # Étape 1 : Détection et vérification du contenu actuel
                             day_input_field, is_correct_value = detecter_et_verifier_contenu(driver, id, valeur_a_remplir)
-                            print(f"id trouvé : {day_input_field} / is_correct_value : {is_correct_value}")
+                            write_log(f"id trouvé : {day_input_field} / is_correct_value : {is_correct_value}", LOG_FILE, "DEBUG")
                             
                             if is_correct_value:
                                 break
@@ -537,16 +559,16 @@ def main():
                                 break
 
                         except StaleElementReferenceException:
-                            print(f"Référence obsolète. tentative {attempt + 1}")
+                            write_log(f"Référence obsolète. tentative {attempt + 1}", LOG_FILE, "DEBUG")
                         
                         attempt += 1
 
                     # Si toutes les tentatives échouent, indiquer un message d'échec
                     if attempt == max_attempts:
-                        print(f"Échec de l'insertion de la valeur '{valeur_a_remplir}' pour l'ID '{id}', après {max_attempts} tentatives.")
+                        write_log(f"Échec de l'insertion de la valeur '{valeur_a_remplir}' pour l'ID '{id}', après {max_attempts} tentatives.", LOG_FILE, "DEBUG")
                         
         else:
-            print("La personne N'EST PAS en mission")
+            write_log("La personne N'EST PAS en mission", LOG_FILE, "INFO")
             
         # Attendre que le DOM soit stable
         wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
@@ -626,17 +648,17 @@ def main():
                         if alerte == alertes[0]:
                             # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
                             click_element_without_wait(driver, By.ID, "#ICOK")
-                            print("\nWARNING : Assurez-vous d’avoir choisi la bonne date pour votre relevé d’heures. (24500,19)")
+                            write_log(f"\nWARNING : Assurez-vous d’avoir choisi la bonne date pour votre relevé d’heures. (24500,19)", LOG_FILE, "INFO")
                             input("--> Appuyez sur Entrée pour continuer.")  
                         elif alerte == alertes[1]:
                             # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
                             click_element_without_wait(driver, By.ID, "#ICOK")
-                            print("\nWARNING : Un jour de la semaine est un jour férié. Ces heures n'ont pas été saisies comme telles. (24500,427).")
+                            write_log(f"\nWARNING : Un jour de la semaine est un jour férié. Ces heures n'ont pas été saisies comme telles. (24500,427).", LOG_FILE, "INFO")
                             input("--> Appuyez sur Entrée pour fermer le navigateur.")  
                         elif alerte == alertes[2]:
                             # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
                             click_element_without_wait(driver, By.ID, "#ICOK")
-                            print("\nWARNING : Il existe un écart avec vos absences approuvées dans le Centre de service RH (24500,320)")
+                            write_log(f"\nWARNING : Il existe un écart avec vos absences approuvées dans le Centre de service RH (24500,320)", LOG_FILE, "INFO")
                             input("--> Appuyez sur Entrée pour fermer le navigateur.")    
                         break # Arrêter la boucle une fois la ou les alerte(s) traitée(s)
                     
@@ -676,27 +698,30 @@ def main():
         #     click_element_without_wait(driver, By.ID, "EX_TIME_HDR_WRK_PB_SUBMIT")
 
     except NoSuchElementException as e:
-        print(f"L'élément n'a pas été trouvé : {str(e)}")
+        write_log(f"L'élément n'a pas été trouvé : {str(e)}", LOG_FILE, "ERROR")
     except TimeoutException as e:
-        print(f"Temps d'attente dépassé pour un élément : {str(e)}")
+        write_log(f"Temps d'attente dépassé pour un élément : {str(e)}", LOG_FILE, "ERROR")
     except WebDriverException as e:
-        print(f"Erreur liée au WebDriver : {str(e)}")
+        write_log(f"Erreur liée au WebDriver : {str(e)}", LOG_FILE, "ERROR")
     except Exception as e:
-        print(f"Erreur inattendue : {str(e)}")
+        write_log(f"Erreur inattendue : {str(e)}", LOG_FILE, "ERROR")
 
     finally:
         try:
-            seprateur_menu_affichage()
+            seprateur_menu_affichage_console()
         except ValueError:
             pass  # Ignore toute erreur
         finally:
             # Suppression sécurisée des mémoires partagées
             if memoire_cle is not None:
-                supprimer_memoire_partagee_securisee(memoire_cle)
+                supprimer_memoire_partagee_securisee(memoire_cle, LOG_FILE)
             if memoire_nom is not None:
-                supprimer_memoire_partagee_securisee(memoire_nom)
+                supprimer_memoire_partagee_securisee(memoire_nom, LOG_FILE)
             if memoire_mdp is not None:
-                supprimer_memoire_partagee_securisee(memoire_mdp)
+                supprimer_memoire_partagee_securisee(memoire_mdp, LOG_FILE)
             
-            print("[FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier saisie_automatiser_psatime.")
+            write_log("[FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier saisie_automatiser_psatime.", LOG_FILE, "INFO")
             driver.quit()
+
+
+            
