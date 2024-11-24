@@ -22,7 +22,7 @@ def get_runtime_config_path(log_file=None):
         # Copier le fichier embarqué vers le répertoire courant si nécessaire (si absent)
         if not os.path.exists(current_dir_config):
             shutil.copy(embedded_config, current_dir_config)
-            write_log(f"Copie de {embedded_config} vers {current_dir_config}", log_file, "INFO")
+            write_log(f"Copie de {embedded_config} vers {current_dir_config}", log_file, "DEBUG")
     else:
         write_log("Exécution en mode script.", log_file, "DEBUG")
     
@@ -39,7 +39,7 @@ def read_config_ini(log_file=None):
         write_log(f"Le fichier '{config_file_ini}' est introuvable.", log_file, "ERROR")
         raise FileNotFoundError(f"Le fichier de configuration '{config_file_ini}' est introuvable.")
     else:
-        write_log(f"Le fichier '{config_file_ini}' a été trouvé.", log_file, "INFO")
+        write_log(f"Le fichier '{config_file_ini}' a été trouvé.", log_file, "DEBUG")
 
     # Initialiser ConfigParser
     config = configparser.ConfigParser()
@@ -48,7 +48,7 @@ def read_config_ini(log_file=None):
         # Lire le fichier avec l'encodage UTF-8
         with open(config_file_ini, 'r', encoding="utf-8") as configfile:
             config.read_file(configfile)
-            write_log(f"Le fichier de configuration '{config_file_ini}' a été lu avec succès.", log_file, "INFO")
+            write_log(f"Le fichier de configuration '{config_file_ini}' a été lu avec succès.", log_file, "DEBUG")
     except UnicodeDecodeError as e:
         write_log(f"Erreur d'encodage lors de la lecture du fichier '{config_file_ini}'.", log_file, "ERROR")
         raise UnicodeDecodeError(
@@ -73,7 +73,7 @@ def write_config_ini(configuration_personnel, log_file=None):
         write_log(f"Le fichier '{config_file_ini}' est introuvable.", log_file, "ERROR")
         raise FileNotFoundError(f"Le fichier de configuration '{config_file_ini}' est introuvable.")
     else:
-        write_log(f"Le fichier '{config_file_ini}' a été trouvé.", log_file, "INFO")
+        write_log(f"Le fichier '{config_file_ini}' a été trouvé.", log_file, "DEBUG")
 
     try:
         # Écrire dans le fichier avec l'encodage UTF-8
