@@ -1,30 +1,33 @@
 # fonctions_selenium_utils.py
 
 # Import des bibliothèques nécessaires
-import configparser
+# import configparser
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+# from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException, StaleElementReferenceException
-from datetime import datetime, timedelta
+# from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+# from selenium.common.exceptions import TimeoutException, WebDriverException
+# from datetime import datetime, timedelta
 import time
-import sys
-import os
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives.padding import PKCS7
-from multiprocessing import shared_memory
-from encryption_utils import recuperer_de_memoire_partagee, dechiffrer_donnees ,supprimer_memoire_partagee_securisee
-from read_or_write_file_config_ini_utils import read_config_ini
+# import sys
+# import os
+# from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+# from cryptography.hazmat.primitives.padding import PKCS7
+# from multiprocessing import shared_memory
+# from encryption_utils import recuperer_de_memoire_partagee, dechiffrer_donnees ,supprimer_memoire_partagee_securisee
+# from read_file_config_ini_utils import read_config_ini
 from logger_utils import write_log
+from shared_utils import get_log_file
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
-from main import get_log_file
+# from main import get_log_file
+
 LOG_FILE = get_log_file()
 
 DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut
@@ -156,9 +159,22 @@ def remplir_champ_texte(day_input_field, day_label, input_value):
 
 def detecter_et_verifier_contenu(driver, element_id, input_value):
     """Détecte l'élément et vérifie si le contenu actuel correspond à la valeur cible."""
-    day_input_field = driver.find_element(By.ID, element_id)
-    current_content = day_input_field.get_attribute("value").strip()
-    return day_input_field, current_content == input_value
+    try:
+        # Rechercher l'élément par son ID
+        day_input_field = driver.find_element(By.ID, element_id)
+        current_content = day_input_field.get_attribute("value").strip()
+        is_correct_value = current_content == input_value
+        write_log(f"id trouvé : {element_id} / is_correct_value : {is_correct_value}", LOG_FILE, "DEBUG")
+        return day_input_field, is_correct_value
+    except NoSuchElementException as e:
+        write_log(f"Élément avec id='{element_id}' introuvable. {str(e)}", LOG_FILE, "ERROR")
+        raise
+    except StaleElementReferenceException as e:
+        write_log(f"Référence obsolète pour l'élément id='{element_id}'. {str(e)}", LOG_FILE, "ERROR")
+        raise
+    except Exception as e:
+        write_log(f"Erreur inattendue lors de la détection et de la vérification du contenu : {str(e)}", LOG_FILE, "ERROR")
+        raise
 
 
 def effacer_et_entrer_valeur(day_input_field, input_value):
