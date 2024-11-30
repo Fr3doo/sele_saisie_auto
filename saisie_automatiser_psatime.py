@@ -1,21 +1,21 @@
 # saisie_automatiser_psatime.py
 
 # Import des bibliothèques nécessaires
-import configparser
-from selenium import webdriver
+# import configparser
+# from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.edge.options import Options as EdgeOptions
-from selenium.webdriver.support.ui import WebDriverWait, Select
+# from selenium.webdriver.edge.options import Options as EdgeOptions
+# from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
+# from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException, StaleElementReferenceException
 from datetime import datetime, timedelta
 import time
 import sys
 import os
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives.padding import PKCS7
+# from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+# from cryptography.hazmat.primitives.padding import PKCS7
 from multiprocessing import shared_memory
 from encryption_utils import recuperer_de_memoire_partagee, dechiffrer_donnees ,supprimer_memoire_partagee_securisee
 from fonctions_selenium_utils import click_element_without_wait, controle_insertion, definir_taille_navigateur, detecter_doublons_jours
@@ -25,12 +25,15 @@ from fonctions_selenium_utils import switch_to_iframe_by_id_or_name, trouver_lig
 from logger_utils import write_log
 from read_or_write_file_config_ini_utils import read_config_ini
 from remplir_informations_supp_utils import traiter_description
+from dropdown_options import cgi_options_billing_action
+
 
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
 
-from main import get_log_file
+# from main import get_log_file
+from shared_utils import get_log_file
 LOG_FILE = get_log_file()
 config = read_config_ini(LOG_FILE)
 
@@ -52,8 +55,10 @@ LISTE_ITEMS_DESCRIPTIONS = [item.strip().strip('"') for item in config.get('sett
 
 # Configuration des jours de travail et congés
 JOURS_DE_TRAVAIL = {day: (value.partition(',')[0].strip(), value.partition(',')[2].strip()) for day, value in config.items('work_schedule')}
-INFORMATIONS_PROJET_MISSION = {item_projet: value for item_projet, value in config.items('project_information')}
-
+INFORMATIONS_PROJET_MISSION = {
+    item_projet: cgi_options_billing_action.get(value, value)  # Remplace si une correspondance existe
+    for item_projet, value in config.items('project_information')
+}
 # Liste des IDs associés aux informations du projet
 LISTES_ID_INFORMATIONS_MISSION = ["PROJECT_CODE$0", "ACTIVITY_CODE$0", "CATEGORY_CODE$0", "SUB_CATEGORY_CODE$0", "BILLING_ACTION$0"]
 
@@ -122,39 +127,39 @@ DESCRIPTIONS = [
 
 if DEBUG_MODE:
     # Afficher les configurations chargées (facultatif, pour le debug)
-    write_log("Chargement des configurations...", LOG_FILE, "DEBUG")
+    write_log("Chargement des configurations...", LOG_FILE, "INFO")
     write_log(f"--> Login : {ENCRYPTED_LOGIN} - pas visible, normal", LOG_FILE, "CRITICAL")
     write_log(f"--> Password : {ENCRYPTED_MDP} - pas visible, normal", LOG_FILE, "CRITICAL")
     write_log(f"--> URL : {URL}", LOG_FILE, "CRITICAL")
-    write_log(f"--> Date cible : {DATE_CIBLE}", LOG_FILE, "DEBUG")
+    write_log(f"--> Date cible : {DATE_CIBLE}", LOG_FILE, "INFO")
     
-    write_log(f"Planning de travail de la semaine:", LOG_FILE, "DEBUG")
+    write_log(f"Planning de travail de la semaine:", LOG_FILE, "INFO")
     for day, (activity, hours) in JOURS_DE_TRAVAIL.items():
-        write_log(f"--> '{day}': ('{activity}', '{hours}')", LOG_FILE, "DEBUG")
+        write_log(f"--> '{day}': ('{activity}', '{hours}')", LOG_FILE, "INFO")
         
-    write_log(f"Infos_supp_cgi_periode_repos_respectee:", LOG_FILE, "DEBUG")
+    write_log(f"Infos_supp_cgi_periode_repos_respectee:", LOG_FILE, "INFO")
     for day, status in INFORMATIONS_SUPPLEMENTAIRES_PERIODE_REPOS_RESPECTEE.items():
-        write_log(f"--> '{day}': '{status}'", LOG_FILE, "DEBUG")
+        write_log(f"--> '{day}': '{status}'", LOG_FILE, "INFO")
         
-    write_log(f"Infos_supp_cgi_horaire_travail_effectif:", LOG_FILE, "DEBUG")
+    write_log(f"Infos_supp_cgi_horaire_travail_effectif:", LOG_FILE, "INFO")
     for day, status in INFORMATIONS_SUPPLEMENTAIRES_HORAIRE_TRAVAIL_EFFECTIF.items():
-        write_log(f"--> '{day}': '{status}'", LOG_FILE, "DEBUG")
+        write_log(f"--> '{day}': '{status}'", LOG_FILE, "INFO")
         
-    write_log(f"Planning de travail de la semaine:", LOG_FILE, "DEBUG")
+    write_log(f"Planning de travail de la semaine:", LOG_FILE, "INFO")
     for day, status in INFORMATIONS_SUPPLEMENTAIRES_PLUS_DEMI_JOURNEE_TRAVAILLEE.items():
-        write_log(f"--> '{day}': '{status}'", LOG_FILE, "DEBUG")
+        write_log(f"--> '{day}': '{status}'", LOG_FILE, "INFO")
         
-    write_log(f"Infos_supp_cgi_duree_pause_dejeuner:", LOG_FILE, "DEBUG") 
+    write_log(f"Infos_supp_cgi_duree_pause_dejeuner:", LOG_FILE, "INFO") 
     for day, status in INFORMATIONS_SUPPLEMENTAIRES_DUREE_PAUSE_DEJEUNER.items():
-        write_log(f"--> '{day}': '{status}'", LOG_FILE, "DEBUG")
+        write_log(f"--> '{day}': '{status}'", LOG_FILE, "INFO")
         
-    write_log(f"Lieu de travail Matin:", LOG_FILE, "DEBUG")
+    write_log(f"Lieu de travail Matin:", LOG_FILE, "INFO")
     for day, location in LIEU_DU_TRAVAIL_MATIN.items():
-        write_log(f"--> '{day}': '{location}'", LOG_FILE, "DEBUG")
+        write_log(f"--> '{day}': '{location}'", LOG_FILE, "INFO")
         
-    write_log(f"Lieu de travail Apres-midi:", LOG_FILE, "DEBUG")
+    write_log(f"Lieu de travail Apres-midi:", LOG_FILE, "INFO")
     for day, location in LIEU_DU_TRAVAIL_APRES_MIDI.items():
-        write_log(f"--> '{day}': '{location}'", LOG_FILE, "DEBUG")
+        write_log(f"--> '{day}': '{location}'", LOG_FILE, "INFO")
 
 CHOIX_USER = True # true pour créer une nouvelle feuille de temps
 DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut
@@ -545,19 +550,20 @@ def main():
             # Boucle sur les IDs pour insérer les valeurs correspondantes
             for id in LISTES_ID_INFORMATIONS_MISSION:
                 key = ID_TO_KEY_MAPPING[id]  # Récupérer la clé associée
+                if key == "sub_category_code":
+                    continue
                 valeur_a_remplir = INFORMATIONS_PROJET_MISSION[key]  # Récupérer la valeur associée
                 write_log(f"Traitement de l'élément : {key} avec ID : {id} et valeur : {valeur_a_remplir}", LOG_FILE, "DEBUG")
                 attempt = 0
-                
+
                 # Vérifier la présence de l'élément
                 element = wait_for_element(driver, By.ID, id, timeout=DEFAULT_TIMEOUT)
-                
                 if element:
                     while attempt < max_attempts:
                         try:
                             # Étape 1 : Détection et vérification du contenu actuel
                             day_input_field, is_correct_value = detecter_et_verifier_contenu(driver, id, valeur_a_remplir)
-                            write_log(f"id trouvé : {day_input_field} / is_correct_value : {is_correct_value}", LOG_FILE, "DEBUG")
+                            # write_log(f"id trouvé : {day_input_field} / is_correct_value : {is_correct_value}", LOG_FILE, "DEBUG")
                             
                             if is_correct_value:
                                 break
@@ -721,6 +727,7 @@ def main():
 
     finally:
         try:
+            input("Controler et soumettez votre PSATime, Puis appuyer sur ENTRER")
             seprateur_menu_affichage_console()
         except ValueError:
             pass  # Ignore toute erreur
