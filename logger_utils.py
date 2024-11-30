@@ -10,29 +10,12 @@ ROW_HEIGHT = "20px"
 FONT_SIZE = "12px"
 PADDING = "2px"
 LOG_LEVELS = {"INFO": 10, "DEBUG": 20, "WARNING": 30, "ERROR": 40, "CRITICAL": 50}
-LOG_LEVEL_FILTER = "INFO"  # Niveau maxi des logs à écrire
-DEBUG_MODE = False
 
-def setup_logs(log_dir=DEFAULT_LOG_DIR, log_format=HTML_FORMAT):
-    """
-    Prépare un fichier de log journalier.
-    
-    Args:
-        log_dir (str): Nom du répertoire où seront stockés les logs.
-        log_format (str): Format du fichier de log ("html" ou "txt").
-    
-    Returns:
-        str: Chemin complet du fichier de log.
-    """
-    try:
-        os.makedirs(log_dir, exist_ok=True)
-        extension = HTML_FORMAT if log_format.lower() == HTML_FORMAT else TXT_FORMAT
-        log_file = os.path.join(log_dir, f"log_{datetime.now().strftime('%Y-%m-%d')}.{extension}")
-        return log_file
-    except OSError as e:
-        raise RuntimeError(f"Erreur liée au système de fichiers : {e}")
-    except Exception as e:
-        raise RuntimeError(f"Erreur inattendue lors de la création des logs : {e}")
+# LOG_FILE = get_log_file()
+# config = read_config_ini(LOG_FILE)
+LOG_LEVEL_FILTER = "INFO"  # Niveau maxi des logs à écrire
+# LOG_LEVEL_FILTER = config.get('settings', 'debug_mode') # Niveau maxi des logs à écrire
+DEBUG_MODE = False
 
 
 def is_log_level_allowed(current_level, configured_level):
