@@ -2,30 +2,28 @@
 # pyinstaller --onefile --add-data "config.ini;." --hidden-import "saisie_automatiser_psatime" --hidden-import "encryption_utils" --hidden-import "cryptography.hazmat.bindings._rust" --hidden-import "cryptography.hazmat.primitives.ciphers" --hidden-import "cryptography.hazmat.primitives.padding" main.py 
 
 # Import des bibliothèques nécessaires
-import configparser
+# import configparser
 import multiprocessing
 import tkinter as tk
 from tkinter import ttk, messagebox, StringVar
 import re
 import time
-import subprocess
-import sys
-import os
-from dropdown_options import work_location_options, cgi_options, cgi_options_dejeuner ,work_schedule_options
+# import subprocess
+# import sys
+# import os
+from dropdown_options import work_location_options, cgi_options, cgi_options_dejeuner, work_schedule_options, cgi_options_billing_action
 from encryption_utils import generer_cle_aes, chiffrer_donnees, stocker_en_memoire_partagee
 from encryption_utils import supprimer_memoire_partagee_securisee
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives.padding import PKCS7
+# from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+# from cryptography.hazmat.primitives.padding import PKCS7
 from multiprocessing import shared_memory
-from read_or_write_file_config_ini_utils import get_runtime_config_path, read_config_ini, write_config_ini
-from logger_utils import setup_logs, write_log, close_logs
+from read_or_write_file_config_ini_utils import read_config_ini, write_config_ini
+# from logger_utils import setup_logs, write_log, close_logs, LOG_LEVELS
+from logger_utils import write_log, close_logs, LOG_LEVELS
+from shared_utils import get_log_file
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
-"""Les modules externes n'accèdent pas directement à _log_file. 
-Ils passent par get_log_file(), qui garantit une gestion contrôlée du fichier de log.
-Variable privée pour éviter des modifications externes"""
-_log_file = None 
 
 # Jours de la semaine
 JOURS_SEMAINE__DICT = {'lundi': '', 'mardi': '', 'mercredi': '', 'jeudi': '', 'vendredi': '', 'samedi': '', 'dimanche': ''}
@@ -62,6 +60,14 @@ ADDITIONAL_SECTION_LABELS = {
     'additional_information_half_day_worked': 'demi-journée travaillée',
     'additional_information_lunch_break_duration': 'durée pause déjeuner'
 }
+
+# Recuperation des valeurs dans dropdown_options.py
+BILLING_ACTIONS_CHOICES = list(cgi_options_billing_action.keys())
+
+# Pour recuperer le LEVEL 'CRITICAL'
+# LOG_LEVELS_CHOICES_ALL = list(LOG_LEVELS.keys())
+# Pour retirer le LEVEL 'CRITICAL'
+LOG_LEVELS_CHOICES = list(LOG_LEVELS.keys())[:-1]
 
 # Définition des couleurs et du style
 COLORS = {
@@ -148,56 +154,37 @@ def setup_modern_style(configuration, colors):
                    font=('Segoe UI', 10, 'bold'))
 
 # ----------------------------------------------------------------------------- #
-# ------------------------------- FONCTIONS ------------------------------------ #
+# ------------------------------- FONCTIONS ----------------------------------- #
 # ----------------------------------------------------------------------------- #
-def get_log_file():
-    """Retourne le fichier de log utilisé dans l'application, en l'initialisant si nécessaire.
-
-    Cette fonction est utilisée pour centraliser la gestion du fichier de log dans le programme.
-    Elle garantit qu'un unique fichier de log est créé et partagé entre les différents modules
-    et processus de l'application.
-
-    Si le fichier de log (_log_file) n'est pas encore initialisé, cette fonction appelle 
-    `setup_logs()` pour le créer et l'initialiser avant de le retourner. Dans le cas contraire, 
-    elle retourne simplement la référence existante du fichier de log.
-
-    Utilisation :
-    - Permet de s'assurer que tous les modules accèdent au même fichier de log sans le réinitialiser.
-    - Évite les problèmes de redondance ou de création multiple de fichiers de log.
-
-    Returns:
-        str: Le chemin du fichier de log initialisé.
-    """
-    global _log_file
-    if _log_file is None:
-        _log_file = setup_logs()  # Initialise le fichier de log
-    return _log_file
-
 
 def run_psatime_with_credentials(cle_aes, login_var, mdp_var, log_file):
     try:
         login = login_var.get()
         password = mdp_var.get()
         
+        if not login or not password:
+            messagebox.showerror("Erreur", "Veuillez entrer votre login et mot de passe.")
+            return None
+        
         # Chiffrer les informations
         nom_utilisateur_chiffre = chiffrer_donnees(login, cle_aes, log_file=log_file)
         mot_de_passe_chiffre = chiffrer_donnees(password, cle_aes, log_file=log_file)
         memoire_cle = stocker_en_memoire_partagee(MEMOIRE_PARTAGEE_CLE, cle_aes, log_file=log_file)
-        write_log(f"Taille des données chiffrées du nom d'utilisateur : {len(nom_utilisateur_chiffre)}", log_file, "CRITICAL")
-        write_log(f"Taille des données chiffrées du mot de passe : {len(mot_de_passe_chiffre)}", log_file, "CRITICAL")
+        write_log(f"Données à chiffrer pour l'utilisateur: {login}.", log_file, "CRITICAL")
+        write_log(f"Données à chiffrer pour le password: {password}.", log_file, "CRITICAL")
+        write_log(f"Données chiffrées stockées pour l'utilisateur: {nom_utilisateur_chiffre}.", log_file, "CRITICAL")
+        write_log(f"Données chiffrées stockées pour le password: {mot_de_passe_chiffre}.", log_file, "CRITICAL")
+        write_log(f"Taille des données chiffrées du nom d'utilisateur: {len(nom_utilisateur_chiffre)}", log_file, "CRITICAL")
+        write_log(f"Taille des données chiffrées du mot de passe: {len(mot_de_passe_chiffre)}", log_file, "CRITICAL")
         
-        if not login or not password:
-            messagebox.showerror("Erreur", "Veuillez entrer votre login et mot de passe.")
-            return None
-
         memoire_nom = shared_memory.SharedMemory(name="memoire_nom", create=True, size=len(nom_utilisateur_chiffre))
         memoire_nom.buf[:len(nom_utilisateur_chiffre)] = nom_utilisateur_chiffre
 
         memoire_mdp = shared_memory.SharedMemory(name="memoire_mdp", create=True, size=len(mot_de_passe_chiffre))
         memoire_mdp.buf[:len(mot_de_passe_chiffre)] = mot_de_passe_chiffre
 
-        write_log(f"Clé et données chiffrées stockées dans la mémoire partagée.", log_file, "DEBUG")
-        write_log(f"Lancement de PSATime avec login: {login}@cgi.com et mot de passe.", log_file, "DEBUG")
+        write_log(f"Clé et données chiffrées stockées dans la mémoire partagée.", log_file, "CRITICAL")
+        write_log(f"Lancement de PSATime avec login: {login}@cgi.com et mot de passe.", log_file, "CRITICAL")
 
         run_psatime(log_file)
     except Exception as e:
@@ -359,8 +346,15 @@ def create_Modern_entry_with_grid_for_password(frame, var, row, col, width=20, s
     return modern_entry_grid_for_password
 
 
+def create_combobox_with_pack(frame, var, values, width=20, style="Modern.TCombobox", state="normal", side="top", padx=5, pady=5):
+    """Crée une Combobox liée à une variable et la place dans le cadre donné avec pack."""
+    modern_combobox_pack = ttk.Combobox(frame, textvariable=var, values=values, width=width, style=style, state=state)
+    modern_combobox_pack.pack(side=side, padx=padx, pady=pady)
+    return modern_combobox_pack
+
+
 def create_combobox(frame, var, values, row, col, width=20, style="Modern.TCombobox", state="normal", padx=5, pady=8):
-    """Crée une Combobox liée à une variable et la place dans le cadre donné."""
+    """Crée une Combobox liée à une variable et la place dans le cadre donné avec grid."""
     modern_combobox_grid = ttk.Combobox(frame, textvariable=var, values=values, width=width, style=style, state=state)
     modern_combobox_grid.grid(row=row, column=col, padx=padx, pady=pady)
     return modern_combobox_grid
@@ -519,7 +513,7 @@ def start_configuration(cle_aes, log_file):
 
     # Variables
     date_cible_var = create_structured_StringVar(config_ini, 'settings', 'date_cible')
-    debug_mode_var = create_structured_BooleanVar(config_ini, 'settings', 'debug_mode')
+    debug_mode_var = create_structured_StringVar(config_ini, 'settings', 'debug_mode')
     # Sousmettre_mode_var = create_structured_BooleanVar(config_ini, 'settings', 'soumettre_mode')
 
     # Container pour les champs de saisie ou cocher/decocher
@@ -532,8 +526,9 @@ def start_configuration(cle_aes, log_file):
     
     # Mode debug
     debug_frame = create_a_frame(fields_container, fill="x", expand=False, pady=(0, 10))
-    create_Modern_label_with_pack(debug_frame, text="Mode Debug:", side='left', padx=5)
-    create_Modern_checkbox_with_pack(debug_frame, debug_mode_var, side="left", padx=5)
+    create_Modern_label_with_pack(debug_frame, text="Log Level:", side='left', padx=5)
+    create_combobox_with_pack(debug_frame, debug_mode_var, values=LOG_LEVELS_CHOICES, side='left')
+    # create_Modern_checkbox_with_pack(debug_frame, debug_mode_var, side="left", padx=5)
     
     # Mode Soumettre directement -- > todo
     # debug_frame = ttk.Frame(fields_container, style='Modern.TFrame')
@@ -607,7 +602,7 @@ def start_configuration(cle_aes, log_file):
     create_Modern_label_with_grid(mission_frame, text=f"Sub Category Code:", row=3, col=0, padx=5, pady=5)
     create_Modern_entry_with_grid(mission_frame, sub_category_code_var, row=3, col=1, padx=5, pady=5)
     create_Modern_label_with_grid(mission_frame, text=f"Billing Action:", row=4, col=0, padx=5, pady=5)
-    create_Modern_entry_with_grid(mission_frame, billing_action_var, row=4, col=1, padx=5, pady=5)
+    create_combobox(mission_frame, billing_action_var, values=BILLING_ACTIONS_CHOICES, row=4, col=1, width=17, padx=5, pady=5)
 
 
     for i, day in enumerate(JOURS_SEMAINE__LIST, start=1):
@@ -699,7 +694,9 @@ def start_configuration(cle_aes, log_file):
                         sub_category_code_var, billing_action_var, log_file
                         ]
     
-    create_button_with_style(button_frame, text="Sauvegarder", command=lambda: save_config(elements_to_save_it))
+    save_button = create_button_with_style(button_frame, text="Sauvegarder", command=lambda: save_config(elements_to_save_it))
+    # Lier la touche Entrée au bouton
+    save_button.bind("<Return>", lambda event: save_button.invoke())                    
 
     # Focus initial sur le champ parametre
     date_entry = settings_frame.winfo_children()[-1]
@@ -738,11 +735,16 @@ def main_menu(cle_aes, log_file):
     
     # menu : Lancer votre PSATime
     launch_button = create_button_without_style(menu, text="Lancer votre PSATime", command=lambda: run_psatime(log_file))
-
+    # Lier la touche Entrée au bouton
+    launch_button.bind("<Return>", lambda event: launch_button.invoke())
+    
     # menu : Configurer le lancement
-    create_button_without_style(menu, text="Configurer le lancement", command=lambda: [menu.destroy(), start_configuration(cle_aes, log_file)])
+    config_button = create_button_without_style(menu, text="Configurer le lancement", command=lambda: [menu.destroy(), start_configuration(cle_aes, log_file)])
+    # Lier la touche Entrée au bouton
+    config_button.bind("<Return>", lambda event: config_button.invoke())
 
-    # Signature en bas à droite
+
+    # Signature en bas à droite                     
     color_grey = "grey"
     color_bleu_acier_doux ="#5f6a73"  # Bleu acier doux
     color_bleu_clair ="#4b9cd3"  # Bleu clair
@@ -771,9 +773,9 @@ if __name__ == "__main__":
     write_log(f"Démarrage du programme", log_file, "INFO")
     multiprocessing.freeze_support() # contouner un probléme avec Pyinstaller et les multi processus
     try: 
-        cle_aes = generer_cle_aes(TAILLE_CLE, log_file=get_log_file())
-        main_menu(cle_aes, log_file=get_log_file())
+        cle_aes = generer_cle_aes(TAILLE_CLE, log_file=log_file)
+        main_menu(cle_aes, log_file=log_file)
     except Exception as e:
-        write_log(f"Erreur rencontrée : {str(e)}", get_log_file(), "ERROR")
+        write_log(f"Erreur rencontrée : {str(e)}", log_file, "ERROR")
     finally:
-        close_logs(log_file=get_log_file())
+        close_logs(log_file=log_file)
