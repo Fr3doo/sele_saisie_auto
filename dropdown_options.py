@@ -12,6 +12,12 @@ cgi_options = ["", "N/A", "Oui", "Non"]
 # Options pour l'onglet "Informations CGI- ligne pause dejeuner"
 cgi_options_dejeuner = ["", "1"]
 
+# Options pour le menu deroulant "billing"
+cgi_options_billing_action = {"Facturable":"B", 
+                              "Facture int.":"I", 
+                              "Non facturable":"U"
+                            }
+
 # Options pour l'onglet "Planning de travail"
 work_schedule_options = [
     "", "En mission", "Formation IA", "Conseiller Prud’Homal", "Vacances (Congés payés)", "Temps compensatoire", "Maladie", 
