@@ -769,10 +769,20 @@ def main_menu(cle_aes, log_file):
     time.sleep(10)
 
 if __name__ == "__main__":
-    log_file = get_log_file()
-    write_log(f"Démarrage du programme", log_file, "INFO")
-    multiprocessing.freeze_support() # contouner un probléme avec Pyinstaller et les multi processus
+    log_file = get_log_file() # Initialiser le fichier de log
+    write_log("Initialisation du programme.", log_file, "INFO")
+    
+    # Charger la configuration et Initialiser le niveau de log à partir de la configuration
+    config = read_config_ini(log_file) 
+    initialize_logger(config) 
+    write_log("Niveau de Log initialisée avec succès.", log_file, "INFO")
+    
+    # contouner un probléme avec Pyinstaller et les multi processus
+    multiprocessing.freeze_support()
+    
     try: 
+        # Lancer le programme principal
+        write_log(f"Démarrage du programme", log_file, "INFO")
         cle_aes = generer_cle_aes(TAILLE_CLE, log_file=log_file)
         main_menu(cle_aes, log_file=log_file)
     except Exception as e:
