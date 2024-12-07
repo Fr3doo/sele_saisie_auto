@@ -1,7 +1,10 @@
 import os
 from datetime import datetime
 
-# Constantes globales pour la configuration
+
+# ----------------------------------------------------------------------------- #
+# ------------------------------- CONSTANTE ----------------------------------- #
+# ----------------------------------------------------------------------------- #
 DEFAULT_LOG_DIR = "logs"
 HTML_FORMAT = "html"
 TXT_FORMAT = "txt"
@@ -11,12 +14,33 @@ FONT_SIZE = "12px"
 PADDING = "2px"
 LOG_LEVELS = {"INFO": 10, "DEBUG": 20, "WARNING": 30, "ERROR": 40, "CRITICAL": 50}
 
-# LOG_FILE = get_log_file()
-# config = read_config_ini(LOG_FILE)
-LOG_LEVEL_FILTER = "INFO"  # Niveau maxi des logs à écrire
-# LOG_LEVEL_FILTER = config.get('settings', 'debug_mode') # Niveau maxi des logs à écrire
+# Par défaut, on commence avec un niveau de log minimal (par ex., "INFO")
+DEFAULT_LOG_LEVEL = "INFO"
+LOG_LEVEL_FILTER = DEFAULT_LOG_LEVEL
 DEBUG_MODE = False
 
+# -------------------
+# Test non concluant
+# LOG_FILE = get_log_file()
+# config = read_config_ini(LOG_FILE)
+# LOG_LEVEL_FILTER = "INFO"  # Niveau maxi des logs à écrire
+# LOG_LEVEL_FILTER = None  # Niveau maxi des logs à écrire
+# LOG_LEVEL_FILTER = config.get('settings', 'debug_mode') # Niveau maxi des logs à écrire
+# -------------------
+
+# ------------------------------------------------------------------------------------------- #
+# ----------------------------------- FONCTIONS --------------------------------------------- #
+# ------------------------------------------------------------------------------------------- #
+
+def initialize_logger(config):
+    """
+    Initialise le niveau de log à partir de la configuration.
+    Args:
+        config (ConfigParser): Objet de configuration contenant les paramètres.
+    """
+    global LOG_LEVEL_FILTER
+    LOG_LEVEL_FILTER = config.get('settings', 'debug_mode', fallback='INFO')
+    
 
 def is_log_level_allowed(current_level, configured_level):
     """
