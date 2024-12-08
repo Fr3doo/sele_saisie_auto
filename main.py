@@ -1,11 +1,13 @@
 # main.py
-# pyinstaller --onefile --add-data "config.ini;." --hidden-import "saisie_automatiser_psatime" --hidden-import "encryption_utils" --hidden-import "cryptography.hazmat.bindings._rust" --hidden-import "cryptography.hazmat.primitives.ciphers" --hidden-import "cryptography.hazmat.primitives.padding" main.py 
+# pyinstaller --onefile --add-data "config.ini:." --add-data "calendar_icon.png:." --hidden-import "saisie_automatiser_psatime" --hidden-import "encryption_utils" --hidden-import "cryptography.hazmat.bindings._rust" --hidden-import "cryptography.hazmat.primitives.ciphers" --hidden-import "cryptography.hazmat.primitives.padding" main.py 
 
 # Import des bibliothèques nécessaires
 # import configparser
+import datetime
 import multiprocessing
 import tkinter as tk
 from tkinter import ttk, messagebox, StringVar
+from tkcalendar import Calendar
 import re
 import time
 # import subprocess
@@ -18,9 +20,9 @@ from encryption_utils import supprimer_memoire_partagee_securisee
 # from cryptography.hazmat.primitives.padding import PKCS7
 from multiprocessing import shared_memory
 from read_or_write_file_config_ini_utils import read_config_ini, write_config_ini
-# from logger_utils import setup_logs, write_log, close_logs, LOG_LEVELS
-from logger_utils import write_log, close_logs, LOG_LEVELS
+from logger_utils import initialize_logger, write_log, close_logs, LOG_LEVELS
 from shared_utils import get_log_file
+from PIL import Image, ImageTk  # Pour la gestion des images
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
@@ -64,10 +66,9 @@ ADDITIONAL_SECTION_LABELS = {
 # Recuperation des valeurs dans dropdown_options.py
 BILLING_ACTIONS_CHOICES = list(cgi_options_billing_action.keys())
 
-# Pour recuperer le LEVEL 'CRITICAL'
-# LOG_LEVELS_CHOICES_ALL = list(LOG_LEVELS.keys())
-# Pour retirer le LEVEL 'CRITICAL'
-LOG_LEVELS_CHOICES = list(LOG_LEVELS.keys())[:-1]
+
+# LOG_LEVELS_CHOICES_ALL = list(LOG_LEVELS.keys()) # Pour recuperer le LEVEL 'CRITICAL'
+LOG_LEVELS_CHOICES = list(LOG_LEVELS.keys())[:-1] # Pour retirer le LEVEL 'CRITICAL'
 
 # Définition des couleurs et du style
 COLORS = {
@@ -197,18 +198,16 @@ def run_psatime_with_credentials(cle_aes, login_var, mdp_var, log_file):
             supprimer_memoire_partagee_securisee(memoire_nom, log_file=log_file)
         if memoire_mdp is not None:
             supprimer_memoire_partagee_securisee(memoire_mdp, log_file=log_file)
-    finally:
-        # Suppression sécurisée
-        time.sleep(DUREE_DE_VIE_CLE)
-        # Suppression sécurisée des mémoires partagées
-        supprimer_memoire_partagee_securisee(memoire_cle, log_file=log_file)
-        write_log("[FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier main.", log_file, "INFO")
+        if memoire_cle is not None:
+            # Suppression sécurisée des mémoires partagées
+            supprimer_memoire_partagee_securisee(memoire_cle, log_file=log_file)
+        write_log(f"🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier main.", log_file, "INFO")
 
 
 def run_psatime(log_file):
     # Fermez la fenêtre graphique
     menu.destroy()
-    write_log("Lancement de la fonction main de saisie_automatiser_psatime.py", log_file, "INFO")
+    write_log(f"📌 Lancement de la fonction 'main' du fichier 'saisie_automatiser_psatime.py'", log_file, "INFO")
     import saisie_automatiser_psatime # Import de saisie_automatiser_psatime.py comme module
     saisie_automatiser_psatime.main()
 
@@ -396,12 +395,95 @@ def handle_mission_selection(event, combo, frame, day, active_mission_days):
     update_mission_frame_visibility(frame, active_mission_days)
 
 
-# Fonction pour attacher correctement les événements
 def attach_event(combo, current_day, mission_frame, active_mission_days):
     """Attache l'événement pour gérer la sélection des items."""
     combo.bind("<<ComboboxSelected>>", 
                lambda event: handle_mission_selection(event, combo, mission_frame, current_day, active_mission_days))
 
+
+def add_date_picker(parent, var, label_text="Date cible (jj/mm/aaaa):"):
+    """Ajoute un champ avec un bouton pour ouvrir un calendrier réutilisable."""
+    # Utilise un cadre standard pour contenir l'étiquette et l'entrée
+    date_frame = create_a_frame(parent, fill="x", expand=False, pady=(0, 15))
+
+    # Ajouter une étiquette
+    create_Modern_label_with_pack(date_frame, label_text, side="left", padx=5, pady=5)
+
+    # Ajouter une entrée pour la date
+    create_Modern_entry_with_pack(date_frame, var, side="left", padx=0, pady=0)
+
+    # Fenêtre de calendrier réutilisable
+    calendar_window = None
+
+    def open_calendar():
+        """Ouvre une fenêtre avec un calendrier réutilisable."""
+        nonlocal calendar_window
+        if calendar_window is None or not calendar_window.winfo_exists():
+            # Créer une nouvelle fenêtre si elle n'existe pas ou a été fermée
+            calendar_window = tk.Toplevel(parent)
+            calendar_window.title("Sélectionner une date")
+            calendar_window.geometry("300x300")
+            calendar_window.resizable(False, False)
+
+            # Obtenir la position de l'icône ou du bouton
+            button_x = button.winfo_rootx()
+            button_y = button.winfo_rooty()
+            button_height = button.winfo_height()
+
+            # Ajuster la position de la fenêtre pour qu'elle s'affiche près du bouton
+            calendar_window.geometry(f"+{button_x}+{button_y + button_height + 5}")  # Décalage de 5 pixels sous le bouton
+            
+            # Ajouter le calendrier (en français, sans numéro de semaine, avec la date actuelle)
+            cal = Calendar(
+                calendar_window,
+                selectmode="day",
+                date_pattern="dd/mm/yyyy",
+                locale="fr_FR",
+                showweeknumbers=False,
+                mindate=datetime.date.today(),
+                background="#f9f9f9",
+                foreground="black",
+                disabledbackground="#e0e0e0",
+                bordercolor="#cfcfcf",
+                headersbackground="#4CAF50",
+                headersforeground="white",
+                selectbackground="#2196F3",
+                selectforeground="white",
+                normalbackground="#ffffff",
+                normalforeground="#333333",
+                weekendbackground="#FFEBEE",
+                weekendforeground="#E91E63",
+                othermonthforeground="#9E9E9E",
+                othermonthbackground="#F5F5F5"
+            )
+            cal.pack(padx=25, pady=25)
+
+            # Bouton pour valider la date sélectionnée
+            def validate_date():
+                selected_date = cal.get_date()
+                var.set(selected_date)  # Mettre à jour la variable associée à l'entrée
+                calendar_window.withdraw()  # Masquer la fenêtre au lieu de la détruire
+                messagebox.showinfo("Date sélectionnée", f"Vous avez sélectionné : {selected_date}")
+
+            # Ajouter le bouton "Valider"
+            create_button_with_style(calendar_window, "Valider", validate_date, side="top", pady=10)
+        else:
+            # Si la fenêtre existe, la montrer de nouveau
+            calendar_window.deiconify()
+
+    # Ajouter un bouton avec une icône pour ouvrir le calendrier
+    try:
+        icon_image = Image.open("calendar_icon.png")  # Charger l'image
+        resized_icon = icon_image.resize((16, 16), Image.Resampling.LANCZOS)  # Redimensionner à 16x16 pixels
+        icon_photo = ImageTk.PhotoImage(resized_icon)
+        button = ttk.Button(date_frame, image=icon_photo, command=open_calendar)
+        button.image = icon_photo  # Conserver une référence pour éviter la collecte de déchets
+        button.pack(side=None, fill=None, padx=5, pady=5, ipady=0)
+    except FileNotFoundError:
+        # Si l'image n'est pas disponible, utiliser un texte par défaut
+        create_button_without_style(date_frame, "📅", open_calendar, side="left", padx=5, pady=5)
+
+    return date_frame
 
 # Fonction pour sauvegarder les modifications dans config.ini
 def save_config(elements):
@@ -520,9 +602,11 @@ def start_configuration(cle_aes, log_file):
     fields_container = create_a_frame(left_frame, padding=(15, 5, 15, 15))
 
     # Date cible
-    date_label_frame = create_a_frame(fields_container, fill="x", expand=False, pady=(0, 15))
-    date_entry = create_Modern_label_with_pack(date_label_frame, text="Date cible (jj/mm/aaaa):", side='left', padx=5) # on cree une variable pour le focus
-    date_entry = create_Modern_entry_with_pack(date_label_frame, date_cible_var, side='left', padx=5)
+    # date_label_frame = create_a_frame(fields_container, fill="x", expand=False, pady=(0, 15))
+    # date_entry = create_Modern_label_with_pack(date_label_frame, text="Date cible (jj/mm/aaaa):", side='left', padx=5) # on cree une variable pour le focus
+    # date_entry = create_Modern_entry_with_pack(date_label_frame, date_cible_var, side='left', padx=5)
+    # Date cible avec un calendrier interactif
+    add_date_picker(fields_container, date_cible_var)
     
     # Mode debug
     debug_frame = create_a_frame(fields_container, fill="x", expand=False, pady=(0, 10))
@@ -770,21 +854,22 @@ def main_menu(cle_aes, log_file):
 
 if __name__ == "__main__":
     log_file = get_log_file() # Initialiser le fichier de log
-    write_log("Initialisation du programme.", log_file, "INFO")
+    write_log(f"🚦 Initialisation du programme.", log_file, "INFO")
     
     # Charger la configuration et Initialiser le niveau de log à partir de la configuration
     config = read_config_ini(log_file) 
     initialize_logger(config) 
-    write_log("Niveau de Log initialisée avec succès.", log_file, "INFO")
+    write_log(f"🔹 Niveau de Log initialisée avec succès.", log_file, "INFO")
     
     # contouner un probléme avec Pyinstaller et les multi processus
     multiprocessing.freeze_support()
     
     try: 
         # Lancer le programme principal
-        write_log(f"Démarrage du programme", log_file, "INFO")
+        write_log(f"📌 Démarrage du programme", log_file, "INFO")
         cle_aes = generer_cle_aes(TAILLE_CLE, log_file=log_file)
         main_menu(cle_aes, log_file=log_file)
+        write_log(f"✅ Toutes les tâches ont été effectuées.", log_file, "INFO")
     except Exception as e:
         write_log(f"Erreur rencontrée : {str(e)}", log_file, "ERROR")
     finally:
