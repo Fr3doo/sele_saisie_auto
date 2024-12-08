@@ -81,6 +81,7 @@ def rotate_log_file(log_file):
         log_file (str): Chemin du fichier de log à tourner.
     """
     if os.path.exists(log_file):
+        close_logs(log_file)  # Fermez le tableau avant la rotation
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         rotated_file = f"{log_file}.{timestamp}.bak"
         os.rename(log_file, rotated_file)
@@ -137,13 +138,23 @@ def get_html_style():
 
 def initialize_html_log_file(log_file):
     """
-    Initialise un fichier de log HTML avec le style requis.
-
-    Args:
-        log_file (str): Chemin du fichier de log.
+    Initialise un fichier de log HTML avec le style requis si le fichier n'existe pas.
+    Si le fichier existe déjà, vérifie si une table est ouverte.
     """
-    with open(log_file, "w") as f:
-        f.write(get_html_style())
+    if not os.path.exists(log_file):
+        # Crée un nouveau fichier HTML avec la structure complète
+        with open(log_file, "w", encoding="utf-8") as f:
+            f.write(get_html_style())
+    else:
+        # Vérifie si la balise </table> est présente
+        with open(log_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        if "</table>" in content:
+            # Supprime les balises fermantes pour continuer l'écriture
+            content = content.replace("</table></body></html>", "")
+            with open(log_file, "w", encoding="utf-8") as f:
+                f.write(content)
+
 
 
 def write_log(
@@ -177,8 +188,6 @@ def write_log(
         if DEBUG_MODE:
             # Vérifiez l'encodage du message (débogage)
             log_message = f"<tr><td>{datetime.now()}</td><td>{level}</td><td>{message}</td></tr>\n"
-
-        if DEBUG_MODE:
             debug_print(f"Écriture dans le fichier pour : {level}")
 
         # Rotation du fichier si nécessaire
@@ -191,19 +200,17 @@ def write_log(
         if log_format.lower() == HTML_FORMAT:
             log_message = f"<tr><td>{timestamp}</td><td>{level}</td><td>{message}</td></tr>\n"
             
-            # Initialisation du fichier HTML s'il n'existe pas
-            if not os.path.exists(log_file):
-                debug_print("Initialisation du fichier HTML")
-                initialize_html_log_file(log_file)
+            initialize_html_log_file(log_file)
             
             # Ajout du message
             with open(log_file, "a", encoding="utf-8") as f:
                 if DEBUG_MODE:
                     debug_print(f"Ajout dans le fichier HTML : {message}")
                 f.write(log_message)
-                if auto_close:
-                    f.write("</table>")
-
+            # Ajouter fermeture propre si auto_close est activé
+            if auto_close:
+                with open(log_file, "a", encoding="utf-8") as f:
+                    f.write("</table></body></html>")
         else:  # Format texte brut
             log_message = f"[{timestamp}] {level}: {message}\n"
             with open(log_file, "a", encoding="utf-8") as f:
@@ -233,8 +240,10 @@ def close_logs(log_file, log_format=HTML_FORMAT):
     """
     try:
         if log_format.lower() == HTML_FORMAT and os.path.exists(log_file):
-            with open(log_file, "a") as f:
-                f.write("</table>")
+            with open(log_file, "r+", encoding="utf-8") as f:
+                content = f.read()
+                if "</table>" not in content:
+                    f.write("</table></body></html>")
     except OSError as e:
         raise RuntimeError(f"Erreur liée au système de fichiers : {e}")
     except Exception as e:
