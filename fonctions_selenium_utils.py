@@ -24,7 +24,6 @@ import time
 from logger_utils import write_log
 from shared_utils import get_log_file
 import requests
-import certifi
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
