@@ -8,6 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import WebDriverException
 # from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 # from selenium.common.exceptions import TimeoutException, WebDriverException
@@ -22,6 +23,8 @@ import time
 # from read_file_config_ini_utils import read_config_ini
 from logger_utils import write_log
 from shared_utils import get_log_file
+import requests
+import certifi
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
@@ -106,7 +109,7 @@ def wait_for_element(driver, by=By.ID, locator_value=None, condition=EC.presence
     """Attend qu'un élément réponde à une condition, sinon retourne None après le délai."""
 
     if locator_value is None:
-        write_log(f"Erreur : Le paramètre 'locator_value' doit être spécifié pour localiser l'élément.", LOG_FILE, "ERROR")
+        write_log(f"❌ Erreur : Le paramètre 'locator_value' doit être spécifié pour localiser l'élément.", LOG_FILE, "ERROR")
         return None
     
     found_elements = driver.find_elements(by, locator_value)
@@ -130,7 +133,7 @@ def send_keys_to_element(driver, by, locator_value, input_text):
     """Fonction pour envoyer des touches à un élément spécifié."""
     target_element = driver.find_element(by, locator_value)
     target_element.send_keys(input_text)
-    write_log(f"Valeur '{input_text}' envoyée à l'élément {by}='{locator_value}' avec succès.", LOG_FILE, "CRITICAL")
+    # write_log(f"Valeur '{input_text}' envoyée à l'élément {by}='{locator_value}' avec succès.", LOG_FILE, "CRITICAL")
 
 
 def verifier_champ_jour_rempli(day_field, day_label):
@@ -167,13 +170,13 @@ def detecter_et_verifier_contenu(driver, element_id, input_value):
         write_log(f"id trouvé : {element_id} / is_correct_value : {is_correct_value}", LOG_FILE, "DEBUG")
         return day_input_field, is_correct_value
     except NoSuchElementException as e:
-        write_log(f"Élément avec id='{element_id}' introuvable. {str(e)}", LOG_FILE, "ERROR")
+        write_log(f"❌ Élément avec id='{element_id}' introuvable. {str(e)}", LOG_FILE, "ERROR")
         raise
     except StaleElementReferenceException as e:
-        write_log(f"Référence obsolète pour l'élément id='{element_id}'. {str(e)}", LOG_FILE, "ERROR")
+        write_log(f"❌ Référence obsolète pour l'élément id='{element_id}'. {str(e)}", LOG_FILE, "ERROR")
         raise
     except Exception as e:
-        write_log(f"Erreur inattendue lors de la détection et de la vérification du contenu : {str(e)}", LOG_FILE, "ERROR")
+        write_log(f"❌ Erreur inattendue lors de la détection et de la vérification du contenu : {str(e)}", LOG_FILE, "ERROR")
         raise
 
 
@@ -195,7 +198,7 @@ def selectionner_option_menu_deroulant_type_select(dropdown_field, visible_text)
         select.select_by_visible_text(visible_text)
         write_log(f"Valeur '{visible_text}' sélectionnée.", LOG_FILE, "DEBUG")
     except Exception as e:
-        write_log(f"Erreur lors de la sélection de la valeur '{visible_text}' : {str(e)}", LOG_FILE, "ERROR")
+        write_log(f"❌ Erreur lors de la sélection de la valeur '{visible_text}' : {str(e)}", LOG_FILE, "ERROR")
 
 
 def trouver_ligne_par_description(driver, target_description, row_prefix, partial_match=False):
@@ -285,6 +288,34 @@ def detecter_doublons_jours(driver):
             write_log(f"Aucun doublon détecté pour le jour '{day_name}'", LOG_FILE, "DEBUG")
 
 
+def verifier_accessibilite_url(url):
+    try:
+        response = requests.get(url, timeout=10, verify=True)
+        if response.status_code == 200:
+            write_log(f"🔹 URL accessible, avec vérification SSL : {url}", LOG_FILE, "INFO")
+            return True
+        else:
+            write_log(f"❌ URL inaccessible, avec vérification SSL - statut : {response.status_code}", LOG_FILE, "ERROR")
+            return False
+        
+    except requests.exceptions.SSLError as ssl_err:
+        write_log(f"❌ Erreur SSL détectée : {ssl_err}", LOG_FILE, "ERROR")
+        
+        # Option pour ignorer temporairement les erreurs SSL
+        try:
+            response = requests.get(url, timeout=10, verify=False)
+            if response.status_code == 200:
+                write_log(f"⚠️ URL accessible, sans vérification SSL : {url}", LOG_FILE, "WARNING")
+                return True
+        except Exception as e:
+            write_log(f"❌ URL inaccessible, sans vérification SSL : {e}", LOG_FILE, "ERROR")
+            return False
+        
+    except requests.exceptions.RequestException as req_err:
+        write_log(f"❌ Erreur de connexion à l'URL : {req_err}", LOG_FILE, "ERROR")
+        return False
+
+
 def ouvrir_navigateur_sur_ecran_principal(plein_ecran=False, url="https://www.example.com", headless=False, no_sandbox=False):
     """Ouvre le navigateur sur un écran principal de l'ordinateur, si necessaire avec des options"""
     edge_browser_options = EdgeOptions()
@@ -296,18 +327,27 @@ def ouvrir_navigateur_sur_ecran_principal(plein_ecran=False, url="https://www.ex
     if no_sandbox:
         edge_browser_options.add_argument("--no-sandbox")
 
-    # Initialiser le navigateur
-    browser_instance = webdriver.Edge(options=edge_browser_options)
+    if not verifier_accessibilite_url(url):
+        return None
 
-    # Charger l'URL désirée
-    browser_instance.get(url)
+    try:
+        # Initialiser le navigateur
+        browser_instance = webdriver.Edge(options=edge_browser_options)
+        # Charger l'URL désirée
+        browser_instance.get(url)
+        # plein écran si choisi
+        if plein_ecran:
+            browser_instance.maximize_window()
+            
+        return browser_instance
     
-    # plein écran si choisi
-    if plein_ecran:
-        browser_instance.maximize_window()
-
-    return browser_instance
-
+    except WebDriverException as e:
+        if "ERR_CONNECTION_CLOSED" in str(e):
+            write_log(f"❌ La connexion au serveur a été fermée.", LOG_FILE, "ERROR")
+        else:
+            write_log(f"❌ Erreur WebDriver : {str(e)}", LOG_FILE, "ERROR")
+        return None
+    
 
 def definir_taille_navigateur(navigateur, largeur, hauteur):
     """Définit la taille de la fenêtre du navigateur en pixels"""
