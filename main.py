@@ -1,5 +1,7 @@
 # main.py
-# pyinstaller --onefile --add-data "config.ini:." --add-data "calendar_icon.png:." --hidden-import "saisie_automatiser_psatime" --hidden-import "encryption_utils" --hidden-import "cryptography.hazmat.bindings._rust" --hidden-import "cryptography.hazmat.primitives.ciphers" --hidden-import "cryptography.hazmat.primitives.padding" main.py 
+# pyinstaller --onefile --add-data "config.ini:." --add-data "calendar_icon.png:." --hidden-import "saisie_automatiser_psatime" --hidden-import "encryption_utils" --hidden-import "cryptography.hazmat.bindings._rust" --hidden-import "cryptography.hazmat.primitives.ciphers" --hidden-import "cryptography.hazmat.primitives.padding" --hidden-import "tkcalendar" --hidden-import "babel.numbers" main.py 
+# OU
+# pyinstaller main.spec
 
 # Import des bibliothèques nécessaires
 # import configparser
@@ -19,7 +21,7 @@ from encryption_utils import supprimer_memoire_partagee_securisee
 # from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 # from cryptography.hazmat.primitives.padding import PKCS7
 from multiprocessing import shared_memory
-from read_or_write_file_config_ini_utils import read_config_ini, write_config_ini
+from read_or_write_file_config_ini_utils import get_runtime_resource_path, read_config_ini, write_config_ini
 from logger_utils import initialize_logger, write_log, close_logs, LOG_LEVELS
 from shared_utils import get_log_file
 from PIL import Image, ImageTk  # Pour la gestion des images
@@ -415,7 +417,7 @@ def add_date_picker(parent, var, label_text="Date cible (jj/mm/aaaa):"):
     # Fenêtre de calendrier réutilisable
     calendar_window = None
 
-    def open_calendar():
+    def open_calendar(button):
         """Ouvre une fenêtre avec un calendrier réutilisable."""
         nonlocal calendar_window
         if calendar_window is None or not calendar_window.winfo_exists():
@@ -473,14 +475,19 @@ def add_date_picker(parent, var, label_text="Date cible (jj/mm/aaaa):"):
 
     # Ajouter un bouton avec une icône pour ouvrir le calendrier
     try:
-        icon_image = Image.open("calendar_icon.png")  # Charger l'image
+        # Charger l'image de l'icône avec le chemin correct
+        icon_path = get_runtime_resource_path("calendar_icon.png", log_file)
+        icon_image = Image.open(icon_path)
+        # icon_image = Image.open(get_resource_path("calendar_icon.png", log_file))
+        # icon_image = Image.open("calendar_icon.png")  # Charger l'image
         resized_icon = icon_image.resize((16, 16), Image.Resampling.LANCZOS)  # Redimensionner à 16x16 pixels
         icon_photo = ImageTk.PhotoImage(resized_icon)
-        button = ttk.Button(date_frame, image=icon_photo, command=open_calendar)
+        button = ttk.Button(date_frame, image=icon_photo, command=lambda: open_calendar(button))
         button.image = icon_photo  # Conserver une référence pour éviter la collecte de déchets
         button.pack(side=None, fill=None, padx=5, pady=5, ipady=0)
     except FileNotFoundError:
         # Si l'image n'est pas disponible, utiliser un texte par défaut
+        write_log("🔹 Icône non trouvée, utilisation du texte par défaut.", log_file, "DEBUG")
         create_button_without_style(date_frame, "📅", open_calendar, side="left", padx=5, pady=5)
 
     return date_frame
@@ -855,6 +862,7 @@ def main_menu(cle_aes, log_file):
 if __name__ == "__main__":
     log_file = get_log_file() # Initialiser le fichier de log
     write_log(f"🚦 Initialisation du programme.", log_file, "INFO")
+    write_log(f"🔍 Chemin du fichier log : {log_file}", log_file, "INFO")
     
     # Charger la configuration et Initialiser le niveau de log à partir de la configuration
     config = read_config_ini(log_file) 
