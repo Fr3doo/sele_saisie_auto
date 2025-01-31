@@ -1,26 +1,14 @@
 # fonctions_selenium_utils.py
 
 # Import des bibliothèques nécessaires
-# import configparser
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-# from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import WebDriverException
-# from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
-# from selenium.common.exceptions import TimeoutException, WebDriverException
-# from datetime import datetime, timedelta
 import time
-# import sys
-# import os
-# from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-# from cryptography.hazmat.primitives.padding import PKCS7
-# from multiprocessing import shared_memory
-# from encryption_utils import recuperer_de_memoire_partagee, dechiffrer_donnees ,supprimer_memoire_partagee_securisee
-# from read_file_config_ini_utils import read_config_ini
 from logger_utils import write_log
 from shared_utils import get_log_file
 import requests
@@ -74,13 +62,13 @@ def wait_until_dom_is_stable(driver, timeout=10):
             unchanged_count = 0
         
         if unchanged_count >= required_stability_count:
-            write_log("Le DOM est stable.", LOG_FILE, "DEBUG")
+            write_log(f"Le DOM est stable.", LOG_FILE, "DEBUG")
             return True
         
         previous_dom_snapshot = current_dom_snapshot
         time.sleep(1)  # Attendre une seconde avant de vérifier à nouveau le DOM
     
-    write_log("Le DOM n'est pas complètement stable après le délai.", LOG_FILE, "WARNING")
+    write_log(f"Le DOM n'est pas complètement stable après le délai.", LOG_FILE, "WARNING")
     return False
 
 
