@@ -24,7 +24,7 @@ from multiprocessing import shared_memory
 from read_or_write_file_config_ini_utils import get_runtime_resource_path, read_config_ini, write_config_ini
 from logger_utils import initialize_logger, write_log, close_logs, LOG_LEVELS
 from shared_utils import get_log_file
-from PIL import Image, ImageTk  # Pour la gestion des images
+from PIL import Image, ImageTk  # Pour la gestion des images - pip install pillow
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
