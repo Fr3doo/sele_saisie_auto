@@ -1,21 +1,16 @@
 # saisie_automatiser_psatime.py
 
-# Import des bibliothèques nécessaires
-# import configparser
-# from selenium import webdriver
+# ----------------------------------------------------------------------------- #
+# ---------------- Import des bibliothèques nécessaires ----------------------- #
+# ----------------------------------------------------------------------------- #
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-# from selenium.webdriver.edge.options import Options as EdgeOptions
-# from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
-# from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException, StaleElementReferenceException
 from datetime import datetime, timedelta
 import time
 import sys
 import os
-# from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-# from cryptography.hazmat.primitives.padding import PKCS7
 from multiprocessing import shared_memory
 from encryption_utils import recuperer_de_memoire_partagee, dechiffrer_donnees ,supprimer_memoire_partagee_securisee
 from fonctions_selenium_utils import click_element_without_wait, controle_insertion, definir_taille_navigateur, detecter_doublons_jours
@@ -26,8 +21,8 @@ from logger_utils import write_log
 from read_or_write_file_config_ini_utils import read_config_ini
 from remplir_informations_supp_utils import traiter_description
 from dropdown_options import cgi_options_billing_action
+import remplir_jours_feuille_de_temps
 from shared_utils import get_log_file
-
 
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
@@ -172,14 +167,6 @@ JOURS_SEMAINE = {
     6: "vendredi",
     7: "samedi"
 }
-TITLE_PROGRAM = "Program PSATime Auto"
-
-TITLE_QUESTION_MENU_ACCUEIL = "Que voulez faire ?"
-CHOICE_MENU_ACCUEIL = (
-        "Lancer votre PSATime",
-        "Configurer le lancement",
-        "Quitter le programme"
-        )
 
 # Configuration memoire partagée et cryptage
 MEMOIRE_PARTAGEE_CLE = "memoire_partagee_cle"
@@ -187,9 +174,9 @@ MEMOIRE_PARTAGEE_DONNEES = "memoire_partagee_donnees"
 TAILLE_CLE = 32  # 256 bits pour AES-256
 TAILLE_BLOC = 128  # Taille de bloc AES pour le padding
 
-# ------------------------------------------------------------------------------------------- #
-# ----------------------------------- FONCTIONS --------------------------------------------- #
-# ------------------------------------------------------------------------------------------- #
+# ------------------------------------------------------------------------------------------------- #
+# ----------------------------------- FONCTIONS UTILS --------------------------------------------- #
+# ------------------------------------------------------------------------------------------------- #
 def clear_screen():
     if(os.name == 'posix'):
         os.system('clear')
@@ -243,478 +230,504 @@ def afficher_message_insertion(jour, valeur, tentative, message):
         write_log(f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' ({message}{tentative + 1})", LOG_FILE, "DEBUG")
     else:
         write_log(f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' {message})", LOG_FILE, "DEBUG")
-        
+
+
+# ------------------------------------------------------------------------------------------------- #
+# ----------------------------------- FONCTIONS PRINCIPALES --------------------------------------- #
+# ------------------------------------------------------------------------------------------------- #
+
+def log_initialisation():
+    """Initialise les logs et vérifie les configurations essentielles."""
+    if not LOG_FILE:
+        raise RuntimeError("Fichier de log introuvable.")
+    write_log(f"📌 Démarrage de la fonction 'saisie_automatiser_psatime.main()'", LOG_FILE, "INFO")
+    write_log(f"🔍 Chemin du fichier log : {LOG_FILE}", LOG_FILE, "DEBUG")
+    
+
+def initialize_shared_memory():
+    """Récupère les données de la mémoire partagée pour le login."""
+    memoire_cle = memoire_nom = memoire_mdp = None
+    
+    memoire_cle, cle_aes = recuperer_de_memoire_partagee(MEMOIRE_PARTAGEE_CLE, TAILLE_CLE, log_file=LOG_FILE)
+    write_log(f"💀 Clé AES récupérée : {cle_aes.hex()}", LOG_FILE, "CRITICAL")
+
+    memoire_nom = shared_memory.SharedMemory(name="memoire_nom")
+    taille_nom = len(bytes(memoire_nom.buf).rstrip(b"\x00"))
+    nom_utilisateur_chiffre = bytes(memoire_nom.buf[:taille_nom])
+    write_log(f"💀 Taille du login chiffré : {len(nom_utilisateur_chiffre)}", LOG_FILE, "CRITICAL")
+
+    memoire_mdp = shared_memory.SharedMemory(name="memoire_mdp")
+    taille_mdp = len(bytes(memoire_mdp.buf).rstrip(b"\x00"))
+    mot_de_passe_chiffre = bytes(memoire_mdp.buf[:taille_mdp])
+    write_log(f"💀 Taille du mot de passe chiffré : {len(mot_de_passe_chiffre)}", LOG_FILE, "CRITICAL")
+
+    # Vérification des données en mémoire partagée
+    if not memoire_nom or not memoire_mdp or not memoire_cle:
+        write_log(f"🚨 La mémoire partagée n'a pas été initialisée correctement. Assurez-vous que les identifiants ont été chiffrés", LOG_FILE, "ERROR")
+        sys.exit(1)
+    
+    return [cle_aes, memoire_cle, nom_utilisateur_chiffre, memoire_nom, mot_de_passe_chiffre, memoire_mdp]
+
+def wait_for_dom(driver):
+    wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT) # Attendre que le DOM soit stable
+    wait_for_dom_ready(driver, LONG_TIMEOUT) # chargé le DOM de page
+
+def setup_browser():
+    """Configure et démarre le navigateur."""
+    driver = None
+    
+    driver = ouvrir_navigateur_sur_ecran_principal(
+        plein_ecran=False,
+        url=URL,
+        headless=False,
+        no_sandbox=False
+    )
+    if driver is not None:
+        driver = definir_taille_navigateur(driver, 1260, 800)
+        wait_for_dom_ready(driver, LONG_TIMEOUT)
+    return driver
+
+
+def connect_to_psatime(driver, cle_aes, nom_utilisateur_chiffre, mot_de_passe_chiffre):
+    """Connecte l'utilisateur au portail PSATime."""
+    nom_utilisateur = dechiffrer_donnees(nom_utilisateur_chiffre, cle_aes, log_file=LOG_FILE)
+    mot_de_passe = dechiffrer_donnees(mot_de_passe_chiffre, cle_aes, log_file=LOG_FILE)
+    cle_aes = None
+    
+    send_keys_to_element(driver, By.ID, "userid", nom_utilisateur)
+    nom_utilisateur = None
+    nom_utilisateur_chiffre = None
+    send_keys_to_element(driver, By.ID, "pwd", mot_de_passe)
+    mot_de_passe = None
+    mot_de_passe_chiffre = None
+    send_keys_to_element(driver, By.ID, "pwd", Keys.RETURN)
+
+    wait_for_dom(driver)
+
+
+def switch_to_iframe_main_target_win0(driver):
+    # Attendre que l'iframe soit chargé avant de basculer
+    element_present = wait_for_element(driver, By.ID, "main_target_win0", timeout=DEFAULT_TIMEOUT)
+    if element_present:
+        switched_to_iframe = switch_to_iframe_by_id_or_name(driver, "main_target_win0")  # Remplace par l'ID exact de l'iframe
+    wait_for_dom(driver)
+    
+    return switched_to_iframe
+
+
+def navigate_from_home_to_date_entry_page(driver):
+    """Navigue de la page d'accueil jusqu'à la page de la saisie de la date cible"""
+    
+    # Verifier la présence et Interagir avec l'élément --> todo : indiquer quel nom
+    element_present = wait_for_element(driver, By.ID, "PTNUI_LAND_REC14$0_row_0", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
+    if element_present:
+        click_element_without_wait(driver, By.ID, "PTNUI_LAND_REC14$0_row_0")
+    wait_for_dom(driver)
+    
+    # Verifier la présence et Cliquer sur le bouton "panel" pour le fermer
+    element_present = wait_for_element(driver, By.ID, "PT_SIDE$PIMG", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
+    if element_present:
+        click_element_without_wait(driver, By.ID, "PT_SIDE$PIMG")
+    wait_for_dom(driver)
+    
+    switched_to_iframe = switch_to_iframe_main_target_win0(driver)
+    
+    return switched_to_iframe
+
+
+def handle_date_input(driver, date_cible):
+    """Gère la date cible pour la saisie."""
+    date_input = wait_for_element(driver, By.ID, "EX_TIME_ADD_VW_PERIOD_END_DT", timeout=DEFAULT_TIMEOUT)
+    if date_input:
+        current_date_value = date_input.get_attribute("value")
+        if date_cible and date_cible.strip():
+            modifier_date_input(date_input, date_cible, "Date cible appliquée")
+        else:
+            new_date_value = get_next_saturday_if_not_saturday(current_date_value)
+            if new_date_value != current_date_value:
+                modifier_date_input(date_input, new_date_value, "Prochain samedi appliqué")
+            else:
+                write_log("Aucune modification de la date nécessaire.", LOG_FILE, "DEBUG")
+    wait_for_dom(driver)
+
+
+def submit_date_cible(driver):
+    # Verifier la présence et Cliquer sur le bouton "Ajout"
+    element_present = wait_for_element(driver, By.ID, "PTS_CFG_CL_WRK_PTS_ADD_BTN", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
+    if element_present:
+        send_keys_to_element(driver, By.ID, "PTS_CFG_CL_WRK_PTS_ADD_BTN", Keys.RETURN)
+        # click_element_without_wait(driver, By.ID, "PTS_CFG_CL_WRK_PTS_ADD_BTN")
+    wait_for_dom(driver)
+    
+    return element_present
+    
+
+def navigate_from_work_schedule_to_additional_information_page(driver):
+    """Navigue de la page jours de travail jusqu'à la page information supplementaire"""
+    wait_for_dom(driver)
+
+    element_present = wait_for_element(driver, By.ID, "UC_EX_WRK_UC_TI_FRA_LINK", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
+    if element_present:
+        click_element_without_wait(driver, By.ID, "UC_EX_WRK_UC_TI_FRA_LINK")
+
+    # Revenir au contexte principal du document
+    switch_to_default_content(driver)
+    
+    wait_for_dom(driver)
+
+
+def submit_and_validate_additional_information(driver):
+    """Valide et remplit les informations supplémentaires nécessaires."""
+    # Attendre que l'iframe soit chargé avant de basculer
+    element_present = wait_for_element(driver, By.ID, "ptModFrame_0", timeout=DEFAULT_TIMEOUT)
+    if element_present:
+        switched_to_iframe = switch_to_iframe_by_id_or_name(driver, "ptModFrame_0")  # Remplace par l'ID exact de l'iframe
+    
+    if switched_to_iframe:
+        for config_description in DESCRIPTIONS:
+            traiter_description(driver, config_description)
+        write_log(f"Validation des informations supplémentaires terminée.", LOG_FILE, "INFO")
+
+    # Verifier la présence et Cliquer sur le bouton "OK"
+    element_present = wait_for_element(driver, By.ID, "#ICSave", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
+    if element_present:
+        click_element_without_wait(driver, By.ID, "#ICSave")
+
+
+def save_draft_and_validate(driver):
+    """Verifier la présence et Cliquer sur le bouton "Enreg. brouill."""
+    element_present = wait_for_element(driver, By.ID, "EX_ICLIENT_WRK_SAVE_PB", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
+    if element_present:
+        click_element_without_wait(driver, By.ID, "EX_ICLIENT_WRK_SAVE_PB")
+        wait_for_dom(driver)
+    
+    return element_present
+
+
+def finalize_submit_and_validate(driver):
+    """Effectue les étapes finales de soumission."""
+    # Attendre que l'iframe soit chargé avant de basculer
+    element_present = wait_for_element(driver, By.ID, "ptModFrame_1", timeout=DEFAULT_TIMEOUT)
+    if element_present:
+        switched_to_iframe = switch_to_iframe_by_id_or_name(driver, "ptModFrame_1")
+
+    # Verifier la présence et Cliquer sur le bouton "OK"
+    element_present = wait_for_element(driver, By.ID, "#ICSave", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
+    if element_present:
+        click_element_without_wait(driver, By.ID, "#ICSave")
+
+    # Verifier la présence et Cliquer sur le bouton "Soumettre pour approb."
+    element_present = wait_for_element(driver, By.ID, "EX_TIME_HDR_WRK_PB_SUBMIT", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
+    if element_present:
+        click_element_without_wait(driver, By.ID, "EX_TIME_HDR_WRK_PB_SUBMIT")
+
+
+def cleanup_resources(driver, memoire_cle, memoire_nom, memoire_mdp):
+    """Nettoie les ressources à la fin de l'exécution."""
+    if memoire_cle:
+        supprimer_memoire_partagee_securisee(memoire_cle, LOG_FILE)
+    if memoire_nom:
+        supprimer_memoire_partagee_securisee(memoire_nom, LOG_FILE)
+    if memoire_mdp:
+        supprimer_memoire_partagee_securisee(memoire_mdp, LOG_FILE)
+    if driver:
+        driver.quit()
+    write_log(f"🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier saisie_automatiser_psatime.", LOG_FILE, "INFO")
+
+
 # ------------------------------------------------------------------------------------------------------------------ #
 # -------------------------------------------- CODE PRINCIPAL ------------------------------------------------------ #
 # ------------------------------------------------------------------------------------------------------------------ #
 def main():
-    memoire_nom = None
-    memoire_mdp = None
-    memoire_cle = None
-    taille_nom = None
-    
-    if not LOG_FILE:
-        write_log(f"⚠️ Fichier de log introuvable.", LOG_FILE, "DEBUG")
-        return
-    
-    write_log(f"📌 Démarrage de la fonction 'saisie_automatiser_psatime.main()'", LOG_FILE, "INFO")
-    write_log(f"🔍 Chemin du fichier log : {LOG_FILE}", LOG_FILE, "DEBUG")
-    
+    """Point d'entrée principal du script."""
     try:
-        # Récupérer la clé depuis la mémoire partagée
-        memoire_cle, cle_aes = recuperer_de_memoire_partagee(MEMOIRE_PARTAGEE_CLE, TAILLE_CLE, log_file=LOG_FILE)
-        write_log(f"💀 Clé AES-256 récupérée : {cle_aes.hex()}", LOG_FILE, "CRITICAL")
-
-        # Récupérer les données chiffrées depuis la mémoire partagée
-        memoire_nom = shared_memory.SharedMemory(name="memoire_nom")
-        taille_nom = len(bytes(memoire_nom.buf).rstrip(b"\x00"))
-        nom_utilisateur_chiffre = bytes(memoire_nom.buf[:taille_nom])
-        write_log(f"💀 Taille récupérée pour le nom d'utilisateur chiffré : {len(nom_utilisateur_chiffre)}", LOG_FILE, "CRITICAL")
-
-        memoire_mdp = shared_memory.SharedMemory(name="memoire_mdp")
-        taille_mdp = len(bytes(memoire_mdp.buf).rstrip(b"\x00"))
-        mot_de_passe_chiffre = bytes(memoire_mdp.buf[:taille_mdp])
-        write_log(f"💀 Taille récupérée pour le mot de passe chiffré : {len(mot_de_passe_chiffre)}", LOG_FILE, "CRITICAL")
-
-         # Vérification des données en mémoire partagée
-        if not memoire_nom or not memoire_mdp or not memoire_cle:
-            write_log(f"🚨 La mémoire partagée n'a pas été initialisée correctement. Assurez-vous que les identifiants ont été chiffrés", LOG_FILE, "ERROR")
-            sys.exit(1)
-                
-        # Démarrer le navigateur
-        driver = ouvrir_navigateur_sur_ecran_principal(
-            plein_ecran=False,
-            url=URL,
-            headless=False,  # Activez ou désactivez le mode headless
-            no_sandbox=False  # Activez ou désactivez le mode no-sandbox
-        )
+        # Initialisation des logs et configurations
+        log_initialisation()
+        variables = initialize_shared_memory()
+        cle_aes = variables[0]
+        memoire_cle = variables[1]
+        nom_utilisateur_chiffre = variables[2]
+        memoire_nom = variables[3]
+        mot_de_passe_chiffre = variables[4]
+        memoire_mdp = variables[5]
+        variables = None
         
-        if driver is not None:
-            # Utilisation de la fonction avec des dimensions spécifiques
-            driver = definir_taille_navigateur(driver, 1260, 800)
+        # Initialisation du navigateur
+        driver = setup_browser()
         
-            # Vérifie si le DOM est complètement chargé.
-            wait_for_dom_ready(driver, LONG_TIMEOUT)
+        # Connexion au portail PSATime
+        connect_to_psatime(driver, cle_aes, nom_utilisateur_chiffre, mot_de_passe_chiffre)
         
-            # Connexion
-            # Déchiffrer les données
-            nom_utilisateur = dechiffrer_donnees(nom_utilisateur_chiffre, cle_aes, log_file=LOG_FILE)
-            mot_de_passe = dechiffrer_donnees(mot_de_passe_chiffre, cle_aes, log_file=LOG_FILE)
-            send_keys_to_element(driver, By.ID, "userid", nom_utilisateur)
-            send_keys_to_element(driver, By.ID, "pwd", mot_de_passe)
-            nom_utilisateur = None
-            mot_de_passe = None
-            # write_log(f"💀 Nom d'utilisateur déchiffré : {nom_utilisateur}", LOG_FILE, "CRITICAL")
-            # write_log(f"💀 Mot de passe déchiffré : {mot_de_passe}", LOG_FILE, "CRITICAL")
-            send_keys_to_element(driver, By.ID, "pwd", Keys.RETURN)
-            
-            # Attendre que le DOM soit stable
-            wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-            
-            # chargé le DOM de page
-            wait_for_dom_ready(driver, LONG_TIMEOUT)
-            
-            # Verifier la présence et Interagir avec l'élément
-            element_present = wait_for_element(driver, By.ID, "PTNUI_LAND_REC14$0_row_0", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
-            if element_present:
-                click_element_without_wait(driver, By.ID, "PTNUI_LAND_REC14$0_row_0")
-            
-            # Attendre que le DOM soit stable
-            wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-            
-            # chargé le DOM de page
-            wait_for_dom_ready(driver, LONG_TIMEOUT)
+        # Navigation vers la page de feuille de temps
+        switched_to_iframe = navigate_from_home_to_date_entry_page(driver)
 
-            # Verifier la présence et Cliquer sur le bouton "panel" pour le fermer
-            element_present = wait_for_element(driver, By.ID, "PT_SIDE$PIMG", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
-            if element_present:
-                click_element_without_wait(driver, By.ID, "PT_SIDE$PIMG")
-
-            # Attendre que l'iframe soit chargé avant de basculer
-            element_present = wait_for_element(driver, By.ID, "main_target_win0", timeout=DEFAULT_TIMEOUT)
-            if element_present:
-                switched_to_iframe = switch_to_iframe_by_id_or_name(driver, "main_target_win0")  # Remplace par l'ID exact de l'iframe
-            
-            # Attendre que le DOM soit stable
-            wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-            # chargé le DOM de page
-            wait_for_dom_ready(driver, LONG_TIMEOUT)
-
-            if switched_to_iframe:
-                # Attendre que l'élément "EX_TIME_ADD_VW_PERIOD_END_DT" soit présent dans l'iframe
-                date_input = wait_for_element(driver, By.ID ,"EX_TIME_ADD_VW_PERIOD_END_DT", timeout=DEFAULT_TIMEOUT)
-                
-                if date_input:                   
-                    if DATE_CIBLE and DATE_CIBLE.strip(): # si la date est none ou vide
-                        # Utiliser la date cible
-                        modifier_date_input(date_input, DATE_CIBLE, "Date modifiée par defaut vers la date cible")
-                    else:
-                        # Sinon, appliquer la logique de prochain samedi
-                        current_date_value = date_input.get_attribute("value")
-                        new_date_value = get_next_saturday_if_not_saturday(current_date_value)
-
-                        if new_date_value != current_date_value:
-                            modifier_date_input(date_input, new_date_value, "Date modifiée au prochain samedi")
-                        else:
-                            write_log("Aucune modification nécessaire, date actuelle conservée.", LOG_FILE, "DEBUG")
-
-
-                # Attendre que le DOM soit stable
-                wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-                # chargé le DOM de page
-                wait_for_dom_ready(driver, LONG_TIMEOUT)
-                
-                program_break_time(1, "Veuillez patienter. Court délai pour stabilisation du DOM")
-                print()
-                
-                # Verifier la présence et Cliquer sur le bouton "Ajout"
-                element_present = wait_for_element(driver, By.ID, "PTS_CFG_CL_WRK_PTS_ADD_BTN", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
-                if element_present:
-                    send_keys_to_element(driver, By.ID, "PTS_CFG_CL_WRK_PTS_ADD_BTN", Keys.RETURN)
-                    # click_element_without_wait(driver, By.ID, "PTS_CFG_CL_WRK_PTS_ADD_BTN")
-
-                    # Attendre que le DOM soit stable
-                    wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-                    # chargé le DOM de page
-                    wait_for_dom_ready(driver, LONG_TIMEOUT)
-
-                    # Revenir au contexte principal du document
-                    switch_to_default_content(driver)
-            
-                    # Vérifier la présence d'un message d'alerte indiquant une date non conforme
-                    alertes = ["ptModContent_0"] 
-                    for alerte in alertes:
-                        element_present = wait_for_element(driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT)
-                        if element_present:
-                            # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur de modifier la date
-                            click_element_without_wait(driver, By.ID, "#ICOK")
-                            if alerte == alertes[0]:
-                                write_log(f"\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)\n"
-                                    "--> Modifier la date du PSATime dans le fichier ini. Le programme va s'arreter.", LOG_FILE, "INFO")
-
-
-                            # Arrêter le script. Utilisez sys.exit() pour une sortie propre
-                            sys.exit()
-                    else:
-                        write_log("Date validée avec succès.", LOG_FILE, "DEBUG")
-            
-            # Attendre que le DOM soit stable
-            wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-            # chargé le DOM de page
-            wait_for_dom_ready(driver, LONG_TIMEOUT)
-
-            # Attendre que l'iframe soit chargé avant de basculer
-            element_present = wait_for_element(driver, By.ID, "main_target_win0", timeout=DEFAULT_TIMEOUT)
-            if element_present:
-                switched_to_iframe = switch_to_iframe_by_id_or_name(driver, "main_target_win0")
-
-            # Attendre que le DOM soit stable
-            wait_until_dom_is_stable(driver, timeout=LONG_TIMEOUT)
-            # chargé le DOM de page
-            wait_for_dom_ready(driver, timeout=LONG_TIMEOUT)
+        if switched_to_iframe:
+            # Gestion de la date cible
+            handle_date_input(driver, DATE_CIBLE)
 
             program_break_time(1, "Veuillez patienter. Court délai pour stabilisation du DOM")
             print()
             
-            # Verifier la présence et Cliquer sur "Ouvrir déclaration vide" après avoir changé de page
-            if CHOIX_USER:
-                element_present = wait_for_element(driver, By.ID, "EX_ICLIENT_WRK_OK_PB", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
-                if element_present:
-                    click_element_without_wait(driver, By.ID, "EX_ICLIENT_WRK_OK_PB")
+            element_present = submit_date_cible(driver)
+            if element_present:
+                # Revenir au contexte principal du document
+                switch_to_default_content(driver)
+        
+                # Vérifier la présence d'un message d'alerte indiquant une date non conforme
+                alertes = ["ptModContent_0"] 
+                for alerte in alertes:
+                    element_present = wait_for_element(driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT)
+                    if element_present:
+                        # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur de modifier la date
+                        click_element_without_wait(driver, By.ID, "#ICOK")
+                        if alerte == alertes[0]:
+                            write_log(f"\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)\n"
+                                "--> Modifier la date du PSATime dans le fichier ini. Le programme va s'arreter.", LOG_FILE, "INFO")
 
-            # Verifier la présence et Cliquer sur "Copie feuille temps" après avoir changé de page
-            elif not CHOIX_USER:
-                element_present = wait_for_element(driver, By.ID, "EX_TIME_HDR_WRK_COPY_TIME_RPT", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
-                if element_present:
-                    click_element_without_wait(driver, By.ID, "EX_TIME_HDR_WRK_COPY_TIME_RPT")
 
-            # Attendre que le DOM soit stable
-            wait_until_dom_is_stable(driver, timeout=LONG_TIMEOUT)
+                        # Arrêter le script. Utilisez sys.exit() pour une sortie propre
+                        sys.exit()
+                else:
+                    write_log("Date validée avec succès.", LOG_FILE, "DEBUG")
+        
+        wait_for_dom(driver)
+        switched_to_iframe = switch_to_iframe_main_target_win0(driver)
 
-            # chargé le DOM de page
-            wait_for_dom_ready(driver, timeout=LONG_TIMEOUT)
+        program_break_time(1, "Veuillez patienter. Court délai pour stabilisation du DOM")
+        print()
+        
+        # Verifier la présence et Cliquer sur "Ouvrir déclaration vide" après avoir changé de page
+        if CHOIX_USER:
+            element_present = wait_for_element(driver, By.ID, "EX_ICLIENT_WRK_OK_PB", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
+            if element_present:
+                click_element_without_wait(driver, By.ID, "EX_ICLIENT_WRK_OK_PB")
 
-            jours_remplis = []  # Liste pour suivre les jours déjà remplis
-            max_attempts = 5
-            # Parcourir chaque description dans LISTE_ITEMS_DESCRIPTIONS
-            for description_cible in LISTE_ITEMS_DESCRIPTIONS:
-                # Recherche de la ligne avec la description spécifiée pour le jour
-                id_value = "POL_DESCR$"
-                row_index = trouver_ligne_par_description(driver, description_cible, id_value)
+        # Verifier la présence et Cliquer sur "Copie feuille temps" après avoir changé de page
+        elif not CHOIX_USER:
+            element_present = wait_for_element(driver, By.ID, "EX_TIME_HDR_WRK_COPY_TIME_RPT", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
+            if element_present:
+                click_element_without_wait(driver, By.ID, "EX_TIME_HDR_WRK_COPY_TIME_RPT")
 
-                # Si la ligne est trouvée, remplir les jours de la semaine
-                if row_index is not None:
-                    for jour_index, jour_name in JOURS_SEMAINE.items():  # Dimanche = 1, Lundi = 2, etc.
-                        input_id = f"POL_TIME{jour_index}${row_index}"
+        wait_for_dom(driver)
 
-                        # Vérifier la présence de l'élément
-                        element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
+        remplir_jours_feuille_de_temps.main(driver)
+        
+        # jours_remplis = []  # Liste pour suivre les jours déjà remplis
+        # max_attempts = 5
+        # # Parcourir chaque description dans LISTE_ITEMS_DESCRIPTIONS
+        # for description_cible in LISTE_ITEMS_DESCRIPTIONS:
+        #     # Recherche de la ligne avec la description spécifiée pour le jour
+        #     id_value = "POL_DESCR$"
+        #     row_index = trouver_ligne_par_description(driver, description_cible, id_value)
 
-                        if element:
-                            # Vérifier s'il y a une valeur dans l'élément pour ce jour
-                            jour_rempli = verifier_champ_jour_rempli(element, jour_name)
-                            if jour_rempli:
-                                jours_remplis.append(jour_rempli) # Ajouter le jour s'il est déjà rempli
-            
-            clear_screen()
+        #     # Si la ligne est trouvée, remplir les jours de la semaine
+        #     if row_index is not None:
+        #         for jour_index, jour_name in JOURS_SEMAINE.items():  # Dimanche = 1, Lundi = 2, etc.
+        #             input_id = f"POL_TIME{jour_index}${row_index}"
 
-            # Remplir les jours du dimanche au samedi, s'ils sont encore vides.
-            for jour, (description_cible, valeur_a_remplir) in JOURS_DE_TRAVAIL.items():
-                attempt = 0
-                if description_cible and not est_en_mission(description_cible) and jour not in jours_remplis:  # Remplir seulement si le jour est vide
-                    id_value = "POL_DESCR$"
-                    row_index = trouver_ligne_par_description(driver, description_cible, id_value)
-                    
-                    if row_index is not None:
-                        jour_index = list(JOURS_SEMAINE.keys())[list(JOURS_SEMAINE.values()).index(jour)]
-                        input_id = f"POL_TIME{jour_index}${row_index}"
-                        
-                        # Vérifier la présence de l'élément
-                        element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
-                        
-                        if element:
-                            while attempt < max_attempts:
-                                try:
-                                    # Étape 1 : Détection et vérification du contenu actuel
-                                    day_input_field, is_correct_value = detecter_et_verifier_contenu(driver, input_id, valeur_a_remplir)
-                                    
-                                    if is_correct_value:
-                                        jours_remplis = ajouter_jour_a_jours_remplis(jour, jours_remplis)
-                                        afficher_message_insertion(jour, valeur_a_remplir, attempt, "tentative d'insertion n°")
-                                        break
+        #             # Vérifier la présence de l'élément
+        #             element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
 
-                                    # Étape 2 : Effacer et entrer la nouvelle valeur
-                                    effacer_et_entrer_valeur(day_input_field, valeur_a_remplir)
-                                    program_break_time(1, "Veuillez patienter. Court délai pour stabilisation du DOM")
-                                    print()
+        #             if element:
+        #                 # Vérifier s'il y a une valeur dans l'élément pour ce jour
+        #                 jour_rempli = verifier_champ_jour_rempli(element, jour_name)
+        #                 if jour_rempli:
+        #                     jours_remplis.append(jour_rempli) # Ajouter le jour s'il est déjà rempli
+        
+        
+        # # clear_screen()
 
-                                    # Étape 3 : Contrôler que la valeur est bien insérée
-                                    if controle_insertion(day_input_field, valeur_a_remplir):
-                                        jours_remplis = ajouter_jour_a_jours_remplis(jour, jours_remplis)
-                                        afficher_message_insertion(jour, valeur_a_remplir, attempt, "après insertion")
-                                        break
-
-                                except StaleElementReferenceException:
-                                    write_log(f"Référence obsolète pour '{jour}', tentative {attempt + 1}", LOG_FILE, "DEBUG")
-                                
-                                attempt += 1
-
-                            # Si toutes les tentatives échouent, indiquer un message d'échec
-                            if attempt == max_attempts:
-                                write_log(f"Échec de l'insertion de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {max_attempts} tentatives.", LOG_FILE, "DEBUG")
-
-                elif description_cible and est_en_mission(description_cible) and jour not in jours_remplis:
-                    # Cas où description_cible est "En mission", on écrit directement dans les IDs spécifiques sans utiliser `description_cible`
-                    jour_index = list(JOURS_SEMAINE.keys())[list(JOURS_SEMAINE.values()).index(jour)]
-                    input_id = f"TIME{jour_index}$0"  # Définir l'ID de l'élément pour ce jour
-                    
-                    # Vérifier la présence de l'élément
-                    element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
-
-                    if element:
-                        while attempt < max_attempts:
-                            try:
-                                # Étape 1 : Détection et vérification du contenu actuel
-                                day_input_field, is_correct_value = detecter_et_verifier_contenu(driver, input_id, valeur_a_remplir)
-                                
-                                if is_correct_value:
-                                    jours_remplis = ajouter_jour_a_jours_remplis(jour, jours_remplis)
-                                    afficher_message_insertion(jour, valeur_a_remplir, attempt, "tentative d'insertion n°")
-                                    break
-
-                                # Étape 2 : Effacer et entrer la nouvelle valeur
-                                effacer_et_entrer_valeur(day_input_field, valeur_a_remplir)
-                                program_break_time(1, "Veuillez patienter. Court délai pour stabilisation du DOM")
-                                print()
-
-                                # Étape 3 : Contrôler que la valeur est bien insérée
-                                if controle_insertion(day_input_field, valeur_a_remplir):
-                                    jours_remplis = ajouter_jour_a_jours_remplis(jour, jours_remplis)
-                                    afficher_message_insertion(jour, valeur_a_remplir, attempt, "après insertion")
-                                    break
-
-                            except StaleElementReferenceException:
-                                write_log(f"Référence obsolète pour '{jour}', tentative {attempt + 1}", LOG_FILE, "DEBUG")
-                            
-                            attempt += 1
-
-                        # Si toutes les tentatives échouent, indiquer un message d'échec
-                        if attempt == max_attempts:
-                            write_log(f"Échec de l'insertion de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {max_attempts} tentatives.", LOG_FILE, "DEBUG")
-            
-            # Vérifie si "En mission" est présent
-            contains_en_mission = any(value[0] == "En mission" for value in JOURS_DE_TRAVAIL.values())
-            if contains_en_mission:
-                write_log(f"Contient 'En mission' : {contains_en_mission}", LOG_FILE, "INFO")
+        # # Remplir les jours du dimanche au samedi, s'ils sont encore vides.
+        # for jour, (description_cible, valeur_a_remplir) in JOURS_DE_TRAVAIL.items():
+        #     attempt = 0
+        #     if description_cible and not est_en_mission(description_cible) and jour not in jours_remplis:  # Remplir seulement si le jour est vide
+        #         id_value = "POL_DESCR$"
+        #         row_index = trouver_ligne_par_description(driver, description_cible, id_value)
                 
-                # Boucle sur les IDs pour insérer les valeurs correspondantes
-                for id in LISTES_ID_INFORMATIONS_MISSION:
-                    key = ID_TO_KEY_MAPPING[id]  # Récupérer la clé associée
-                    if key == "sub_category_code":
-                        continue
-                    valeur_a_remplir = INFORMATIONS_PROJET_MISSION[key]  # Récupérer la valeur associée
-                    write_log(f"Traitement de l'élément : {key} avec ID : {id} et valeur : {valeur_a_remplir}", LOG_FILE, "DEBUG")
-                    attempt = 0
-
-                    # Vérifier la présence de l'élément
-                    element = wait_for_element(driver, By.ID, id, timeout=DEFAULT_TIMEOUT)
-                    if element:
-                        while attempt < max_attempts:
-                            try:
-                                # Étape 1 : Détection et vérification du contenu actuel
-                                day_input_field, is_correct_value = detecter_et_verifier_contenu(driver, id, valeur_a_remplir)
-                                # write_log(f"id trouvé : {day_input_field} / is_correct_value : {is_correct_value}", LOG_FILE, "DEBUG")
-                                
-                                if is_correct_value:
-                                    break
-                                
-                                # Étape 2 : Effacer et entrer la nouvelle valeur
-                                effacer_et_entrer_valeur(day_input_field, valeur_a_remplir)
-                                program_break_time(1, "Veuillez patienter. Court délai pour stabilisation du DOM")
-                                print()
-
-                                # Étape 3 : Contrôler que la valeur est bien insérée
-                                if controle_insertion(day_input_field, valeur_a_remplir):
-                                    break
-
-                            except StaleElementReferenceException:
-                                write_log(f"Référence obsolète. tentative {attempt + 1}", LOG_FILE, "DEBUG")
-                            
-                            attempt += 1
-
-                        # Si toutes les tentatives échouent, indiquer un message d'échec
-                        if attempt == max_attempts:
-                            write_log(f"Échec de l'insertion de la valeur '{valeur_a_remplir}' pour l'ID '{id}', après {max_attempts} tentatives.", LOG_FILE, "DEBUG")
-                            
-            else:
-                write_log("La personne N'EST PAS en mission", LOG_FILE, "INFO")
-                
-            # Attendre que le DOM soit stable
-            wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-
-            # chargé le DOM de page
-            wait_for_dom_ready(driver, LONG_TIMEOUT)
-
-            element_present = wait_for_element(driver, By.ID, "UC_EX_WRK_UC_TI_FRA_LINK", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
-            if element_present:
-                click_element_without_wait(driver, By.ID, "UC_EX_WRK_UC_TI_FRA_LINK")
-
-            # Revenir au contexte principal du document
-            switch_to_default_content(driver)
-            
-            # Attendre que le DOM soit stable
-            wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-
-            # chargé le DOM de page
-            wait_for_dom_ready(driver, LONG_TIMEOUT)
-            
-            # ---------------------------- #
-            # -- Sommaire feuille temps -- #
-            # ---------------------------- #
-            # Attendre que l'iframe soit chargé avant de basculer
-            element_present = wait_for_element(driver, By.ID, "ptModFrame_0", timeout=DEFAULT_TIMEOUT)
-            if element_present:
-                switched_to_iframe = switch_to_iframe_by_id_or_name(driver, "ptModFrame_0")  # Remplace par l'ID exact de l'iframe
-
-            if switched_to_iframe:
-                for config_description in DESCRIPTIONS:
-                    traiter_description(driver, config_description)
-
-            # Verifier la présence et Cliquer sur le bouton "OK"
-            element_present = wait_for_element(driver, By.ID, "#ICSave", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
-            if element_present:
-                click_element_without_wait(driver, By.ID, "#ICSave")
-
-            # Revenir au contexte principal du document
-            switch_to_default_content(driver)
-            
-            # Attendre que le DOM soit stable
-            wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-
-            # chargé le DOM de page
-            wait_for_dom_ready(driver, LONG_TIMEOUT)
-
-            # Attendre que l'iframe soit chargé avant de basculer
-            element_present = wait_for_element(driver, By.ID, "main_target_win0", timeout=DEFAULT_TIMEOUT)
-            if element_present:
-                switched_to_iframe = switch_to_iframe_by_id_or_name(driver, "main_target_win0")  # Remplace par l'ID exact de l'iframe
-
-            if switched_to_iframe:
-                # Contrôle après avoir rempli les jours
-                detecter_doublons_jours(driver)
+        #         if row_index is not None:
+        #             jour_index = list(JOURS_SEMAINE.keys())[list(JOURS_SEMAINE.values()).index(jour)]
+        #             input_id = f"POL_TIME{jour_index}${row_index}"
                     
-                # ----------------------------------------------------------------------------- #
-                # ---------------------- ETAPE ENREG. BROUILL --------------------------------- #
-                # ----------------------------------------------------------------------------- #
-                # Verifier la présence et Cliquer sur le bouton "Enreg. brouill."
-                element_present = wait_for_element(driver, By.ID, "EX_ICLIENT_WRK_SAVE_PB", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
-                if element_present:
-                    click_element_without_wait(driver, By.ID, "EX_ICLIENT_WRK_SAVE_PB")
+        #             # Vérifier la présence de l'élément
+        #             element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
+                    
+        #             if element:
+        #                 while attempt < max_attempts:
+        #                     try:
+        #                         # Étape 1 : Détection et vérification du contenu actuel
+        #                         day_input_field, is_correct_value = detecter_et_verifier_contenu(driver, input_id, valeur_a_remplir)
+                                
+        #                         if is_correct_value:
+        #                             jours_remplis = ajouter_jour_a_jours_remplis(jour, jours_remplis)
+        #                             afficher_message_insertion(jour, valeur_a_remplir, attempt, "tentative d'insertion n°")
+        #                             break
 
-                    # Attendre que le DOM soit stable
-                    wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-                    # chargé le DOM de page
-                    wait_for_dom_ready(driver, LONG_TIMEOUT)
+        #                         # Étape 2 : Effacer et entrer la nouvelle valeur
+        #                         effacer_et_entrer_valeur(day_input_field, valeur_a_remplir)
+        #                         program_break_time(1, "Veuillez patienter. Court délai pour stabilisation du DOM")
+        #                         print()
 
-                    # Revenir au contexte principal du document
-                    switch_to_default_content(driver)
+        #                         # Étape 3 : Contrôler que la valeur est bien insérée
+        #                         if controle_insertion(day_input_field, valeur_a_remplir):
+        #                             jours_remplis = ajouter_jour_a_jours_remplis(jour, jours_remplis)
+        #                             afficher_message_insertion(jour, valeur_a_remplir, attempt, "après insertion")
+        #                             break
 
-                    # Vérifier la présence d'un message d'alerte indiquant une date non conforme
-                    alertes = ["ptModContent_1", "ptModContent_2", "ptModContent_3"] 
-                    for alerte in alertes:
-                        element_present = wait_for_element(driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT)
-                        if element_present:
-                            if alerte == alertes[0]:
-                                # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
-                                click_element_without_wait(driver, By.ID, "#ICOK")
-                                write_log(f"⚠️ \nAssurez-vous d’avoir choisi la bonne date pour votre relevé d’heures. (24500,19)", LOG_FILE, "INFO")
-                                # input("--> Appuyez sur Entrée pour continuer.")  
-                            elif alerte == alertes[1]:
-                                # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
-                                click_element_without_wait(driver, By.ID, "#ICOK")
-                                write_log(f"⚠️ \nUn jour de la semaine est un jour férié. Ces heures n'ont pas été saisies comme telles. (24500,427).", LOG_FILE, "INFO")
-                                # input("--> Appuyez sur Entrée pour fermer le navigateur.")  
-                            elif alerte == alertes[2]:
-                                # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
-                                click_element_without_wait(driver, By.ID, "#ICOK")
-                                write_log(f"⚠️\nIl existe un écart avec vos absences approuvées dans le Centre de service RH (24500,320)", LOG_FILE, "INFO")
-                                # input("--> Appuyez sur Entrée pour fermer le navigateur.")    
-                            break # Arrêter la boucle une fois la ou les alerte(s) traitée(s)
+        #                     except StaleElementReferenceException:
+        #                         write_log(f"Référence obsolète pour '{jour}', tentative {attempt + 1}", LOG_FILE, "DEBUG")
+                            
+        #                     attempt += 1
+
+        #                 # Si toutes les tentatives échouent, indiquer un message d'échec
+        #                 if attempt == max_attempts:
+        #                     write_log(f"Échec de l'insertion de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {max_attempts} tentatives.", LOG_FILE, "DEBUG")
+
+        #     elif description_cible and est_en_mission(description_cible) and jour not in jours_remplis:
+        #         # Cas où description_cible est "En mission", on écrit directement dans les IDs spécifiques sans utiliser `description_cible`
+        #         jour_index = list(JOURS_SEMAINE.keys())[list(JOURS_SEMAINE.values()).index(jour)]
+        #         input_id = f"TIME{jour_index}$0"  # Définir l'ID de l'élément pour ce jour
+                
+        #         # Vérifier la présence de l'élément
+        #         element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
+
+        #         if element:
+        #             while attempt < max_attempts:
+        #                 try:
+        #                     # Étape 1 : Détection et vérification du contenu actuel
+        #                     day_input_field, is_correct_value = detecter_et_verifier_contenu(driver, input_id, valeur_a_remplir)
+                            
+        #                     if is_correct_value:
+        #                         jours_remplis = ajouter_jour_a_jours_remplis(jour, jours_remplis)
+        #                         afficher_message_insertion(jour, valeur_a_remplir, attempt, "tentative d'insertion n°")
+        #                         break
+
+        #                     # Étape 2 : Effacer et entrer la nouvelle valeur
+        #                     effacer_et_entrer_valeur(day_input_field, valeur_a_remplir)
+        #                     program_break_time(1, "Veuillez patienter. Court délai pour stabilisation du DOM")
+        #                     print()
+
+        #                     # Étape 3 : Contrôler que la valeur est bien insérée
+        #                     if controle_insertion(day_input_field, valeur_a_remplir):
+        #                         jours_remplis = ajouter_jour_a_jours_remplis(jour, jours_remplis)
+        #                         afficher_message_insertion(jour, valeur_a_remplir, attempt, "après insertion")
+        #                         break
+
+        #                 except StaleElementReferenceException:
+        #                     write_log(f"Référence obsolète pour '{jour}', tentative {attempt + 1}", LOG_FILE, "DEBUG")
                         
+        #                 attempt += 1
 
-            # Attendre que le DOM soit stable
-            wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-            # chargé le DOM de page
-            wait_for_dom_ready(driver, LONG_TIMEOUT)
-
-            # Attendre que l'iframe soit chargé avant de basculer
-            element_present = wait_for_element(driver, By.ID, "main_target_win0", timeout=DEFAULT_TIMEOUT)
-            if element_present:
-                switched_to_iframe = switch_to_iframe_by_id_or_name(driver, "main_target_win0")
+        #             # Si toutes les tentatives échouent, indiquer un message d'échec
+        #             if attempt == max_attempts:
+        #                 write_log(f"Échec de l'insertion de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {max_attempts} tentatives.", LOG_FILE, "DEBUG")
+        
+        # # Vérifie si "En mission" est présent
+        # contains_en_mission = any(value[0] == "En mission" for value in JOURS_DE_TRAVAIL.values())
+        # if contains_en_mission:
+        #     write_log(f"Contient 'En mission' : {contains_en_mission}", LOG_FILE, "INFO")
             
-            # Attendre que le DOM soit stable
-            wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
+        #     # Boucle sur les IDs pour insérer les valeurs correspondantes
+        #     for id in LISTES_ID_INFORMATIONS_MISSION:
+        #         key = ID_TO_KEY_MAPPING[id]  # Récupérer la clé associée
+        #         if key == "sub_category_code":
+        #             continue
+        #         valeur_a_remplir = INFORMATIONS_PROJET_MISSION[key]  # Récupérer la valeur associée
+        #         write_log(f"Traitement de l'élément : {key} avec ID : {id} et valeur : {valeur_a_remplir}", LOG_FILE, "DEBUG")
+        #         attempt = 0
 
-            # chargé le DOM de page
-            wait_for_dom_ready(driver, LONG_TIMEOUT)
+        #         wait_for_dom(driver)
+                
+        #         # Vérifier la présence de l'élément
+        #         element = wait_for_element(driver, By.ID, id, timeout=DEFAULT_TIMEOUT)
+        #         if element:
+        #             while attempt < max_attempts:
+        #                 try:
+        #                     # Étape 1 : Détection et vérification du contenu actuel
+        #                     day_input_field, is_correct_value = detecter_et_verifier_contenu(driver, id, valeur_a_remplir)
+        #                     # write_log(f"id trouvé : {day_input_field} / is_correct_value : {is_correct_value}", LOG_FILE, "DEBUG")
+                            
+        #                     if is_correct_value:
+        #                         break
+                            
+        #                     # Étape 2 : Effacer et entrer la nouvelle valeur
+        #                     effacer_et_entrer_valeur(day_input_field, valeur_a_remplir)
+        #                     program_break_time(1, "Veuillez patienter. Court délai pour stabilisation du DOM")
+        #                     print()
 
+        #                     # Étape 3 : Contrôler que la valeur est bien insérée
+        #                     if controle_insertion(day_input_field, valeur_a_remplir):
+        #                         break
+
+        #                 except StaleElementReferenceException:
+        #                     write_log(f"Référence obsolète. tentative {attempt + 1}", LOG_FILE, "DEBUG")
+                        
+        #                 attempt += 1
+
+        #             # Si toutes les tentatives échouent, indiquer un message d'échec
+        #             if attempt == max_attempts:
+        #                 write_log(f"Échec de l'insertion de la valeur '{valeur_a_remplir}' pour l'ID '{id}', après {max_attempts} tentatives.", LOG_FILE, "DEBUG")
+                        
+        # else:
+        #     write_log("La personne N'EST PAS en mission", LOG_FILE, "INFO")
+            
+        # Navigue de la page jours de travail jusqu'à la page information supplementaire
+        navigate_from_work_schedule_to_additional_information_page(driver)
+        
+        # Validation des informations supplémentaires
+        submit_and_validate_additional_information(driver)
+
+        # Revenir au contexte principal du document
+        switch_to_default_content(driver)
+        
+        wait_for_dom(driver)
+
+        switched_to_iframe = switch_to_iframe_main_target_win0(driver)
+        
+        if switched_to_iframe:
+            # Contrôle après avoir rempli les jours
+            detecter_doublons_jours(driver)
+                
             # ----------------------------------------------------------------------------- #
-            # ---------------------- ETAPE SOUMETTRE POUR APPROB. ------------------------- #
+            # ---------------------- ETAPE ENREG. BROUILL --------------------------------- #
             # ----------------------------------------------------------------------------- #
-            # Attendre que l'iframe soit chargé avant de basculer
-            # element_present = wait_for_element(driver, By.ID, "ptModFrame_1", timeout=DEFAULT_TIMEOUT)
-            # if element_present:
-            #     switched_to_iframe = switch_to_iframe_by_id_or_name(driver, "ptModFrame_1")
+            if save_draft_and_validate(driver):
 
-            # Verifier la présence et Cliquer sur le bouton "OK"
-            # element_present = wait_for_element(driver, By.ID, "#ICSave", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
-            # if element_present:
-            #     click_element_without_wait(driver, By.ID, "#ICSave")
+                # Revenir au contexte principal du document
+                switch_to_default_content(driver)
 
-            # Verifier la présence et Cliquer sur le bouton "Soumettre pour approb."
-            # element_present = wait_for_element(driver, By.ID, "EX_TIME_HDR_WRK_PB_SUBMIT", EC.element_to_be_clickable, timeout=DEFAULT_TIMEOUT)
-            # if element_present:
-            #     click_element_without_wait(driver, By.ID, "EX_TIME_HDR_WRK_PB_SUBMIT")
+                # Vérifier la présence d'un message d'alerte indiquant une date non conforme
+                alertes = ["ptModContent_1", "ptModContent_2", "ptModContent_3"] 
+                for alerte in alertes:
+                    element_present = wait_for_element(driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT)
+                    if element_present:
+                        if alerte == alertes[0]:
+                            # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
+                            click_element_without_wait(driver, By.ID, "#ICOK")
+                            write_log(f"⚠️ \nAssurez-vous d’avoir choisi la bonne date pour votre relevé d’heures. (24500,19)", LOG_FILE, "INFO")
+                            # input("--> Appuyez sur Entrée pour continuer.")  
+                        elif alerte == alertes[1]:
+                            # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
+                            click_element_without_wait(driver, By.ID, "#ICOK")
+                            write_log(f"⚠️ \nUn jour de la semaine est un jour férié. Ces heures n'ont pas été saisies comme telles. (24500,427).", LOG_FILE, "INFO")
+                            # input("--> Appuyez sur Entrée pour fermer le navigateur.")  
+                        elif alerte == alertes[2]:
+                            # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
+                            click_element_without_wait(driver, By.ID, "#ICOK")
+                            write_log(f"⚠️\nIl existe un écart avec vos absences approuvées dans le Centre de service RH (24500,320)", LOG_FILE, "INFO")
+                            # input("--> Appuyez sur Entrée pour fermer le navigateur.")    
+                        break # Arrêter la boucle une fois la ou les alerte(s) traitée(s)
+                    
+
+        wait_for_dom(driver)
+        
+        switch_to_iframe_main_target_win0(driver)
+
+        wait_for_dom(driver)
+        # ----------------------------------------------------------------------------- #
+        # ---------------------- ETAPE SOUMETTRE POUR APPROB. ------------------------- #
+        # ----------------------------------------------------------------------------- #
+        # finalize_submit_and_validate(driver)
+
 
     except NoSuchElementException as e:
         write_log(f"❌ L'élément n'a pas été trouvé : {str(e)}", LOG_FILE, "ERROR")
@@ -735,13 +748,4 @@ def main():
         except ValueError:
             pass  # Ignore toute erreur
         finally:
-            # Suppression sécurisée des mémoires partagées
-            if memoire_cle is not None:
-                supprimer_memoire_partagee_securisee(memoire_cle, LOG_FILE)
-            if memoire_nom is not None:
-                supprimer_memoire_partagee_securisee(memoire_nom, LOG_FILE)
-            if memoire_mdp is not None:
-                supprimer_memoire_partagee_securisee(memoire_mdp, LOG_FILE)
-            if driver is not None:
-                driver.quit()
-            write_log(f"🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier saisie_automatiser_psatime.", LOG_FILE, "INFO")
+            cleanup_resources(driver, memoire_cle, memoire_nom, memoire_mdp)
