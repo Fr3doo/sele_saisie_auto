@@ -26,12 +26,10 @@ from encryption_utils import EncryptionService
 from fonctions_selenium_utils import (
     click_element_without_wait,
     controle_insertion,
-    definir_taille_navigateur,
     detecter_doublons_jours,
     detecter_et_verifier_contenu,
     effacer_et_entrer_valeur,
     modifier_date_input,
-    ouvrir_navigateur_sur_ecran_principal,
     remplir_champ_texte,
     selectionner_option_menu_deroulant_type_select,
     send_keys_to_element,
@@ -49,6 +47,7 @@ from fonctions_selenium_utils import (
 from logger_utils import write_log
 from remplir_informations_supp_utils import set_log_file as set_log_file_infos
 from remplir_informations_supp_utils import traiter_description
+from selenium_driver_manager import SeleniumDriverManager
 from shared_utils import program_break_time
 
 # ----------------------------------------------------------------------------- #
@@ -275,9 +274,9 @@ TAILLE_BLOC = 128  # Taille de bloc AES pour le padding
 # ------------------------------------------------------------------------------------------------- #
 def clear_screen():
     if os.name == "posix":
-        os.system("clear")
+        os.system("clear")  # nosec
     else:
-        os.system("cls")
+        os.system("cls")  # nosec
 
 
 def seprateur_menu_affichage_log():
@@ -401,17 +400,9 @@ def wait_for_dom(driver):
     wait_for_dom_ready(driver, LONG_TIMEOUT)  # chargé le DOM de page
 
 
-def setup_browser():
+def setup_browser(driver_manager: SeleniumDriverManager):
     """Configure et démarre le navigateur."""
-    driver = None
-
-    driver = ouvrir_navigateur_sur_ecran_principal(
-        plein_ecran=False, url=URL, headless=False, no_sandbox=False
-    )
-    if driver is not None:
-        driver = definir_taille_navigateur(driver, 1260, 800)
-        wait_for_dom_ready(driver, LONG_TIMEOUT)
-    return driver
+    return driver_manager.open(URL, fullscreen=False, headless=False)
 
 
 def connect_to_psatime(driver, cle_aes, nom_utilisateur_chiffre, mot_de_passe_chiffre):
@@ -608,7 +599,12 @@ def finalize_submit_and_validate(driver):
         click_element_without_wait(driver, By.ID, "EX_TIME_HDR_WRK_PB_SUBMIT")
 
 
-def cleanup_resources(driver, memoire_cle, memoire_nom, memoire_mdp):
+def cleanup_resources(
+    driver_manager: SeleniumDriverManager,
+    memoire_cle,
+    memoire_nom,
+    memoire_mdp,
+):
     """Nettoie les ressources à la fin de l'exécution."""
     if memoire_cle:
         encryption_service.supprimer_memoire_partagee_securisee(memoire_cle)
@@ -616,8 +612,7 @@ def cleanup_resources(driver, memoire_cle, memoire_nom, memoire_mdp):
         encryption_service.supprimer_memoire_partagee_securisee(memoire_nom)
     if memoire_mdp:
         encryption_service.supprimer_memoire_partagee_securisee(memoire_mdp)
-    if driver:
-        driver.quit()
+    driver_manager.close()
     write_log(
         f"🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier saisie_automatiser_psatime.",
         LOG_FILE,
@@ -644,7 +639,8 @@ def main(log_file: str) -> None:
         variables = None
 
         # Initialisation du navigateur
-        driver = setup_browser()
+        driver_manager = SeleniumDriverManager(log_file)
+        driver = setup_browser(driver_manager)
 
         # Connexion au portail PSATime
         connect_to_psatime(
@@ -813,7 +809,7 @@ def main(log_file: str) -> None:
 
     finally:
         try:
-            if driver is not None:
+            if driver_manager.driver is not None:
                 input(
                     "INFO : Controler et soumettez votre PSATime, Puis appuyer sur ENTRER "
                 )
@@ -825,4 +821,4 @@ def main(log_file: str) -> None:
         except ValueError:
             pass  # Ignore toute erreur
         finally:
-            cleanup_resources(driver, memoire_cle, memoire_nom, memoire_mdp)
+            cleanup_resources(driver_manager, memoire_cle, memoire_nom, memoire_mdp)

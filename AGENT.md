@@ -43,6 +43,7 @@
 | `ConfigManager`         | Lecture et préparation de `config.ini`        | `config_manager.py`  | Aucune                | Objet `ConfigParser`         |
 | `EncryptionService`     | Chiffre/déchiffre les données sensibles       | `encryption_utils.py`                     | Chaîne ou bytes       | Bytes ou chaîne             |
 | `Logger`                | Gestion et rotation des logs                  | `logger_utils.py`                         | Messages à enregistrer| Fichier HTML/TXT de logs     |
+| `SeleniumDriverManager` | Initialise et ferme le WebDriver             | `selenium_driver_manager.py`             | URL, options          | Instance WebDriver |
 | `SeleniumUtils`         | Fonctions utilitaires pour Selenium           | `fonctions_selenium_utils.py`             | WebDriver, ID, valeurs| Éléments manipulés          |
 ## 6. Détails par agent
 
@@ -80,6 +81,12 @@
 - **Sorties** : données chiffrées ou déchiffrées.
 - **Dépendances** : `Logger`.
 - **Tests** : TODO ajouter `tests/test_encryption_service.py`.
+
+### `SeleniumDriverManager`
+- **Rôle** : Centraliser l'ouverture et la fermeture du WebDriver.
+- **Entrées** : URL cible et options navigateur.
+- **Sorties** : instance Selenium prête à l'emploi.
+- **Dépendances** : `SeleniumUtils`, `Logger`.
 
 ## 7. Schéma d’interaction
 
