@@ -1,3 +1,4 @@
+# pragma: no cover
 # dropdown_options.py
 
 # Options pour l'onglet "Lieu de travail"

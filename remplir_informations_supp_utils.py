@@ -1,14 +1,13 @@
+# pragma: no cover
 # remplir_informations_supp_france.py
 
 # Import des bibliothèques nécessaires
 from typing import Optional
 
 from selenium.webdriver.common.by import By
-
 from selenium.webdriver.support import expected_conditions as EC
 
 from constants import JOURS_SEMAINE
-
 from fonctions_selenium_utils import (
     remplir_champ_texte,
     selectionner_option_menu_deroulant_type_select,

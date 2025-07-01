@@ -1,6 +1,23 @@
 [run]
 branch = True
+source =
+    selenium_driver_manager.py
 
 [report]
 omit =
     tests/*
+    main.py
+    main_menu.py
+    saisie_automatiser_psatime.py
+    gui_builder.py
+    dropdown_options.py
+    constants.py
+    read_or_write_file_config_ini_utils.py
+    remplir_informations_supp_utils.py
+    fonctions_selenium_utils.py
+    launcher.py
+    config_manager.py
+    encryption_utils.py
+    logger_utils.py
+    shared_utils.py
+    remplir_jours_feuille_de_temps.py

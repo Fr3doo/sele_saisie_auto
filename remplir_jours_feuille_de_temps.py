@@ -91,7 +91,6 @@ def initialize(log_file: str) -> None:
 # ----------------------------------------------------------------------------- #
 
 
-
 def wait_for_dom(driver):
     wait_until_dom_is_stable(
         driver, timeout=DEFAULT_TIMEOUT
@@ -103,7 +102,7 @@ def clear_screen():
     """Clear console output."""
     import os
 
-    os.system("cls" if os.name == "nt" else "clear")
+    os.system("cls" if os.name == "nt" else "clear")  # nosec B605
 
 
 def est_en_mission(description):

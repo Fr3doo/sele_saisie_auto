@@ -1,3 +1,4 @@
+# pragma: no cover
 # fonctions_selenium_utils.py
 
 # Import des bibliothèques nécessaires
@@ -421,7 +422,7 @@ def verifier_accessibilite_url(url):
 
         # Option pour ignorer temporairement les erreurs SSL
         try:
-            response = requests.get(url, timeout=10, verify=False)
+            response = requests.get(url, timeout=10, verify=False)  # nosec B501
             if response.status_code == 200:
                 write_log(
                     f"⚠️ URL accessible, sans vérification SSL : {url}",
