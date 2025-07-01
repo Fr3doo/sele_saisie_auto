@@ -12,7 +12,6 @@ from typing import Optional
 
 from selenium.common.exceptions import (
     NoSuchElementException,
-    StaleElementReferenceException,
     TimeoutException,
     WebDriverException,
 )
@@ -26,21 +25,14 @@ from dropdown_options import cgi_options_billing_action
 from encryption_utils import EncryptionService
 from fonctions_selenium_utils import (
     click_element_without_wait,
-    controle_insertion,
     detecter_doublons_jours,
-    detecter_et_verifier_contenu,
-    effacer_et_entrer_valeur,
     modifier_date_input,
-    remplir_champ_texte,
-    selectionner_option_menu_deroulant_type_select,
     send_keys_to_element,
 )
 from fonctions_selenium_utils import set_log_file as set_log_file_selenium
 from fonctions_selenium_utils import (
     switch_to_default_content,
     switch_to_iframe_by_id_or_name,
-    trouver_ligne_par_description,
-    verifier_champ_jour_rempli,
     wait_for_dom_ready,
     wait_for_element,
     wait_until_dom_is_stable,
@@ -274,21 +266,21 @@ TAILLE_BLOC = 128  # Taille de bloc AES pour le padding
 # ------------------------------------------------------------------------------------------------- #
 def clear_screen():
     if os.name == "posix":
-        os.system("clear")  # nosec B605
+        os.system("clear")  # nosec B605 B607
     else:
-        os.system("cls")  # nosec B605
+        os.system("cls")  # nosec B605 B607
 
 
 def seprateur_menu_affichage_log():
     write_log(
-        f"*************************************************************",
+        "*************************************************************",
         LOG_FILE,
         "INFO",
     )
 
 
 def seprateur_menu_affichage_console():
-    print(f"*************************************************************")
+    print("*************************************************************")
 
 
 def get_next_saturday_if_not_saturday(date_str):
@@ -340,7 +332,7 @@ def log_initialisation():
     if not LOG_FILE:
         raise RuntimeError("Fichier de log introuvable.")
     write_log(
-        f"📌 Démarrage de la fonction 'saisie_automatiser_psatime.main()'",
+        "📌 Démarrage de la fonction 'saisie_automatiser_psatime.main()'",
         LOG_FILE,
         "INFO",
     )
@@ -377,7 +369,7 @@ def initialize_shared_memory():
     # Vérification des données en mémoire partagée
     if not memoire_nom or not memoire_mdp or not memoire_cle:
         write_log(
-            f"🚨 La mémoire partagée n'a pas été initialisée correctement. Assurez-vous que les identifiants ont été chiffrés",
+            "🚨 La mémoire partagée n'a pas été initialisée correctement. Assurez-vous que les identifiants ont été chiffrés",
             LOG_FILE,
             "ERROR",
         )
@@ -543,7 +535,7 @@ def submit_and_validate_additional_information(driver):
         for config_description in DESCRIPTIONS:
             traiter_description(driver, config_description)
         write_log(
-            f"Validation des informations supplémentaires terminée.", LOG_FILE, "INFO"
+            "Validation des informations supplémentaires terminée.", LOG_FILE, "INFO"
         )
 
     # Verifier la présence et Cliquer sur le bouton "OK"
@@ -575,7 +567,7 @@ def save_draft_and_validate(driver):
         driver, By.ID, "ptModFrame_1", timeout=DEFAULT_TIMEOUT
     )
     if element_present:
-        switched_to_iframe = switch_to_iframe_by_id_or_name(driver, "ptModFrame_1")
+        switch_to_iframe_by_id_or_name(driver, "ptModFrame_1")
 
     # Verifier la présence et Cliquer sur le bouton "OK"
     element_present = wait_for_element(
@@ -611,7 +603,7 @@ def cleanup_resources(
         encryption_service.supprimer_memoire_partagee_securisee(memoire_mdp)
     driver_manager.close()
     write_log(
-        f"🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier saisie_automatiser_psatime.",
+        "🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier saisie_automatiser_psatime.",
         LOG_FILE,
         "INFO",
     )
@@ -672,7 +664,7 @@ def main(log_file: str) -> None:
                         click_element_without_wait(driver, By.ID, "#ICOK")
                         if alerte == alertes[0]:
                             write_log(
-                                f"\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)\n"
+                                "\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)\n"
                                 "--> Modifier la date du PSATime dans le fichier ini. Le programme va s'arreter.",
                                 LOG_FILE,
                                 "INFO",
@@ -758,7 +750,7 @@ def main(log_file: str) -> None:
                             # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
                             click_element_without_wait(driver, By.ID, "#ICOK")
                             write_log(
-                                f"⚠️ \nAssurez-vous d’avoir choisi la bonne date pour votre relevé d’heures. (24500,19)",
+                                "⚠️ \nAssurez-vous d’avoir choisi la bonne date pour votre relevé d’heures. (24500,19)",
                                 LOG_FILE,
                                 "INFO",
                             )
@@ -766,7 +758,7 @@ def main(log_file: str) -> None:
                             # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
                             click_element_without_wait(driver, By.ID, "#ICOK")
                             write_log(
-                                f"⚠️ \nUn jour de la semaine est un jour férié. Ces heures n'ont pas été saisies comme telles. (24500,427).",
+                                "⚠️ \nUn jour de la semaine est un jour férié. Ces heures n'ont pas été saisies comme telles. (24500,427).",
                                 LOG_FILE,
                                 "INFO",
                             )
@@ -774,7 +766,7 @@ def main(log_file: str) -> None:
                             # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
                             click_element_without_wait(driver, By.ID, "#ICOK")
                             write_log(
-                                f"⚠️\nIl existe un écart avec vos absences approuvées dans le Centre de service RH (24500,320)",
+                                "⚠️\nIl existe un écart avec vos absences approuvées dans le Centre de service RH (24500,320)",
                                 LOG_FILE,
                                 "INFO",
                             )
