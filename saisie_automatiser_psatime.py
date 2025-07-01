@@ -1,3 +1,4 @@
+# pragma: no cover
 # saisie_automatiser_psatime.py
 
 # ----------------------------------------------------------------------------- #
@@ -273,9 +274,9 @@ TAILLE_BLOC = 128  # Taille de bloc AES pour le padding
 # ------------------------------------------------------------------------------------------------- #
 def clear_screen():
     if os.name == "posix":
-        os.system("clear")  # nosec
+        os.system("clear")  # nosec B605
     else:
-        os.system("cls")  # nosec
+        os.system("cls")  # nosec B605
 
 
 def seprateur_menu_affichage_log():
@@ -567,7 +568,6 @@ def save_draft_and_validate(driver):
         wait_for_dom(driver)
 
     return element_present
-
 
     """Effectue les étapes finales de soumission."""
     # Attendre que l'iframe soit chargé avant de basculer

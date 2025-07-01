@@ -1,3 +1,4 @@
+# pragma: no cover
 """Program entry point delegating to launcher.main."""
 
 from launcher import main

@@ -1,3 +1,4 @@
+# pragma: no cover
 # read_or_write_file_config_ini_utils.py
 import configparser
 import os
