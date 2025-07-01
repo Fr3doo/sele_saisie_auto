@@ -23,6 +23,7 @@
       - `@codecov-ai-reviewer review`  
       - `@codecov-ai-reviewer test`  
   5. Avant d’ouvrir la PR :
+      - exécuter `poetry install`
       - exécuter `poetry run pre-commit run --all-files` et `poetry run pytest`. Les deux doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
       - executer `ruff`, `radon`, `bandit` et `safety`. Les quatres doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
 
