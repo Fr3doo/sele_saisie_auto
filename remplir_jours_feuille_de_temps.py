@@ -16,6 +16,7 @@ from logger_utils import write_log
 from read_or_write_file_config_ini_utils import read_config_ini
 from shared_utils import get_log_file
 from dropdown_options import cgi_options_billing_action
+from constants import JOURS_SEMAINE
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
@@ -47,15 +48,6 @@ ID_TO_KEY_MAPPING = {
 MAX_ATTEMPTS = 5
 DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut
 LONG_TIMEOUT = 20
-JOURS_SEMAINE = {
-    1: "dimanche",
-    2: "lundi",
-    3: "mardi",
-    4: "mercredi",
-    5: "jeudi",
-    6: "vendredi",
-    7: "samedi"
-}
 
 
 # ----------------------------------------------------------------------------- #
