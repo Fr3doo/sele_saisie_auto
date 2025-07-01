@@ -31,6 +31,24 @@ from read_or_write_file_config_ini_utils import get_runtime_resource_path, read_
 from logger_utils import initialize_logger, write_log, close_logs, LOG_LEVELS
 from shared_utils import get_log_file
 from PIL import Image, ImageTk  # Pour la gestion des images - pip install pillow
+from gui_builder import (
+    seperator_ttk,
+    create_tab,
+    create_Title_label_with_grid,
+    create_a_frame,
+    create_labeled_frame,
+    create_Modern_label_with_pack,
+    create_Modern_entry_with_pack,
+    create_Modern_checkbox_with_pack,
+    create_Modern_label_with_grid,
+    create_Modern_entry_with_grid,
+    create_Modern_entry_with_grid_for_password,
+    create_combobox_with_pack,
+    create_combobox,
+    create_button_with_style,
+    create_button_without_style,
+)
+
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
@@ -254,6 +272,7 @@ def validate_data(date):
         return True
 
 
+
 def seperator_ttk(menu, orient='horizontal', fill='x', padx=10, pady=5):
     separator = ttk.Separator(menu, orient=orient)
     separator.pack(fill=fill, padx=padx, pady=pady)
@@ -279,105 +298,6 @@ def create_structured_BooleanVar(config, section, key, default=False):
         except ValueError:
             pass  # Garde la valeur par défaut si la conversion échoue
     return tk.BooleanVar(value=value)
-
-
-def create_tab(notebook, title, style="Modern.TFrame", padding=20):
-    """Crée un onglet (ttk.Frame) et l'ajoute à un ttk.Notebook."""
-    tab_frame = ttk.Frame(notebook, style=style, padding=padding)
-    notebook.add(tab_frame, text=title)
-    return tab_frame
-
-
-def create_Title_label_with_grid(frame, text, row, col, style='Title.TLabel', padx=5, pady=5, sticky="w"):
-    """Crée un Label et le place dans le cadre donné."""
-    title_label = ttk.Label(frame, text=text, style=style)
-    title_label.grid(row=row, column=col, padx=padx, pady=pady, sticky=sticky)
-    return title_label
-
-
-def create_a_frame(parent, style="Modern.TFrame", side=None, fill="both", expand=True, padx=0, pady=0, padding=None):
-    """Crée un ttk.Frame avec des paramètres configurables et le positionne avec `pack`."""
-    frame = ttk.Frame(parent, style=style, padding=padding)
-    frame.pack(side=side, fill=fill, expand=expand, padx=padx, pady=pady)
-    return frame
-
-
-def create_labeled_frame(parent, text="", style="Parametres.TLabelframe", side=None, fill="both", expand=True, padx=0, pady=0, padding=None):
-    """Crée un ttk.LabelFrame avec un texte et le positionne avec `pack`."""
-    label_frame = ttk.LabelFrame(parent, text=text, style=style, padding=padding)
-    label_frame.pack(side=side, fill=fill, expand=expand, padx=padx, pady=pady)
-    return label_frame
-
-
-def create_Modern_label_with_pack(frame, text, style="Modern.TLabel", side=None, padx=0, pady=0, sticky=None):
-    """"""
-    modern_label_pack = ttk.Label(frame, text=text, style=style)
-    modern_label_pack.pack(side=side, padx=padx, pady=pady, sticky=sticky)
-    return modern_label_pack
-
-
-def create_Modern_entry_with_pack(frame, var, width=20, style="Settings.TEntry", side=None, padx=0, pady=0):
-    """"""
-    modern_entry_pack = ttk.Entry(frame, textvariable=var, width=width, style=style)
-    modern_entry_pack.pack(side=side, padx=padx, pady=pady)
-    return modern_entry_pack
-
-
-def create_Modern_checkbox_with_pack(parent, var, style_checkbox="Modern.TCheckbutton", side=None, padx=0, pady=0):
-    """Crée une case à cocher avec l'option .pack."""
-    checkbox = ttk.Checkbutton(parent, variable=var, style=style_checkbox)
-    checkbox.pack(side=side, padx=padx, pady=pady)
-    return checkbox
-
-
-def create_Modern_label_with_grid(frame, text, row, col, style="Modern.TLabel", padx=5, pady=5, sticky="w"):
-    """Crée un Label et le place dans le cadre donné."""
-    modern_label_grid = ttk.Label(frame, text=text, style=style)
-    modern_label_grid.grid(row=row, column=col, padx=padx, pady=pady, sticky=sticky)
-    return modern_label_grid
-
-
-def create_Modern_entry_with_grid(frame, var, row, col, width=20, style="Modern.TEntry", padx=5, pady=5):
-    """Crée un Entry lié à une variable et le place dans le cadre donné."""
-    modern_entry_grid = ttk.Entry(frame, textvariable=var, width=width, style=style)
-    modern_entry_grid.grid(row=row, column=col, padx=padx, pady=pady)
-    return modern_entry_grid
-
-
-def create_Modern_entry_with_grid_for_password(frame, var, row, col, width=20, style="Modern.TEntry", padx=5, pady=5):
-    """Crée un Entry lié à une variable et le place dans le cadre donné."""
-    modern_entry_grid_for_password = ttk.Entry(frame, textvariable=var,  show='*', width=width, style=style)
-    modern_entry_grid_for_password.grid(row=row, column=col, padx=padx, pady=pady)
-    return modern_entry_grid_for_password
-
-
-def create_combobox_with_pack(frame, var, values, width=20, style="Modern.TCombobox", state="normal", side="top", padx=5, pady=5):
-    """Crée une Combobox liée à une variable et la place dans le cadre donné avec pack."""
-    modern_combobox_pack = ttk.Combobox(frame, textvariable=var, values=values, width=width, style=style, state=state)
-    modern_combobox_pack.pack(side=side, padx=padx, pady=pady)
-    return modern_combobox_pack
-
-
-def create_combobox(frame, var, values, row, col, width=20, style="Modern.TCombobox", state="normal", padx=5, pady=8):
-    """Crée une Combobox liée à une variable et la place dans le cadre donné avec grid."""
-    modern_combobox_grid = ttk.Combobox(frame, textvariable=var, values=values, width=width, style=style, state=state)
-    modern_combobox_grid.grid(row=row, column=col, padx=padx, pady=pady)
-    return modern_combobox_grid
-
-
-def create_button_with_style(frame, text, command, style="Modern.TButton", side=None, fill=None, padx=None, pady=None, ipady=None):
-    """Crée un bouton ttk avec un style et l'ajoute au parent avec `.pack`."""
-    button = ttk.Button(frame, text=text, command=command, style=style)
-    button.pack(side=side, fill=fill, padx=padx, pady=pady, ipady=ipady)
-    return button
-
-
-def create_button_without_style(frame, text, command, side=None, fill="x", padx=20, pady=5, ipady=5):
-    """Crée un bouton tk sans style et l'ajoute au parent avec `.pack`."""
-    button = tk.Button(frame, text=text, command=command)
-    button.pack(side=side, fill=fill, padx=padx, pady=pady, ipady=ipady)
-    return button
-
 
 def update_mission_frame_visibility(frame, active_mission_days):
     """Affiche ou masque le cadre des informations de mission en fonction de `active_mission_days`."""
