@@ -8,7 +8,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException, StaleElementReferenceException
 from datetime import datetime, timedelta
-import time
 import sys
 import os
 from multiprocessing import shared_memory
@@ -22,7 +21,7 @@ from read_or_write_file_config_ini_utils import read_config_ini
 from remplir_informations_supp_utils import traiter_description
 from dropdown_options import cgi_options_billing_action
 import remplir_jours_feuille_de_temps
-from shared_utils import get_log_file
+from shared_utils import get_log_file, program_break_time
 
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
@@ -182,16 +181,6 @@ def clear_screen():
         os.system('clear')
     else:
         os.system('cls')
-
-
-def program_break_time(memorization_time, affichage_text):
-    duree_restante_avant_lancement = memorization_time
-    print(f"{affichage_text} {memorization_time} secondes ", end="", flush=True)
-    for i in range(memorization_time):
-        time.sleep(1)
-        print(".", end="", flush=True)
-        duree_restante_avant_lancement -= 1
-
 
 def seprateur_menu_affichage_log():
     write_log(f"*************************************************************", LOG_FILE, "INFO")
