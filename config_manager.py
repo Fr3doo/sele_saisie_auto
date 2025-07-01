@@ -22,8 +22,9 @@ class ConfigManager:
 
     def load(self) -> ConfigParser:
         """Lit ``config.ini`` et retourne un ``ConfigParser``."""
-        self._config = read_config_ini(log_file=self.log_file)
-        return self._config
+        config = read_config_ini(log_file=self.log_file)
+        self._config = config
+        return config
 
     def save(self) -> str:
         """Enregistre la configuration actuelle dans ``config.ini``."""
