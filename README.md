@@ -12,7 +12,7 @@ Automatiser la saisie de la feuille de temps PSA Time via Selenium et une interf
 - Python 3.11
 - Selenium 4.25
 - Cryptography 43.0
-- Dev: pytest, flake8, mypy, black, isort
+- Dev: pytest, flake8, mypy, black, isort, ruff, radon, bandit, safety
 
 ## ⚡ Démarrage rapide
 ```bash
@@ -110,7 +110,9 @@ Rapports de couverture disponibles dans `htmlcov/` via `pytest --cov-report html
 ## 🔍 Qualité du code
 - Formatage : `black`
 - Tri des imports : `isort`
-- Lint : `flake8`
+- Lint : `flake8` et `ruff`
+- Analyse de complexité : `radon`
+- Analyse de sécurité : `bandit` et `safety`
 - Typage statique : `mypy`
 
 ## 🤝 Contribuer
