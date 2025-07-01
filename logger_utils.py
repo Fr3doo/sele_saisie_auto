@@ -32,14 +32,22 @@ DEBUG_MODE = False
 # ------------------------------------------------------------------------------------------- #
 
 
-def initialize_logger(config):
-    """
-    Initialise le niveau de log à partir de la configuration.
+def initialize_logger(config, log_level_override: str | None = None) -> None:
+    """Initialise le niveau de log.
+
+    La priorité est donnée au niveau fourni en argument. Si aucun
+    ``log_level_override`` n'est passé, la valeur provient de la configuration.
+
     Args:
-        config (ConfigParser): Objet de configuration contenant les paramètres.
+        config: Objet ``ConfigParser`` contenant les paramètres.
+        log_level_override: Niveau de log à appliquer en priorité.
     """
+
     global LOG_LEVEL_FILTER
-    LOG_LEVEL_FILTER = config.get("settings", "debug_mode", fallback="INFO")
+    if log_level_override:
+        LOG_LEVEL_FILTER = log_level_override
+    else:
+        LOG_LEVEL_FILTER = config.get("settings", "debug_mode", fallback="INFO")
 
 
 def is_log_level_allowed(current_level, configured_level):
