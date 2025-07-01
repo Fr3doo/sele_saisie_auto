@@ -136,6 +136,27 @@ def wait_for_element(
         return None
 
 
+def find_clickable(driver, by, locator_value, timeout=DEFAULT_TIMEOUT):
+    """Retourne l'élément lorsqu'il devient cliquable."""
+    return wait_for_element(
+        driver, by, locator_value, EC.element_to_be_clickable, timeout
+    )
+
+
+def find_visible(driver, by, locator_value, timeout=DEFAULT_TIMEOUT):
+    """Retourne l'élément lorsqu'il est visible."""
+    return wait_for_element(
+        driver, by, locator_value, EC.visibility_of_element_located, timeout
+    )
+
+
+def find_present(driver, by, locator_value, timeout=DEFAULT_TIMEOUT):
+    """Retourne l'élément lorsqu'il est présent dans le DOM."""
+    return wait_for_element(
+        driver, by, locator_value, EC.presence_of_element_located, timeout
+    )
+
+
 def click_element_without_wait(driver, by, locator_value):
     """Cliquer directement sur un élément spécifié (sans attente)."""
     target_element = driver.find_element(by, locator_value)

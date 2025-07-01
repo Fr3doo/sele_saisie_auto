@@ -4,10 +4,7 @@ from pathlib import Path
 # add project root to sys.path
 sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
-from remplir_jours_feuille_de_temps import (
-    remplir_jours,
-    remplir_mission,
-)
+from remplir_jours_feuille_de_temps import remplir_jours, remplir_mission  # noqa: E402
 
 
 def test_remplir_jours_collects_filled_days(monkeypatch):
@@ -53,9 +50,7 @@ def test_remplir_mission_calls_helpers(monkeypatch):
         calls["specifique"].append((jour, val))
         jours.append(f"mission_{jour}")
 
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.traiter_jour", fake_traiter
-    )
+    monkeypatch.setattr("remplir_jours_feuille_de_temps.traiter_jour", fake_traiter)
     monkeypatch.setattr(
         "remplir_jours_feuille_de_temps.remplir_mission_specifique", fake_specifique
     )
