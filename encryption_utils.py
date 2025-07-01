@@ -131,7 +131,9 @@ class EncryptionService:
             raise
 
 
-    def recuperer_de_memoire_partagee(self, nom: str, taille: int) -> bytes:
+    def recuperer_de_memoire_partagee(
+        self, nom: str, taille: int
+    ) -> tuple[shared_memory.SharedMemory, bytes]:
         """Lit des octets depuis un segment de mémoire partagée existant.
 
     Args:

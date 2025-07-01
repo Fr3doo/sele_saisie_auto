@@ -1,7 +1,7 @@
 import sys
+from multiprocessing import shared_memory
 from pathlib import Path
 from uuid import uuid4
-from multiprocessing import shared_memory
 
 import pytest
 
@@ -36,7 +36,10 @@ def test_gestion_memoire_partagee():
 
     shm = service.stocker_en_memoire_partagee(name, data)
     try:
-        opened, retrieved = service.recuperer_de_memoire_partagee(name, len(data))
+        opened, retrieved = service.recuperer_de_memoire_partagee(
+            name,
+            len(data),
+        )
         try:
             assert retrieved == data
         finally:
@@ -53,4 +56,3 @@ def test_gestion_memoire_partagee():
             shm.unlink()
         except FileNotFoundError:
             pass
-
