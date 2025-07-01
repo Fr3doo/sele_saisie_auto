@@ -168,7 +168,6 @@ def send_keys_to_element(driver, by, locator_value, input_text):
     """Fonction pour envoyer des touches à un élément spécifié."""
     target_element = driver.find_element(by, locator_value)
     target_element.send_keys(input_text)
-    # write_log(f"Valeur '{input_text}' envoyée à l'élément {by}='{locator_value}' avec succès.", LOG_FILE, "CRITICAL")
 
 
 def verifier_champ_jour_rempli(day_field, day_label):
