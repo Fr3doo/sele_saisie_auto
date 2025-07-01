@@ -23,8 +23,7 @@ from dropdown_options import (
     cgi_options_billing_action,
 )
 from constants import JOURS_SEMAINE__DICT, JOURS_SEMAINE__LIST
-from encryption_utils import generer_cle_aes, chiffrer_donnees, stocker_en_memoire_partagee
-from encryption_utils import supprimer_memoire_partagee_securisee
+from encryption_utils import EncryptionService
 # from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 # from cryptography.hazmat.primitives.padding import PKCS7
 from multiprocessing import shared_memory
@@ -165,7 +164,7 @@ def setup_modern_style(configuration, colors):
 # ------------------------------- FONCTIONS ----------------------------------- #
 # ----------------------------------------------------------------------------- #
 
-def run_psatime_with_credentials(cle_aes, login_var, mdp_var, log_file):
+def run_psatime_with_credentials(encryption_service, cle_aes, login_var, mdp_var, log_file):
     try:
         login = login_var.get()
         password = mdp_var.get()
@@ -175,9 +174,9 @@ def run_psatime_with_credentials(cle_aes, login_var, mdp_var, log_file):
             return None
         
         # Chiffrer les informations
-        nom_utilisateur_chiffre = chiffrer_donnees(login, cle_aes, log_file=log_file)
-        mot_de_passe_chiffre = chiffrer_donnees(password, cle_aes, log_file=log_file)
-        memoire_cle = stocker_en_memoire_partagee(MEMOIRE_PARTAGEE_CLE, cle_aes, log_file=log_file)
+        nom_utilisateur_chiffre = encryption_service.chiffrer_donnees(login, cle_aes)
+        mot_de_passe_chiffre = encryption_service.chiffrer_donnees(password, cle_aes)
+        memoire_cle = encryption_service.stocker_en_memoire_partagee(MEMOIRE_PARTAGEE_CLE, cle_aes)
         write_log(f"Données à chiffrer pour l'utilisateur: {login}.", log_file, "CRITICAL")
         write_log(f"Données à chiffrer pour le password: {password}.", log_file, "CRITICAL")
         write_log(f"Données chiffrées stockées pour l'utilisateur: {nom_utilisateur_chiffre}.", log_file, "CRITICAL")
@@ -202,12 +201,12 @@ def run_psatime_with_credentials(cle_aes, login_var, mdp_var, log_file):
         # Suppression sécurisée
         time.sleep(DUREE_DE_VIE_CLE)
         if memoire_nom is not None:
-            supprimer_memoire_partagee_securisee(memoire_nom, log_file=log_file)
+            encryption_service.supprimer_memoire_partagee_securisee(memoire_nom)
         if memoire_mdp is not None:
-            supprimer_memoire_partagee_securisee(memoire_mdp, log_file=log_file)
+            encryption_service.supprimer_memoire_partagee_securisee(memoire_mdp)
         if memoire_cle is not None:
             # Suppression sécurisée des mémoires partagées
-            supprimer_memoire_partagee_securisee(memoire_cle, log_file=log_file)
+            encryption_service.supprimer_memoire_partagee_securisee(memoire_cle)
         write_log(f"🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier main.", log_file, "INFO")
 
 
@@ -513,6 +512,7 @@ def save_config(elements):
     sub_category_code_var       = elements[11] 
     billing_action_var          = elements[12]
     log_file_var                = elements[13]
+    encryption_service          = elements[14]
     
     messagebox.showinfo("Sauvegarde en cours", "Veuillez patienter pendant que la configuration est sauvegardée.")
     if not validate_data(date_cible):
@@ -552,14 +552,14 @@ def save_config(elements):
     
         # Fermer la fenêtre de configuration et revenir au menu principal
         main_configuration.destroy()
-        main_menu(cle_aes, log_file=log_file_var)
+        main_menu(cle_aes, log_file=log_file_var, encryption_service=encryption_service)
     except IOError as e:
         messagebox.showerror("Erreur", f"Impossible de sauvegarder la configuration : {e}")
 
 # ----------------------------------------------------------------------------- #
 # --------------------- CODE PRINCIPALE --------------------------------------- #
 # ----------------------------------------------------------------------------- #
-def start_configuration(cle_aes, log_file):
+def start_configuration(cle_aes, log_file, encryption_service):
     # Initialisation de la configuration
     config_ini = read_config_ini(log_file)
 
@@ -784,11 +784,22 @@ def start_configuration(cle_aes, log_file):
     button_frame = create_a_frame(configuration, side=tk.BOTTOM, pady=20)
     
     elements_to_save_it = [
-                        config_ini, date_cible_var, debug_mode_var, work_schedule_vars,
-                        additional_info_vars, work_location_vars, configuration, cle_aes,
-                        project_code_var, activity_code_var, category_code_var, 
-                        sub_category_code_var, billing_action_var, log_file
-                        ]
+        config_ini,
+        date_cible_var,
+        debug_mode_var,
+        work_schedule_vars,
+        additional_info_vars,
+        work_location_vars,
+        configuration,
+        cle_aes,
+        project_code_var,
+        activity_code_var,
+        category_code_var,
+        sub_category_code_var,
+        billing_action_var,
+        log_file,
+        encryption_service,
+    ]
     
     save_button = create_button_with_style(button_frame, text="Sauvegarder", command=lambda: save_config(elements_to_save_it))
     # Lier la touche Entrée au bouton
@@ -804,7 +815,7 @@ def start_configuration(cle_aes, log_file):
 # ----------------------------------------------------------------------------- #
 # -------------------------- MENU DE DEMARRAGE -------------------------------- #
 # ----------------------------------------------------------------------------- #
-def main_menu(cle_aes, log_file):
+def main_menu(cle_aes, log_file, encryption_service):
     global menu
     menu = tk.Tk()
     menu.title("Program PSATime Auto")
@@ -835,7 +846,11 @@ def main_menu(cle_aes, log_file):
     launch_button.bind("<Return>", lambda event: launch_button.invoke())
     
     # menu : Configurer le lancement
-    config_button = create_button_without_style(menu, text="Configurer le lancement", command=lambda: [menu.destroy(), start_configuration(cle_aes, log_file)])
+    config_button = create_button_without_style(
+        menu,
+        text="Configurer le lancement",
+        command=lambda: [menu.destroy(), start_configuration(cle_aes, log_file, encryption_service)],
+    )
     # Lier la touche Entrée au bouton
     config_button.bind("<Return>", lambda event: config_button.invoke())
 
@@ -854,7 +869,11 @@ def main_menu(cle_aes, log_file):
     signature_label.pack(fill='x', padx=20, pady=5, ipady=5)
 
     # Mise à jour de la commande du bouton "Lancer votre PSATime" afin de prendre en compte les login et mdp
-    launch_button.config(command=lambda: run_psatime_with_credentials(cle_aes, login_var, mdp_var, log_file))
+    launch_button.config(
+        command=lambda: run_psatime_with_credentials(
+            encryption_service, cle_aes, login_var, mdp_var, log_file
+        )
+    )
 
     # Focus initial sur le champ login
     login_entry.focus()
@@ -865,7 +884,7 @@ def main_menu(cle_aes, log_file):
     time.sleep(10)
 
 if __name__ == "__main__":
-    log_file = get_log_file() # Initialiser le fichier de log
+    log_file = get_log_file()  # Initialiser le fichier de log
     write_log(f"🚦 Initialisation du programme.", log_file, "INFO")
     write_log(f"🔍 Chemin du fichier log : {log_file}", log_file, "INFO")
     
@@ -880,8 +899,9 @@ if __name__ == "__main__":
     try: 
         # Lancer le programme principal
         write_log(f"📌 Démarrage du programme", log_file, "INFO")
-        cle_aes = generer_cle_aes(TAILLE_CLE, log_file=log_file)
-        main_menu(cle_aes, log_file=log_file)
+        encryption_service = EncryptionService(log_file)
+        cle_aes = encryption_service.generer_cle_aes(TAILLE_CLE)
+        main_menu(cle_aes, log_file=log_file, encryption_service=encryption_service)
         write_log(f"✅ Toutes les tâches ont été effectuées.", log_file, "INFO")
     except Exception as e:
         write_log(f"Erreur rencontrée : {str(e)}", log_file, "ERROR")

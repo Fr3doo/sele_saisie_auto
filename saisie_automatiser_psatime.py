@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import sys
 import os
 from multiprocessing import shared_memory
-from encryption_utils import recuperer_de_memoire_partagee, dechiffrer_donnees ,supprimer_memoire_partagee_securisee
+from encryption_utils import EncryptionService
 from fonctions_selenium_utils import click_element_without_wait, controle_insertion, definir_taille_navigateur, detecter_doublons_jours
 from fonctions_selenium_utils import detecter_et_verifier_contenu, effacer_et_entrer_valeur, modifier_date_input, ouvrir_navigateur_sur_ecran_principal
 from fonctions_selenium_utils import remplir_champ_texte, selectionner_option_menu_deroulant_type_select, send_keys_to_element, switch_to_default_content
@@ -29,6 +29,7 @@ from shared_utils import get_log_file, program_break_time
 
 LOG_FILE = get_log_file()
 config = read_config_ini(LOG_FILE)
+encryption_service = EncryptionService(LOG_FILE)
 
 # Extraction des informations de connexion
 ENCRYPTED_LOGIN = config.get('credentials', 'login')
@@ -237,7 +238,9 @@ def initialize_shared_memory():
     """Récupère les données de la mémoire partagée pour le login."""
     memoire_cle = memoire_nom = memoire_mdp = None
     
-    memoire_cle, cle_aes = recuperer_de_memoire_partagee(MEMOIRE_PARTAGEE_CLE, TAILLE_CLE, log_file=LOG_FILE)
+    memoire_cle, cle_aes = encryption_service.recuperer_de_memoire_partagee(
+        MEMOIRE_PARTAGEE_CLE, TAILLE_CLE
+    )
     write_log(f"💀 Clé AES récupérée : {cle_aes.hex()}", LOG_FILE, "CRITICAL")
 
     memoire_nom = shared_memory.SharedMemory(name="memoire_nom")
@@ -279,8 +282,8 @@ def setup_browser():
 
 def connect_to_psatime(driver, cle_aes, nom_utilisateur_chiffre, mot_de_passe_chiffre):
     """Connecte l'utilisateur au portail PSATime."""
-    nom_utilisateur = dechiffrer_donnees(nom_utilisateur_chiffre, cle_aes, log_file=LOG_FILE)
-    mot_de_passe = dechiffrer_donnees(mot_de_passe_chiffre, cle_aes, log_file=LOG_FILE)
+    nom_utilisateur = encryption_service.dechiffrer_donnees(nom_utilisateur_chiffre, cle_aes)
+    mot_de_passe = encryption_service.dechiffrer_donnees(mot_de_passe_chiffre, cle_aes)
     cle_aes = None
     
     send_keys_to_element(driver, By.ID, "userid", nom_utilisateur)
@@ -414,11 +417,11 @@ def finalize_submit_and_validate(driver):
 def cleanup_resources(driver, memoire_cle, memoire_nom, memoire_mdp):
     """Nettoie les ressources à la fin de l'exécution."""
     if memoire_cle:
-        supprimer_memoire_partagee_securisee(memoire_cle, LOG_FILE)
+        encryption_service.supprimer_memoire_partagee_securisee(memoire_cle)
     if memoire_nom:
-        supprimer_memoire_partagee_securisee(memoire_nom, LOG_FILE)
+        encryption_service.supprimer_memoire_partagee_securisee(memoire_nom)
     if memoire_mdp:
-        supprimer_memoire_partagee_securisee(memoire_mdp, LOG_FILE)
+        encryption_service.supprimer_memoire_partagee_securisee(memoire_mdp)
     if driver:
         driver.quit()
     write_log(f"🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier saisie_automatiser_psatime.", LOG_FILE, "INFO")
