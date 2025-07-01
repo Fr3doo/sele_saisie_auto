@@ -118,7 +118,7 @@ graph TD
 * [ ] Créer un workflow GitHub Actions pour les tests (`ci.yml`).
 * [ ] Ajouter des tests unitaires pour chaque agent.
 * [ ] Automatiser la génération du diagramme Mermaid.
-* [ ] Documenter la procédure d’export en binaire via PyInstaller.
+* [x] Documenter la procédure d’export en binaire via PyInstaller (voir `README.md`).
 
 ## 11. Interfaces détaillées des agents
 *(à compléter au fur et à mesure des besoins)*
