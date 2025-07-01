@@ -20,9 +20,11 @@
   2. Étapes pour tester  
   3. Impact éventuel sur les autres agents  
   4. CodecovIA : ajouter à la fin du commentaire PR :  
-- `@codecov-ai-reviewer review`  
-- `@codecov-ai-reviewer test`  
-  5. Avant d’ouvrir la PR : exécuter `poetry run pre-commit run --all-files` et `poetry run pytest`. Les deux doivent réussir.
+      - `@codecov-ai-reviewer review`  
+      - `@codecov-ai-reviewer test`  
+  5. Avant d’ouvrir la PR :
+      - exécuter `poetry run pre-commit run --all-files` et `poetry run pytest`. Les deux doivent réussir.
+      - execute `radon`, `bandit` et `safety`.
 
 ## 4. Codex/ChatGPT Usage Tips
 > 🔧 Conseils pour guider l’IA dans ce repo  
