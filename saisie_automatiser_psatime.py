@@ -20,6 +20,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 
 import remplir_jours_feuille_de_temps
+from config_manager import ConfigManager
 from dropdown_options import cgi_options_billing_action
 from encryption_utils import EncryptionService
 from fonctions_selenium_utils import (
@@ -46,7 +47,6 @@ from fonctions_selenium_utils import (
     wait_until_dom_is_stable,
 )
 from logger_utils import write_log
-from read_or_write_file_config_ini_utils import read_config_ini
 from remplir_informations_supp_utils import set_log_file as set_log_file_infos
 from remplir_informations_supp_utils import traiter_description
 from shared_utils import program_break_time
@@ -81,10 +81,7 @@ ID_TO_KEY_MAPPING = {
     "SUB_CATEGORY_CODE$0": "sub_category_code",
     "BILLING_ACTION$0": "billing_action",
 }
-INFORMATIONS_SUPPLEMENTAIRES_PERIODE_REPOS_RESPECTEE = {}
-INFORMATIONS_SUPPLEMENTAIRES_HORAIRE_TRAVAIL_EFFECTIF = {}
-INFORMATIONS_SUPPLEMENTAIRES_PLUS_DEMI_JOURNEE_TRAVAILLEE = {}
-INFORMATIONS_SUPPLEMENTAIRES_DUREE_PAUSE_DEJEUNER = {}
+INFORMATIONS_SUPPLEMENTAIRES = {}
 LIEU_DU_TRAVAIL_MATIN = {}
 LIEU_DU_TRAVAIL_APRES_MIDI = {}
 DESCRIPTIONS = []
@@ -95,16 +92,14 @@ def initialize(log_file: str) -> None:
 
     global LOG_FILE, config, encryption_service, ENCRYPTED_LOGIN, ENCRYPTED_MDP, URL, DATE_CIBLE
     global LISTE_ITEMS_DESCRIPTIONS, JOURS_DE_TRAVAIL, INFORMATIONS_PROJET_MISSION
-    global INFORMATIONS_SUPPLEMENTAIRES_PERIODE_REPOS_RESPECTEE
-    global INFORMATIONS_SUPPLEMENTAIRES_HORAIRE_TRAVAIL_EFFECTIF
-    global INFORMATIONS_SUPPLEMENTAIRES_PLUS_DEMI_JOURNEE_TRAVAILLEE
-    global INFORMATIONS_SUPPLEMENTAIRES_DUREE_PAUSE_DEJEUNER
+    global INFORMATIONS_SUPPLEMENTAIRES
     global LIEU_DU_TRAVAIL_MATIN, LIEU_DU_TRAVAIL_APRES_MIDI, DESCRIPTIONS
 
     LOG_FILE = log_file
     set_log_file_selenium(log_file)
     set_log_file_infos(log_file)
-    config = read_config_ini(log_file)
+    manager = ConfigManager(log_file=log_file)
+    config = manager.load()
     encryption_service = EncryptionService(log_file)
 
     ENCRYPTED_LOGIN = config.get("credentials", "login")
@@ -129,21 +124,27 @@ def initialize(log_file: str) -> None:
         for item_projet, value in config.items("project_information")
     }
 
-    INFORMATIONS_SUPPLEMENTAIRES_PERIODE_REPOS_RESPECTEE = {
-        day: value
-        for day, value in config.items("additional_information_rest_period_respected")
-    }
-    INFORMATIONS_SUPPLEMENTAIRES_HORAIRE_TRAVAIL_EFFECTIF = {
-        day: value
-        for day, value in config.items("additional_information_work_time_range")
-    }
-    INFORMATIONS_SUPPLEMENTAIRES_PLUS_DEMI_JOURNEE_TRAVAILLEE = {
-        day: value
-        for day, value in config.items("additional_information_half_day_worked")
-    }
-    INFORMATIONS_SUPPLEMENTAIRES_DUREE_PAUSE_DEJEUNER = {
-        day: value
-        for day, value in config.items("additional_information_lunch_break_duration")
+    INFORMATIONS_SUPPLEMENTAIRES = {
+        "periode_repos_respectee": {
+            day: value
+            for day, value in config.items(
+                "additional_information_rest_period_respected"
+            )
+        },
+        "horaire_travail_effectif": {
+            day: value
+            for day, value in config.items("additional_information_work_time_range")
+        },
+        "plus_demi_journee_travaillee": {
+            day: value
+            for day, value in config.items("additional_information_half_day_worked")
+        },
+        "duree_pause_dejeuner": {
+            day: value
+            for day, value in config.items(
+                "additional_information_lunch_break_duration"
+            )
+        },
     }
     LIEU_DU_TRAVAIL_MATIN = {
         day: value for day, value in config.items("work_location_am")
@@ -158,28 +159,34 @@ def initialize(log_file: str) -> None:
             "id_value_ligne": "DESCR100$",
             "id_value_jours": "UC_DAILYREST",
             "type_element": "select",
-            "valeurs_a_remplir": INFORMATIONS_SUPPLEMENTAIRES_PERIODE_REPOS_RESPECTEE,
+            "valeurs_a_remplir": INFORMATIONS_SUPPLEMENTAIRES[
+                "periode_repos_respectee"
+            ],
         },
         {
             "description_cible": "Mon temps de travail effectif a débuté entre 8h00 et 10h00 et Mon temps de travail effectif a pris fin entre 16h30 et 19h00",
             "id_value_ligne": "DESCR100$",
             "id_value_jours": "UC_DAILYREST",
             "type_element": "select",
-            "valeurs_a_remplir": INFORMATIONS_SUPPLEMENTAIRES_HORAIRE_TRAVAIL_EFFECTIF,
+            "valeurs_a_remplir": INFORMATIONS_SUPPLEMENTAIRES[
+                "horaire_travail_effectif"
+            ],
         },
         {
             "description_cible": "J’ai travaillé plus d’une demi-journée",
             "id_value_ligne": "DESCR100$",
             "id_value_jours": "UC_DAILYREST",
             "type_element": "select",
-            "valeurs_a_remplir": INFORMATIONS_SUPPLEMENTAIRES_PLUS_DEMI_JOURNEE_TRAVAILLEE,
+            "valeurs_a_remplir": INFORMATIONS_SUPPLEMENTAIRES[
+                "plus_demi_journee_travaillee"
+            ],
         },
         {
             "description_cible": "Durée de la pause déjeuner",
             "id_value_ligne": "UC_TIME_LIN_WRK_DESCR200$",
             "id_value_jours": "UC_TIME_LIN_WRK_UC_DAILYREST",
             "type_element": "input",
-            "valeurs_a_remplir": INFORMATIONS_SUPPLEMENTAIRES_DUREE_PAUSE_DEJEUNER,
+            "valeurs_a_remplir": INFORMATIONS_SUPPLEMENTAIRES["duree_pause_dejeuner"],
         },
         {
             "description_cible": "Matin",
@@ -213,25 +220,25 @@ def initialize(log_file: str) -> None:
             write_log(f"🔹 '{day}': ('{activity}', '{hours}')", LOG_FILE, "INFO")
 
         write_log("👉 Infos_supp_cgi_periode_repos_respectee:", LOG_FILE, "INFO")
-        for day, status in INFORMATIONS_SUPPLEMENTAIRES_PERIODE_REPOS_RESPECTEE.items():
+        for day, status in INFORMATIONS_SUPPLEMENTAIRES[
+            "periode_repos_respectee"
+        ].items():
             write_log(f"🔹 '{day}': '{status}'", LOG_FILE, "INFO")
 
         write_log("👉 Infos_supp_cgi_horaire_travail_effectif:", LOG_FILE, "INFO")
-        for (
-            day,
-            status,
-        ) in INFORMATIONS_SUPPLEMENTAIRES_HORAIRE_TRAVAIL_EFFECTIF.items():
+        for day, status in INFORMATIONS_SUPPLEMENTAIRES[
+            "horaire_travail_effectif"
+        ].items():
             write_log(f"🔹 '{day}': '{status}'", LOG_FILE, "INFO")
 
         write_log("👉 Planning de travail de la semaine:", LOG_FILE, "INFO")
-        for (
-            day,
-            status,
-        ) in INFORMATIONS_SUPPLEMENTAIRES_PLUS_DEMI_JOURNEE_TRAVAILLEE.items():
+        for day, status in INFORMATIONS_SUPPLEMENTAIRES[
+            "plus_demi_journee_travaillee"
+        ].items():
             write_log(f"🔹 '{day}': '{status}'", LOG_FILE, "INFO")
 
         write_log("👉 Infos_supp_cgi_duree_pause_dejeuner:", LOG_FILE, "INFO")
-        for day, status in INFORMATIONS_SUPPLEMENTAIRES_DUREE_PAUSE_DEJEUNER.items():
+        for day, status in INFORMATIONS_SUPPLEMENTAIRES["duree_pause_dejeuner"].items():
             write_log(f"🔹 '{day}': '{status}'", LOG_FILE, "INFO")
 
         write_log("👉 Lieu de travail Matin:", LOG_FILE, "INFO")
