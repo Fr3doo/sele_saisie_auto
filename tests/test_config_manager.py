@@ -1,8 +1,5 @@
-import os
 import sys
 from pathlib import Path
-
-import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
@@ -15,7 +12,8 @@ def test_load_and_save(tmp_path, monkeypatch):
 
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
-        "read_or_write_file_config_ini_utils.messagebox.showinfo", lambda *a, **k: None
+        "read_or_write_file_config_ini_utils.messagebox.showinfo",
+        lambda *a, **k: None,
     )
 
     manager = ConfigManager(log_file=str(tmp_path / "log.html"))
