@@ -1,7 +1,6 @@
 # remplir_jours_feuille_de_temps.py
 
 # Import des bibliothèques nécessaires
-import time
 from selenium.common.exceptions import (
     NoSuchElementException,
     TimeoutException,
@@ -14,7 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from fonctions_selenium_utils import controle_insertion, detecter_et_verifier_contenu, effacer_et_entrer_valeur, remplir_champ_texte, selectionner_option_menu_deroulant_type_select, trouver_ligne_par_description, verifier_champ_jour_rempli, wait_for_dom_ready, wait_for_element, wait_until_dom_is_stable
 from logger_utils import write_log
 from read_or_write_file_config_ini_utils import read_config_ini
-from shared_utils import get_log_file
+from shared_utils import get_log_file, program_break_time
 from dropdown_options import cgi_options_billing_action
 from constants import JOURS_SEMAINE
 
@@ -94,14 +93,6 @@ def afficher_message_insertion(jour, valeur, tentative, message):
         write_log(f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' ({message}{tentative + 1})", LOG_FILE, "DEBUG")
     else:
         write_log(f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' {message})", LOG_FILE, "DEBUG")
-
-def program_break_time(memorization_time, affichage_text):
-    duree_restante_avant_lancement = memorization_time
-    print(f"{affichage_text} {memorization_time} secondes ", end="", flush=True)
-    for i in range(memorization_time):
-        time.sleep(1)
-        print(".", end="", flush=True)
-        duree_restante_avant_lancement -= 1
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS --------------------------------------------- #
