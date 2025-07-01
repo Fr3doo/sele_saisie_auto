@@ -90,15 +90,6 @@ def initialize(log_file: str) -> None:
 # ------------------------------- UTILITIES ----------------------------------- #
 # ----------------------------------------------------------------------------- #
 
-# def log_error(message: str):
-#     """Log errors to a file."""
-#     with open(LOG_FILE, 'a', encoding="utf-8") as log:
-#         log.write(f"ERROR: {message}\n")
-
-# def log_info(message: str):
-#     """Log info to a file."""
-#     with open(LOG_FILE, 'a', encoding="utf-8") as log:
-#         log.write(f"INFO: {message}\n")
 
 
 def wait_for_dom(driver):

@@ -18,15 +18,6 @@ DEFAULT_LOG_LEVEL = "INFO"
 LOG_LEVEL_FILTER = DEFAULT_LOG_LEVEL
 DEBUG_MODE = False
 
-# -------------------
-# Test non concluant
-# LOG_FILE = get_log_file()
-# config = read_config_ini(LOG_FILE)
-# LOG_LEVEL_FILTER = "INFO"  # Niveau maxi des logs à écrire
-# LOG_LEVEL_FILTER = None  # Niveau maxi des logs à écrire
-# LOG_LEVEL_FILTER = config.get('settings', 'debug_mode') # Niveau maxi des logs à écrire
-# -------------------
-
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #

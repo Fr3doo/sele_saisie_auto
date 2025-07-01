@@ -1,21 +1,14 @@
 # remplir_informations_supp_france.py
 
 # Import des bibliothèques nécessaires
-# import configparser
-# from selenium import webdriver
 from typing import Optional
 
 from selenium.webdriver.common.by import By
 
-# from selenium.webdriver.common.keys import Keys
-# from selenium.webdriver.edge.options import Options as EdgeOptions
-# from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
 
 from constants import JOURS_SEMAINE
 
-# from selenium.webdriver.common.action_chains import ActionChains
-# from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException, StaleElementReferenceException
 from fonctions_selenium_utils import (
     remplir_champ_texte,
     selectionner_option_menu_deroulant_type_select,

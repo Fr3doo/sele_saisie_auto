@@ -61,7 +61,6 @@ ENCRYPTED_LOGIN = None
 ENCRYPTED_MDP = None
 URL = None
 DATE_CIBLE = None
-# DEBUG_MODE = config.get('settings', 'debug_mode').lower() == 'true'
 DEBUG_MODE = True
 LISTE_ITEMS_DESCRIPTIONS = []
 JOURS_DE_TRAVAIL = {}
@@ -503,7 +502,6 @@ def submit_date_cible(driver):
     )
     if element_present:
         send_keys_to_element(driver, By.ID, "PTS_CFG_CL_WRK_PTS_ADD_BTN", Keys.RETURN)
-        # click_element_without_wait(driver, By.ID, "PTS_CFG_CL_WRK_PTS_ADD_BTN")
     wait_for_dom(driver)
 
     return element_present
@@ -571,7 +569,6 @@ def save_draft_and_validate(driver):
     return element_present
 
 
-def finalize_submit_and_validate(driver):
     """Effectue les étapes finales de soumission."""
     # Attendre que l'iframe soit chargé avant de basculer
     element_present = wait_for_element(
@@ -765,7 +762,6 @@ def main(log_file: str) -> None:
                                 LOG_FILE,
                                 "INFO",
                             )
-                            # input("--> Appuyez sur Entrée pour continuer.")
                         elif alerte == alertes[1]:
                             # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
                             click_element_without_wait(driver, By.ID, "#ICOK")
@@ -774,7 +770,6 @@ def main(log_file: str) -> None:
                                 LOG_FILE,
                                 "INFO",
                             )
-                            # input("--> Appuyez sur Entrée pour fermer le navigateur.")
                         elif alerte == alertes[2]:
                             # Cliquer sur le bouton "OK" pour fermer l'alerte et indiquer à l'utilisateur le warning
                             click_element_without_wait(driver, By.ID, "#ICOK")
@@ -783,7 +778,6 @@ def main(log_file: str) -> None:
                                 LOG_FILE,
                                 "INFO",
                             )
-                            # input("--> Appuyez sur Entrée pour fermer le navigateur.")
                         break  # Arrêter la boucle une fois la ou les alerte(s) traitée(s)
 
         wait_for_dom(driver)
@@ -794,7 +788,6 @@ def main(log_file: str) -> None:
         # ----------------------------------------------------------------------------- #
         # ---------------------- ETAPE SOUMETTRE POUR APPROB. ------------------------- #
         # ----------------------------------------------------------------------------- #
-        # finalize_submit_and_validate(driver)
 
     except NoSuchElementException as e:
         write_log(f"❌ L'élément n'a pas été trouvé : {str(e)}", LOG_FILE, "ERROR")
