@@ -1,7 +1,6 @@
 import os
 from datetime import datetime
 
-
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
@@ -32,6 +31,7 @@ DEBUG_MODE = False
 # ----------------------------------- FONCTIONS --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
 
+
 def initialize_logger(config):
     """
     Initialise le niveau de log à partir de la configuration.
@@ -39,17 +39,17 @@ def initialize_logger(config):
         config (ConfigParser): Objet de configuration contenant les paramètres.
     """
     global LOG_LEVEL_FILTER
-    LOG_LEVEL_FILTER = config.get('settings', 'debug_mode', fallback='INFO')
-    
+    LOG_LEVEL_FILTER = config.get("settings", "debug_mode", fallback="INFO")
+
 
 def is_log_level_allowed(current_level, configured_level):
     """
     Vérifie si le niveau actuel est autorisé en fonction de la configuration.
-    
+
     Args:
         current_level (str): Niveau du log actuel (ex: "INFO", "ERROR").
         configured_level (str): Niveau de log configuré (ex: "DEBUG").
-    
+
     Returns:
         bool: True si le niveau est autorisé, False sinon.
     """
@@ -59,11 +59,11 @@ def is_log_level_allowed(current_level, configured_level):
 def should_rotate(log_file, max_size_mb=5):
     """
     Vérifie si un fichier de log doit être tourné (taille maximale atteinte).
-    
+
     Args:
         log_file (str): Chemin du fichier de log.
         max_size_mb (int): Taille maximale en mégaoctets avant rotation.
-    
+
     Returns:
         bool: True si le fichier doit être tourné, False sinon.
     """
@@ -76,7 +76,7 @@ def should_rotate(log_file, max_size_mb=5):
 def rotate_log_file(log_file):
     """
     Tourne un fichier de log en renommant l'ancien fichier avec un suffixe unique.
-    
+
     Args:
         log_file (str): Chemin du fichier de log à tourner.
     """
@@ -90,7 +90,7 @@ def rotate_log_file(log_file):
 def get_html_style():
     """
     Retourne le style HTML/CSS utilisé pour les fichiers de log.
-    
+
     Returns:
         str: Chaîne contenant les balises HTML nécessaires pour inclure le style CSS.
     """
@@ -156,26 +156,29 @@ def initialize_html_log_file(log_file):
                 f.write(content)
 
 
-
 def write_log(
     message,
     log_file,
     level="INFO",
     log_format=HTML_FORMAT,
     auto_close=False,
-    max_size_mb=5
+    max_size_mb=5,
 ):
     try:
         # Vérifier si le niveau de log est valide
         if level not in LOG_LEVELS:
             if DEBUG_MODE:
-                debug_print(f"Niveau non valide ignoré : {level}")  # Log pour niveau inconnu
+                debug_print(
+                    f"Niveau non valide ignoré : {level}"
+                )  # Log pour niveau inconnu
             return
 
         # Appliquer le filtre de niveau (gère les niveaux supérieurs ou égaux à LOG_LEVEL_FILTER)
         if LOG_LEVELS[level] > LOG_LEVELS[LOG_LEVEL_FILTER]:
             if DEBUG_MODE:
-                debug_print(f"Niveau ignoré par filtre : {level}")  # Log pour niveau filtré
+                debug_print(
+                    f"Niveau ignoré par filtre : {level}"
+                )  # Log pour niveau filtré
             return
 
         # Securité supplementaire pour les logs: Si le mode DEBUG est désactivé, n'afficher que les logs INFO
@@ -198,10 +201,12 @@ def write_log(
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         if log_format.lower() == HTML_FORMAT:
-            log_message = f"<tr><td>{timestamp}</td><td>{level}</td><td>{message}</td></tr>\n"
-            
+            log_message = (
+                f"<tr><td>{timestamp}</td><td>{level}</td><td>{message}</td></tr>\n"
+            )
+
             initialize_html_log_file(log_file)
-            
+
             # Ajout du message
             with open(log_file, "a", encoding="utf-8") as f:
                 if DEBUG_MODE:
@@ -233,7 +238,7 @@ def debug_print(message):
 def close_logs(log_file, log_format=HTML_FORMAT):
     """
     Ajoute une fermeture propre du tableau HTML si nécessaire.
-    
+
     Args:
         log_file (str): Chemin complet du fichier de log.
         log_format (str): Format du fichier de log ("html" ou "txt").

@@ -6,11 +6,11 @@ import tkinter as tk
 from tkinter import messagebox
 
 from gui_builder import (
+    create_button_without_style,
     create_labeled_frame,
     create_Modern_entry_with_grid,
     create_Modern_entry_with_grid_for_password,
     create_Modern_label_with_grid,
-    create_button_without_style,
 )
 from launcher import run_psatime_with_credentials, start_configuration
 
@@ -26,9 +26,13 @@ def main_menu(cle_aes: bytes, log_file: str, encryption_service) -> None:
     mdp_var = tk.StringVar()
 
     tk.Label(menu, text="Program PSATime Auto", font=("Segoe UI", 14)).pack(pady=10)
-    credentials = create_labeled_frame(menu, text="Identifiants", padx=20, pady=10, padding=(10, 5))
+    credentials = create_labeled_frame(
+        menu, text="Identifiants", padx=20, pady=10, padding=(10, 5)
+    )
     create_Modern_label_with_grid(credentials, text="Login:", row=0, col=0)
-    login_entry = create_Modern_entry_with_grid(credentials, var=login_var, row=0, col=1)
+    login_entry = create_Modern_entry_with_grid(
+        credentials, var=login_var, row=0, col=1
+    )
     create_Modern_label_with_grid(credentials, text="@cgi.com", row=0, col=2)
 
     create_Modern_label_with_grid(credentials, text="Mot de passe:", row=1, col=0)
@@ -46,7 +50,10 @@ def main_menu(cle_aes: bytes, log_file: str, encryption_service) -> None:
     config_btn = create_button_without_style(
         menu,
         text="Configurer le lancement",
-        command=lambda: [menu.destroy(), start_configuration(cle_aes, log_file, encryption_service)],
+        command=lambda: [
+            menu.destroy(),
+            start_configuration(cle_aes, log_file, encryption_service),
+        ],
     )
     config_btn.bind("<Return>", lambda _: config_btn.invoke())
 

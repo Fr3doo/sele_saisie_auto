@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import multiprocessing
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import messagebox, ttk
 
 from config_manager import ConfigManager
 from encryption_utils import EncryptionService
@@ -16,12 +16,10 @@ from gui_builder import (
     create_Modern_label_with_pack,
     create_tab,
 )
-from logger_utils import initialize_logger, write_log, close_logs, LOG_LEVELS
+from logger_utils import LOG_LEVELS, close_logs, initialize_logger, write_log
+from main_menu import main_menu
 from read_or_write_file_config_ini_utils import read_config_ini, write_config_ini
 from shared_utils import get_log_file
-
-from main_menu import main_menu
-
 
 DEFAULT_SETTINGS = {"date_cible": "", "debug_mode": "INFO"}
 

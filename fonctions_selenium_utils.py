@@ -1,19 +1,23 @@
 # fonctions_selenium_utils.py
 
 # Import des bibliothèques nécessaires
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.edge.options import Options as EdgeOptions
-from selenium.webdriver.support.ui import WebDriverWait, Select
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import WebDriverException
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 import time
 from typing import Optional
 
-from logger_utils import write_log
 import requests
+from selenium import webdriver
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+    WebDriverException,
+)
+from selenium.webdriver.common.by import By
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select, WebDriverWait
+
 from constants import JOURS_SEMAINE
+from logger_utils import write_log
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
@@ -26,12 +30,14 @@ def set_log_file(log_file: str) -> None:
     global LOG_FILE
     LOG_FILE = log_file
 
+
 DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut
 LONG_TIMEOUT = 20
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
+
 
 def is_document_complete(driver):
     """Vérifie si le DOM est complètement chargé."""
@@ -49,23 +55,25 @@ def wait_until_dom_is_stable(driver, timeout=10):
     previous_dom_snapshot = ""
     unchanged_count = 0
     required_stability_count = 3  # Le nombre de fois où le DOM doit rester stable pour être considéré comme chargé
-    
+
     for _ in range(timeout):
         current_dom_snapshot = driver.page_source  # Récupère l'état actuel du DOM
-        
+
         if current_dom_snapshot == previous_dom_snapshot:
             unchanged_count += 1
         else:
             unchanged_count = 0
-        
+
         if unchanged_count >= required_stability_count:
             write_log(f"Le DOM est stable.", LOG_FILE, "DEBUG")
             return True
-        
+
         previous_dom_snapshot = current_dom_snapshot
         time.sleep(1)  # Attendre une seconde avant de vérifier à nouveau le DOM
-    
-    write_log(f"Le DOM n'est pas complètement stable après le délai.", LOG_FILE, "WARNING")
+
+    write_log(
+        f"Le DOM n'est pas complètement stable après le délai.", LOG_FILE, "WARNING"
+    )
     return False
 
 
@@ -79,7 +87,9 @@ def modifier_date_input(date_field, new_date, update_message):
 def switch_to_iframe_by_id_or_name(driver, iframe_identifier):
     """Bascule dans l'iframe spécifié par l'ID ou le nom sans attendre sa présence."""
     driver.switch_to.frame(driver.find_element(By.ID, iframe_identifier))
-    write_log(f"Bascule dans l'iframe '{iframe_identifier}' réussie.", LOG_FILE, "DEBUG")
+    write_log(
+        f"Bascule dans l'iframe '{iframe_identifier}' réussie.", LOG_FILE, "DEBUG"
+    )
     return True
 
 
@@ -89,20 +99,40 @@ def switch_to_default_content(driver):
     write_log(f"Retour au contexte principal.", LOG_FILE, "DEBUG")
 
 
-def wait_for_element(driver, by=By.ID, locator_value=None, condition=EC.presence_of_element_located, timeout=10):
+def wait_for_element(
+    driver,
+    by=By.ID,
+    locator_value=None,
+    condition=EC.presence_of_element_located,
+    timeout=10,
+):
     """Attend qu'un élément réponde à une condition, sinon retourne None après le délai."""
 
     if locator_value is None:
-        write_log(f"❌ Erreur : Le paramètre 'locator_value' doit être spécifié pour localiser l'élément.", LOG_FILE, "ERROR")
+        write_log(
+            f"❌ Erreur : Le paramètre 'locator_value' doit être spécifié pour localiser l'élément.",
+            LOG_FILE,
+            "ERROR",
+        )
         return None
-    
+
     found_elements = driver.find_elements(by, locator_value)
     if found_elements:
-        matched_element = WebDriverWait(driver, timeout).until(condition((by, locator_value)))
-        write_log(f"Élément avec {by}='{locator_value}' trouvé et condition '{condition.__name__}' validée.", LOG_FILE, "DEBUG")
+        matched_element = WebDriverWait(driver, timeout).until(
+            condition((by, locator_value))
+        )
+        write_log(
+            f"Élément avec {by}='{locator_value}' trouvé et condition '{condition.__name__}' validée.",
+            LOG_FILE,
+            "DEBUG",
+        )
         return matched_element
     else:
-        write_log(f"Élément avec {by}='{locator_value}' non trouvé dans le délai imparti ({timeout}s).", LOG_FILE, "WARNING")
+        write_log(
+            f"Élément avec {by}='{locator_value}' non trouvé dans le délai imparti ({timeout}s).",
+            LOG_FILE,
+            "WARNING",
+        )
         return None
 
 
@@ -123,9 +153,13 @@ def send_keys_to_element(driver, by, locator_value, input_text):
 def verifier_champ_jour_rempli(day_field, day_label):
     """Vérifie si une cellule contient une valeur pour un jour spécifique."""
     field_content = day_field.get_attribute("value")
-    
+
     if field_content.strip():
-        write_log(f"Jour '{day_label}' contient une valeur : {field_content}", LOG_FILE, "DEBUG")
+        write_log(
+            f"Jour '{day_label}' contient une valeur : {field_content}",
+            LOG_FILE,
+            "DEBUG",
+        )
         return day_label  # On retourne le jour si une valeur est présente
     else:
         write_log(f"Jour '{day_label}' est vide", LOG_FILE, "DEBUG")
@@ -139,9 +173,17 @@ def remplir_champ_texte(day_input_field, day_label, input_value):
     if not current_content.strip():
         day_input_field.clear()  # Effacer l'ancienne valeur
         day_input_field.send_keys(input_value)  # Entrer la nouvelle valeur
-        write_log(f"Valeur '{input_value}' insérée dans le jour '{day_label}'", LOG_FILE, "DEBUG")
+        write_log(
+            f"Valeur '{input_value}' insérée dans le jour '{day_label}'",
+            LOG_FILE,
+            "DEBUG",
+        )
     else:
-        write_log(f"Le jour '{day_label}' contient déjà une valeur : {current_content}, rien à changer.", LOG_FILE, "DEBUG")
+        write_log(
+            f"Le jour '{day_label}' contient déjà une valeur : {current_content}, rien à changer.",
+            LOG_FILE,
+            "DEBUG",
+        )
 
 
 def detecter_et_verifier_contenu(driver, element_id, input_value):
@@ -151,16 +193,32 @@ def detecter_et_verifier_contenu(driver, element_id, input_value):
         day_input_field = driver.find_element(By.ID, element_id)
         current_content = day_input_field.get_attribute("value").strip()
         is_correct_value = current_content == input_value
-        write_log(f"id trouvé : {element_id} / is_correct_value : {is_correct_value}", LOG_FILE, "DEBUG")
+        write_log(
+            f"id trouvé : {element_id} / is_correct_value : {is_correct_value}",
+            LOG_FILE,
+            "DEBUG",
+        )
         return day_input_field, is_correct_value
     except NoSuchElementException as e:
-        write_log(f"❌ Élément avec id='{element_id}' introuvable. {str(e)}", LOG_FILE, "ERROR")
+        write_log(
+            f"❌ Élément avec id='{element_id}' introuvable. {str(e)}",
+            LOG_FILE,
+            "ERROR",
+        )
         raise
     except StaleElementReferenceException as e:
-        write_log(f"❌ Référence obsolète pour l'élément id='{element_id}'. {str(e)}", LOG_FILE, "ERROR")
+        write_log(
+            f"❌ Référence obsolète pour l'élément id='{element_id}'. {str(e)}",
+            LOG_FILE,
+            "ERROR",
+        )
         raise
     except Exception as e:
-        write_log(f"❌ Erreur inattendue lors de la détection et de la vérification du contenu : {str(e)}", LOG_FILE, "ERROR")
+        write_log(
+            f"❌ Erreur inattendue lors de la détection et de la vérification du contenu : {str(e)}",
+            LOG_FILE,
+            "ERROR",
+        )
         raise
 
 
@@ -168,7 +226,9 @@ def effacer_et_entrer_valeur(day_input_field, input_value):
     """Efface le contenu actuel du champ et entre la nouvelle valeur."""
     day_input_field.clear()
     day_input_field.send_keys(input_value)
-    write_log(f"Valeur '{input_value}' insérée dans le champ avec succès.", LOG_FILE, "DEBUG")
+    write_log(
+        f"Valeur '{input_value}' insérée dans le champ avec succès.", LOG_FILE, "DEBUG"
+    )
 
 
 def controle_insertion(day_input_field, input_value):
@@ -182,10 +242,16 @@ def selectionner_option_menu_deroulant_type_select(dropdown_field, visible_text)
         select.select_by_visible_text(visible_text)
         write_log(f"Valeur '{visible_text}' sélectionnée.", LOG_FILE, "DEBUG")
     except Exception as e:
-        write_log(f"❌ Erreur lors de la sélection de la valeur '{visible_text}' : {str(e)}", LOG_FILE, "ERROR")
+        write_log(
+            f"❌ Erreur lors de la sélection de la valeur '{visible_text}' : {str(e)}",
+            LOG_FILE,
+            "ERROR",
+        )
 
 
-def trouver_ligne_par_description(driver, target_description, row_prefix, partial_match=False):
+def trouver_ligne_par_description(
+    driver, target_description, row_prefix, partial_match=False
+):
     """
     Trouve l'index de la ligne qui correspond à une description spécifique ou partielle dans la table.
     Renvoie l'index de la ligne si trouvé, sinon renvoie None.
@@ -197,7 +263,9 @@ def trouver_ligne_par_description(driver, target_description, row_prefix, partia
     while True:
         try:
             # Cherche le span qui correspond à la description de la ligne
-            current_description_element = driver.find_element(By.ID, f"{row_prefix}{row_counter}")
+            current_description_element = driver.find_element(
+                By.ID, f"{row_prefix}{row_counter}"
+            )
             raw_text = current_description_element.text.strip()
 
             # Nettoyage du texte trouvé : suppression des espaces en trop, tabulations et nouvelles lignes
@@ -205,18 +273,34 @@ def trouver_ligne_par_description(driver, target_description, row_prefix, partia
 
             # Vérifie si la description correspond à celle recherchée (partielle ou complète)
             if partial_match:
-                if target_description in cleaned_text:  # Correspondance partielle avec nettoyage du texte trouvé
-                    write_log(f"Ligne trouvée (correspondance partielle) pour '{target_description}' à l'index {row_counter}", LOG_FILE, "DEBUG")
+                if (
+                    target_description in cleaned_text
+                ):  # Correspondance partielle avec nettoyage du texte trouvé
+                    write_log(
+                        f"Ligne trouvée (correspondance partielle) pour '{target_description}' à l'index {row_counter}",
+                        LOG_FILE,
+                        "DEBUG",
+                    )
                     matched_row_index = row_counter
                     break
             else:
-                if cleaned_text == target_description:  # Correspondance exacte après nettoyage
-                    write_log(f"Ligne trouvée pour '{target_description}' à l'index {row_counter}", LOG_FILE, "DEBUG")
+                if (
+                    cleaned_text == target_description
+                ):  # Correspondance exacte après nettoyage
+                    write_log(
+                        f"Ligne trouvée pour '{target_description}' à l'index {row_counter}",
+                        LOG_FILE,
+                        "DEBUG",
+                    )
                     matched_row_index = row_counter
                     break
             row_counter += 1
         except NoSuchElementException:
-            write_log(f"Aucune ligne trouvée pour '{target_description}'.", LOG_FILE, "WARNING")
+            write_log(
+                f"Aucune ligne trouvée pour '{target_description}'.",
+                LOG_FILE,
+                "WARNING",
+            )
             break
     return matched_row_index
 
@@ -226,88 +310,128 @@ def detecter_doublons_jours(driver):
     Parcourt toutes les lignes et tous les jours pour vérifier si un même jour a été rempli plus d'une fois.
     Renvoie une alerte si des doublons sont détectés.
     """
-    filled_days_tracker = {}  # Dictionnaire pour suivre les jours remplis (clé : jour, valeur : liste des lignes avec des valeurs)
+    filled_days_tracker = (
+        {}
+    )  # Dictionnaire pour suivre les jours remplis (clé : jour, valeur : liste des lignes avec des valeurs)
 
     row_index = 0
     while True:
         try:
             # Cherche le span qui correspond à la description de la ligne
-            current_line_description = driver.find_element(By.ID, f"POL_DESCR${row_index}")
+            current_line_description = driver.find_element(
+                By.ID, f"POL_DESCR${row_index}"
+            )
             line_description = current_line_description.text.strip()
-            write_log(f"Analyse de la ligne '{line_description}' à l'index {row_index}", LOG_FILE, "DEBUG")
+            write_log(
+                f"Analyse de la ligne '{line_description}' à l'index {row_index}",
+                LOG_FILE,
+                "DEBUG",
+            )
 
             # Parcours tous les jours pour cette ligne
             for day_counter in range(1, 8):  # Dimanche = 1, Samedi = 7
                 day_input_id = f"POL_TIME{day_counter}${row_index}"
-                
+
                 # Vérifie la présence de l'élément (input pour le jour)
                 try:
                     day_field = driver.find_element(By.ID, day_input_id)
                     day_content = day_field.get_attribute("value")
 
                     if day_content.strip():  # Si le jour contient une valeur
-                        day_name = JOURS_SEMAINE[day_counter]  # Obtenir le nom du jour (lundi, mardi, etc.)
+                        day_name = JOURS_SEMAINE[
+                            day_counter
+                        ]  # Obtenir le nom du jour (lundi, mardi, etc.)
 
                         # Ajouter la ligne à la liste des jours remplis
                         if day_name in filled_days_tracker:
-                            filled_days_tracker[day_name].append(line_description)  # Ajouter la ligne actuelle
+                            filled_days_tracker[day_name].append(
+                                line_description
+                            )  # Ajouter la ligne actuelle
                         else:
                             filled_days_tracker[day_name] = [line_description]
 
                 except NoSuchElementException:
-                    write_log(f"Impossible de trouver l'élément pour le jour '{JOURS_SEMAINE[day_counter]}' avec l'ID '{day_input_id}'", LOG_FILE, "WARNING")
+                    write_log(
+                        f"Impossible de trouver l'élément pour le jour '{JOURS_SEMAINE[day_counter]}' avec l'ID '{day_input_id}'",
+                        LOG_FILE,
+                        "WARNING",
+                    )
 
             row_index += 1  # Passer à la ligne suivante
 
         except NoSuchElementException:
             # Si aucune ligne supplémentaire n'est trouvée, on sort de la boucle
-            write_log(f"Fin de l'analyse des lignes à l'index {row_index}", LOG_FILE, "DEBUG")
+            write_log(
+                f"Fin de l'analyse des lignes à l'index {row_index}", LOG_FILE, "DEBUG"
+            )
             break
 
     # Vérification des doublons dans les jours remplis
     for day_name, lines in filled_days_tracker.items():
         if len(lines) > 1:  # Si plus d'une ligne est remplie pour le même jour
-            write_log(f"Doublon détecté pour le jour '{day_name}' dans les lignes : {', '.join(lines)}", LOG_FILE, "WARNING")
+            write_log(
+                f"Doublon détecté pour le jour '{day_name}' dans les lignes : {', '.join(lines)}",
+                LOG_FILE,
+                "WARNING",
+            )
         else:
-            write_log(f"Aucun doublon détecté pour le jour '{day_name}'", LOG_FILE, "DEBUG")
+            write_log(
+                f"Aucun doublon détecté pour le jour '{day_name}'", LOG_FILE, "DEBUG"
+            )
 
 
 def verifier_accessibilite_url(url):
     try:
         response = requests.get(url, timeout=10, verify=True)
         if response.status_code == 200:
-            write_log(f"🔹 URL accessible, avec vérification SSL : {url}", LOG_FILE, "INFO")
+            write_log(
+                f"🔹 URL accessible, avec vérification SSL : {url}", LOG_FILE, "INFO"
+            )
             return True
         else:
-            write_log(f"❌ URL inaccessible, avec vérification SSL - statut : {response.status_code}", LOG_FILE, "ERROR")
+            write_log(
+                f"❌ URL inaccessible, avec vérification SSL - statut : {response.status_code}",
+                LOG_FILE,
+                "ERROR",
+            )
             return False
-        
+
     except requests.exceptions.SSLError as ssl_err:
         write_log(f"❌ Erreur SSL détectée : {ssl_err}", LOG_FILE, "ERROR")
-        
+
         # Option pour ignorer temporairement les erreurs SSL
         try:
             response = requests.get(url, timeout=10, verify=False)
             if response.status_code == 200:
-                write_log(f"⚠️ URL accessible, sans vérification SSL : {url}", LOG_FILE, "WARNING")
+                write_log(
+                    f"⚠️ URL accessible, sans vérification SSL : {url}",
+                    LOG_FILE,
+                    "WARNING",
+                )
                 return True
         except Exception as e:
-            write_log(f"❌ URL inaccessible, sans vérification SSL : {e}", LOG_FILE, "ERROR")
+            write_log(
+                f"❌ URL inaccessible, sans vérification SSL : {e}", LOG_FILE, "ERROR"
+            )
             return False
-        
+
     except requests.exceptions.RequestException as req_err:
         write_log(f"❌ Erreur de connexion à l'URL : {req_err}", LOG_FILE, "ERROR")
         return False
 
 
-def ouvrir_navigateur_sur_ecran_principal(plein_ecran=False, url="https://www.example.com", headless=False, no_sandbox=False):
+def ouvrir_navigateur_sur_ecran_principal(
+    plein_ecran=False, url="https://www.example.com", headless=False, no_sandbox=False
+):
     """Ouvre le navigateur sur un écran principal de l'ordinateur, si necessaire avec des options"""
     edge_browser_options = EdgeOptions()
     edge_browser_options.use_chromium = True
 
     # Appliquer les arguments selon les choix de l'utilisateur
     if headless:
-        edge_browser_options.add_argument("--headless")  # Pour exécuter sans interface graphique
+        edge_browser_options.add_argument(
+            "--headless"
+        )  # Pour exécuter sans interface graphique
     if no_sandbox:
         edge_browser_options.add_argument("--no-sandbox")
 
@@ -322,16 +446,16 @@ def ouvrir_navigateur_sur_ecran_principal(plein_ecran=False, url="https://www.ex
         # plein écran si choisi
         if plein_ecran:
             browser_instance.maximize_window()
-            
+
         return browser_instance
-    
+
     except WebDriverException as e:
         if "ERR_CONNECTION_CLOSED" in str(e):
             write_log(f"❌ La connexion au serveur a été fermée.", LOG_FILE, "ERROR")
         else:
             write_log(f"❌ Erreur WebDriver : {str(e)}", LOG_FILE, "ERROR")
         return None
-    
+
 
 def definir_taille_navigateur(navigateur, largeur, hauteur):
     """Définit la taille de la fenêtre du navigateur en pixels"""

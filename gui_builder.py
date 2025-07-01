@@ -5,13 +5,21 @@ import tkinter as tk
 from tkinter import ttk
 
 
-def seperator_ttk(menu: ttk.Widget, orient: str = "horizontal", fill: str = "x", padx: int = 10, pady: int = 5) -> None:
+def seperator_ttk(
+    menu: ttk.Widget,
+    orient: str = "horizontal",
+    fill: str = "x",
+    padx: int = 10,
+    pady: int = 5,
+) -> None:
     """Ajouter un séparateur ttk à ``menu``."""
     separator = ttk.Separator(menu, orient=orient)
     separator.pack(fill=fill, padx=padx, pady=pady)
 
 
-def create_tab(notebook: ttk.Notebook, title: str, style: str = "Modern.TFrame", padding: int = 20) -> ttk.Frame:
+def create_tab(
+    notebook: ttk.Notebook, title: str, style: str = "Modern.TFrame", padding: int = 20
+) -> ttk.Frame:
     """Créer un onglet dans ``notebook``."""
     tab_frame = ttk.Frame(notebook, style=style, padding=padding)
     notebook.add(tab_frame, text=title)
@@ -245,4 +253,3 @@ def create_button_without_style(
     button = tk.Button(frame, text=text, command=command)
     button.pack(side=side, fill=fill, padx=padx, pady=pady, ipady=ipady)
     return button
-
