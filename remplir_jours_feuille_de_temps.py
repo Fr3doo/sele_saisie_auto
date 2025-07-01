@@ -10,29 +10,36 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
-from fonctions_selenium_utils import controle_insertion, detecter_et_verifier_contenu, effacer_et_entrer_valeur, remplir_champ_texte, selectionner_option_menu_deroulant_type_select, trouver_ligne_par_description, verifier_champ_jour_rempli, wait_for_dom_ready, wait_for_element, wait_until_dom_is_stable
+from fonctions_selenium_utils import (
+    controle_insertion,
+    detecter_et_verifier_contenu,
+    effacer_et_entrer_valeur,
+    remplir_champ_texte,
+    selectionner_option_menu_deroulant_type_select,
+    trouver_ligne_par_description,
+    verifier_champ_jour_rempli,
+    wait_for_dom_ready,
+    wait_for_element,
+    wait_until_dom_is_stable,
+    set_log_file as set_log_file_selenium,
+)
+from typing import Optional
+
 from logger_utils import write_log
 from read_or_write_file_config_ini_utils import read_config_ini
-from shared_utils import get_log_file, program_break_time
+from shared_utils import program_break_time
 from dropdown_options import cgi_options_billing_action
 from constants import JOURS_SEMAINE
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
-LOG_FILE = get_log_file()
-config = read_config_ini(LOG_FILE)
-
-# Récupérer la liste, split, nettoie les espaces et les double quote
-LISTE_ITEMS_DESCRIPTIONS = [item.strip().strip('"') for item in config.get('settings', 'liste_items_planning').split(",")]
-
-# Configuration des jours de travail et congés
-JOURS_DE_TRAVAIL = {day: (value.partition(',')[0].strip(), value.partition(',')[2].strip()) for day, value in config.items('work_schedule')}
-
-INFORMATIONS_PROJET_MISSION = {
-    item_projet: cgi_options_billing_action.get(value, value)  # Remplace si une correspondance existe
-    for item_projet, value in config.items('project_information')
-}
+# Variables initialisées lors de l'``initialize``
+LOG_FILE: Optional[str] = None
+config = None
+LISTE_ITEMS_DESCRIPTIONS = []
+JOURS_DE_TRAVAIL = {}
+INFORMATIONS_PROJET_MISSION = {}
 # Liste des IDs associés aux informations du projet
 LISTES_ID_INFORMATIONS_MISSION = ["PROJECT_CODE$0", "ACTIVITY_CODE$0", "CATEGORY_CODE$0", "SUB_CATEGORY_CODE$0", "BILLING_ACTION$0"]
 
@@ -47,6 +54,27 @@ ID_TO_KEY_MAPPING = {
 MAX_ATTEMPTS = 5
 DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut
 LONG_TIMEOUT = 20
+
+
+def initialize(log_file: str) -> None:
+    """Initialise la configuration du module."""
+    global LOG_FILE, config, LISTE_ITEMS_DESCRIPTIONS, JOURS_DE_TRAVAIL, INFORMATIONS_PROJET_MISSION
+
+    LOG_FILE = log_file
+    set_log_file_selenium(log_file)
+    config = read_config_ini(log_file)
+    LISTE_ITEMS_DESCRIPTIONS = [
+        item.strip().strip('"')
+        for item in config.get('settings', 'liste_items_planning').split(',')
+    ]
+    JOURS_DE_TRAVAIL = {
+        day: (value.partition(',')[0].strip(), value.partition(',')[2].strip())
+        for day, value in config.items('work_schedule')
+    }
+    INFORMATIONS_PROJET_MISSION = {
+        item_projet: cgi_options_billing_action.get(value, value)
+        for item_projet, value in config.items('project_information')
+    }
 
 
 # ----------------------------------------------------------------------------- #
@@ -277,8 +305,9 @@ def traiter_champs_mission(driver, listes_id_informations_mission, id_to_key_map
 # ----------------------------------------------------------------------------- #
 # ----------------------------------- MAIN ------------------------------------ #
 # ----------------------------------------------------------------------------- #
-def main(driver):
+def main(driver, log_file: str) -> None:
     """Point d'entrée principal du script pour remplir automatiquement les jours et les missions."""
+    initialize(log_file)
     try:
         jours_remplis = []  # Liste pour suivre les jours déjà remplis
 
@@ -316,4 +345,6 @@ def main(driver):
         write_log(f"Erreur inattendue : {str(e)}.", LOG_FILE, "ERROR")
 
 if __name__ == "__main__":
-    main()
+    from shared_utils import get_log_file
+
+    main(None, get_log_file())

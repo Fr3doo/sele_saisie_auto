@@ -11,14 +11,21 @@ from selenium.webdriver.support import expected_conditions as EC
 # from selenium.webdriver.common.action_chains import ActionChains
 # from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException, StaleElementReferenceException
 from fonctions_selenium_utils import remplir_champ_texte, selectionner_option_menu_deroulant_type_select, trouver_ligne_par_description, verifier_champ_jour_rempli, wait_for_element
+from typing import Optional
+
 from logger_utils import write_log
-from shared_utils import get_log_file
 from constants import JOURS_SEMAINE
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
-LOG_FILE = get_log_file()
+LOG_FILE: Optional[str] = None
+
+
+def set_log_file(log_file: str) -> None:
+    """Inject log file path for the module."""
+    global LOG_FILE
+    LOG_FILE = log_file
 
 DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut
 LONG_TIMEOUT = 20
