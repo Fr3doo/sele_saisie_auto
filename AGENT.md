@@ -23,8 +23,8 @@
       - `@codecov-ai-reviewer review`  
       - `@codecov-ai-reviewer test`  
   5. Avant d’ouvrir la PR :
-      - exécuter `poetry run pre-commit run --all-files` et `poetry run pytest`. Les deux doivent réussir.
-      - execute `radon`, `bandit` et `safety`.
+      - exécuter `poetry run pre-commit run --all-files` et `poetry run pytest`. Les deux doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
+      - executer `radon`, `bandit` et `safety`. Les trois doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
 
 ## 4. Codex/ChatGPT Usage Tips
 > 🔧 Conseils pour guider l’IA dans ce repo  
