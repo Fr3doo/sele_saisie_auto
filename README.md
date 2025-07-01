@@ -26,7 +26,7 @@ poetry run python main.py
 
 ### Depuis les sources
 ```bash
-pip install -r requirements.txt
+poetry install --no-root
 ```
 
 ### Mode développement
@@ -95,8 +95,9 @@ Voir [AGENT.md](AGENT.md) pour la description complète des agents.
 L'utilisation de PyInstaller permet de générer un exécutable Windows.
 
 ### Génération pas à pas
-1. Installer les dépendances du projet :
+1. Exporter puis installer les dépendances :
    ```bash
+   poetry export -f requirements.txt --output requirements.txt --without-hashes
    pip install -r requirements.txt
    ```
 2. Depuis le répertoire racine, exécuter PyInstaller avec les fichiers à embarquer :

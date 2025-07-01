@@ -173,3 +173,6 @@ cython_debug/
 
 # html extensions
 *.html
+# Generated requirements file
+requirements.txt
+
