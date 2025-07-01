@@ -26,8 +26,9 @@ from main_menu import main_menu
 DEFAULT_SETTINGS = {"date_cible": "", "debug_mode": "INFO"}
 
 
-def run_psatime(log_file: str) -> None:
-    """Launch the Selenium automation."""
+def run_psatime(log_file: str, menu: tk.Tk) -> None:
+    """Launch the Selenium automation after closing the menu."""
+    menu.destroy()
     write_log("Launching PSA time", log_file, "INFO")
     import saisie_automatiser_psatime
 
@@ -40,8 +41,9 @@ def run_psatime_with_credentials(
     login_var: tk.StringVar,
     mdp_var: tk.StringVar,
     log_file: str,
+    menu: tk.Tk,
 ) -> None:
-    """Encrypt credentials and start PSA time."""
+    """Encrypt credentials and start PSA time after closing the menu."""
     login = login_var.get()
     password = mdp_var.get()
     if not login or not password:
@@ -53,7 +55,7 @@ def run_psatime_with_credentials(
     encryption_service.stocker_en_memoire_partagee("memoire_nom", data_login)
     encryption_service.stocker_en_memoire_partagee("memoire_mdp", data_pwd)
 
-    run_psatime(log_file)
+    run_psatime(log_file, menu)
 
 
 def start_configuration(

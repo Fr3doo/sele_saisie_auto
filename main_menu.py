@@ -38,7 +38,7 @@ def main_menu(cle_aes: bytes, log_file: str, encryption_service) -> None:
         menu,
         text="Lancer votre PSATime",
         command=lambda: run_psatime_with_credentials(
-            encryption_service, cle_aes, login_var, mdp_var, log_file
+            encryption_service, cle_aes, login_var, mdp_var, log_file, menu
         ),
     )
     launch.bind("<Return>", lambda _: launch.invoke())
