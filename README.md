@@ -92,7 +92,21 @@ Voir [AGENT.md](AGENT.md) pour la description complète des agents.
 ```
 
 ## 🖥️ Compatibilité Windows
-L'utilisation de PyInstaller permet de générer un exécutable Windows (voir instructions dans `main.py`).
+L'utilisation de PyInstaller permet de générer un exécutable Windows.
+
+### Génération pas à pas
+1. Installer les dépendances du projet :
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. Depuis le répertoire racine, exécuter PyInstaller avec les fichiers à embarquer :
+   ```bash
+   pyinstaller --onefile --windowed \
+     --add-data "config.ini;." \
+     --add-data "calendar_icon.png;." \
+     main.py
+   ```
+3. L'exécutable se trouve dans le dossier `dist/`. Copiez `config.ini` à côté si besoin pour conserver la configuration.
 
 ## 🛠️ Fichiers de configuration
 - `config.ini` : paramètres de connexion et de planning
