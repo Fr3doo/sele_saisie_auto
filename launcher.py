@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import multiprocessing
 import tkinter as tk
 from tkinter import messagebox, ttk
@@ -22,6 +23,19 @@ from read_or_write_file_config_ini_utils import read_config_ini, write_config_in
 from shared_utils import get_log_file
 
 DEFAULT_SETTINGS = {"date_cible": "", "debug_mode": "INFO"}
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse command line arguments."""
+
+    parser = argparse.ArgumentParser(description="Launch PSA Time automation")
+    parser.add_argument(
+        "-l",
+        "--log-level",
+        choices=list(LOG_LEVELS.keys()),
+        help="Override log level",
+    )
+    return parser.parse_args(argv)
 
 
 def run_psatime(log_file: str, menu: tk.Tk) -> None:
@@ -97,13 +111,15 @@ def start_configuration(
     root.mainloop()
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     """Entry point."""
+    args = parse_args(argv)
+
     log_file = get_log_file()
     write_log("Initialisation", log_file, "INFO")
 
     config = read_config_ini(log_file)
-    initialize_logger(config)
+    initialize_logger(config, log_level_override=args.log_level)
 
     multiprocessing.freeze_support()
     encryption_service = EncryptionService(log_file)
