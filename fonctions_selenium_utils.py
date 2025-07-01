@@ -9,17 +9,22 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 import time
+from typing import Optional
+
 from logger_utils import write_log
-from shared_utils import get_log_file
 import requests
 from constants import JOURS_SEMAINE
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
-# from main import get_log_file
+LOG_FILE: Optional[str] = None
 
-LOG_FILE = get_log_file()
+
+def set_log_file(log_file: str) -> None:
+    """Inject log file path for the module."""
+    global LOG_FILE
+    LOG_FILE = log_file
 
 DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut
 LONG_TIMEOUT = 20

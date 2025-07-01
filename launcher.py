@@ -32,7 +32,7 @@ def run_psatime(log_file: str, menu: tk.Tk) -> None:
     write_log("Launching PSA time", log_file, "INFO")
     import saisie_automatiser_psatime
 
-    saisie_automatiser_psatime.main()
+    saisie_automatiser_psatime.main(log_file)
 
 
 def run_psatime_with_credentials(
