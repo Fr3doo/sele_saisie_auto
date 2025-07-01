@@ -6,21 +6,129 @@ on:
   pull_request:
 
 jobs:
-  test:
+  # 1) Pré-commit (format & lint basique)
+  precommit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'poetry'
+
       - name: Install Poetry
-        run: |
-          pip install poetry
+        run: pip install poetry
+
       - name: Install dependencies
-        run: |
-          poetry install --no-root
+        run: poetry install --no-root --no-interaction --no-ansi
+
       - name: Run pre-commit
         run: poetry run pre-commit run --all-files
+
+  # 2) Lint avancé (Ruff)
+  lint:
+    needs: precommit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'poetry'
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install dependencies
+        run: poetry install --no-root --no-interaction --no-ansi
+
+      - name: Lint with ruff
+        run: poetry run ruff .
+
+  # 3) Tests unitaires (pytest)
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'poetry'
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install dependencies
+        run: poetry install --no-root --no-interaction --no-ansi
+
       - name: Run pytest
-        run: poetry run pytest
+        run: poetry run pytest --maxfail=1 --disable-warnings -q
+
+  # 4) Complexité cyclomatique (Radon)
+  complexity:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'poetry'
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install dependencies
+        run: poetry install --no-root --no-interaction --no-ansi
+
+      - name: Check complexity (Cyclomatic CC)
+        run: poetry run radon cc src/ -s
+
+  # 5) Analyse de sécurité statique (Bandit)
+  security:
+    needs: complexity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'poetry'
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install dependencies
+        run: poetry install --no-root --no-interaction --no-ansi
+
+      - name: Security scan with bandit
+        run: poetry run bandit -r src/ -lll -iii
+
+  # 6) Vulnérabilités de dépendances (Safety)
+  safety:
+    needs: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'poetry'
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install dependencies
+        run: poetry install --no-root --no-interaction --no-ansi
+
+      - name: Dependency vulnerabilities with safety
+        run: |
+          poetry export --without-hashes -f requirements.txt > requirements.txt
+          poetry run safety check --file=requirements.txt
