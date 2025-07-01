@@ -38,7 +38,7 @@
 | `SeleniumFiller`        | Remplit la feuille de temps via Selenium      | `saisie_automatiser_psatime.py`           | Config, navigateur    | Feuille de temps complétée   |
 | `TimeSheetHelper`       | Remplit les jours dans la grille              | `remplir_jours_feuille_de_temps.py`       | Driver, config        | Statut d’insertion           |
 | `ExtraInfoHelper`       | Gère les informations supplémentaires         | `remplir_informations_supp_utils.py`      | Driver, config        | Champs complétés             |
-| `ConfigManager`         | Lecture et préparation de `config.ini`        | `read_or_write_file_config_ini_utils.py`  | Aucune                | Objet `ConfigParser`         |
+| `ConfigManager`         | Lecture et préparation de `config.ini`        | `config_manager.py`  | Aucune                | Objet `ConfigParser`         |
 | `EncryptionService`     | Chiffre/déchiffre les données sensibles       | `encryption_utils.py`                     | Chaîne ou bytes       | Bytes ou chaîne             |
 | `Logger`                | Gestion et rotation des logs                  | `logger_utils.py`                         | Messages à enregistrer| Fichier HTML/TXT de logs     |
 | `SeleniumUtils`         | Fonctions utilitaires pour Selenium           | `fonctions_selenium_utils.py`             | WebDriver, ID, valeurs| Éléments manipulés          |
