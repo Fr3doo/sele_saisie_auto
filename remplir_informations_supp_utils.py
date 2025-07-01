@@ -13,6 +13,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from fonctions_selenium_utils import remplir_champ_texte, selectionner_option_menu_deroulant_type_select, trouver_ligne_par_description, verifier_champ_jour_rempli, wait_for_element
 from logger_utils import write_log
 from shared_utils import get_log_file
+from constants import JOURS_SEMAINE
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
@@ -21,15 +22,6 @@ LOG_FILE = get_log_file()
 
 DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut
 LONG_TIMEOUT = 20
-JOURS_SEMAINE = {
-    1: "dimanche",
-    2: "lundi",
-    3: "mardi",
-    4: "mercredi",
-    5: "jeudi",
-    6: "vendredi",
-    7: "samedi"
-}
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS --------------------------------------------- #

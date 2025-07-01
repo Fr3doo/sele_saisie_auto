@@ -15,7 +15,14 @@ import time
 # import subprocess
 # import sys
 # import os
-from dropdown_options import work_location_options, cgi_options, cgi_options_dejeuner, work_schedule_options, cgi_options_billing_action
+from dropdown_options import (
+    work_location_options,
+    cgi_options,
+    cgi_options_dejeuner,
+    work_schedule_options,
+    cgi_options_billing_action,
+)
+from constants import JOURS_SEMAINE__DICT, JOURS_SEMAINE__LIST
 from encryption_utils import generer_cle_aes, chiffrer_donnees, stocker_en_memoire_partagee
 from encryption_utils import supprimer_memoire_partagee_securisee
 # from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -29,9 +36,7 @@ from PIL import Image, ImageTk  # Pour la gestion des images - pip install pillo
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
 
-# Jours de la semaine
-JOURS_SEMAINE__DICT = {'lundi': '', 'mardi': '', 'mercredi': '', 'jeudi': '', 'vendredi': '', 'samedi': '', 'dimanche': ''}
-JOURS_SEMAINE__LIST = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"]
+# Jours de la semaine (importés depuis constants.py)
 
 # Valeurs par défaut pour les sections de configuration
 DEFAULT_CREDENTIALS = {'login': '', 'mdp': ''}
