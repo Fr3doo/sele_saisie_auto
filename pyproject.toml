@@ -25,6 +25,8 @@ ruff = "^0.12.1"
 radon = "^6.0.1"
 bandit = "^1.8.5"
 safety = "^3.5.2"
+pyinstaller = {version = "^6.11.1", markers = "python_version < '3.14'"}
+pyinstaller-hooks-contrib = {version = "^2024.10", markers = "python_version < '3.14'"}
 
 [tool.black]
 line-length = 88

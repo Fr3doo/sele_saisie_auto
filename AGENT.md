@@ -2,7 +2,7 @@
 
 ## 1. Dev Environment Tips
 > ℹ️ Comment configurer et lancer l’environnement local  
-- Installer les dépendances : `pip install -r requirements.txt`  
+- Installer les dépendances : `poetry install --no-root`
 - Pour cibler un agent : exécuter directement le fichier Python correspondant (ex. `python saisie_automatiser_psatime.py`)  
 - Les scripts utilisent `config.ini` pour les paramètres. Vérifier son contenu avant exécution.
 

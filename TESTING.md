@@ -8,7 +8,7 @@ Ce projet utilise principalement **pytest** pour les tests unitaires. Pour d’a
 
 1. Installer les dépendances nécessaires :
    ```bash
-   pip install -r requirements.txt
+   poetry install --no-root
    # ou pour un projet JS/TS
    npm install
    ```
