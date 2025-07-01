@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
 from config_manager import ConfigManager  # noqa: E402
@@ -25,3 +27,15 @@ def test_load_and_save(tmp_path, monkeypatch):
 
     content = config_file.read_text(encoding="utf-8")
     assert "key = new" in content
+
+
+def test_config_property_without_load(tmp_path):
+    manager = ConfigManager(log_file=str(tmp_path / "log.html"))
+    with pytest.raises(RuntimeError):
+        _ = manager.config
+
+
+def test_save_without_load(tmp_path):
+    manager = ConfigManager(log_file=str(tmp_path / "log.html"))
+    with pytest.raises(RuntimeError):
+        manager.save()

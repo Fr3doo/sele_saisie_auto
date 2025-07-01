@@ -56,3 +56,29 @@ def test_gestion_memoire_partagee():
             shm.unlink()
         except FileNotFoundError:
             pass
+
+
+def test_generer_cle_aes_error(monkeypatch):
+    service = EncryptionService()
+
+    def raise_error(n):
+        raise OSError("boom")
+
+    monkeypatch.setattr("os.urandom", raise_error)
+
+    with pytest.raises(OSError):
+        service.generer_cle_aes()
+
+
+def test_chiffrer_donnees_error(monkeypatch):
+    service = EncryptionService()
+    key = service.generer_cle_aes()
+
+    class DummyCipher:
+        def __init__(self, *a, **k):
+            raise ValueError("fail")
+
+    monkeypatch.setattr("encryption_utils.Cipher", DummyCipher)
+
+    with pytest.raises(ValueError):
+        service.chiffrer_donnees("msg", key)

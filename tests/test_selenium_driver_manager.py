@@ -47,3 +47,17 @@ def test_close_quits_driver(monkeypatch):
 
     assert closed.get("quit") is True  # nosec B101
     assert manager.driver is None  # nosec B101
+
+
+def test_open_returns_none(monkeypatch):
+    monkeypatch.setattr(
+        "selenium_driver_manager.ouvrir_navigateur_sur_ecran_principal",
+        lambda *a, **k: None,
+    )
+    manager = SeleniumDriverManager("log.html")
+    assert manager.open("http://test") is None
+
+
+def test_close_with_no_driver():
+    manager = SeleniumDriverManager("log.html")
+    manager.close()  # Should not raise
