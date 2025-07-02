@@ -1,4 +1,3 @@
-# pragma: no cover
 """Main menu interface."""
 
 from __future__ import annotations
