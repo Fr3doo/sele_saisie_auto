@@ -105,7 +105,9 @@ def test_write_log_debug_html_autoclose(monkeypatch, tmp_path):
     monkeypatch.setattr(logger_utils, "should_rotate", lambda *a, **k: False)
     logs = []
     monkeypatch.setattr(logger_utils, "debug_print", lambda m: logs.append(m))
-    logger_utils.write_log("hello", str(log_file), level="INFO", log_format="html", auto_close=True)
+    logger_utils.write_log(
+        "hello", str(log_file), level="INFO", log_format="html", auto_close=True
+    )
     content = log_file.read_text(encoding="utf-8")
     assert logs
     assert content.endswith("</table></body></html>")
@@ -169,7 +171,9 @@ def test_write_log_rotation(monkeypatch, tmp_path):
     logger_utils.LOG_LEVEL_FILTER = "INFO"
     monkeypatch.setattr(logger_utils, "should_rotate", lambda *a, **k: True)
     called = []
-    monkeypatch.setattr(logger_utils, "rotate_log_file", lambda path: called.append(path))
+    monkeypatch.setattr(
+        logger_utils, "rotate_log_file", lambda path: called.append(path)
+    )
     logger_utils.write_log("msg", str(log_file), level="INFO", log_format="html")
     assert called == [str(log_file)]
     logger_utils.LOG_LEVEL_FILTER = logger_utils.DEFAULT_LOG_LEVEL
@@ -213,4 +217,3 @@ def test_close_logs_generic_error(monkeypatch, tmp_path):
     monkeypatch.setattr("builtins.open", raise_value)
     with pytest.raises(RuntimeError):
         logger_utils.close_logs(str(log_file))
-

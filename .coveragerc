@@ -6,7 +6,7 @@ source =
     logger_utils.py
     selenium_driver_manager.py
     shared_utils.py
-    remplir_jours_feuille_de_temps.py
+    read_or_write_file_config_ini_utils.py
 
 [report]
 omit =

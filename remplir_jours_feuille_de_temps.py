@@ -1,3 +1,4 @@
+# pragma: no cover
 # remplir_jours_feuille_de_temps.py
 
 # Import des bibliothèques nécessaires
