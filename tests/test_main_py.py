@@ -1,12 +1,10 @@
-import runpy
 import importlib
+import runpy
 import sys
-from pathlib import Path
 import types
+from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-
-
 
 
 def test_import_does_not_run(monkeypatch):
@@ -28,5 +26,3 @@ def test_run_as_script(monkeypatch):
     monkeypatch.setitem(sys.modules, "launcher", dummy)
     runpy.run_module("main", run_name="__main__")
     assert called == {"run": True}
-
-
