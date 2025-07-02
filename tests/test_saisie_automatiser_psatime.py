@@ -1,7 +1,7 @@
 import sys
-from pathlib import Path
 import types
 from configparser import ConfigParser
+from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
@@ -70,7 +70,11 @@ def make_config():
 
 def setup_init(monkeypatch):
     cfg = make_config()
-    monkeypatch.setattr(sap, "ConfigManager", lambda log_file=None: types.SimpleNamespace(load=lambda: cfg))
+    monkeypatch.setattr(
+        sap,
+        "ConfigManager",
+        lambda log_file=None: types.SimpleNamespace(load=lambda: cfg),
+    )
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
     monkeypatch.setattr(sap, "EncryptionService", lambda lf: DummyEnc())
@@ -107,7 +111,9 @@ def test_initialize_sets_globals(monkeypatch):
 
 def test_initialize_shared_memory(monkeypatch):
     setup_init(monkeypatch)
-    monkeypatch.setattr(sap, "shared_memory", types.SimpleNamespace(SharedMemory=DummySHM))
+    monkeypatch.setattr(
+        sap, "shared_memory", types.SimpleNamespace(SharedMemory=DummySHM)
+    )
     sap.encryption_service = DummyEnc()
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
     result = sap.initialize_shared_memory()
@@ -123,7 +129,11 @@ def test_main_flow(monkeypatch):
     sap.CHOIX_USER = True
 
     monkeypatch.setattr(sap, "log_initialisation", lambda: None)
-    monkeypatch.setattr(sap, "initialize_shared_memory", lambda: [b"k", object(), b"user", object(), b"pass", object()])
+    monkeypatch.setattr(
+        sap,
+        "initialize_shared_memory",
+        lambda: [b"k", object(), b"user", object(), b"pass", object()],
+    )
     monkeypatch.setattr(sap, "SeleniumDriverManager", DummyManager)
 
     def fake_wait(driver, by, ident, *a, **k):
@@ -153,12 +163,18 @@ def test_main_flow(monkeypatch):
     monkeypatch.setattr(sap, "wait_until_dom_is_stable", lambda *a, **k: None)
     monkeypatch.setattr(sap, "wait_for_dom_ready", lambda *a, **k: None)
     monkeypatch.setattr(sap, "program_break_time", lambda *a, **k: None)
-    monkeypatch.setattr(sap.remplir_jours_feuille_de_temps, "main", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.remplir_jours_feuille_de_temps, "main", lambda *a, **k: None
+    )
     monkeypatch.setattr(sap, "traiter_description", lambda *a, **k: None)
     monkeypatch.setattr(sap, "detecter_doublons_jours", lambda *a, **k: None)
     monkeypatch.setattr(sap, "sys", types.SimpleNamespace(exit=lambda: None))
     cleanup_called = {}
-    monkeypatch.setattr(sap, "cleanup_resources", lambda *a, **k: cleanup_called.setdefault("done", True))
+    monkeypatch.setattr(
+        sap,
+        "cleanup_resources",
+        lambda *a, **k: cleanup_called.setdefault("done", True),
+    )
     monkeypatch.setattr(sap, "seprateur_menu_affichage_console", lambda: None)
     monkeypatch.setattr(__import__("builtins"), "input", lambda *a, **k: None)
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
