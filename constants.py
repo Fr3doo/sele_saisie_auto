@@ -33,3 +33,21 @@ JOURS_SEMAINE__LIST = [
     "vendredi",
     "samedi",
 ]
+
+# Liste des IDs associés aux informations du projet
+LISTES_ID_INFORMATIONS_MISSION = [
+    "PROJECT_CODE$0",
+    "ACTIVITY_CODE$0",
+    "CATEGORY_CODE$0",
+    "SUB_CATEGORY_CODE$0",
+    "BILLING_ACTION$0",
+]
+
+# Correspondance entre l'ID d'un champ et la clé de configuration associée
+ID_TO_KEY_MAPPING = {
+    "PROJECT_CODE$0": "project_code",
+    "ACTIVITY_CODE$0": "activity_code",
+    "CATEGORY_CODE$0": "category_code",
+    "SUB_CATEGORY_CODE$0": "sub_category_code",
+    "BILLING_ACTION$0": "billing_action",
+}

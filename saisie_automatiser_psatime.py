@@ -592,15 +592,6 @@ class PSATimeAutomation:
                 )
 
 
-LISTES_ID_INFORMATIONS_MISSION = [
-    "PROJECT_CODE$0",
-    "ACTIVITY_CODE$0",
-    "CATEGORY_CODE$0",
-    "SUB_CATEGORY_CODE$0",
-    "BILLING_ACTION$0",
-]
-
-
 CHOIX_USER = True  # true pour créer une nouvelle feuille de temps
 DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut
 LONG_TIMEOUT = 20
