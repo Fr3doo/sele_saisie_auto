@@ -143,8 +143,8 @@ def test_initialize_shared_memory(monkeypatch):
     sap.context.shared_memory_service = DummySHMService()
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
     result = sap.initialize_shared_memory()
-    assert result[2] == b"user"
-    assert result[4] == b"pass"
+    assert result.login == b"user"
+    assert result.password == b"pass"
 
 
 def test_main_flow(monkeypatch):
@@ -157,7 +157,14 @@ def test_main_flow(monkeypatch):
     monkeypatch.setattr(
         sap.PSATimeAutomation,
         "initialize_shared_memory",
-        lambda self: [b"k", object(), b"user", object(), b"pass", object()],
+        lambda self: sap.Credentials(
+            aes_key=b"k",
+            mem_key=object(),
+            login=b"user",
+            mem_login=object(),
+            password=b"pass",
+            mem_password=object(),
+        ),
     )
     monkeypatch.setattr(sap, "SeleniumDriverManager", DummyManager)
 

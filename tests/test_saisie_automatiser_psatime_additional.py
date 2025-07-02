@@ -291,7 +291,14 @@ def test_main_exceptions(monkeypatch):
     monkeypatch.setattr(
         sap.PSATimeAutomation,
         "initialize_shared_memory",
-        lambda self: [b"k", object(), b"user", object(), b"pass", object()],
+        lambda self: sap.Credentials(
+            aes_key=b"k",
+            mem_key=object(),
+            login=b"user",
+            mem_login=object(),
+            password=b"pass",
+            mem_password=object(),
+        ),
     )
     monkeypatch.setattr(sap, "SeleniumDriverManager", DummyManager)
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: True)
