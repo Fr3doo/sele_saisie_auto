@@ -1,4 +1,3 @@
-# pragma: no cover
 # remplir_informations_supp_france.py
 
 # Import des bibliothèques nécessaires
