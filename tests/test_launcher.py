@@ -100,17 +100,17 @@ def test_run_psatime(monkeypatch):
     menu = DummyMenu()
     calls = {}
 
-    def fake_write_log(msg, lf, level):
-        calls["log"] = (msg, lf, level)
+    class DummyLogger:
+        def info(self, msg):
+            calls["log"] = msg
 
     fake_mod = types.SimpleNamespace(main=lambda lf: calls.setdefault("main", lf))
     monkeypatch.setitem(sys.modules, "saisie_automatiser_psatime", fake_mod)
-    monkeypatch.setattr(launcher, "write_log", fake_write_log)
 
-    launcher.run_psatime("file.html", menu)
+    launcher.run_psatime("file.html", menu, logger=DummyLogger())
 
     assert menu.destroy_called
-    assert calls["log"][0].startswith("Launching")
+    assert calls["log"].startswith("Launching")
     assert calls["main"] == "file.html"
 
 
@@ -123,9 +123,13 @@ def test_run_psatime_with_credentials(monkeypatch):
     run_called = {}
 
     monkeypatch.setattr(
-        launcher, "run_psatime", lambda lf, m: run_called.setdefault("run", lf)
+        launcher,
+        "run_psatime",
+        lambda lf, m, logger=None: run_called.setdefault("run", lf),
     )
-    launcher.run_psatime_with_credentials(enc, b"k", login, pwd, "log", menu)
+    launcher.run_psatime_with_credentials(
+        enc, b"k", login, pwd, "log", menu, logger=None
+    )
 
     assert ("memoire_nom", b"user") in enc.stored
     assert ("memoire_mdp", b"pass") in enc.stored
