@@ -49,9 +49,13 @@ def test_traiter_description_input(monkeypatch):
         return DummyElement()
 
     monkeypatch.setattr(risu, "wait_for_element", fake_wait)
-    monkeypatch.setattr(risu, "verifier_champ_jour_rempli", lambda el, jour: jour == "dimanche")
+    monkeypatch.setattr(
+        risu, "verifier_champ_jour_rempli", lambda el, jour: jour == "dimanche"
+    )
     filled = []
-    monkeypatch.setattr(risu, "remplir_champ_texte", lambda el, jour, val: filled.append((jour, val)))
+    monkeypatch.setattr(
+        risu, "remplir_champ_texte", lambda el, jour, val: filled.append((jour, val))
+    )
 
     risu.traiter_description(None, make_config())
 
@@ -81,7 +85,9 @@ def test_traiter_description_select_special(monkeypatch):
         lambda el, val: selected.append(val),
     )
 
-    cfg = make_config(type_element="select", id_value_jours="UC_TIME_LIN_WRK_UC_DAILYREST")
+    cfg = make_config(
+        type_element="select", id_value_jours="UC_TIME_LIN_WRK_UC_DAILYREST"
+    )
     del cfg["valeurs_a_remplir"]["mardi"]
     risu.traiter_description(None, cfg)
 
