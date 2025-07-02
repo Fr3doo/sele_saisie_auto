@@ -5,7 +5,6 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
 import gui_builder  # noqa: E402
 
-
 sep_instance = None
 
 
@@ -101,7 +100,9 @@ def test_build_widgets():
     assert isinstance(entry_g, DummyWidget)
     assert entry_g.grid_kwargs["row"] == 2
 
-    pwd = gui_builder.create_Modern_entry_with_grid_for_password(frame, var="p", row=3, col=3)
+    pwd = gui_builder.create_Modern_entry_with_grid_for_password(
+        frame, var="p", row=3, col=3
+    )
     assert isinstance(pwd, DummyWidget)
     assert pwd.kwargs.get("show") == "*"
 
