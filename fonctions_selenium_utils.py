@@ -1,4 +1,3 @@
-# pragma: no cover
 # fonctions_selenium_utils.py
 
 # Import des bibliothèques nécessaires
