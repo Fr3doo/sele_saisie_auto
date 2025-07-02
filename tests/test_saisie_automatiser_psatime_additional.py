@@ -53,6 +53,12 @@ class DummyManager:
     def close(self):
         self.driver = None
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+
 
 def make_config():
     cfg = ConfigParser()

@@ -466,128 +466,137 @@ class PSATimeAutomation:
             mot_de_passe_chiffre,
             memoire_mdp,
         ) = variables
-        driver_manager = SeleniumDriverManager(self.log_file)
-        driver = self.setup_browser(driver_manager)
-        try:
-            self.connect_to_psatime(
-                driver, cle_aes, nom_utilisateur_chiffre, mot_de_passe_chiffre
-            )
-            switched_to_iframe = self.navigate_from_home_to_date_entry_page(driver)
-            if switched_to_iframe:
-                self.handle_date_input(driver, self.context.config.date_cible)
+
+        with SeleniumDriverManager(self.log_file) as driver_manager:
+            driver = self.setup_browser(driver_manager)
+            try:
+                self.connect_to_psatime(
+                    driver,
+                    cle_aes,
+                    nom_utilisateur_chiffre,
+                    mot_de_passe_chiffre,
+                )
+                switched_to_iframe = self.navigate_from_home_to_date_entry_page(driver)
+                if switched_to_iframe:
+                    self.handle_date_input(driver, self.context.config.date_cible)
+                    program_break_time(
+                        1, "Veuillez patienter. Court délai pour stabilisation du DOM"
+                    )
+                    print()
+                    element_present = self.submit_date_cible(driver)
+                    if element_present:
+                        switch_to_default_content(driver)
+                        alertes = ["ptModContent_0"]
+                        for alerte in alertes:
+                            element_present = wait_for_element(
+                                driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT
+                            )
+                            if element_present:
+                                click_element_without_wait(driver, By.ID, "#ICOK")
+                                if alerte == alertes[0]:
+                                    write_log(
+                                        "\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)",
+                                        self.log_file,
+                                        "INFO",
+                                    )
+                                    write_log(
+                                        "--> Modifier la date du PSATime dans le fichier ini. Le programme va s'arreter.",
+                                        self.log_file,
+                                        "INFO",
+                                    )
+                                sys.exit()
+                        else:
+                            write_log(
+                                "Date validée avec succès.", self.log_file, "DEBUG"
+                            )
+
+                self.wait_for_dom(driver)
+                switched_to_iframe = self.switch_to_iframe_main_target_win0(driver)
                 program_break_time(
                     1, "Veuillez patienter. Court délai pour stabilisation du DOM"
                 )
                 print()
-                element_present = self.submit_date_cible(driver)
-                if element_present:
-                    switch_to_default_content(driver)
-                    alertes = ["ptModContent_0"]
-                    for alerte in alertes:
-                        element_present = wait_for_element(
-                            driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT
-                        )
-                        if element_present:
-                            click_element_without_wait(driver, By.ID, "#ICOK")
-                            if alerte == alertes[0]:
-                                write_log(
-                                    "\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)",
-                                    self.log_file,
-                                    "INFO",
-                                )
-                                write_log(
-                                    "--> Modifier la date du PSATime dans le fichier ini. Le programme va s'arreter.",
-                                    self.log_file,
-                                    "INFO",
-                                )
-                            sys.exit()
-                    else:
-                        write_log("Date validée avec succès.", self.log_file, "DEBUG")
 
-            self.wait_for_dom(driver)
-            switched_to_iframe = self.switch_to_iframe_main_target_win0(driver)
-            program_break_time(
-                1, "Veuillez patienter. Court délai pour stabilisation du DOM"
-            )
-            print()
-
-            if CHOIX_USER:
-                element_present = wait_for_element(
-                    driver,
-                    By.ID,
-                    "EX_ICLIENT_WRK_OK_PB",
-                    EC.element_to_be_clickable,
-                    timeout=DEFAULT_TIMEOUT,
-                )
-                if element_present:
-                    click_element_without_wait(driver, By.ID, "EX_ICLIENT_WRK_OK_PB")
-            else:
-                element_present = wait_for_element(
-                    driver,
-                    By.ID,
-                    "EX_TIME_HDR_WRK_COPY_TIME_RPT",
-                    EC.element_to_be_clickable,
-                    timeout=DEFAULT_TIMEOUT,
-                )
-                if element_present:
-                    click_element_without_wait(
-                        driver, By.ID, "EX_TIME_HDR_WRK_COPY_TIME_RPT"
+                if CHOIX_USER:
+                    element_present = wait_for_element(
+                        driver,
+                        By.ID,
+                        "EX_ICLIENT_WRK_OK_PB",
+                        EC.element_to_be_clickable,
+                        timeout=DEFAULT_TIMEOUT,
                     )
-
-            self.wait_for_dom(driver)
-            remplir_jours_feuille_de_temps.main(driver, self.log_file)
-            self.navigate_from_work_schedule_to_additional_information_page(driver)
-            self.submit_and_validate_additional_information(driver)
-            switch_to_default_content(driver)
-            self.wait_for_dom(driver)
-            switched_to_iframe = self.switch_to_iframe_main_target_win0(driver)
-            if switched_to_iframe:
-                detecter_doublons_jours(driver)
-                if self.save_draft_and_validate(driver):
-                    switch_to_default_content(driver)
-                    alertes = ["ptModContent_1", "ptModContent_2", "ptModContent_3"]
-                    for alerte in alertes:
-                        element_present = wait_for_element(
-                            driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT
+                    if element_present:
+                        click_element_without_wait(
+                            driver, By.ID, "EX_ICLIENT_WRK_OK_PB"
                         )
-                        if element_present:
-                            click_element_without_wait(driver, By.ID, "#ICOK")
-                            write_log(
-                                "⚠️ Alerte rencontrée lors de la sauvegarde.",
-                                self.log_file,
-                                "INFO",
-                            )
-                            break
-            self.wait_for_dom(driver)
-            self.switch_to_iframe_main_target_win0(driver)
-            self.wait_for_dom(driver)
-        except NoSuchElementException as e:
-            log_error(f"❌ L'élément n'a pas été trouvé : {str(e)}", self.log_file)
-        except TimeoutException as e:
-            log_error(
-                f"❌ Temps d'attente dépassé pour un élément : {str(e)}", self.log_file
-            )
-        except WebDriverException as e:
-            log_error(f"❌ Erreur liée au WebDriver : {str(e)}", self.log_file)
-        except Exception as e:
-            log_error(f"❌ Erreur inattendue : {str(e)}", self.log_file)
-        finally:
-            try:
-                if driver_manager.driver is not None:
-                    console_ui.ask_continue(
-                        "INFO : Controler et soumettez votre PSATime, Puis appuyer sur ENTRER "
-                    )
                 else:
-                    console_ui.ask_continue(
-                        "ERROR : Controler les Log, Puis appuyer sur ENTRER ET relancer l'outil "
+                    element_present = wait_for_element(
+                        driver,
+                        By.ID,
+                        "EX_TIME_HDR_WRK_COPY_TIME_RPT",
+                        EC.element_to_be_clickable,
+                        timeout=DEFAULT_TIMEOUT,
                     )
-                seprateur_menu_affichage_console()
-            except ValueError:
-                pass
-            finally:
-                self.cleanup_resources(
-                    driver_manager, memoire_cle, memoire_nom, memoire_mdp
+                    if element_present:
+                        click_element_without_wait(
+                            driver, By.ID, "EX_TIME_HDR_WRK_COPY_TIME_RPT"
+                        )
+
+                self.wait_for_dom(driver)
+                remplir_jours_feuille_de_temps.main(driver, self.log_file)
+                self.navigate_from_work_schedule_to_additional_information_page(driver)
+                self.submit_and_validate_additional_information(driver)
+                switch_to_default_content(driver)
+                self.wait_for_dom(driver)
+                switched_to_iframe = self.switch_to_iframe_main_target_win0(driver)
+                if switched_to_iframe:
+                    detecter_doublons_jours(driver)
+                    if self.save_draft_and_validate(driver):
+                        switch_to_default_content(driver)
+                        alertes = ["ptModContent_1", "ptModContent_2", "ptModContent_3"]
+                        for alerte in alertes:
+                            element_present = wait_for_element(
+                                driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT
+                            )
+                            if element_present:
+                                click_element_without_wait(driver, By.ID, "#ICOK")
+                                write_log(
+                                    "⚠️ Alerte rencontrée lors de la sauvegarde.",
+                                    self.log_file,
+                                    "INFO",
+                                )
+                                break
+                self.wait_for_dom(driver)
+                self.switch_to_iframe_main_target_win0(driver)
+                self.wait_for_dom(driver)
+            except NoSuchElementException as e:
+                log_error(f"❌ L'élément n'a pas été trouvé : {str(e)}", self.log_file)
+            except TimeoutException as e:
+                log_error(
+                    f"❌ Temps d'attente dépassé pour un élément : {str(e)}",
+                    self.log_file,
                 )
+            except WebDriverException as e:
+                log_error(f"❌ Erreur liée au WebDriver : {str(e)}", self.log_file)
+            except Exception as e:
+                log_error(f"❌ Erreur inattendue : {str(e)}", self.log_file)
+            finally:
+                try:
+                    if driver_manager.driver is not None:
+                        console_ui.ask_continue(
+                            "INFO : Controler et soumettez votre PSATime, Puis appuyer sur ENTRER "
+                        )
+                    else:
+                        console_ui.ask_continue(
+                            "ERROR : Controler les Log, Puis appuyer sur ENTRER ET relancer l'outil "
+                        )
+                    seprateur_menu_affichage_console()
+                except ValueError:
+                    pass
+                finally:
+                    self.cleanup_resources(
+                        driver_manager, memoire_cle, memoire_nom, memoire_mdp
+                    )
 
 
 CHOIX_USER = True  # true pour créer une nouvelle feuille de temps

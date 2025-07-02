@@ -61,3 +61,19 @@ def test_open_returns_none(monkeypatch):
 def test_close_with_no_driver():
     manager = SeleniumDriverManager("log.html")
     manager.close()  # Should not raise
+
+
+def test_context_manager_closes(monkeypatch):
+    closed = {}
+
+    class Dummy:
+        def quit(self):
+            closed["quit"] = True
+
+    manager = SeleniumDriverManager("log.html")
+    manager.driver = Dummy()
+    with manager as mgr:
+        assert mgr is manager  # nosec B101
+
+    assert closed.get("quit") is True  # nosec B101
+    assert manager.driver is None  # nosec B101

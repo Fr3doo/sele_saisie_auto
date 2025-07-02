@@ -20,6 +20,19 @@ class SeleniumDriverManager:
         self.log_file = log_file
         self.driver: Optional[WebDriver] = None
 
+    def __enter__(self) -> "SeleniumDriverManager":
+        """Return itself when used as a context manager."""
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: object | None,
+    ) -> None:
+        """Ensure the driver is closed when leaving a context."""
+        self.close()
+
     def open(
         self,
         url: str,
