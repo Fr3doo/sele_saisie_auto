@@ -78,7 +78,7 @@ def test_submit_and_validate_additional_information_positive(monkeypatch):
     monkeypatch.setattr(
         sap, "click_element_without_wait", lambda *a, **k: records.append("ok")
     )
-    sap.DESCRIPTIONS = [
+    sap.context.descriptions = [
         {
             "description_cible": "d",
             "id_value_ligne": "x",
@@ -107,10 +107,14 @@ def test_initialize_debug_mode_off(monkeypatch):
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
     monkeypatch.setattr(sap, "EncryptionService", lambda lf: DummyManager())
-    sap.DEBUG_MODE = False
-    sap.initialize("log.html")
-    assert not messages  # no debug logs when DEBUG_MODE is False
-    sap.DEBUG_MODE = True
+    app_cfg.debug_mode = "OFF"
+    sap.initialize("log.html", app_cfg)
+    monkeypatch.setattr(
+        sap,
+        "ConfigManager",
+        lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
+    )
+    assert not messages  # no debug logs when debug_mode is OFF
 
 
 def test_switch_to_iframe_main_target_win0_no_element(monkeypatch):
@@ -147,6 +151,6 @@ def test_submit_and_validate_additional_information_none(monkeypatch):
 def test_cleanup_resources_none(monkeypatch):
     mgr = DummyManager()
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
-    sap.encryption_service = DummyManager()
+    sap.context.encryption_service = DummyManager()
     sap.cleanup_resources(mgr, None, None, None)
     assert mgr.closed is True

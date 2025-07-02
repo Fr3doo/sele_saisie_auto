@@ -65,15 +65,15 @@ def setup_init(monkeypatch):
     from app_config import AppConfig
 
     app_cfg = AppConfig.from_parser(cfg)
+    monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
+    monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
+    monkeypatch.setattr(sap, "EncryptionService", lambda lf: DummyEnc())
+    sap.initialize("log.html", app_cfg)
     monkeypatch.setattr(
         sap,
         "ConfigManager",
         lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
     )
-    monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
-    monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
-    monkeypatch.setattr(sap, "EncryptionService", lambda lf: DummyEnc())
-    sap.initialize("log.html")
 
 
 def test_connect_to_psatime(monkeypatch):
@@ -85,7 +85,7 @@ def test_connect_to_psatime(monkeypatch):
         "send_keys_to_element",
         lambda driver, by, ident, value: actions.append((ident, value)),
     )
-    sap.encryption_service = DummyEnc()
+    sap.context.encryption_service = DummyEnc()
     sap.connect_to_psatime("drv", b"key", b"user", b"pass")
     assert ("userid", "user") in actions
     assert ("pwd", "pass") in actions
@@ -198,7 +198,7 @@ def test_additional_information(monkeypatch):
     monkeypatch.setattr(
         sap, "click_element_without_wait", lambda *a, **k: collected.append("ok")
     )
-    sap.DESCRIPTIONS = [
+    sap.context.descriptions = [
         {
             "description_cible": "d",
             "id_value_ligne": "x",
@@ -227,7 +227,7 @@ def test_cleanup_resources(monkeypatch):
     called = []
     manager = types.SimpleNamespace(close=lambda: called.append("close"))
     enc = DummyEnc()
-    sap.encryption_service = enc
+    sap.context.encryption_service = enc
     sap.cleanup_resources(manager, "c", "n", "p")
     assert enc.removed == ["c", "n", "p"]
     assert "close" in called

@@ -18,16 +18,16 @@ def test_initialize_date_none(monkeypatch):
     from app_config import AppConfig
 
     app_cfg = AppConfig.from_parser(cfg)
+    monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
+    monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
+    monkeypatch.setattr(sap, "EncryptionService", lambda lf: DummyEnc())
+    sap.initialize("log.html", app_cfg)
     monkeypatch.setattr(
         sap,
         "ConfigManager",
         lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
     )
-    monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
-    monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
-    monkeypatch.setattr(sap, "EncryptionService", lambda lf: DummyEnc())
-    sap.initialize("log.html")
-    assert sap.DATE_CIBLE is None
+    assert sap.context.config.date_cible is None
 
 
 def test_clear_screen_windows(monkeypatch):
@@ -62,9 +62,9 @@ def test_initialize_shared_memory_error(monkeypatch):
     monkeypatch.setattr(
         sap, "shared_memory", types.SimpleNamespace(SharedMemory=DummySHM)
     )
-    sap.encryption_service = DummyEnc()
+    sap.context.encryption_service = DummyEnc()
     monkeypatch.setattr(
-        sap.encryption_service,
+        sap.context.encryption_service,
         "recuperer_de_memoire_partagee",
         lambda *a, **k: (None, b"k" * 32),
     )
@@ -144,7 +144,7 @@ def test_save_draft_and_validate_no_element(monkeypatch):
 def test_cleanup_resources_calls():
     enc = DummyEnc()
     manager = DummyManager("log.html")
-    sap.encryption_service = enc
+    sap.context.encryption_service = enc
     sap.cleanup_resources(manager, "c", "n", None)
     assert enc.removed == ["c", "n"]
     assert manager.driver is None

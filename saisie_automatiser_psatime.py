@@ -6,8 +6,9 @@
 import os
 import sys
 from datetime import datetime, timedelta
+from dataclasses import dataclass
 from multiprocessing import shared_memory
-from typing import Optional
+from typing import Dict, List, Optional
 
 from selenium.common.exceptions import (
     NoSuchElementException,
@@ -41,22 +42,27 @@ from remplir_informations_supp_utils import set_log_file as set_log_file_infos
 from remplir_informations_supp_utils import traiter_description
 from selenium_driver_manager import SeleniumDriverManager
 from shared_utils import program_break_time
+from app_config import AppConfig
 
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
 
 LOG_FILE: Optional[str] = None
-config = None
-encryption_service = None
-ENCRYPTED_LOGIN = None
-ENCRYPTED_MDP = None
-URL = None
-DATE_CIBLE = None
-DEBUG_MODE = True
-LISTE_ITEMS_DESCRIPTIONS = []
-JOURS_DE_TRAVAIL = {}
-INFORMATIONS_PROJET_MISSION = {}
+
+
+@dataclass
+class SaisieContext:
+    """Container for runtime configuration and services."""
+
+    config: "AppConfig"
+    encryption_service: EncryptionService
+    informations_projet_mission: Dict[str, str]
+    descriptions: List[Dict[str, object]]
+
+
+context: Optional[SaisieContext] = None
+
 LISTES_ID_INFORMATIONS_MISSION = [
     "PROJECT_CODE$0",
     "ACTIVITY_CODE$0",
@@ -71,139 +77,116 @@ ID_TO_KEY_MAPPING = {
     "SUB_CATEGORY_CODE$0": "sub_category_code",
     "BILLING_ACTION$0": "billing_action",
 }
-INFORMATIONS_SUPPLEMENTAIRES = {}
-LIEU_DU_TRAVAIL_MATIN = {}
-LIEU_DU_TRAVAIL_APRES_MIDI = {}
-DESCRIPTIONS = []
 
 
-def initialize(log_file: str) -> None:
+def initialize(log_file: str, app_config: AppConfig) -> None:
     """Initialise la configuration et les dépendances."""
 
-    global LOG_FILE, config, encryption_service, ENCRYPTED_LOGIN, ENCRYPTED_MDP, URL, DATE_CIBLE
-    global LISTE_ITEMS_DESCRIPTIONS, JOURS_DE_TRAVAIL, INFORMATIONS_PROJET_MISSION
-    global INFORMATIONS_SUPPLEMENTAIRES
-    global LIEU_DU_TRAVAIL_MATIN, LIEU_DU_TRAVAIL_APRES_MIDI, DESCRIPTIONS
+    global LOG_FILE, context
 
     LOG_FILE = log_file
     set_log_file_selenium(log_file)
     set_log_file_infos(log_file)
-    manager = ConfigManager(log_file=log_file)
-    config = manager.load()
     encryption_service = EncryptionService(log_file)
 
-    ENCRYPTED_LOGIN = config.encrypted_login
-    ENCRYPTED_MDP = config.encrypted_mdp
-    URL = config.url
-    DATE_CIBLE = config.date_cible
-
-    LISTE_ITEMS_DESCRIPTIONS = config.liste_items_planning
-
-    JOURS_DE_TRAVAIL = config.work_schedule
-
-    INFORMATIONS_PROJET_MISSION = {
+    informations_projet_mission = {
         item_projet: cgi_options_billing_action.get(value, value)
-        for item_projet, value in config.project_information.items()
+        for item_projet, value in app_config.project_information.items()
     }
 
-    INFORMATIONS_SUPPLEMENTAIRES = config.additional_information
-    LIEU_DU_TRAVAIL_MATIN = config.work_location_am
-    LIEU_DU_TRAVAIL_APRES_MIDI = config.work_location_pm
-
-    DESCRIPTIONS = [
+    descriptions = [
         {
             "description_cible": "Temps de repos de 11h entre 2 jours travaillés respecté",
             "id_value_ligne": "DESCR100$",
             "id_value_jours": "UC_DAILYREST",
             "type_element": "select",
-            "valeurs_a_remplir": INFORMATIONS_SUPPLEMENTAIRES[
-                "periode_repos_respectee"
-            ],
+            "valeurs_a_remplir": app_config.additional_information["periode_repos_respectee"],
         },
         {
             "description_cible": "Mon temps de travail effectif a débuté entre 8h00 et 10h00 et Mon temps de travail effectif a pris fin entre 16h30 et 19h00",
             "id_value_ligne": "DESCR100$",
             "id_value_jours": "UC_DAILYREST",
             "type_element": "select",
-            "valeurs_a_remplir": INFORMATIONS_SUPPLEMENTAIRES[
-                "horaire_travail_effectif"
-            ],
+            "valeurs_a_remplir": app_config.additional_information["horaire_travail_effectif"],
         },
         {
             "description_cible": "J’ai travaillé plus d’une demi-journée",
             "id_value_ligne": "DESCR100$",
             "id_value_jours": "UC_DAILYREST",
             "type_element": "select",
-            "valeurs_a_remplir": INFORMATIONS_SUPPLEMENTAIRES[
-                "plus_demi_journee_travaillee"
-            ],
+            "valeurs_a_remplir": app_config.additional_information["plus_demi_journee_travaillee"],
         },
         {
             "description_cible": "Durée de la pause déjeuner",
             "id_value_ligne": "UC_TIME_LIN_WRK_DESCR200$",
             "id_value_jours": "UC_TIME_LIN_WRK_UC_DAILYREST",
             "type_element": "input",
-            "valeurs_a_remplir": INFORMATIONS_SUPPLEMENTAIRES["duree_pause_dejeuner"],
+            "valeurs_a_remplir": app_config.additional_information["duree_pause_dejeuner"],
         },
         {
             "description_cible": "Matin",
             "id_value_ligne": "DESCR$",
             "id_value_jours": "UC_LOCATION_A",
             "type_element": "select",
-            "valeurs_a_remplir": LIEU_DU_TRAVAIL_MATIN,
+            "valeurs_a_remplir": app_config.work_location_am,
         },
         {
             "description_cible": "Après-midi",
             "id_value_ligne": "DESCR$",
             "id_value_jours": "UC_LOCATION_A",
             "type_element": "select",
-            "valeurs_a_remplir": LIEU_DU_TRAVAIL_APRES_MIDI,
+            "valeurs_a_remplir": app_config.work_location_pm,
         },
     ]
 
-    if DEBUG_MODE:
+    context = SaisieContext(
+        config=app_config,
+        encryption_service=encryption_service,
+        informations_projet_mission=informations_projet_mission,
+        descriptions=descriptions,
+    )
+
+    if context.config.debug_mode.upper() != "OFF":
         write_log("📌 Chargement des configurations...", LOG_FILE, "INFO")
         write_log(
-            f"👉 Login : {ENCRYPTED_LOGIN} - pas visible, normal", LOG_FILE, "CRITICAL"
+            f"👉 Login : {context.config.encrypted_login} - pas visible, normal",
+            LOG_FILE,
+            "CRITICAL",
         )
         write_log(
-            f"👉 Password : {ENCRYPTED_MDP} - pas visible, normal", LOG_FILE, "CRITICAL"
+            f"👉 Password : {context.config.encrypted_mdp} - pas visible, normal",
+            LOG_FILE,
+            "CRITICAL",
         )
-        write_log(f"👉 URL : {URL}", LOG_FILE, "CRITICAL")
-        write_log(f"👉 Date cible : {DATE_CIBLE}", LOG_FILE, "INFO")
+        write_log(f"👉 URL : {context.config.url}", LOG_FILE, "CRITICAL")
+        write_log(f"👉 Date cible : {context.config.date_cible}", LOG_FILE, "INFO")
 
         write_log("👉 Planning de travail de la semaine:", LOG_FILE, "INFO")
-        for day, (activity, hours) in JOURS_DE_TRAVAIL.items():
+        for day, (activity, hours) in context.config.work_schedule.items():
             write_log(f"🔹 '{day}': ('{activity}', '{hours}')", LOG_FILE, "INFO")
 
         write_log("👉 Infos_supp_cgi_periode_repos_respectee:", LOG_FILE, "INFO")
-        for day, status in INFORMATIONS_SUPPLEMENTAIRES[
-            "periode_repos_respectee"
-        ].items():
+        for day, status in context.config.additional_information["periode_repos_respectee"].items():
             write_log(f"🔹 '{day}': '{status}'", LOG_FILE, "INFO")
 
         write_log("👉 Infos_supp_cgi_horaire_travail_effectif:", LOG_FILE, "INFO")
-        for day, status in INFORMATIONS_SUPPLEMENTAIRES[
-            "horaire_travail_effectif"
-        ].items():
+        for day, status in context.config.additional_information["horaire_travail_effectif"].items():
             write_log(f"🔹 '{day}': '{status}'", LOG_FILE, "INFO")
 
         write_log("👉 Planning de travail de la semaine:", LOG_FILE, "INFO")
-        for day, status in INFORMATIONS_SUPPLEMENTAIRES[
-            "plus_demi_journee_travaillee"
-        ].items():
+        for day, status in context.config.additional_information["plus_demi_journee_travaillee"].items():
             write_log(f"🔹 '{day}': '{status}'", LOG_FILE, "INFO")
 
         write_log("👉 Infos_supp_cgi_duree_pause_dejeuner:", LOG_FILE, "INFO")
-        for day, status in INFORMATIONS_SUPPLEMENTAIRES["duree_pause_dejeuner"].items():
+        for day, status in context.config.additional_information["duree_pause_dejeuner"].items():
             write_log(f"🔹 '{day}': '{status}'", LOG_FILE, "INFO")
 
         write_log("👉 Lieu de travail Matin:", LOG_FILE, "INFO")
-        for day, location in LIEU_DU_TRAVAIL_MATIN.items():
+        for day, location in context.config.work_location_am.items():
             write_log(f"🔹 '{day}': '{location}'", LOG_FILE, "INFO")
 
         write_log("👉 Lieu de travail Apres-midi:", LOG_FILE, "INFO")
-        for day, location in LIEU_DU_TRAVAIL_APRES_MIDI.items():
+        for day, location in context.config.work_location_pm.items():
             write_log(f"🔹 '{day}': '{location}'", LOG_FILE, "INFO")
 
 
@@ -309,7 +292,7 @@ def initialize_shared_memory():
     """Récupère les données de la mémoire partagée pour le login."""
     memoire_cle = memoire_nom = memoire_mdp = None
 
-    memoire_cle, cle_aes = encryption_service.recuperer_de_memoire_partagee(
+    memoire_cle, cle_aes = context.encryption_service.recuperer_de_memoire_partagee(
         MEMOIRE_PARTAGEE_CLE, TAILLE_CLE
     )
     write_log(f"💀 Clé AES récupérée : {cle_aes.hex()}", LOG_FILE, "CRITICAL")
@@ -360,15 +343,15 @@ def wait_for_dom(driver):
 
 def setup_browser(driver_manager: SeleniumDriverManager):
     """Configure et démarre le navigateur."""
-    return driver_manager.open(URL, fullscreen=False, headless=False)
+    return driver_manager.open(context.config.url, fullscreen=False, headless=False)
 
 
 def connect_to_psatime(driver, cle_aes, nom_utilisateur_chiffre, mot_de_passe_chiffre):
     """Connecte l'utilisateur au portail PSATime."""
-    nom_utilisateur = encryption_service.dechiffrer_donnees(
+    nom_utilisateur = context.encryption_service.dechiffrer_donnees(
         nom_utilisateur_chiffre, cle_aes
     )
-    mot_de_passe = encryption_service.dechiffrer_donnees(mot_de_passe_chiffre, cle_aes)
+    mot_de_passe = context.encryption_service.dechiffrer_donnees(mot_de_passe_chiffre, cle_aes)
     cle_aes = None
 
     send_keys_to_element(driver, By.ID, "userid", nom_utilisateur)
@@ -562,11 +545,11 @@ def cleanup_resources(
 ):
     """Nettoie les ressources à la fin de l'exécution."""
     if memoire_cle:
-        encryption_service.supprimer_memoire_partagee_securisee(memoire_cle)
+        context.encryption_service.supprimer_memoire_partagee_securisee(memoire_cle)
     if memoire_nom:
-        encryption_service.supprimer_memoire_partagee_securisee(memoire_nom)
+        context.encryption_service.supprimer_memoire_partagee_securisee(memoire_nom)
     if memoire_mdp:
-        encryption_service.supprimer_memoire_partagee_securisee(memoire_mdp)
+        context.encryption_service.supprimer_memoire_partagee_securisee(memoire_mdp)
     driver_manager.close()
     write_log(
         "🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier saisie_automatiser_psatime.",
@@ -580,7 +563,9 @@ def cleanup_resources(
 # ------------------------------------------------------------------------------------------------------------------ #
 def main(log_file: str) -> None:  # pragma: no cover
     """Point d'entrée principal du script."""
-    initialize(log_file)
+    manager = ConfigManager(log_file=log_file)
+    app_cfg = manager.load()
+    initialize(log_file, app_cfg)
     try:
         # Initialisation des logs et configurations
         log_initialisation()
@@ -607,7 +592,7 @@ def main(log_file: str) -> None:  # pragma: no cover
 
         if switched_to_iframe:
             # Gestion de la date cible
-            handle_date_input(driver, DATE_CIBLE)
+            handle_date_input(driver, context.config.date_cible)
 
             program_break_time(
                 1, "Veuillez patienter. Court délai pour stabilisation du DOM"

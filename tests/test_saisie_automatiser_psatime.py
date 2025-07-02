@@ -73,15 +73,15 @@ def setup_init(monkeypatch):
     from app_config import AppConfig
 
     app_cfg = AppConfig.from_parser(cfg)
+    monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
+    monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
+    monkeypatch.setattr(sap, "EncryptionService", lambda lf: DummyEnc())
+    sap.initialize("log.html", app_cfg)
     monkeypatch.setattr(
         sap,
         "ConfigManager",
         lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
     )
-    monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
-    monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
-    monkeypatch.setattr(sap, "EncryptionService", lambda lf: DummyEnc())
-    sap.initialize("log.html")
 
 
 def test_helpers(monkeypatch):
@@ -107,9 +107,9 @@ def test_helpers(monkeypatch):
 
 def test_initialize_sets_globals(monkeypatch):
     setup_init(monkeypatch)
-    assert sap.URL == "http://test"
-    assert sap.JOURS_DE_TRAVAIL["lundi"] == ("En mission", "8")
-    assert sap.INFORMATIONS_PROJET_MISSION["billing_action"] == "B"
+    assert sap.context.config.url == "http://test"
+    assert sap.context.config.work_schedule["lundi"] == ("En mission", "8")
+    assert sap.context.informations_projet_mission["billing_action"] == "B"
 
 
 def test_initialize_shared_memory(monkeypatch):
@@ -117,7 +117,7 @@ def test_initialize_shared_memory(monkeypatch):
     monkeypatch.setattr(
         sap, "shared_memory", types.SimpleNamespace(SharedMemory=DummySHM)
     )
-    sap.encryption_service = DummyEnc()
+    sap.context.encryption_service = DummyEnc()
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
     result = sap.initialize_shared_memory()
     assert result[2] == b"user"
@@ -127,8 +127,8 @@ def test_initialize_shared_memory(monkeypatch):
 def test_main_flow(monkeypatch):
     setup_init(monkeypatch)
     sap.LOG_FILE = "log.html"
-    sap.URL = "http://test"
-    sap.DATE_CIBLE = "06/07/2024"
+    sap.context.config.url = "http://test"
+    sap.context.config.date_cible = "06/07/2024"
     sap.CHOIX_USER = True
 
     monkeypatch.setattr(sap, "log_initialisation", lambda: None)
