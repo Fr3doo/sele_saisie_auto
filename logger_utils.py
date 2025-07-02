@@ -55,37 +55,6 @@ def is_log_level_allowed(current_level, configured_level):
     return LOG_LEVELS[current_level] >= LOG_LEVELS[configured_level]
 
 
-def should_rotate(log_file, max_size_mb=5):
-    """
-    Vérifie si un fichier de log doit être tourné (taille maximale atteinte).
-
-    Args:
-        log_file (str): Chemin du fichier de log.
-        max_size_mb (int): Taille maximale en mégaoctets avant rotation.
-
-    Returns:
-        bool: True si le fichier doit être tourné, False sinon.
-    """
-    if os.path.exists(log_file):
-        file_size = os.path.getsize(log_file) / (1024 * 1024)  # Taille en Mo
-        return file_size >= max_size_mb
-    return False
-
-
-def rotate_log_file(log_file):
-    """
-    Tourne un fichier de log en renommant l'ancien fichier avec un suffixe unique.
-
-    Args:
-        log_file (str): Chemin du fichier de log à tourner.
-    """
-    if os.path.exists(log_file):
-        close_logs(log_file)  # Fermez le tableau avant la rotation
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        rotated_file = f"{log_file}.{timestamp}.bak"
-        os.rename(log_file, rotated_file)
-
-
 def get_html_style():
     """
     Retourne le style HTML/CSS utilisé pour les fichiers de log.
@@ -161,7 +130,6 @@ def write_log(
     level="INFO",
     log_format=HTML_FORMAT,
     auto_close=False,
-    max_size_mb=5,
 ):
     try:
         # Vérifier si le niveau de log est valide
@@ -191,10 +159,6 @@ def write_log(
             # Vérifiez l'encodage du message (débogage)
             log_message = f"<tr><td>{datetime.now()}</td><td>{level}</td><td>{message}</td></tr>\n"
             debug_print(f"Écriture dans le fichier pour : {level}")
-
-        # Rotation du fichier si nécessaire
-        if should_rotate(log_file, max_size_mb):
-            rotate_log_file(log_file)
 
         # Écriture dans le fichier
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
