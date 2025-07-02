@@ -2,17 +2,17 @@ import sys
 import types
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
+sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
-from remplir_jours_feuille_de_temps import (
+from remplir_jours_feuille_de_temps import (  # noqa: E402
     afficher_message_insertion,
+    main,
     remplir_jours,
-    traiter_jour,
     remplir_mission,
     remplir_mission_specifique,
     traiter_champs_mission,
+    traiter_jour,
     wait_for_dom,
-    main,
 )
 
 
@@ -68,9 +68,7 @@ def test_traiter_jour_failure(monkeypatch):
             __import__("selenium").common.exceptions.StaleElementReferenceException()
         ),
     )
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1
-    )
+    monkeypatch.setattr("remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1)
     logs = []
     monkeypatch.setattr(
         "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
@@ -82,6 +80,7 @@ def test_traiter_jour_failure(monkeypatch):
 
 def test_remplir_mission_dispatch(monkeypatch):
     called = {}
+
     def fake_traiter(driver, j, d, v, jr):
         called.setdefault("jour", True)
         return jr
@@ -115,9 +114,7 @@ def test_remplir_mission_specifique_failure(monkeypatch):
             __import__("selenium").common.exceptions.StaleElementReferenceException()
         ),
     )
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1
-    )
+    monkeypatch.setattr("remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1)
     logs = []
     monkeypatch.setattr(
         "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
@@ -168,8 +165,18 @@ def test_run_as_script(monkeypatch):
     )
 
     prefix = "\n" * 469
-    code = prefix + "if __name__ == '__main__':\n    from shared_utils import get_log_file\n\n    main(None, get_log_file())\n"
-    exec(compile(code, mod.__file__, "exec"), {"__name__": "__main__", "main": mod.main, "get_log_file": fake_shared.get_log_file})
+    code = (
+        prefix
+        + "if __name__ == '__main__':\n    from shared_utils import get_log_file\n\n    main(None, get_log_file())\n"
+    )
+    exec(
+        compile(code, mod.__file__, "exec"),
+        {
+            "__name__": "__main__",
+            "main": mod.main,
+            "get_log_file": fake_shared.get_log_file,
+        },
+    )
     assert called["main"] == (None, "file")
 
 
@@ -257,7 +264,9 @@ def test_traiter_champs_mission_insertion_fail(monkeypatch):
     ids = ["PROJECT_CODE$0"]
     mapping = {"PROJECT_CODE$0": "project_code"}
     info = {"project_code": "VAL"}
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "remplir_jours_feuille_de_temps.wait_for_dom", lambda *a, **k: None
+    )
     monkeypatch.setattr(
         "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
     )
@@ -288,7 +297,9 @@ def test_main_handles_other_exceptions(monkeypatch):
     monkeypatch.setattr("remplir_jours_feuille_de_temps.initialize", lambda lf: None)
     monkeypatch.setattr(
         "remplir_jours_feuille_de_temps.remplir_jours",
-        lambda *a, **k: (_ for _ in ()).throw(__import__("selenium").common.exceptions.NoSuchElementException()),
+        lambda *a, **k: (_ for _ in ()).throw(
+            __import__("selenium").common.exceptions.NoSuchElementException()
+        ),
     )
     monkeypatch.setattr(
         "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
@@ -302,7 +313,9 @@ def test_main_webdriver_exception(monkeypatch):
     monkeypatch.setattr("remplir_jours_feuille_de_temps.initialize", lambda lf: None)
     monkeypatch.setattr(
         "remplir_jours_feuille_de_temps.remplir_jours",
-        lambda *a, **k: (_ for _ in ()).throw(__import__("selenium").common.exceptions.WebDriverException()),
+        lambda *a, **k: (_ for _ in ()).throw(
+            __import__("selenium").common.exceptions.WebDriverException()
+        ),
     )
     monkeypatch.setattr(
         "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
@@ -316,7 +329,9 @@ def test_main_stale_exception(monkeypatch):
     monkeypatch.setattr("remplir_jours_feuille_de_temps.initialize", lambda lf: None)
     monkeypatch.setattr(
         "remplir_jours_feuille_de_temps.remplir_jours",
-        lambda *a, **k: (_ for _ in ()).throw(__import__("selenium").common.exceptions.StaleElementReferenceException()),
+        lambda *a, **k: (_ for _ in ()).throw(
+            __import__("selenium").common.exceptions.StaleElementReferenceException()
+        ),
     )
     monkeypatch.setattr(
         "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
@@ -337,4 +352,3 @@ def test_main_generic_exception(monkeypatch):
     )
     main(None, "log")
     assert any("inattendue" in m for m in logs)
-
