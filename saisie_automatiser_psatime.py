@@ -25,6 +25,7 @@ from config_manager import ConfigManager
 from dropdown_options import cgi_options_billing_action
 from encryption_utils import EncryptionService
 from logger_utils import write_log
+from error_handler import log_error
 from remplir_informations_supp_utils import set_log_file as set_log_file_infos
 from remplir_informations_supp_utils import traiter_description
 from selenium_driver_manager import SeleniumDriverManager
@@ -560,19 +561,13 @@ class PSATimeAutomation:
             self.switch_to_iframe_main_target_win0(driver)
             self.wait_for_dom(driver)
         except NoSuchElementException as e:
-            write_log(
-                f"❌ L'élément n'a pas été trouvé : {str(e)}", self.log_file, "ERROR"
-            )
+            log_error(f"❌ L'élément n'a pas été trouvé : {str(e)}", self.log_file)
         except TimeoutException as e:
-            write_log(
-                f"❌ Temps d'attente dépassé pour un élément : {str(e)}",
-                self.log_file,
-                "ERROR",
-            )
+            log_error(f"❌ Temps d'attente dépassé pour un élément : {str(e)}", self.log_file)
         except WebDriverException as e:
-            write_log(f"❌ Erreur liée au WebDriver : {str(e)}", self.log_file, "ERROR")
+            log_error(f"❌ Erreur liée au WebDriver : {str(e)}", self.log_file)
         except Exception as e:
-            write_log(f"❌ Erreur inattendue : {str(e)}", self.log_file, "ERROR")
+            log_error(f"❌ Erreur inattendue : {str(e)}", self.log_file)
         finally:
             try:
                 if driver_manager.driver is not None:

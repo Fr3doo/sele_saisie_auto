@@ -277,7 +277,7 @@ def test_main_handles_exception(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
+        "remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
     )
 
     main(None, "file")
