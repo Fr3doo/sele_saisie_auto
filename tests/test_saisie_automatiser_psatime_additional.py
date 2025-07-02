@@ -236,6 +236,9 @@ def test_additional_information(monkeypatch):
     monkeypatch.setattr(
         sap, "click_element_without_wait", lambda *a, **k: collected.append("ok")
     )
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     sap.context.descriptions = [
         {
             "description_cible": "d",

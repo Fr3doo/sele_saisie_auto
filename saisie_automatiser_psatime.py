@@ -40,6 +40,7 @@ from selenium_utils import set_log_file as set_log_file_selenium
 from selenium_utils import (
     switch_to_default_content,
     switch_to_iframe_by_id_or_name,
+    wait_for_dom_after,
     wait_for_dom_ready,
     wait_for_element,
     wait_until_dom_is_stable,
@@ -291,6 +292,7 @@ class PSATimeAutomation:
             self.context.config.url, fullscreen=False, headless=False
         )
 
+    @wait_for_dom_after
     def connect_to_psatime(
         self, driver, cle_aes, nom_utilisateur_chiffre, mot_de_passe_chiffre
     ):
@@ -306,6 +308,7 @@ class PSATimeAutomation:
         send_keys_to_element(driver, By.ID, "pwd", Keys.RETURN)
         self.wait_for_dom(driver)
 
+    @wait_for_dom_after
     def switch_to_iframe_main_target_win0(self, driver):
         switched_to_iframe = None
         element_present = wait_for_element(
@@ -320,6 +323,7 @@ class PSATimeAutomation:
             raise NameError("main_target_win0 not found")
         return switched_to_iframe
 
+    @wait_for_dom_after
     def navigate_from_home_to_date_entry_page(self, driver):
         element_present = wait_for_element(
             driver,
@@ -369,6 +373,7 @@ class PSATimeAutomation:
                     )
         self.wait_for_dom(driver)
 
+    @wait_for_dom_after
     def submit_date_cible(self, driver):
         element_present = wait_for_element(
             driver,
@@ -384,6 +389,7 @@ class PSATimeAutomation:
         self.wait_for_dom(driver)
         return element_present
 
+    @wait_for_dom_after
     def navigate_from_work_schedule_to_additional_information_page(self, driver):
         self.wait_for_dom(driver)
         element_present = wait_for_element(
@@ -398,6 +404,7 @@ class PSATimeAutomation:
         switch_to_default_content(driver)
         self.wait_for_dom(driver)
 
+    @wait_for_dom_after
     def submit_and_validate_additional_information(self, driver):
         element_present = wait_for_element(
             driver, By.ID, "ptModFrame_0", timeout=DEFAULT_TIMEOUT
@@ -424,6 +431,7 @@ class PSATimeAutomation:
         if element_present:
             click_element_without_wait(driver, By.ID, "#ICSave")
 
+    @wait_for_dom_after
     def save_draft_and_validate(self, driver):
         element_present = wait_for_element(
             driver,
