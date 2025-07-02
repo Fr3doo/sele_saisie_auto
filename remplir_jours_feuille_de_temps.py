@@ -12,7 +12,7 @@ from selenium.common.exceptions import (
 )
 from selenium.webdriver.common.by import By
 
-from constants import JOURS_SEMAINE
+from constants import ID_TO_KEY_MAPPING, JOURS_SEMAINE, LISTES_ID_INFORMATIONS_MISSION
 from dropdown_options import cgi_options_billing_action
 from fonctions_selenium_utils import (
     controle_insertion,
@@ -40,22 +40,6 @@ config = None
 LISTE_ITEMS_DESCRIPTIONS = []
 JOURS_DE_TRAVAIL = {}
 INFORMATIONS_PROJET_MISSION = {}
-# Liste des IDs associés aux informations du projet
-LISTES_ID_INFORMATIONS_MISSION = [
-    "PROJECT_CODE$0",
-    "ACTIVITY_CODE$0",
-    "CATEGORY_CODE$0",
-    "SUB_CATEGORY_CODE$0",
-    "BILLING_ACTION$0",
-]
-
-ID_TO_KEY_MAPPING = {
-    "PROJECT_CODE$0": "project_code",
-    "ACTIVITY_CODE$0": "activity_code",
-    "CATEGORY_CODE$0": "category_code",
-    "SUB_CATEGORY_CODE$0": "sub_category_code",
-    "BILLING_ACTION$0": "billing_action",
-}
 
 MAX_ATTEMPTS = 5
 DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut

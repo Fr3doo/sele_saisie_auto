@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Application configuration dataclass and loader."""
+
+from __future__ import annotations
 
 from configparser import ConfigParser
 from dataclasses import dataclass
