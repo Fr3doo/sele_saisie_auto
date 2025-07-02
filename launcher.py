@@ -1,4 +1,3 @@
-# pragma: no cover
 """Launcher module handling configuration and Selenium startup."""
 
 from __future__ import annotations
