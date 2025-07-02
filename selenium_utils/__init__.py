@@ -1,8 +1,10 @@
 """Convenience exports for Selenium helper functions."""
+
 # ruff: noqa: E402
+# flake8: noqa: E402
+import time
 from typing import Optional
 
-import time
 import requests
 from selenium import webdriver
 from selenium.common.exceptions import (
@@ -12,6 +14,7 @@ from selenium.common.exceptions import (
 )
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
+
 from logger_utils import write_log
 
 LOG_FILE: Optional[str] = None
@@ -22,37 +25,38 @@ def set_log_file(log_file: str) -> None:
     global LOG_FILE
     LOG_FILE = log_file
 
+
 DEFAULT_TIMEOUT = 10
 LONG_TIMEOUT = 20
 
-from .wait_helpers import (
-    is_document_complete,
-    wait_for_dom_ready,
-    wait_until_dom_is_stable,
-    wait_for_element,
-    find_clickable,
-    find_visible,
-    find_present,
-)
 from .element_actions import (
-    modifier_date_input,
-    switch_to_iframe_by_id_or_name,
-    switch_to_default_content,
     click_element_without_wait,
-    send_keys_to_element,
-    verifier_champ_jour_rempli,
-    remplir_champ_texte,
+    controle_insertion,
+    detecter_doublons_jours,
     detecter_et_verifier_contenu,
     effacer_et_entrer_valeur,
-    controle_insertion,
+    modifier_date_input,
+    remplir_champ_texte,
     selectionner_option_menu_deroulant_type_select,
+    send_keys_to_element,
+    switch_to_default_content,
+    switch_to_iframe_by_id_or_name,
     trouver_ligne_par_description,
-    detecter_doublons_jours,
+    verifier_champ_jour_rempli,
 )
 from .navigation import (
-    verifier_accessibilite_url,
-    ouvrir_navigateur_sur_ecran_principal,
     definir_taille_navigateur,
+    ouvrir_navigateur_sur_ecran_principal,
+    verifier_accessibilite_url,
+)
+from .wait_helpers import (
+    find_clickable,
+    find_present,
+    find_visible,
+    is_document_complete,
+    wait_for_dom_ready,
+    wait_for_element,
+    wait_until_dom_is_stable,
 )
 
 __all__ = [

@@ -1,4 +1,5 @@
 """Selenium wait helper functions."""
+
 from __future__ import annotations
 
 import time
@@ -7,7 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from . import LOG_FILE, DEFAULT_TIMEOUT, write_log
+from . import DEFAULT_TIMEOUT, LOG_FILE, write_log
 
 
 def is_document_complete(driver):
@@ -86,7 +87,9 @@ def wait_for_element(
 
 def find_clickable(driver, by, locator_value, timeout=DEFAULT_TIMEOUT):
     """Return element when it becomes clickable."""
-    return wait_for_element(driver, by, locator_value, EC.element_to_be_clickable, timeout)
+    return wait_for_element(
+        driver, by, locator_value, EC.element_to_be_clickable, timeout
+    )
 
 
 def find_visible(driver, by, locator_value, timeout=DEFAULT_TIMEOUT):
@@ -102,4 +105,6 @@ def find_visible(driver, by, locator_value, timeout=DEFAULT_TIMEOUT):
 
 def find_present(driver, by, locator_value, timeout=DEFAULT_TIMEOUT):
     """Return element when it is present in the DOM."""
-    return wait_for_element(driver, by, locator_value, EC.presence_of_element_located, timeout)
+    return wait_for_element(
+        driver, by, locator_value, EC.presence_of_element_located, timeout
+    )
