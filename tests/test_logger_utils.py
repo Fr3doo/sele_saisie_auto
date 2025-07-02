@@ -23,15 +23,6 @@ def test_is_log_level_allowed():
     assert logger_utils.is_log_level_allowed("INFO", "ERROR") is False
 
 
-def test_should_rotate_and_rotate_log_file(tmp_path):
-    log_file = tmp_path / "log.html"
-    log_file.write_text("x" * (6 * 1024 * 1024), encoding="utf-8")
-    assert logger_utils.should_rotate(str(log_file), max_size_mb=5)
-    logger_utils.rotate_log_file(str(log_file))
-    rotated = list(tmp_path.glob("log.html.*.bak"))
-    assert rotated
-
-
 def test_write_and_close_html_log(tmp_path):
     log_file = tmp_path / "log.html"
     logger_utils.write_log("msg", str(log_file), level="INFO", log_format="html")
@@ -54,10 +45,6 @@ def test_initialize_logger_config_value(tmp_path):
     cfg["settings"] = {"debug_mode": "WARNING"}
     mod.initialize_logger(cfg)
     assert mod.LOG_LEVEL_FILTER == "WARNING"
-
-
-def test_rotate_log_file_no_file(tmp_path):
-    logger_utils.rotate_log_file(str(tmp_path / "absent.log"))
 
 
 def test_initialize_html_log_file_cleanup(tmp_path):
@@ -89,7 +76,6 @@ def test_write_log_filtered(monkeypatch, tmp_path):
     logger_utils.LOG_LEVEL_FILTER = "INFO"
     messages = []
     monkeypatch.setattr(logger_utils, "debug_print", lambda m: messages.append(m))
-    monkeypatch.setattr(logger_utils, "should_rotate", lambda *a, **k: False)
     logger_utils.write_log("msg", str(log_file), level="ERROR", log_format="html")
     assert messages
     assert not log_file.exists()
@@ -102,7 +88,6 @@ def test_write_log_debug_html_autoclose(monkeypatch, tmp_path):
     log_file = tmp_path / "log.html"
     logger_utils.DEBUG_MODE = True
     logger_utils.LOG_LEVEL_FILTER = "INFO"
-    monkeypatch.setattr(logger_utils, "should_rotate", lambda *a, **k: False)
     logs = []
     monkeypatch.setattr(logger_utils, "debug_print", lambda m: logs.append(m))
     logger_utils.write_log(
@@ -119,7 +104,6 @@ def test_write_log_text_debug(monkeypatch, tmp_path):
     log_file = tmp_path / "log.txt"
     logger_utils.DEBUG_MODE = True
     logger_utils.LOG_LEVEL_FILTER = "INFO"
-    monkeypatch.setattr(logger_utils, "should_rotate", lambda *a, **k: False)
     logs = []
     monkeypatch.setattr(logger_utils, "debug_print", lambda m: logs.append(m))
     logger_utils.write_log("hi", str(log_file), level="INFO", log_format="txt")
@@ -135,7 +119,6 @@ def test_write_log_oserror(monkeypatch, tmp_path):
     def bad_open(*a, **k):
         raise OSError("boom")
 
-    monkeypatch.setattr(logger_utils, "should_rotate", lambda *a, **k: False)
     monkeypatch.setattr(logger_utils, "initialize_html_log_file", lambda *a, **k: None)
     monkeypatch.setattr("builtins.open", bad_open)
     with pytest.raises(RuntimeError):
@@ -166,22 +149,8 @@ def test_close_logs_error(monkeypatch, tmp_path):
         logger_utils.close_logs(str(log_file))
 
 
-def test_write_log_rotation(monkeypatch, tmp_path):
-    log_file = tmp_path / "log.html"
-    logger_utils.LOG_LEVEL_FILTER = "INFO"
-    monkeypatch.setattr(logger_utils, "should_rotate", lambda *a, **k: True)
-    called = []
-    monkeypatch.setattr(
-        logger_utils, "rotate_log_file", lambda path: called.append(path)
-    )
-    logger_utils.write_log("msg", str(log_file), level="INFO", log_format="html")
-    assert called == [str(log_file)]
-    logger_utils.LOG_LEVEL_FILTER = logger_utils.DEFAULT_LOG_LEVEL
-
-
 def test_write_log_generic_exception(monkeypatch, tmp_path):
     log_file = tmp_path / "log.html"
-    monkeypatch.setattr(logger_utils, "should_rotate", lambda *a, **k: False)
     monkeypatch.setattr(logger_utils, "initialize_html_log_file", lambda *a, **k: None)
 
     def raise_value(*a, **k):
