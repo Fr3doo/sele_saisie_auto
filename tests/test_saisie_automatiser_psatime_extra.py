@@ -1,4 +1,5 @@
 import types
+
 import pytest
 
 import saisie_automatiser_psatime as sap
@@ -15,7 +16,9 @@ def test_initialize_date_none(monkeypatch):
     cfg = make_config()
     cfg["settings"]["date_cible"] = "none"
     monkeypatch.setattr(
-        sap, "ConfigManager", lambda log_file=None: types.SimpleNamespace(load=lambda: cfg)
+        sap,
+        "ConfigManager",
+        lambda log_file=None: types.SimpleNamespace(load=lambda: cfg),
     )
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
@@ -63,7 +66,9 @@ def test_initialize_shared_memory_error(monkeypatch):
         lambda *a, **k: (None, b"k" * 32),
     )
     exit_called = {}
-    monkeypatch.setattr(sap.sys, "exit", lambda code=0: exit_called.setdefault("exit", code))
+    monkeypatch.setattr(
+        sap.sys, "exit", lambda code=0: exit_called.setdefault("exit", code)
+    )
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
     sap.initialize_shared_memory()
     assert exit_called["exit"] == 1
@@ -86,8 +91,14 @@ def test_handle_date_input_no_change(monkeypatch):
 
     inp = Input()
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: inp)
-    monkeypatch.setattr(sap, "get_next_saturday_if_not_saturday", lambda d: "06/07/2024")
-    monkeypatch.setattr(sap, "modifier_date_input", lambda *a, **k: (_ for _ in ()).throw(AssertionError()))
+    monkeypatch.setattr(
+        sap, "get_next_saturday_if_not_saturday", lambda d: "06/07/2024"
+    )
+    monkeypatch.setattr(
+        sap,
+        "modifier_date_input",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError()),
+    )
     logs = []
     monkeypatch.setattr(sap, "write_log", lambda msg, f, level: logs.append(msg))
     monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
@@ -105,7 +116,9 @@ def test_navigate_from_work_schedule_without_element(monkeypatch):
     monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: False)
     called = {}
-    monkeypatch.setattr(sap, "switch_to_default_content", lambda *a, **k: called.setdefault("sw", True))
+    monkeypatch.setattr(
+        sap, "switch_to_default_content", lambda *a, **k: called.setdefault("sw", True)
+    )
     sap.navigate_from_work_schedule_to_additional_information_page("drv")
     assert called["sw"] is True
 
