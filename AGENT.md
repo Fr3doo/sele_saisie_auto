@@ -191,7 +191,6 @@ Fonctions de support communes.
 *(si des APIs ou sockets sont ajoutés)*
 
 ## 13. Surveillance & Performances
-*(ajouter des métriques et logs étendus)*
 
 ## 14. Gestion des erreurs
 *(uniformiser les exceptions et messages)*

@@ -53,8 +53,6 @@ Une interface graphique Tkinter permet de renseigner vos identifiants chiffrés 
 ## 🔌 Injection de dépendances
 Certaines fonctions acceptent les modules Selenium ou Logger en paramètres pour faciliter les tests. Voir [AGENT.md](AGENT.md) pour plus de détails.
 
-## 📈 Collecte de métriques
-TODO: intégrer un système de métriques (ex. Prometheus).
 
 ## ❗ Gestion des erreurs
 Les exceptions sont journalisées via `logger_utils.py`. Reportez-vous à la documentation interne pour enrichir le mécanisme.
