@@ -389,33 +389,34 @@ def traiter_champs_mission(
 # ----------------------------------------------------------------------------- #
 # ----------------------------------- MAIN ------------------------------------ #
 # ----------------------------------------------------------------------------- #
-def main(driver, log_file: str) -> None:
-    """Point d'entrée principal du script pour remplir automatiquement les jours et les missions."""
-    initialize(log_file)
-    try:
-        jours_remplis: list[str] = []  # Liste pour suivre les jours déjà remplis
+class TimeSheetHelper:
+    """Helper class orchestrating the time sheet filling steps."""
 
-        write_log("Initialisation du processus de remplissage...", LOG_FILE, "DEBUG")
+    def __init__(self, log_file: str) -> None:
+        self.log_file = log_file
 
-        # Étape 1 : Remplir les jours standard
-        write_log("Début du remplissage des jours hors mission...", LOG_FILE, "DEBUG")
-        jours_remplis = remplir_jours(
+    def initialize(self) -> None:
+        initialize(self.log_file)
+
+    def fill_standard_days(self, driver, jours_remplis: list[str]) -> list[str]:
+        write_log(
+            "Début du remplissage des jours hors mission...",
+            LOG_FILE,
+            "DEBUG",
+        )
+        return remplir_jours(
             driver, LISTE_ITEMS_DESCRIPTIONS, JOURS_SEMAINE, jours_remplis
         )
-        write_log(f"Jours déjà remplis : {jours_remplis}", LOG_FILE, "DEBUG")
 
-        # Étape 2 : Gestion des jours de travail et des missions
+    def fill_work_missions(self, driver, jours_remplis: list[str]) -> list[str]:
         write_log(
             "Début du traitement des jours de travail et des missions...",
             LOG_FILE,
             "DEBUG",
         )
-        jours_remplis = remplir_mission(driver, JOURS_DE_TRAVAIL, jours_remplis)
-        write_log(
-            f"Finalisation des jours remplis : {jours_remplis}", LOG_FILE, "DEBUG"
-        )
+        return remplir_mission(driver, JOURS_DE_TRAVAIL, jours_remplis)
 
-        # Étape 3 : Vérification des champs liés aux missions
+    def handle_additional_fields(self, driver) -> None:
         if est_en_mission_presente(JOURS_DE_TRAVAIL):
             write_log(
                 "Jour 'En mission' détecté. Traitement des champs associés...",
@@ -431,23 +432,49 @@ def main(driver, log_file: str) -> None:
         else:
             write_log("Aucun Jour 'En mission' détecté.", LOG_FILE, "DEBUG")
 
-        # Étape finale : Succès
-        write_log(
-            "Tous les jours et missions ont été traités avec succès.",
-            LOG_FILE,
-            "DEBUG",
-        )
+    def run(self, driver) -> None:
+        self.initialize()
+        try:
+            jours_remplis: list[str] = []
 
-    except NoSuchElementException as e:
-        log_error(f"Élément introuvable : {str(e)}.", LOG_FILE)
-    except TimeoutException as e:
-        log_error(f"Temps d'attente dépassé pour un élément : {str(e)}.", LOG_FILE)
-    except StaleElementReferenceException as e:
-        log_error(f"Référence obsolète détectée : {str(e)}.", LOG_FILE)
-    except WebDriverException as e:
-        log_error(f"Erreur WebDriver : {str(e)}.", LOG_FILE)
-    except Exception as e:
-        log_error(f"Erreur inattendue : {str(e)}.", LOG_FILE)
+            write_log(
+                "Initialisation du processus de remplissage...",
+                LOG_FILE,
+                "DEBUG",
+            )
+
+            jours_remplis = self.fill_standard_days(driver, jours_remplis)
+            write_log(f"Jours déjà remplis : {jours_remplis}", LOG_FILE, "DEBUG")
+
+            jours_remplis = self.fill_work_missions(driver, jours_remplis)
+            write_log(
+                f"Finalisation des jours remplis : {jours_remplis}",
+                LOG_FILE,
+                "DEBUG",
+            )
+
+            self.handle_additional_fields(driver)
+            write_log(
+                "Tous les jours et missions ont été traités avec succès.",
+                LOG_FILE,
+                "DEBUG",
+            )
+
+        except NoSuchElementException as e:
+            log_error(f"Élément introuvable : {str(e)}.", LOG_FILE)
+        except TimeoutException as e:
+            log_error(f"Temps d'attente dépassé pour un élément : {str(e)}.", LOG_FILE)
+        except StaleElementReferenceException as e:
+            log_error(f"Référence obsolète détectée : {str(e)}.", LOG_FILE)
+        except WebDriverException as e:
+            log_error(f"Erreur WebDriver : {str(e)}.", LOG_FILE)
+        except Exception as e:
+            log_error(f"Erreur inattendue : {str(e)}.", LOG_FILE)
+
+
+def main(driver, log_file: str) -> None:
+    """Minimal orchestrator creating the helper and launching the process."""
+    TimeSheetHelper(log_file).run(driver)
 
 
 if __name__ == "__main__":

@@ -127,29 +127,20 @@ def test_traiter_champs_mission(monkeypatch):
     assert any("Aucune valeur" in m for m in log_calls)
 
 
-def test_main_invokes_helpers(monkeypatch):
+def test_main_invokes_helper(monkeypatch):
     called = {}
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.initialize",
-        lambda lf: called.setdefault("init", True),
-    )
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.remplir_jours",
-        lambda *a, **k: called.setdefault("jours", True) or [],
-    )
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.remplir_mission",
-        lambda *a, **k: called.setdefault("mission", True) or [],
-    )
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.est_en_mission_presente", lambda *_: False
-    )
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log",
-        lambda *a, **k: called.setdefault("log", 0),
-    )
+
+    class DummyHelper:
+        def __init__(self, log_file):
+            called["init"] = log_file
+
+        def run(self, driver):
+            called["run"] = True
+
+    monkeypatch.setattr("remplir_jours_feuille_de_temps.TimeSheetHelper", DummyHelper)
+
     main(None, "file")
-    assert {"init", "jours", "mission", "log"} <= called.keys()
+    assert called == {"init": "file", "run": True}
 
 
 def test_initialize_sets_globals(monkeypatch):
@@ -211,33 +202,19 @@ def test_traiter_champs_mission_insert(monkeypatch):
 
 
 def test_main_with_mission(monkeypatch):
-    called = {}
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.initialize",
-        lambda lf: called.setdefault("init", True),
-    )
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.remplir_jours",
-        lambda *a, **k: called.setdefault("jours", True) or [],
-    )
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.remplir_mission",
-        lambda *a, **k: called.setdefault("mission", True) or [],
-    )
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.est_en_mission_presente", lambda *_: True
-    )
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.traiter_champs_mission",
-        lambda *a, **k: called.setdefault("traite", True),
-    )
-    monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log",
-        lambda *a, **k: called.setdefault("log", 0),
-    )
+    seq = []
+
+    class DummyHelper:
+        def __init__(self, log_file):
+            seq.append("init")
+
+        def run(self, driver):
+            seq.append("run")
+
+    monkeypatch.setattr("remplir_jours_feuille_de_temps.TimeSheetHelper", DummyHelper)
 
     main(None, "file")
-    assert {"init", "jours", "mission", "traite", "log"} <= called.keys()
+    assert seq == ["init", "run"]
 
 
 def test_traiter_champs_mission_error(monkeypatch):
@@ -269,15 +246,17 @@ def test_traiter_champs_mission_error(monkeypatch):
 
 def test_main_handles_exception(monkeypatch):
     logs = []
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.initialize", lambda lf: None)
+
+    def raise_timeout(*_a, **_k):
+        raise __import__("selenium").common.exceptions.TimeoutException()
+
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.remplir_jours",
-        lambda *a, **k: (_ for _ in ()).throw(
-            __import__("selenium").common.exceptions.TimeoutException()
-        ),
+        "remplir_jours_feuille_de_temps.TimeSheetHelper.fill_standard_days",
+        raise_timeout,
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
+        "remplir_jours_feuille_de_temps.log_error",
+        lambda msg, *_: logs.append(msg),
     )
 
     main(None, "file")
