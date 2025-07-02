@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from constants import LISTES_ID_INFORMATIONS_MISSION, ID_TO_KEY_MAPPING  # noqa: E402
+from constants import ID_TO_KEY_MAPPING, LISTES_ID_INFORMATIONS_MISSION  # noqa: E402
 
 
 def test_project_information_constants():
