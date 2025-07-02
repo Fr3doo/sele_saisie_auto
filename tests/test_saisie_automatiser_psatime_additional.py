@@ -243,7 +243,6 @@ EXCEPTIONS = [
 
 def test_main_exceptions(monkeypatch):
     setup_init(monkeypatch)
-    sap.LOG_FILE = "log.html"
     sap.CHOIX_USER = True
     monkeypatch.setattr(sap, "log_initialisation", lambda: None)
     monkeypatch.setattr(

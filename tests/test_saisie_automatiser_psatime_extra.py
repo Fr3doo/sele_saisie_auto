@@ -46,13 +46,12 @@ def test_ajouter_jour_a_jours_remplis_existing():
 def test_afficher_message_insertion_other(monkeypatch):
     logs = []
     monkeypatch.setattr(sap, "write_log", lambda msg, f, level: logs.append(msg))
-    sap.LOG_FILE = "log.html"
-    sap.afficher_message_insertion("mardi", "8", 1, "ok")
+    sap.afficher_message_insertion("mardi", "8", 1, "ok", "log.html")
     assert logs
 
 
 def test_log_initialisation_no_log():
-    sap.LOG_FILE = None
+    sap._AUTOMATION = None
     with pytest.raises(RuntimeError):
         sap.log_initialisation()
 

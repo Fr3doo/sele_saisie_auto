@@ -2,8 +2,8 @@ from __future__ import annotations
 
 """Application configuration dataclass and loader."""
 
-from dataclasses import dataclass
 from configparser import ConfigParser
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
 from read_or_write_file_config_ini_utils import read_config_ini

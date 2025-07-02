@@ -85,18 +85,20 @@ def setup_init(monkeypatch):
 
 
 def test_helpers(monkeypatch):
+    setup_init(monkeypatch)
     messages = []
-    monkeypatch.setattr(sap, "LOG_FILE", "log.html", raising=False)
     monkeypatch.setattr(sap, "write_log", lambda msg, f, level: messages.append(msg))
     assert sap.get_next_saturday_if_not_saturday("01/07/2024") == "06/07/2024"
     assert sap.get_next_saturday_if_not_saturday("06/07/2024") == "06/07/2024"
     assert sap.est_en_mission("En mission") is True
     jours = []
     assert sap.ajouter_jour_a_jours_remplis("lundi", jours) == ["lundi"]
-    sap.afficher_message_insertion("lundi", "8", 0, "tentative d'insertion n°")
+    sap.afficher_message_insertion(
+        "lundi", "8", 0, "tentative d'insertion n°", "log.html"
+    )
     monkeypatch.setattr(sap.os, "system", lambda cmd: messages.append(cmd))
     sap.clear_screen()
-    sap.seprateur_menu_affichage_log()
+    sap.seprateur_menu_affichage_log("log.html")
     with monkeypatch.context() as m:
         printed = []
         m.setattr("builtins.print", lambda msg: printed.append(msg))
@@ -126,7 +128,6 @@ def test_initialize_shared_memory(monkeypatch):
 
 def test_main_flow(monkeypatch):
     setup_init(monkeypatch)
-    sap.LOG_FILE = "log.html"
     sap.context.config.url = "http://test"
     sap.context.config.date_cible = "06/07/2024"
     sap.CHOIX_USER = True
