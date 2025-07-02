@@ -148,6 +148,7 @@ def test_initialize_sets_globals(monkeypatch):
     fake["settings"] = {"liste_items_planning": '"d1", "d2"'}
     fake["work_schedule"] = {"lun": "En mission,8"}
     fake["project_information"] = {"billing_action": "Facturable"}
+    fake["cgi_options_billing_action"] = {"Facturable": "B"}
 
     monkeypatch.setattr(
         "remplir_jours_feuille_de_temps.read_config_ini", lambda lf: fake
