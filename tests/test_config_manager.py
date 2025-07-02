@@ -5,6 +5,7 @@ import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
+from app_config import AppConfig  # noqa: E402
 from config_manager import ConfigManager  # noqa: E402
 
 
@@ -20,9 +21,10 @@ def test_load_and_save(tmp_path, monkeypatch):
 
     manager = ConfigManager(log_file=str(tmp_path / "log.html"))
     config = manager.load()
-    assert config.get("section", "key") == "value"
+    assert isinstance(config, AppConfig)
+    assert config.raw.get("section", "key") == "value"
 
-    config.set("section", "key", "new")
+    config.raw.set("section", "key", "new")
     manager.save()
 
     content = config_file.read_text(encoding="utf-8")
@@ -53,4 +55,4 @@ def test_config_property_after_load(tmp_path, monkeypatch):
 
     manager = ConfigManager(log_file=str(tmp_path / "log.html"))
     config = manager.load()
-    assert manager.config == config
+    assert manager.config == config.raw

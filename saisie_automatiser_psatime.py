@@ -92,56 +92,23 @@ def initialize(log_file: str) -> None:
     config = manager.load()
     encryption_service = EncryptionService(log_file)
 
-    ENCRYPTED_LOGIN = config.get("credentials", "login")
-    ENCRYPTED_MDP = config.get("credentials", "mdp")
-    URL = config.get("settings", "url")
-    DATE_CIBLE = config.get("settings", "date_cible")
-    if DATE_CIBLE.lower() == "none" or DATE_CIBLE.strip() == "":
-        DATE_CIBLE = None
+    ENCRYPTED_LOGIN = config.encrypted_login
+    ENCRYPTED_MDP = config.encrypted_mdp
+    URL = config.url
+    DATE_CIBLE = config.date_cible
 
-    LISTE_ITEMS_DESCRIPTIONS = [
-        item.strip().strip('"')
-        for item in config.get("settings", "liste_items_planning").split(",")
-    ]
+    LISTE_ITEMS_DESCRIPTIONS = config.liste_items_planning
 
-    JOURS_DE_TRAVAIL = {
-        day: (value.partition(",")[0].strip(), value.partition(",")[2].strip())
-        for day, value in config.items("work_schedule")
-    }
+    JOURS_DE_TRAVAIL = config.work_schedule
 
     INFORMATIONS_PROJET_MISSION = {
         item_projet: cgi_options_billing_action.get(value, value)
-        for item_projet, value in config.items("project_information")
+        for item_projet, value in config.project_information.items()
     }
 
-    INFORMATIONS_SUPPLEMENTAIRES = {
-        "periode_repos_respectee": {
-            day: value
-            for day, value in config.items(
-                "additional_information_rest_period_respected"
-            )
-        },
-        "horaire_travail_effectif": {
-            day: value
-            for day, value in config.items("additional_information_work_time_range")
-        },
-        "plus_demi_journee_travaillee": {
-            day: value
-            for day, value in config.items("additional_information_half_day_worked")
-        },
-        "duree_pause_dejeuner": {
-            day: value
-            for day, value in config.items(
-                "additional_information_lunch_break_duration"
-            )
-        },
-    }
-    LIEU_DU_TRAVAIL_MATIN = {
-        day: value for day, value in config.items("work_location_am")
-    }
-    LIEU_DU_TRAVAIL_APRES_MIDI = {
-        day: value for day, value in config.items("work_location_pm")
-    }
+    INFORMATIONS_SUPPLEMENTAIRES = config.additional_information
+    LIEU_DU_TRAVAIL_MATIN = config.work_location_am
+    LIEU_DU_TRAVAIL_APRES_MIDI = config.work_location_pm
 
     DESCRIPTIONS = [
         {
@@ -734,7 +701,6 @@ def main(log_file: str) -> None:  # pragma: no cover
             # ---------------------- ETAPE ENREG. BROUILL --------------------------------- #
             # ----------------------------------------------------------------------------- #
             if save_draft_and_validate(driver):
-
                 # Revenir au contexte principal du document
                 switch_to_default_content(driver)
 

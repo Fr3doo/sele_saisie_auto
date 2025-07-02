@@ -4,7 +4,8 @@
 from configparser import ConfigParser
 from typing import Optional
 
-from read_or_write_file_config_ini_utils import read_config_ini, write_config_ini
+from app_config import AppConfig, load_config
+from read_or_write_file_config_ini_utils import write_config_ini
 
 
 class ConfigManager:
@@ -20,11 +21,11 @@ class ConfigManager:
             raise RuntimeError("La configuration n'est pas chargée. Utilisez load().")
         return self._config
 
-    def load(self) -> ConfigParser:
-        """Lit ``config.ini`` et retourne un ``ConfigParser``."""
-        config = read_config_ini(log_file=self.log_file)
-        self._config = config
-        return config
+    def load(self) -> AppConfig:
+        """Lit ``config.ini`` et retourne un ``AppConfig``."""
+        app_cfg = load_config(log_file=self.log_file)
+        self._config = app_cfg.raw
+        return app_cfg
 
     def save(self) -> str:
         """Enregistre la configuration actuelle dans ``config.ini``."""

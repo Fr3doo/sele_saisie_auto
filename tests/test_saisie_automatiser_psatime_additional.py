@@ -62,10 +62,13 @@ def make_config():
 
 def setup_init(monkeypatch):
     cfg = make_config()
+    from app_config import AppConfig
+
+    app_cfg = AppConfig.from_parser(cfg)
     monkeypatch.setattr(
         sap,
         "ConfigManager",
-        lambda log_file=None: types.SimpleNamespace(load=lambda: cfg),
+        lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
     )
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)

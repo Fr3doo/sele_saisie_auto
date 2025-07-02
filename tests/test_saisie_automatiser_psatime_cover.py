@@ -94,10 +94,13 @@ def test_submit_and_validate_additional_information_positive(monkeypatch):
 
 def test_initialize_debug_mode_off(monkeypatch):
     cfg = make_config()
+    from app_config import AppConfig
+
+    app_cfg = AppConfig.from_parser(cfg)
     monkeypatch.setattr(
         sap,
         "ConfigManager",
-        lambda log_file=None: types.SimpleNamespace(load=lambda: cfg),
+        lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
     )
     messages = []
     monkeypatch.setattr(sap, "write_log", lambda msg, f, level: messages.append(msg))
