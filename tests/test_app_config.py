@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
-from app_config import load_config, AppConfig  # noqa: E402
+from app_config import AppConfig, load_config  # noqa: E402
 
 
 def test_load_config_parses(tmp_path, monkeypatch):
