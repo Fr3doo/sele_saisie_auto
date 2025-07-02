@@ -302,7 +302,7 @@ def test_main_handles_other_exceptions(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
+        "remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
     )
     main(None, "log")
     assert any("introuvable" in m for m in logs)
@@ -318,7 +318,7 @@ def test_main_webdriver_exception(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
+        "remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
     )
     main(None, "log")
     assert any("WebDriver" in m for m in logs)
@@ -334,7 +334,7 @@ def test_main_stale_exception(monkeypatch):
         ),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
+        "remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
     )
     main(None, "log")
     assert any("Référence obsolète" in m for m in logs)
@@ -348,7 +348,7 @@ def test_main_generic_exception(monkeypatch):
         lambda *a, **k: (_ for _ in ()).throw(Exception("boom")),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
+        "remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
     )
     main(None, "log")
     assert any("inattendue" in m for m in logs)
