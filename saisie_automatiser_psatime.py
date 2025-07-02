@@ -25,6 +25,7 @@ from app_config import AppConfig
 from config_manager import ConfigManager
 from encryption_utils import EncryptionService
 from error_handler import log_error
+from locators import Locators
 from logger_utils import write_log
 from remplir_informations_supp_utils import set_log_file as set_log_file_infos
 from remplir_informations_supp_utils import traiter_description
@@ -304,20 +305,20 @@ class PSATimeAutomation:
         mot_de_passe = self.context.encryption_service.dechiffrer_donnees(
             mot_de_passe_chiffre, cle_aes
         )
-        send_keys_to_element(driver, By.ID, "userid", nom_utilisateur)
-        send_keys_to_element(driver, By.ID, "pwd", mot_de_passe)
-        send_keys_to_element(driver, By.ID, "pwd", Keys.RETURN)
+        send_keys_to_element(driver, By.ID, Locators.USERNAME.value, nom_utilisateur)
+        send_keys_to_element(driver, By.ID, Locators.PASSWORD.value, mot_de_passe)
+        send_keys_to_element(driver, By.ID, Locators.PASSWORD.value, Keys.RETURN)
         self.wait_for_dom(driver)
 
     @wait_for_dom_after
     def switch_to_iframe_main_target_win0(self, driver):
         switched_to_iframe = None
         element_present = wait_for_element(
-            driver, By.ID, "main_target_win0", timeout=DEFAULT_TIMEOUT
+            driver, By.ID, Locators.MAIN_FRAME.value, timeout=DEFAULT_TIMEOUT
         )
         if element_present:
             switched_to_iframe = switch_to_iframe_by_id_or_name(
-                driver, "main_target_win0"
+                driver, Locators.MAIN_FRAME.value
             )
         self.wait_for_dom(driver)
         if switched_to_iframe is None:
@@ -329,30 +330,30 @@ class PSATimeAutomation:
         element_present = wait_for_element(
             driver,
             By.ID,
-            "PTNUI_LAND_REC14$0_row_0",
+            Locators.NAV_TO_DATE_ENTRY.value,
             EC.element_to_be_clickable,
             timeout=DEFAULT_TIMEOUT,
         )
         if element_present:
-            click_element_without_wait(driver, By.ID, "PTNUI_LAND_REC14$0_row_0")
+            click_element_without_wait(driver, By.ID, Locators.NAV_TO_DATE_ENTRY.value)
         self.wait_for_dom(driver)
 
         element_present = wait_for_element(
             driver,
             By.ID,
-            "PT_SIDE$PIMG",
+            Locators.SIDE_MENU_BUTTON.value,
             EC.element_to_be_clickable,
             timeout=DEFAULT_TIMEOUT,
         )
         if element_present:
-            click_element_without_wait(driver, By.ID, "PT_SIDE$PIMG")
+            click_element_without_wait(driver, By.ID, Locators.SIDE_MENU_BUTTON.value)
         self.wait_for_dom(driver)
 
         return self.switch_to_iframe_main_target_win0(driver)
 
     def handle_date_input(self, driver, date_cible):
         date_input = wait_for_element(
-            driver, By.ID, "EX_TIME_ADD_VW_PERIOD_END_DT", timeout=DEFAULT_TIMEOUT
+            driver, By.ID, Locators.DATE_INPUT.value, timeout=DEFAULT_TIMEOUT
         )
         if date_input:
             current_date_value = date_input.get_attribute("value")
@@ -379,14 +380,12 @@ class PSATimeAutomation:
         element_present = wait_for_element(
             driver,
             By.ID,
-            "PTS_CFG_CL_WRK_PTS_ADD_BTN",
+            Locators.ADD_BUTTON.value,
             EC.element_to_be_clickable,
             timeout=DEFAULT_TIMEOUT,
         )
         if element_present:
-            send_keys_to_element(
-                driver, By.ID, "PTS_CFG_CL_WRK_PTS_ADD_BTN", Keys.RETURN
-            )
+            send_keys_to_element(driver, By.ID, Locators.ADD_BUTTON.value, Keys.RETURN)
         self.wait_for_dom(driver)
         return element_present
 
@@ -396,22 +395,26 @@ class PSATimeAutomation:
         element_present = wait_for_element(
             driver,
             By.ID,
-            "UC_EX_WRK_UC_TI_FRA_LINK",
+            Locators.ADDITIONAL_INFO_LINK.value,
             EC.element_to_be_clickable,
             timeout=DEFAULT_TIMEOUT,
         )
         if element_present:
-            click_element_without_wait(driver, By.ID, "UC_EX_WRK_UC_TI_FRA_LINK")
+            click_element_without_wait(
+                driver, By.ID, Locators.ADDITIONAL_INFO_LINK.value
+            )
         switch_to_default_content(driver)
         self.wait_for_dom(driver)
 
     @wait_for_dom_after
     def submit_and_validate_additional_information(self, driver):
         element_present = wait_for_element(
-            driver, By.ID, "ptModFrame_0", timeout=DEFAULT_TIMEOUT
+            driver, By.ID, Locators.MODAL_FRAME.value, timeout=DEFAULT_TIMEOUT
         )
         if element_present:
-            switched_to_iframe = switch_to_iframe_by_id_or_name(driver, "ptModFrame_0")
+            switched_to_iframe = switch_to_iframe_by_id_or_name(
+                driver, Locators.MODAL_FRAME.value
+            )
 
         if switched_to_iframe:
             for config_description in self.context.descriptions:
@@ -425,24 +428,24 @@ class PSATimeAutomation:
         element_present = wait_for_element(
             driver,
             By.ID,
-            "#ICSave",
+            Locators.SAVE_ICON.value,
             EC.element_to_be_clickable,
             timeout=DEFAULT_TIMEOUT,
         )
         if element_present:
-            click_element_without_wait(driver, By.ID, "#ICSave")
+            click_element_without_wait(driver, By.ID, Locators.SAVE_ICON.value)
 
     @wait_for_dom_after
     def save_draft_and_validate(self, driver):
         element_present = wait_for_element(
             driver,
             By.ID,
-            "EX_ICLIENT_WRK_SAVE_PB",
+            Locators.SAVE_DRAFT_BUTTON.value,
             EC.element_to_be_clickable,
             timeout=DEFAULT_TIMEOUT,
         )
         if element_present:
-            click_element_without_wait(driver, By.ID, "EX_ICLIENT_WRK_SAVE_PB")
+            click_element_without_wait(driver, By.ID, Locators.SAVE_DRAFT_BUTTON.value)
             self.wait_for_dom(driver)
         return element_present
 
@@ -499,13 +502,15 @@ class PSATimeAutomation:
                     element_present = self.submit_date_cible(driver)
                     if element_present:
                         switch_to_default_content(driver)
-                        alertes = ["ptModContent_0"]
+                        alertes = [Locators.ALERT_CONTENT_0.value]
                         for alerte in alertes:
                             element_present = wait_for_element(
                                 driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT
                             )
                             if element_present:
-                                click_element_without_wait(driver, By.ID, "#ICOK")
+                                click_element_without_wait(
+                                    driver, By.ID, Locators.CONFIRM_OK.value
+                                )
                                 if alerte == alertes[0]:
                                     write_log(
                                         "\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)",
@@ -534,25 +539,25 @@ class PSATimeAutomation:
                     element_present = wait_for_element(
                         driver,
                         By.ID,
-                        "EX_ICLIENT_WRK_OK_PB",
+                        Locators.OK_BUTTON.value,
                         EC.element_to_be_clickable,
                         timeout=DEFAULT_TIMEOUT,
                     )
                     if element_present:
                         click_element_without_wait(
-                            driver, By.ID, "EX_ICLIENT_WRK_OK_PB"
+                            driver, By.ID, Locators.OK_BUTTON.value
                         )
                 else:
                     element_present = wait_for_element(
                         driver,
                         By.ID,
-                        "EX_TIME_HDR_WRK_COPY_TIME_RPT",
+                        Locators.COPY_TIME_BUTTON.value,
                         EC.element_to_be_clickable,
                         timeout=DEFAULT_TIMEOUT,
                     )
                     if element_present:
                         click_element_without_wait(
-                            driver, By.ID, "EX_TIME_HDR_WRK_COPY_TIME_RPT"
+                            driver, By.ID, Locators.COPY_TIME_BUTTON.value
                         )
 
                 self.wait_for_dom(driver)
@@ -566,13 +571,19 @@ class PSATimeAutomation:
                     detecter_doublons_jours(driver)
                     if self.save_draft_and_validate(driver):
                         switch_to_default_content(driver)
-                        alertes = ["ptModContent_1", "ptModContent_2", "ptModContent_3"]
+                        alertes = [
+                            Locators.ALERT_CONTENT_1.value,
+                            Locators.ALERT_CONTENT_2.value,
+                            Locators.ALERT_CONTENT_3.value,
+                        ]
                         for alerte in alertes:
                             element_present = wait_for_element(
                                 driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT
                             )
                             if element_present:
-                                click_element_without_wait(driver, By.ID, "#ICOK")
+                                click_element_without_wait(
+                                    driver, By.ID, Locators.CONFIRM_OK.value
+                                )
                                 write_log(
                                     "⚠️ Alerte rencontrée lors de la sauvegarde.",
                                     self.log_file,

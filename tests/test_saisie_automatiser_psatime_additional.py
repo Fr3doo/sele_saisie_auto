@@ -15,6 +15,7 @@ from selenium.common.exceptions import (  # noqa: E402
 )
 
 import saisie_automatiser_psatime as sap  # noqa: E402
+from locators import Locators  # noqa: E402
 
 
 class DummyEnc:
@@ -112,8 +113,8 @@ def test_connect_to_psatime(monkeypatch):
     )
     sap.context.encryption_service = DummyEnc()
     sap.connect_to_psatime("drv", b"key", b"user", b"pass")
-    assert ("userid", "user") in actions
-    assert ("pwd", "pass") in actions
+    assert (Locators.USERNAME.value, "user") in actions
+    assert (Locators.PASSWORD.value, "pass") in actions
     assert "dom" in actions
 
 
