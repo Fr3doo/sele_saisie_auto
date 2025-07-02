@@ -28,7 +28,10 @@
       - executer `poetry run ruff .` et `poetry run ruff check . --fix`. Les controles doivent réussir. Si erreur, corrige-les en acceptant les modifications de ruff avant d’ouvrir la PR.
       - executer `poetry run radon cc src/ -s` et `poetry run radon mi src/` et `poetry run radon html src/ -o radon-report`. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
       - executer `poetry run bandit -r src/` et `poetry run bandit -r src/ -lll -iii`. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
-      - executer `poetry run safety scan`. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
+      - executer `poetry run safety auth`, pour démarrer le flux d'authentification ou l'état d'affichage.  Les controles doivent réussir. 
+      - executer `poetry run safety scan`, pour effectuer une analyse de vulnérabilité dans le répertoire actuel. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
+      - executer `poetry run safety system-scan`, pour effectuez une analyse sur l’ensemble de la machine de développement. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
+      - executer `poetry run safety scan --apply-fixes`, pour effectuez une mise à jour des dépendances vulnérables. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
 
 ## 4. Codex/ChatGPT Usage Tips
 > 🔧 Conseils pour guider l’IA dans ce repo
