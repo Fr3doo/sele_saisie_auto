@@ -5,9 +5,10 @@ from pathlib import Path
 
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
+sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 from read_or_write_file_config_ini_utils import (  # noqa: E402
+
     get_runtime_config_path,
     get_runtime_resource_path,
     read_config_ini,
