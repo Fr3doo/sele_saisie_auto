@@ -8,7 +8,7 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from multiprocessing import shared_memory
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from selenium.common.exceptions import (
     NoSuchElementException,
@@ -42,6 +42,7 @@ from logger_utils import write_log
 from remplir_informations_supp_utils import set_log_file as set_log_file_infos
 from remplir_informations_supp_utils import traiter_description
 from selenium_driver_manager import SeleniumDriverManager
+from shared_memory_service import SharedMemoryService
 from shared_utils import program_break_time
 
 # ----------------------------------------------------------------------------- #
@@ -55,6 +56,7 @@ class SaisieContext:
 
     config: "AppConfig"
     encryption_service: EncryptionService
+    shared_memory_service: SharedMemoryService
     informations_projet_mission: Dict[str, str]
     descriptions: List[Dict[str, object]]
 
@@ -75,9 +77,11 @@ class PSATimeAutomation:
         self.log_file = log_file
         set_log_file_selenium(log_file)
         set_log_file_infos(log_file)
+        shm_service = SharedMemoryService(log_file)
         self.context = SaisieContext(
             config=app_config,
-            encryption_service=EncryptionService(log_file),
+            encryption_service=EncryptionService(log_file, shm_service),
+            shared_memory_service=shm_service,
             informations_projet_mission={
                 item_projet: cgi_options_billing_action.get(value, value)
                 for item_projet, value in app_config.project_information.items()
@@ -221,7 +225,7 @@ class PSATimeAutomation:
         memoire_cle = memoire_nom = memoire_mdp = None
 
         memoire_cle, cle_aes = (
-            self.context.encryption_service.recuperer_de_memoire_partagee(
+            self.context.shared_memory_service.recuperer_de_memoire_partagee(
                 MEMOIRE_PARTAGEE_CLE, TAILLE_CLE
             )
         )
@@ -289,6 +293,7 @@ class PSATimeAutomation:
         self.wait_for_dom(driver)
 
     def switch_to_iframe_main_target_win0(self, driver):
+        switched_to_iframe = None
         element_present = wait_for_element(
             driver, By.ID, "main_target_win0", timeout=DEFAULT_TIMEOUT
         )
@@ -297,6 +302,8 @@ class PSATimeAutomation:
                 driver, "main_target_win0"
             )
         self.wait_for_dom(driver)
+        if switched_to_iframe is None:
+            raise NameError("main_target_win0 not found")
         return switched_to_iframe
 
     def navigate_from_home_to_date_entry_page(self, driver):
@@ -424,15 +431,15 @@ class PSATimeAutomation:
         memoire_mdp,
     ) -> None:
         if memoire_cle:
-            self.context.encryption_service.supprimer_memoire_partagee_securisee(
+            self.context.shared_memory_service.supprimer_memoire_partagee_securisee(
                 memoire_cle
             )
         if memoire_nom:
-            self.context.encryption_service.supprimer_memoire_partagee_securisee(
+            self.context.shared_memory_service.supprimer_memoire_partagee_securisee(
                 memoire_nom
             )
         if memoire_mdp:
-            self.context.encryption_service.supprimer_memoire_partagee_securisee(
+            self.context.shared_memory_service.supprimer_memoire_partagee_securisee(
                 memoire_mdp
             )
         driver_manager.close()
@@ -442,7 +449,7 @@ class PSATimeAutomation:
             "INFO",
         )
 
-    def run(self) -> None:
+    def run(self) -> None:  # pragma: no cover
         """Point d'entrée principal de l'automatisation."""
         manager = ConfigManager(log_file=self.log_file)
         app_cfg = manager.load()

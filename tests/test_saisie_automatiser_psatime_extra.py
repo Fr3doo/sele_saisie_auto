@@ -7,6 +7,7 @@ from tests.test_saisie_automatiser_psatime import (
     DummyEnc,
     DummyManager,
     DummySHM,
+    DummySHMService,
     make_config,
     setup_init,
 )
@@ -20,7 +21,7 @@ def test_initialize_date_none(monkeypatch):
     app_cfg = AppConfig.from_parser(cfg)
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
-    monkeypatch.setattr(sap, "EncryptionService", lambda lf: DummyEnc())
+    monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyEnc())
     sap.initialize("log.html", app_cfg)
     monkeypatch.setattr(
         sap,
@@ -62,8 +63,9 @@ def test_initialize_shared_memory_error(monkeypatch):
         sap, "shared_memory", types.SimpleNamespace(SharedMemory=DummySHM)
     )
     sap.context.encryption_service = DummyEnc()
+    sap.context.shared_memory_service = DummySHMService()
     monkeypatch.setattr(
-        sap.context.encryption_service,
+        sap.context.shared_memory_service,
         "recuperer_de_memoire_partagee",
         lambda *a, **k: (None, b"k" * 32),
     )
@@ -79,7 +81,9 @@ def test_initialize_shared_memory_error(monkeypatch):
 def test_switch_to_iframe_main_target_win0_false(monkeypatch):
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: True)
     monkeypatch.setattr(sap, "switch_to_iframe_by_id_or_name", lambda *a, **k: False)
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     assert sap.switch_to_iframe_main_target_win0("drv") is False
 
 
@@ -103,19 +107,25 @@ def test_handle_date_input_no_change(monkeypatch):
     )
     logs = []
     monkeypatch.setattr(sap, "write_log", lambda msg, f, level: logs.append(msg))
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     sap.handle_date_input("drv", None)
     assert "Aucune modification" in logs[0]
 
 
 def test_submit_date_cible_no_element(monkeypatch):
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: False)
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     assert sap.submit_date_cible("drv") is False
 
 
 def test_navigate_from_work_schedule_without_element(monkeypatch):
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: False)
     called = {}
     monkeypatch.setattr(
@@ -136,7 +146,9 @@ def test_submit_and_validate_additional_information_no_iframe(monkeypatch):
 
 def test_save_draft_and_validate_no_element(monkeypatch):
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: False)
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     assert sap.save_draft_and_validate("drv") is False
 
 
@@ -144,6 +156,8 @@ def test_cleanup_resources_calls():
     enc = DummyEnc()
     manager = DummyManager("log.html")
     sap.context.encryption_service = enc
+    shm_service = DummySHMService()
+    sap.context.shared_memory_service = shm_service
     sap.cleanup_resources(manager, "c", "n", None)
-    assert enc.removed == ["c", "n"]
+    assert shm_service.removed == ["c", "n"]
     assert manager.driver is None

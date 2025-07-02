@@ -29,6 +29,17 @@ class DummyEnc:
         self.removed.append(mem)
 
 
+class DummySHMService:
+    def __init__(self):
+        self.removed = []
+
+    def recuperer_de_memoire_partagee(self, name, size):
+        return object(), b"k" * size
+
+    def supprimer_memoire_partagee_securisee(self, mem):
+        self.removed.append(mem)
+
+
 class DummyManager:
     def __init__(self, log_file):
         self.log_file = log_file
@@ -67,7 +78,8 @@ def setup_init(monkeypatch):
     app_cfg = AppConfig.from_parser(cfg)
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
-    monkeypatch.setattr(sap, "EncryptionService", lambda lf: DummyEnc())
+    monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyEnc())
+    monkeypatch.setattr(sap, "SharedMemoryService", lambda lf: DummySHMService())
     sap.initialize("log.html", app_cfg)
     monkeypatch.setattr(
         sap,
@@ -79,7 +91,11 @@ def setup_init(monkeypatch):
 def test_connect_to_psatime(monkeypatch):
     setup_init(monkeypatch)
     actions = []
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: actions.append("dom"))
+    monkeypatch.setattr(
+        sap.PSATimeAutomation,
+        "wait_for_dom",
+        lambda self, *a, **k: actions.append("dom"),
+    )
     monkeypatch.setattr(
         sap,
         "send_keys_to_element",
@@ -100,7 +116,9 @@ def test_switch_to_iframe(monkeypatch):
         "switch_to_iframe_by_id_or_name",
         lambda *a, **k: calls.append("sw") or True,
     )
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: calls.append("dom"))
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: calls.append("dom")
+    )
     assert sap.switch_to_iframe_main_target_win0("drv") is True
     assert "sw" in calls
     assert "dom" in calls
@@ -120,7 +138,9 @@ def test_handle_date_input(monkeypatch):
     monkeypatch.setattr(
         sap, "modifier_date_input", lambda elem, val, msg: result.setdefault("v", val)
     )
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     sap.handle_date_input("drv", "10/07/2024")
     assert result["v"] == "10/07/2024"
 
@@ -142,7 +162,9 @@ def test_handle_date_input_auto(monkeypatch):
     monkeypatch.setattr(
         sap, "modifier_date_input", lambda elem, val, msg: result.setdefault("v", val)
     )
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     sap.handle_date_input("drv", None)
     assert result["v"] == "06/07/2024"
 
@@ -155,27 +177,35 @@ def test_submit_date_cible(monkeypatch):
         "send_keys_to_element",
         lambda *a, **k: called.setdefault("done", True),
     )
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     assert sap.submit_date_cible("drv") is True
     assert called["done"] is True
 
 
 def test_navigation_pages(monkeypatch):
+    setup_init(monkeypatch)
     seq = iter([True, True])
 
     def fake_wait(*a, **k):
-        return next(seq)
+        try:
+            return next(seq)
+        except StopIteration:
+            return False
 
     called = []
     monkeypatch.setattr(sap, "wait_for_element", fake_wait)
     monkeypatch.setattr(
         sap, "click_element_without_wait", lambda *a, **k: called.append("clk")
     )
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
     monkeypatch.setattr(
-        sap,
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
+    monkeypatch.setattr(
+        sap.PSATimeAutomation,
         "switch_to_iframe_main_target_win0",
-        lambda *a, **k: called.append("sw") or True,
+        lambda self, *a, **k: called.append("sw") or True,
     )
     assert sap.navigate_from_home_to_date_entry_page("drv") is True
     assert called.count("clk") == 2
@@ -213,12 +243,15 @@ def test_additional_information(monkeypatch):
 
 
 def test_save_draft_and_validate(monkeypatch):
+    setup_init(monkeypatch)
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: True)
     called = []
     monkeypatch.setattr(
         sap, "click_element_without_wait", lambda *a, **k: called.append("clk")
     )
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     assert sap.save_draft_and_validate("drv") is True
     assert "clk" in called
 
@@ -228,8 +261,10 @@ def test_cleanup_resources(monkeypatch):
     manager = types.SimpleNamespace(close=lambda: called.append("close"))
     enc = DummyEnc()
     sap.context.encryption_service = enc
+    shm_service = DummySHMService()
+    sap.context.shared_memory_service = shm_service
     sap.cleanup_resources(manager, "c", "n", "p")
-    assert enc.removed == ["c", "n", "p"]
+    assert shm_service.removed == ["c", "n", "p"]
     assert "close" in called
 
 
@@ -246,9 +281,9 @@ def test_main_exceptions(monkeypatch):
     sap.CHOIX_USER = True
     monkeypatch.setattr(sap, "log_initialisation", lambda: None)
     monkeypatch.setattr(
-        sap,
+        sap.PSATimeAutomation,
         "initialize_shared_memory",
-        lambda: [b"k", object(), b"user", object(), b"pass", object()],
+        lambda self: [b"k", object(), b"user", object(), b"pass", object()],
     )
     monkeypatch.setattr(sap, "SeleniumDriverManager", DummyManager)
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: True)
@@ -273,9 +308,9 @@ def test_main_exceptions(monkeypatch):
     )
     cleanup = {}
     monkeypatch.setattr(
-        sap,
+        sap.PSATimeAutomation,
         "cleanup_resources",
-        lambda *a, **k: cleanup.setdefault("done", True),
+        lambda self, *a, **k: cleanup.setdefault("done", True),
     )
     for exc in EXCEPTIONS:
         monkeypatch.setattr(

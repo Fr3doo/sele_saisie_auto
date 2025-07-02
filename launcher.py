@@ -63,8 +63,9 @@ def run_psatime_with_credentials(
 
     data_login = encryption_service.chiffrer_donnees(login, cle_aes)
     data_pwd = encryption_service.chiffrer_donnees(password, cle_aes)
-    encryption_service.stocker_en_memoire_partagee("memoire_nom", data_login)
-    encryption_service.stocker_en_memoire_partagee("memoire_mdp", data_pwd)
+    shm_service = encryption_service.shared_memory_service
+    shm_service.stocker_en_memoire_partagee("memoire_nom", data_login)
+    shm_service.stocker_en_memoire_partagee("memoire_mdp", data_pwd)
 
     run_psatime(log_file, menu)
 

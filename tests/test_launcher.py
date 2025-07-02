@@ -35,13 +35,15 @@ class DummyEncryption:
     def __init__(self):
         self.encrypted = []
         self.stored = []
+        self.shared_memory_service = types.SimpleNamespace(
+            stocker_en_memoire_partagee=lambda name, data: self.stored.append(
+                (name, data)
+            )
+        )
 
     def chiffrer_donnees(self, val, key):
         self.encrypted.append((val, key))
         return val.encode()
-
-    def stocker_en_memoire_partagee(self, name, data):
-        self.stored.append((name, data))
 
     def generer_cle_aes(self, size):
         return b"k" * size

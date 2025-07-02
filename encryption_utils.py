@@ -1,19 +1,26 @@
 # encryption_utils.py
 
 import os
-from multiprocessing import shared_memory
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 
 from logger_utils import write_log
+from shared_memory_service import SharedMemoryService
 
 
 class EncryptionService:
     """Service chargé de chiffrer et déchiffrer les données sensibles."""
 
-    def __init__(self, log_file: str | None = None) -> None:
+    def __init__(
+        self,
+        log_file: str | None = None,
+        shared_memory_service: SharedMemoryService | None = None,
+    ) -> None:
         self.log_file = log_file
+        self.shared_memory_service = shared_memory_service or SharedMemoryService(
+            log_file
+        )
 
     def generer_cle_aes(self, TAILLE_CLE: int = 32) -> bytes:
         """Génère aléatoirement une clé AES.
@@ -66,94 +73,6 @@ class EncryptionService:
         except Exception as e:
             write_log(
                 f"❌ Erreur lors du chiffrement des données : {e}",
-                self.log_file,
-                "ERROR",
-            )
-            raise
-
-    def stocker_en_memoire_partagee(self, nom: str, donnees: bytes):
-        """Crée un segment de mémoire partagée et y écrit les ``donnees``.
-
-        Args:
-            nom (str): Nom attribué au segment créé.
-            donnees (bytes): Valeurs à écrire dans la zone partagée.
-
-        Returns:
-            SharedMemory: L'objet représentant le segment créé.
-        """
-        try:
-            memoire = shared_memory.SharedMemory(
-                name=nom, create=True, size=len(donnees)
-            )
-            memoire.buf[: len(donnees)] = donnees
-            write_log(
-                f"💀 Données stockées en mémoire partagée avec le nom '{nom}'.",
-                self.log_file,
-                "CRITICAL",
-            )
-            return memoire
-        except Exception as e:
-            write_log(
-                f"❌ Erreur lors du stockage en mémoire partagée : {e}",
-                self.log_file,
-                "ERROR",
-            )
-            raise
-
-    def supprimer_memoire_partagee_securisee(
-        self, memoire: shared_memory.SharedMemory
-    ) -> None:
-        """Efface et détruit un segment de mémoire partagée.
-
-        Le contenu du segment est rempli de zéros avant fermeture puis suppression
-        définitive.
-
-        Args:
-                memoire (shared_memory.SharedMemory): Segment à nettoyer et supprimer.
-        """
-        try:
-            for i in range(len(memoire.buf)):
-                memoire.buf[i] = 0
-            memoire.close()
-            memoire.unlink()
-            write_log(
-                "💀 Mémoire partagée supprimée de manière sécurisée.",
-                self.log_file,
-                "CRITICAL",
-            )
-        except Exception as e:
-            write_log(
-                f"❌ Erreur lors de la suppression sécurisée de la mémoire partagée : {e}",
-                self.log_file,
-                "ERROR",
-            )
-            raise
-
-    def recuperer_de_memoire_partagee(
-        self, nom: str, taille: int
-    ) -> tuple[shared_memory.SharedMemory, bytes]:
-        """Lit des octets depuis un segment de mémoire partagée existant.
-
-        Args:
-            nom (str): Nom du segment à ouvrir.
-            taille (int): Nombre d'octets à lire dans ce segment.
-
-        Returns:
-            tuple[shared_memory.SharedMemory, bytes]:
-                Le segment ouvert ainsi que les données récupérées.
-        """
-        try:
-            memoire = shared_memory.SharedMemory(name=nom)
-            donnees = bytes(memoire.buf[:taille])
-            write_log(
-                f"💀 Données récupérées depuis la mémoire partagée avec le nom '{nom}'.",
-                self.log_file,
-                "CRITICAL",
-            )
-            return memoire, donnees
-        except Exception as e:
-            write_log(
-                f"❌ Erreur lors de la récupération depuis la mémoire partagée : {e}",
                 self.log_file,
                 "ERROR",
             )
