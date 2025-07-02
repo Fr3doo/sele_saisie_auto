@@ -82,3 +82,59 @@ def test_chiffrer_donnees_error(monkeypatch):
 
     with pytest.raises(ValueError):
         service.chiffrer_donnees("msg", key)
+
+
+def test_stocker_en_memoire_partagee_error(monkeypatch):
+    service = EncryptionService()
+
+    def fail(*a, **k):
+        raise ValueError("fail")
+
+    monkeypatch.setattr(shared_memory, "SharedMemory", fail)
+
+    with pytest.raises(ValueError):
+        service.stocker_en_memoire_partagee("name", b"d")
+
+
+class DummyMem:
+    def __init__(self):
+        self.buf = bytearray(b"123")
+
+    def close(self):
+        raise OSError("close fail")
+
+    def unlink(self):
+        pass
+
+
+def test_supprimer_memoire_partagee_securisee_error():
+    service = EncryptionService()
+    with pytest.raises(OSError):
+        service.supprimer_memoire_partagee_securisee(DummyMem())
+
+
+def test_recuperer_de_memoire_partagee_error(monkeypatch):
+    service = EncryptionService()
+
+    def fail(*a, **k):
+        raise FileNotFoundError("oops")
+
+    monkeypatch.setattr(shared_memory, "SharedMemory", fail)
+
+    with pytest.raises(FileNotFoundError):
+        service.recuperer_de_memoire_partagee("name", 4)
+
+
+def test_dechiffrer_donnees_error(monkeypatch):
+    service = EncryptionService()
+    key = service.generer_cle_aes()
+    data = service.chiffrer_donnees("x", key)
+
+    class BadCipher:
+        def __init__(self, *a, **k):
+            raise ValueError("boom")
+
+    monkeypatch.setattr("encryption_utils.Cipher", BadCipher)
+
+    with pytest.raises(ValueError):
+        service.dechiffrer_donnees(data, key)
