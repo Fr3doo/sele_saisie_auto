@@ -285,7 +285,9 @@ def test_verifier_accessibilite_and_browser(monkeypatch):
             self.maximized = True
 
     monkeypatch.setattr(fsu.navigation, "verifier_accessibilite_url", lambda u: True)
-    monkeypatch.setattr(fsu.navigation.webdriver, "Edge", lambda options=None: Browser())
+    monkeypatch.setattr(
+        fsu.navigation.webdriver, "Edge", lambda options=None: Browser()
+    )
     br = fsu.ouvrir_navigateur_sur_ecran_principal(True, url="http://ok")
     assert isinstance(br, Browser) and br.url == "http://ok" and br.maximized
 
@@ -407,7 +409,9 @@ def test_ouvrir_navigateur_sans_plein_ecran(monkeypatch):
             self.maximized = True
 
     monkeypatch.setattr(fsu.navigation, "verifier_accessibilite_url", lambda u: True)
-    monkeypatch.setattr(fsu.navigation.webdriver, "Edge", lambda options=None: Browser())
+    monkeypatch.setattr(
+        fsu.navigation.webdriver, "Edge", lambda options=None: Browser()
+    )
     br = fsu.ouvrir_navigateur_sur_ecran_principal(False, url="http://ok")
     assert isinstance(br, Browser)
     assert br.url == "http://ok"

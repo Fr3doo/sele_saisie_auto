@@ -1,11 +1,16 @@
 """Utility functions for manipulating web elements."""
+
 from __future__ import annotations
 
-from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
 from constants import JOURS_SEMAINE
+
 from . import LOG_FILE, write_log
 
 
@@ -142,14 +147,18 @@ def selectionner_option_menu_deroulant_type_select(dropdown_field, visible_text)
         )
 
 
-def trouver_ligne_par_description(driver, target_description, row_prefix, partial_match=False):
+def trouver_ligne_par_description(
+    driver, target_description, row_prefix, partial_match=False
+):
     """Return the row index matching a description or None."""
     matched_row_index = None
     row_counter = 0
 
     while True:
         try:
-            current_description_element = driver.find_element(By.ID, f"{row_prefix}{row_counter}")
+            current_description_element = driver.find_element(
+                By.ID, f"{row_prefix}{row_counter}"
+            )
             raw_text = current_description_element.text.strip()
             cleaned_text = " ".join(raw_text.split())
 
@@ -188,7 +197,9 @@ def detecter_doublons_jours(driver):
     row_index = 0
     while True:
         try:
-            current_line_description = driver.find_element(By.ID, f"POL_DESCR${row_index}")
+            current_line_description = driver.find_element(
+                By.ID, f"POL_DESCR${row_index}"
+            )
             line_description = current_line_description.text.strip()
             write_log(
                 f"Analyse de la ligne '{line_description}' à l'index {row_index}",
