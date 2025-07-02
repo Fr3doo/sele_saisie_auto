@@ -24,24 +24,24 @@ from app_config import AppConfig
 from config_manager import ConfigManager
 from dropdown_options import cgi_options_billing_action
 from encryption_utils import EncryptionService
-from fonctions_selenium_utils import (
+from logger_utils import write_log
+from remplir_informations_supp_utils import set_log_file as set_log_file_infos
+from remplir_informations_supp_utils import traiter_description
+from selenium_driver_manager import SeleniumDriverManager
+from selenium_utils import (
     click_element_without_wait,
     detecter_doublons_jours,
     modifier_date_input,
     send_keys_to_element,
 )
-from fonctions_selenium_utils import set_log_file as set_log_file_selenium
-from fonctions_selenium_utils import (
+from selenium_utils import set_log_file as set_log_file_selenium
+from selenium_utils import (
     switch_to_default_content,
     switch_to_iframe_by_id_or_name,
     wait_for_dom_ready,
     wait_for_element,
     wait_until_dom_is_stable,
 )
-from logger_utils import write_log
-from remplir_informations_supp_utils import set_log_file as set_log_file_infos
-from remplir_informations_supp_utils import traiter_description
-from selenium_driver_manager import SeleniumDriverManager
 from shared_memory_service import SharedMemoryService
 from shared_utils import program_break_time
 

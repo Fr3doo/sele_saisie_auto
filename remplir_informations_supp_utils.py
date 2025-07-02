@@ -6,14 +6,14 @@ from typing import Optional
 from selenium.webdriver.common.by import By
 
 from constants import JOURS_SEMAINE
-from fonctions_selenium_utils import (
+from logger_utils import write_log
+from selenium_utils import (
     remplir_champ_texte,
     selectionner_option_menu_deroulant_type_select,
     trouver_ligne_par_description,
     verifier_champ_jour_rempli,
     wait_for_element,
 )
-from logger_utils import write_log
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #

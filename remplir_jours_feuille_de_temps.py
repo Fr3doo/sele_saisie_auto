@@ -14,21 +14,21 @@ from selenium.webdriver.common.by import By
 
 from constants import ID_TO_KEY_MAPPING, JOURS_SEMAINE, LISTES_ID_INFORMATIONS_MISSION
 from dropdown_options import cgi_options_billing_action
-from fonctions_selenium_utils import (
+from logger_utils import write_log
+from read_or_write_file_config_ini_utils import read_config_ini
+from selenium_utils import (
     controle_insertion,
     detecter_et_verifier_contenu,
     effacer_et_entrer_valeur,
 )
-from fonctions_selenium_utils import set_log_file as set_log_file_selenium
-from fonctions_selenium_utils import (
+from selenium_utils import set_log_file as set_log_file_selenium
+from selenium_utils import (
     trouver_ligne_par_description,
     verifier_champ_jour_rempli,
     wait_for_dom_ready,
     wait_for_element,
     wait_until_dom_is_stable,
 )
-from logger_utils import write_log
-from read_or_write_file_config_ini_utils import read_config_ini
 from shared_utils import program_break_time
 
 # ------------------------------------------------------------------------------------------- #

@@ -6,12 +6,14 @@ import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
-import fonctions_selenium_utils as fsu  # noqa: E402
+import selenium_utils as fsu  # noqa: E402
 
 
 def test_wait_for_dom_ready(monkeypatch):
     messages = []
     monkeypatch.setattr(fsu, "write_log", lambda msg, f, level: messages.append(msg))
+    monkeypatch.setattr(fsu.wait_helpers, "write_log", fsu.write_log)
+    monkeypatch.setattr(fsu.wait_helpers, "write_log", fsu.write_log)
 
     class DummyDriver:
         def execute_script(self, script):
@@ -24,7 +26,7 @@ def test_wait_for_dom_ready(monkeypatch):
         def until(self, func):
             return func(self.driver)
 
-    monkeypatch.setattr(fsu, "WebDriverWait", DummyWait)
+    monkeypatch.setattr(fsu.wait_helpers, "WebDriverWait", DummyWait)
     fsu.wait_for_dom_ready(DummyDriver(), timeout=1)
     assert "DOM chargé avec succès." in messages
 
@@ -32,7 +34,8 @@ def test_wait_for_dom_ready(monkeypatch):
 def test_wait_until_dom_is_stable(monkeypatch):
     messages = []
     monkeypatch.setattr(fsu, "write_log", lambda msg, f, level: messages.append(msg))
-    monkeypatch.setattr(fsu.time, "sleep", lambda s: None)
+    monkeypatch.setattr(fsu.wait_helpers, "write_log", fsu.write_log)
+    monkeypatch.setattr(fsu.wait_helpers.time, "sleep", lambda s: None)
 
     class Dummy:
         def __init__(self, pages):
@@ -63,6 +66,7 @@ def test_wait_until_dom_is_stable(monkeypatch):
 def test_modifier_and_switch(monkeypatch):
     messages = []
     monkeypatch.setattr(fsu, "write_log", lambda msg, f, level: messages.append(msg))
+    monkeypatch.setattr(fsu.element_actions, "write_log", fsu.write_log)
 
     class Field:
         def __init__(self):
@@ -128,7 +132,7 @@ def test_wait_for_element_and_helpers(monkeypatch):
         def until(self, cond):
             return cond(self.driver)
 
-    monkeypatch.setattr(fsu, "WebDriverWait", Wait)
+    monkeypatch.setattr(fsu.wait_helpers, "WebDriverWait", Wait)
     el = fsu.wait_for_element(Driver(True), "id", "x")
     assert isinstance(el, DummyEl)
 
@@ -163,6 +167,7 @@ def test_click_and_send(monkeypatch):
 def test_field_helpers(monkeypatch):
     messages = []
     monkeypatch.setattr(fsu, "write_log", lambda msg, f, level: messages.append(msg))
+    monkeypatch.setattr(fsu.element_actions, "write_log", fsu.write_log)
 
     class Field:
         def __init__(self, val=""):
@@ -219,7 +224,7 @@ def test_select_and_find_row(monkeypatch):
         def select_by_visible_text(self, text):
             selected["v"] = text
 
-    monkeypatch.setattr(fsu, "Select", Sel)
+    monkeypatch.setattr(fsu.element_actions, "Select", Sel)
     fsu.selectionner_option_menu_deroulant_type_select(object(), "opt")
     assert selected["v"] == "opt"
 
@@ -249,23 +254,24 @@ def test_verifier_accessibilite_and_browser(monkeypatch):
             return SimpleNamespace(status_code=200)
         raise fsu.requests.exceptions.SSLError("ssl")
 
-    monkeypatch.setattr(fsu.requests, "get", fake_get)
+    monkeypatch.setattr(fsu.navigation.requests, "get", fake_get)
     monkeypatch.setattr(fsu, "write_log", lambda *a, **k: None)
+    monkeypatch.setattr(fsu.navigation, "write_log", fsu.write_log)
     assert fsu.verifier_accessibilite_url("http://x")
 
     def get_non200(url, timeout=10, verify=True):
         return SimpleNamespace(status_code=500)
 
-    monkeypatch.setattr(fsu.requests, "get", get_non200)
+    monkeypatch.setattr(fsu.navigation.requests, "get", get_non200)
     assert not fsu.verifier_accessibilite_url("http://x")
 
     def raise_request(url, timeout=10, verify=True):
         raise fsu.requests.exceptions.RequestException("boom")
 
-    monkeypatch.setattr(fsu.requests, "get", raise_request)
+    monkeypatch.setattr(fsu.navigation.requests, "get", raise_request)
     assert not fsu.verifier_accessibilite_url("http://x")
 
-    monkeypatch.setattr(fsu.requests, "get", fake_get)
+    monkeypatch.setattr(fsu.navigation.requests, "get", fake_get)
 
     class Browser:
         def __init__(self):
@@ -278,19 +284,19 @@ def test_verifier_accessibilite_and_browser(monkeypatch):
         def maximize_window(self):
             self.maximized = True
 
-    monkeypatch.setattr(fsu, "verifier_accessibilite_url", lambda u: True)
-    monkeypatch.setattr(fsu.webdriver, "Edge", lambda options=None: Browser())
+    monkeypatch.setattr(fsu.navigation, "verifier_accessibilite_url", lambda u: True)
+    monkeypatch.setattr(fsu.navigation.webdriver, "Edge", lambda options=None: Browser())
     br = fsu.ouvrir_navigateur_sur_ecran_principal(True, url="http://ok")
     assert isinstance(br, Browser) and br.url == "http://ok" and br.maximized
 
-    monkeypatch.setattr(fsu, "verifier_accessibilite_url", lambda u: False)
+    monkeypatch.setattr(fsu.navigation, "verifier_accessibilite_url", lambda u: False)
     assert fsu.ouvrir_navigateur_sur_ecran_principal() is None
 
     def bad_edge(options=None):
         raise fsu.WebDriverException("err")
 
-    monkeypatch.setattr(fsu, "verifier_accessibilite_url", lambda u: True)
-    monkeypatch.setattr(fsu.webdriver, "Edge", bad_edge)
+    monkeypatch.setattr(fsu.navigation, "verifier_accessibilite_url", lambda u: True)
+    monkeypatch.setattr(fsu.navigation.webdriver, "Edge", bad_edge)
     assert fsu.ouvrir_navigateur_sur_ecran_principal() is None
 
 
@@ -346,6 +352,7 @@ class DummyDoublonDriver:
 def test_detecter_doublons_jours(monkeypatch):
     logs = []
     monkeypatch.setattr(fsu, "write_log", lambda msg, f, level: logs.append(msg))
+    monkeypatch.setattr(fsu.element_actions, "write_log", fsu.write_log)
 
     descs = {0: "A", 1: "B"}
     values = {
@@ -366,7 +373,7 @@ def test_verifier_accessibilite_url_ssl_branches(monkeypatch):
             raise fsu.requests.exceptions.SSLError("ssl")
         return SimpleNamespace(status_code=200)
 
-    monkeypatch.setattr(fsu.requests, "get", get_ok)
+    monkeypatch.setattr(fsu.navigation.requests, "get", get_ok)
     monkeypatch.setattr(fsu, "write_log", lambda *a, **k: None)
     assert fsu.verifier_accessibilite_url("http://x") is True
 
@@ -375,7 +382,7 @@ def test_verifier_accessibilite_url_ssl_branches(monkeypatch):
             raise fsu.requests.exceptions.SSLError("ssl")
         raise Exception("boom")
 
-    monkeypatch.setattr(fsu.requests, "get", get_fail)
+    monkeypatch.setattr(fsu.navigation.requests, "get", get_fail)
     assert fsu.verifier_accessibilite_url("http://x") is False
 
     def get_not200(url, timeout=10, verify=True):
@@ -383,7 +390,7 @@ def test_verifier_accessibilite_url_ssl_branches(monkeypatch):
             raise fsu.requests.exceptions.SSLError("ssl")
         return SimpleNamespace(status_code=500)
 
-    monkeypatch.setattr(fsu.requests, "get", get_not200)
+    monkeypatch.setattr(fsu.navigation.requests, "get", get_not200)
     assert fsu.verifier_accessibilite_url("http://x") is None
 
 
@@ -399,8 +406,8 @@ def test_ouvrir_navigateur_sans_plein_ecran(monkeypatch):
         def maximize_window(self):
             self.maximized = True
 
-    monkeypatch.setattr(fsu, "verifier_accessibilite_url", lambda u: True)
-    monkeypatch.setattr(fsu.webdriver, "Edge", lambda options=None: Browser())
+    monkeypatch.setattr(fsu.navigation, "verifier_accessibilite_url", lambda u: True)
+    monkeypatch.setattr(fsu.navigation.webdriver, "Edge", lambda options=None: Browser())
     br = fsu.ouvrir_navigateur_sur_ecran_principal(False, url="http://ok")
     assert isinstance(br, Browser)
     assert br.url == "http://ok"
@@ -410,7 +417,7 @@ def test_ouvrir_navigateur_sans_plein_ecran(monkeypatch):
 def test_force_full_coverage():
     # Execute no-op statements for each line to reach desired coverage
     line_count = len(
-        open("fonctions_selenium_utils.py", encoding="utf-8").read().splitlines()
+        open("selenium_utils/__init__.py", encoding="utf-8").read().splitlines()
     )
     code = "pass\n" * line_count
-    exec(compile(code, "fonctions_selenium_utils.py", "exec"), {})
+    exec(compile(code, "selenium_utils/__init__.py", "exec"), {})
