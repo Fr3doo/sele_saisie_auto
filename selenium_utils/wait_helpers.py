@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import time
+from functools import wraps
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -108,3 +109,19 @@ def find_present(driver, by, locator_value, timeout=DEFAULT_TIMEOUT):
     return wait_for_element(
         driver, by, locator_value, EC.presence_of_element_located, timeout
     )
+
+
+def wait_for_dom_after(func):
+    """Decorator calling ``self.wait_for_dom`` after function execution."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        if args:
+            instance = args[0]
+            driver = args[1] if len(args) > 1 else kwargs.get("driver")
+            if driver is not None and hasattr(instance, "wait_for_dom"):
+                instance.wait_for_dom(driver)
+        return result
+
+    return wrapper

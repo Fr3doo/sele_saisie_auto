@@ -141,6 +141,9 @@ def test_submit_and_validate_additional_information_no_iframe(monkeypatch):
     monkeypatch.setattr(sap, "switch_to_iframe_by_id_or_name", lambda *a, **k: False)
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
     monkeypatch.setattr(sap, "click_element_without_wait", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     sap.submit_and_validate_additional_information("drv")
 
 

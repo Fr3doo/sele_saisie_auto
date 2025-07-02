@@ -90,6 +90,9 @@ def test_submit_and_validate_additional_information_positive(monkeypatch):
     monkeypatch.setattr(
         sap, "click_element_without_wait", lambda *a, **k: records.append("ok")
     )
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     sap.context.descriptions = [
         {
             "description_cible": "d",
