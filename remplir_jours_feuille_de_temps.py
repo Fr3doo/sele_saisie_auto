@@ -10,8 +10,6 @@ from selenium.common.exceptions import (
     WebDriverException,
 )
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as EC
 
 from constants import JOURS_SEMAINE
 from dropdown_options import cgi_options_billing_action
@@ -19,8 +17,6 @@ from fonctions_selenium_utils import (
     controle_insertion,
     detecter_et_verifier_contenu,
     effacer_et_entrer_valeur,
-    remplir_champ_texte,
-    selectionner_option_menu_deroulant_type_select,
 )
 from fonctions_selenium_utils import set_log_file as set_log_file_selenium
 from fonctions_selenium_utils import (
@@ -413,10 +409,10 @@ def main(driver, log_file: str) -> None:
     try:
         jours_remplis = []  # Liste pour suivre les jours déjà remplis
 
-        write_log(f"Initialisation du processus de remplissage...", LOG_FILE, "DEBUG")
+        write_log("Initialisation du processus de remplissage...", LOG_FILE, "DEBUG")
 
         # Étape 1 : Remplir les jours standard
-        write_log(f"Début du remplissage des jours hors mission...", LOG_FILE, "DEBUG")
+        write_log("Début du remplissage des jours hors mission...", LOG_FILE, "DEBUG")
         jours_remplis = remplir_jours(
             driver, LISTE_ITEMS_DESCRIPTIONS, JOURS_SEMAINE, jours_remplis
         )
@@ -424,7 +420,7 @@ def main(driver, log_file: str) -> None:
 
         # Étape 2 : Gestion des jours de travail et des missions
         write_log(
-            f"Début du traitement des jours de travail et des missions...",
+            "Début du traitement des jours de travail et des missions...",
             LOG_FILE,
             "DEBUG",
         )
@@ -436,7 +432,7 @@ def main(driver, log_file: str) -> None:
         # Étape 3 : Vérification des champs liés aux missions
         if est_en_mission_presente(JOURS_DE_TRAVAIL):
             write_log(
-                f"Jour 'En mission' détecté. Traitement des champs associés...",
+                "Jour 'En mission' détecté. Traitement des champs associés...",
                 LOG_FILE,
                 "DEBUG",
             )
@@ -447,11 +443,11 @@ def main(driver, log_file: str) -> None:
                 INFORMATIONS_PROJET_MISSION,
             )
         else:
-            write_log(f"Aucun Jour 'En mission' détecté.", LOG_FILE, "DEBUG")
+            write_log("Aucun Jour 'En mission' détecté.", LOG_FILE, "DEBUG")
 
         # Étape finale : Succès
         write_log(
-            f"Tous les jours et missions ont été traités avec succès.",
+            "Tous les jours et missions ont été traités avec succès.",
             LOG_FILE,
             "DEBUG",
         )

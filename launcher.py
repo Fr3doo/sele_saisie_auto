@@ -8,7 +8,6 @@ import multiprocessing
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-from config_manager import ConfigManager
 from encryption_utils import EncryptionService
 from gui_builder import (
     create_a_frame,

@@ -5,7 +5,6 @@
 from typing import Optional
 
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 
 from constants import JOURS_SEMAINE
 from fonctions_selenium_utils import (
