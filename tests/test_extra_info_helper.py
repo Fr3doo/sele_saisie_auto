@@ -95,3 +95,31 @@ def test_traiter_description_select_special(monkeypatch):
     assert selected
     assert any("Aucune valeur" in m for m in logs)
     assert any("Impossible de trouver" in m for m in logs)
+
+
+def test_set_log_file(tmp_path, monkeypatch):
+    import importlib
+
+    module = importlib.reload(risu)
+    path = tmp_path / "log.txt"
+    module.set_log_file(str(path))
+    assert module.LOG_FILE == str(path)
+
+
+def test_traiter_description_unknown_type(monkeypatch):
+    monkeypatch.setattr(risu, "write_log", lambda *a, **k: None)
+    monkeypatch.setattr(risu, "trouver_ligne_par_description", lambda *a, **k: 1)
+    monkeypatch.setattr(risu, "wait_for_element", lambda *a, **k: object())
+    monkeypatch.setattr(risu, "verifier_champ_jour_rempli", lambda *a, **k: False)
+    called = []
+    monkeypatch.setattr(
+        risu,
+        "selectionner_option_menu_deroulant_type_select",
+        lambda *a, **k: called.append("select"),
+    )
+    monkeypatch.setattr(
+        risu, "remplir_champ_texte", lambda *a, **k: called.append("input")
+    )
+    cfg = make_config(type_element="other")
+    risu.traiter_description(None, cfg)
+    assert not called
