@@ -88,6 +88,46 @@ def test_get_runtime_resource_path_permission_error(tmp_path, monkeypatch):
     monkeypatch.delattr(sys, "_MEIPASS", raising=False)
 
 
+def test_get_runtime_config_path_meipass_exists(tmp_path, monkeypatch):
+    embedded = tmp_path / "embedded"
+    embedded.mkdir()
+    (embedded / "config.ini").write_text("new", encoding="utf-8")
+    current = tmp_path / "current"
+    current.mkdir()
+    cfg = current / "config.ini"
+    cfg.write_text("orig", encoding="utf-8")
+    monkeypatch.chdir(current)
+    monkeypatch.setattr(sys, "_MEIPASS", str(embedded), raising=False)
+    monkeypatch.setattr("read_or_write_file_config_ini_utils.write_log", noop)
+    path = get_runtime_config_path()
+    assert Path(path).read_text(encoding="utf-8") == "orig"
+    monkeypatch.delattr(sys, "_MEIPASS", raising=False)
+
+
+def test_get_runtime_resource_path_exists(tmp_path, monkeypatch):
+    embedded = tmp_path / "embedded"
+    embedded.mkdir()
+    (embedded / "img.png").write_text("embedded", encoding="utf-8")
+    current = tmp_path / "current"
+    current.mkdir()
+    res = current / "img.png"
+    res.write_text("local", encoding="utf-8")
+    monkeypatch.chdir(current)
+    monkeypatch.setattr(sys, "_MEIPASS", str(embedded), raising=False)
+    monkeypatch.setattr("read_or_write_file_config_ini_utils.write_log", noop)
+    path = get_runtime_resource_path("img.png")
+    assert Path(path).read_text(encoding="utf-8") == "local"
+    monkeypatch.delattr(sys, "_MEIPASS", raising=False)
+
+
+def test_get_runtime_resource_path_no_meipass(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("_MEIPASS", raising=False)
+    monkeypatch.setattr("read_or_write_file_config_ini_utils.write_log", noop)
+    path = get_runtime_resource_path("any.png")
+    assert path == str(tmp_path / "any.png")
+
+
 def test_read_config_ini_success(tmp_path, monkeypatch):
     cfg = tmp_path / "config.ini"
     cfg.write_text("[s]\na=b\n", encoding="utf-8")
