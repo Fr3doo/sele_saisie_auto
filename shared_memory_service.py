@@ -2,14 +2,14 @@
 
 from multiprocessing import shared_memory
 
-from logger_utils import write_log
+from logging_service import Logger
 
 
 class SharedMemoryService:
     """Service to store and retrieve bytes in shared memory."""
 
     def __init__(self, log_file: str | None = None) -> None:
-        self.log_file = log_file
+        self.logger = Logger(log_file)
 
     def stocker_en_memoire_partagee(self, nom: str, donnees: bytes):
         """Create a shared memory segment and write ``donnees`` into it."""
@@ -18,18 +18,12 @@ class SharedMemoryService:
                 name=nom, create=True, size=len(donnees)
             )
             memoire.buf[: len(donnees)] = donnees
-            write_log(
-                f"💀 Données stockées en mémoire partagée avec le nom '{nom}'.",
-                self.log_file,
-                "CRITICAL",
+            self.logger.critical(
+                f"💀 Données stockées en mémoire partagée avec le nom '{nom}'."
             )
             return memoire
         except Exception as e:  # pragma: no cover - defensive
-            write_log(
-                f"❌ Erreur lors du stockage en mémoire partagée : {e}",
-                self.log_file,
-                "ERROR",
-            )
+            self.logger.error(f"❌ Erreur lors du stockage en mémoire partagée : {e}")
             raise
 
     def supprimer_memoire_partagee_securisee(
@@ -41,16 +35,10 @@ class SharedMemoryService:
                 memoire.buf[i] = 0
             memoire.close()
             memoire.unlink()
-            write_log(
-                "💀 Mémoire partagée supprimée de manière sécurisée.",
-                self.log_file,
-                "CRITICAL",
-            )
+            self.logger.critical("💀 Mémoire partagée supprimée de manière sécurisée.")
         except Exception as e:  # pragma: no cover - defensive
-            write_log(
-                f"❌ Erreur lors de la suppression sécurisée de la mémoire partagée : {e}",
-                self.log_file,
-                "ERROR",
+            self.logger.error(
+                f"❌ Erreur lors de la suppression sécurisée de la mémoire partagée : {e}"
             )
             raise
 
@@ -61,16 +49,12 @@ class SharedMemoryService:
         try:
             memoire = shared_memory.SharedMemory(name=nom)
             donnees = bytes(memoire.buf[:taille])
-            write_log(
-                f"💀 Données récupérées depuis la mémoire partagée avec le nom '{nom}'.",
-                self.log_file,
-                "CRITICAL",
+            self.logger.critical(
+                f"💀 Données récupérées depuis la mémoire partagée avec le nom '{nom}'."
             )
             return memoire, donnees
         except Exception as e:  # pragma: no cover - defensive
-            write_log(
-                f"❌ Erreur lors de la récupération depuis la mémoire partagée : {e}",
-                self.log_file,
-                "ERROR",
+            self.logger.error(
+                f"❌ Erreur lors de la récupération depuis la mémoire partagée : {e}"
             )
             raise

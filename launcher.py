@@ -16,7 +16,8 @@ from gui_builder import (
     create_Modern_label_with_pack,
     create_tab,
 )
-from logger_utils import LOG_LEVELS, close_logs, initialize_logger, write_log
+from logger_utils import LOG_LEVELS, close_logs, initialize_logger
+from logging_service import Logger
 from main_menu import main_menu
 from read_or_write_file_config_ini_utils import read_config_ini, write_config_ini
 from shared_utils import get_log_file
@@ -37,10 +38,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def run_psatime(log_file: str, menu: tk.Tk) -> None:
+def run_psatime(log_file: str, menu: tk.Tk, logger: Logger | None = None) -> None:
     """Launch the Selenium automation after closing the menu."""
     menu.destroy()
-    write_log("Launching PSA time", log_file, "INFO")
+    log = logger or Logger(log_file)
+    log.info("Launching PSA time")
     import saisie_automatiser_psatime
 
     saisie_automatiser_psatime.main(log_file)
@@ -53,6 +55,7 @@ def run_psatime_with_credentials(
     mdp_var: tk.StringVar,
     log_file: str,
     menu: tk.Tk,
+    logger: Logger | None = None,
 ) -> None:
     """Encrypt credentials and start PSA time after closing the menu."""
     login = login_var.get()
@@ -67,7 +70,7 @@ def run_psatime_with_credentials(
     shm_service.stocker_en_memoire_partagee("memoire_nom", data_login)
     shm_service.stocker_en_memoire_partagee("memoire_mdp", data_pwd)
 
-    run_psatime(log_file, menu)
+    run_psatime(log_file, menu, logger=logger)
 
 
 def start_configuration(
@@ -116,7 +119,8 @@ def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
 
     log_file = get_log_file()
-    write_log("Initialisation", log_file, "INFO")
+    logger = Logger(log_file)
+    logger.info("Initialisation")
 
     config = read_config_ini(log_file)
     initialize_logger(config, log_level_override=args.log_level)
