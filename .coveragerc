@@ -1,12 +1,7 @@
 [run]
 branch = True
 source =
-    config_manager.py
-    encryption_utils.py
-    logger_utils.py
-    selenium_driver_manager.py
-    shared_utils.py
-    read_or_write_file_config_ini_utils.py
+    .
 
 [report]
 omit =
