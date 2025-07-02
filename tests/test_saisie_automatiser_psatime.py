@@ -3,6 +3,8 @@ import types
 from configparser import ConfigParser
 from pathlib import Path
 
+import console_ui
+
 sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
 import saisie_automatiser_psatime as sap  # noqa: E402
@@ -112,8 +114,8 @@ def test_helpers(monkeypatch):
     sap.clear_screen()
     sap.seprateur_menu_affichage_log("log.html")
     with monkeypatch.context() as m:
-        printed = []
-        m.setattr("builtins.print", lambda msg: printed.append(msg))
+        called = []
+        m.setattr(console_ui, "show_separator", lambda: called.append(True))
         sap.seprateur_menu_affichage_console()
     sap.log_initialisation()
     assert messages
@@ -193,7 +195,7 @@ def test_main_flow(monkeypatch):
         lambda self, *a, **k: cleanup_called.setdefault("done", True),
     )
     monkeypatch.setattr(sap, "seprateur_menu_affichage_console", lambda: None)
-    monkeypatch.setattr(__import__("builtins"), "input", lambda *a, **k: None)
+    monkeypatch.setattr(console_ui, "ask_continue", lambda *a, **k: None)
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
 
     sap.main("log.html")

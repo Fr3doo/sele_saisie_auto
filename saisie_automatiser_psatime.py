@@ -19,13 +19,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 
+import console_ui
 import remplir_jours_feuille_de_temps
 from app_config import AppConfig
 from config_manager import ConfigManager
 from dropdown_options import cgi_options_billing_action
 from encryption_utils import EncryptionService
-from logger_utils import write_log
 from error_handler import log_error
+from logger_utils import write_log
 from remplir_informations_supp_utils import set_log_file as set_log_file_infos
 from remplir_informations_supp_utils import traiter_description
 from selenium_driver_manager import SeleniumDriverManager
@@ -563,7 +564,9 @@ class PSATimeAutomation:
         except NoSuchElementException as e:
             log_error(f"❌ L'élément n'a pas été trouvé : {str(e)}", self.log_file)
         except TimeoutException as e:
-            log_error(f"❌ Temps d'attente dépassé pour un élément : {str(e)}", self.log_file)
+            log_error(
+                f"❌ Temps d'attente dépassé pour un élément : {str(e)}", self.log_file
+            )
         except WebDriverException as e:
             log_error(f"❌ Erreur liée au WebDriver : {str(e)}", self.log_file)
         except Exception as e:
@@ -571,11 +574,11 @@ class PSATimeAutomation:
         finally:
             try:
                 if driver_manager.driver is not None:
-                    input(
+                    console_ui.ask_continue(
                         "INFO : Controler et soumettez votre PSATime, Puis appuyer sur ENTRER "
                     )
                 else:
-                    input(
+                    console_ui.ask_continue(
                         "ERROR : Controler les Log, Puis appuyer sur ENTRER ET relancer l'outil "
                     )
                 seprateur_menu_affichage_console()
@@ -617,7 +620,7 @@ def seprateur_menu_affichage_log(log_file: str) -> None:
 
 
 def seprateur_menu_affichage_console():
-    print("*************************************************************")
+    console_ui.show_separator()
 
 
 def get_next_saturday_if_not_saturday(date_str):
