@@ -51,7 +51,7 @@
 | `EncryptionService`     | Chiffre/déchiffre les données sensibles       | `encryption_utils.py`                     | Chaîne ou bytes       | Bytes ou chaîne             |
 | `Logger`                | Gestion et rotation des logs                  | `logger_utils.py`                         | Messages à enregistrer| Fichier HTML/TXT de logs     |
 | `SeleniumDriverManager` | Initialise et ferme le WebDriver             | `selenium_driver_manager.py`             | URL, options          | Instance WebDriver |
-| `SeleniumUtils`         | Fonctions utilitaires pour Selenium           | `fonctions_selenium_utils.py`             | WebDriver, ID, valeurs| Éléments manipulés          |
+| `SeleniumUtils`         | Fonctions utilitaires pour Selenium           | `selenium_utils/`             | WebDriver, ID, valeurs| Éléments manipulés          |
 ## 6. Détails par agent
 
 ### `SeleniumFiller`

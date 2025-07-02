@@ -4,13 +4,13 @@ from typing import Optional
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from fonctions_selenium_utils import (
+from logger_utils import write_log
+from selenium_utils import (
     LONG_TIMEOUT,
     definir_taille_navigateur,
     ouvrir_navigateur_sur_ecran_principal,
     wait_for_dom_ready,
 )
-from logger_utils import write_log
 
 
 class SeleniumDriverManager:
