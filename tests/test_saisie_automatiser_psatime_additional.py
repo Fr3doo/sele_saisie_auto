@@ -76,6 +76,7 @@ def make_config():
     cfg["additional_information_lunch_break_duration"] = {"lundi": "1"}
     cfg["work_location_am"] = {"lundi": "CGI"}
     cfg["work_location_pm"] = {"lundi": "CGI"}
+    cfg["cgi_options_billing_action"] = {"Facturable": "B"}
     return cfg
 
 

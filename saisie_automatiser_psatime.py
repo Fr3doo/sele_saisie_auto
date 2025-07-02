@@ -23,7 +23,6 @@ import console_ui
 import remplir_jours_feuille_de_temps
 from app_config import AppConfig
 from config_manager import ConfigManager
-from dropdown_options import cgi_options_billing_action
 from encryption_utils import EncryptionService
 from error_handler import log_error
 from logger_utils import write_log
@@ -98,7 +97,9 @@ class PSATimeAutomation:
             encryption_service=EncryptionService(log_file, shm_service),
             shared_memory_service=shm_service,
             informations_projet_mission={
-                item_projet: cgi_options_billing_action.get(value, value)
+                item_projet: app_config.cgi_options_billing_action.get(
+                    value.lower(), value
+                )
                 for item_projet, value in app_config.project_information.items()
             },
             descriptions=[

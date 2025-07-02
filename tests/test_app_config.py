@@ -9,7 +9,16 @@ from app_config import AppConfig, load_config  # noqa: E402
 def test_load_config_parses(tmp_path, monkeypatch):
     cfg = tmp_path / "config.ini"
     cfg.write_text(
-        """[credentials]\nlogin=enc\nmdp=enc\n[settings]\nurl=http://t\ndate_cible=01/07/2024\nliste_items_planning=\"a\", \"b\"\n""",
+        """[credentials]
+login=enc
+mdp=enc
+[settings]
+url=http://t
+date_cible=01/07/2024
+liste_items_planning="a", "b"
+[cgi_options_billing_action]
+Facturable = B
+""",
         encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)
@@ -23,3 +32,4 @@ def test_load_config_parses(tmp_path, monkeypatch):
     assert app_cfg.date_cible == "01/07/2024"
     assert app_cfg.liste_items_planning == ["a", "b"]
     assert app_cfg.raw.get("credentials", "login") == "enc"
+    assert app_cfg.cgi_options_billing_action["facturable"] == "B"

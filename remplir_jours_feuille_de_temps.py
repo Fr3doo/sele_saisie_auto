@@ -13,7 +13,9 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.by import By
 
 from constants import ID_TO_KEY_MAPPING, JOURS_SEMAINE, LISTES_ID_INFORMATIONS_MISSION
-from dropdown_options import cgi_options_billing_action
+from dropdown_options import (
+    cgi_options_billing_action as DEFAULT_CGI_OPTIONS_BILLING_ACTION,
+)
 from error_handler import log_error
 from logger_utils import write_log
 from read_or_write_file_config_ini_utils import read_config_ini
@@ -62,8 +64,13 @@ def initialize(log_file: str) -> None:
         day: (value.partition(",")[0].strip(), value.partition(",")[2].strip())
         for day, value in config.items("work_schedule")
     }
+    billing_map = (
+        dict(config.items("cgi_options_billing_action"))
+        if config.has_section("cgi_options_billing_action")
+        else DEFAULT_CGI_OPTIONS_BILLING_ACTION
+    )
     INFORMATIONS_PROJET_MISSION = {
-        item_projet: cgi_options_billing_action.get(value, value)
+        item_projet: billing_map.get(value.lower(), value)
         for item_projet, value in config.items("project_information")
     }
 
