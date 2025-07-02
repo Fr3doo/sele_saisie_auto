@@ -309,6 +309,104 @@ def test_definir_taille_navigateur():
     assert result is nav
 
 
+class DummyDesc:
+    def __init__(self, text=""):
+        self.text = text
+
+
+class DummyField:
+    def __init__(self, value=""):
+        self.value = value
+
+    def get_attribute(self, name):
+        return self.value
+
+
+class DummyDoublonDriver:
+    def __init__(self, descs, values):
+        self.descs = descs
+        self.values = values
+
+    def find_element(self, by, ident):
+        if ident.startswith("POL_DESCR$"):
+            idx = int(ident.split("$")[1])
+            if idx in self.descs:
+                return DummyDesc(self.descs[idx])
+            raise fsu.NoSuchElementException("desc")
+        if ident.startswith("POL_TIME"):
+            prefix, row = ident.split("$")
+            day = int(prefix[8:])
+            idx = int(row)
+            if (day, idx) in self.values:
+                return DummyField(self.values[(day, idx)])
+            raise fsu.NoSuchElementException("day")
+        raise fsu.NoSuchElementException("unknown")
+
+
+def test_detecter_doublons_jours(monkeypatch):
+    logs = []
+    monkeypatch.setattr(fsu, "write_log", lambda msg, f, level: logs.append(msg))
+
+    descs = {0: "A", 1: "B"}
+    values = {
+        (2, 0): "8",  # lundi ligne 0
+        (2, 1): "7",  # lundi ligne 1 -> doublon
+        (3, 0): "4",  # mardi ligne 0 uniquement
+        (4, 0): "",  # mercredi vide pour branche else
+    }
+    driver = DummyDoublonDriver(descs, values)
+    fsu.detecter_doublons_jours(driver)
+    assert any("Doublon détecté" in m for m in logs)
+    assert any("Aucun doublon détecté" in m for m in logs)
+
+
+def test_verifier_accessibilite_url_ssl_branches(monkeypatch):
+    def get_ok(url, timeout=10, verify=True):
+        if verify:
+            raise fsu.requests.exceptions.SSLError("ssl")
+        return SimpleNamespace(status_code=200)
+
+    monkeypatch.setattr(fsu.requests, "get", get_ok)
+    monkeypatch.setattr(fsu, "write_log", lambda *a, **k: None)
+    assert fsu.verifier_accessibilite_url("http://x") is True
+
+    def get_fail(url, timeout=10, verify=True):
+        if verify:
+            raise fsu.requests.exceptions.SSLError("ssl")
+        raise Exception("boom")
+
+    monkeypatch.setattr(fsu.requests, "get", get_fail)
+    assert fsu.verifier_accessibilite_url("http://x") is False
+
+    def get_not200(url, timeout=10, verify=True):
+        if verify:
+            raise fsu.requests.exceptions.SSLError("ssl")
+        return SimpleNamespace(status_code=500)
+
+    monkeypatch.setattr(fsu.requests, "get", get_not200)
+    assert fsu.verifier_accessibilite_url("http://x") is None
+
+
+def test_ouvrir_navigateur_sans_plein_ecran(monkeypatch):
+    class Browser:
+        def __init__(self):
+            self.maximized = False
+            self.url = None
+
+        def get(self, url):
+            self.url = url
+
+        def maximize_window(self):
+            self.maximized = True
+
+    monkeypatch.setattr(fsu, "verifier_accessibilite_url", lambda u: True)
+    monkeypatch.setattr(fsu.webdriver, "Edge", lambda options=None: Browser())
+    br = fsu.ouvrir_navigateur_sur_ecran_principal(False, url="http://ok")
+    assert isinstance(br, Browser)
+    assert br.url == "http://ok"
+    assert br.maximized is False
+
+
 def test_force_full_coverage():
     # Execute no-op statements for each line to reach desired coverage
     line_count = len(
