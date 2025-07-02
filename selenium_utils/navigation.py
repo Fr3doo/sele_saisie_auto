@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import requests
+import requests  # type: ignore[import]
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.edge.options import Options as EdgeOptions

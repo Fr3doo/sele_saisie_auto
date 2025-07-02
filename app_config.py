@@ -100,7 +100,7 @@ class AppConfig:
         )
 
 
-def load_config(log_file: str) -> AppConfig:
+def load_config(log_file: str | None) -> AppConfig:
     """Load ``config.ini`` and return an :class:`AppConfig`."""
     parser = read_config_ini(log_file=log_file)
     return AppConfig.from_parser(parser)

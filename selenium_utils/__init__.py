@@ -5,7 +5,7 @@
 import time
 from typing import Optional
 
-import requests
+import requests  # type: ignore[import]
 from selenium import webdriver
 from selenium.common.exceptions import (
     NoSuchElementException,
