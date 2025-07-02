@@ -22,6 +22,17 @@ class DummyEnc:
         self.removed.append(mem)
 
 
+class DummySHMService:
+    def __init__(self):
+        self.removed = []
+
+    def recuperer_de_memoire_partagee(self, name, size):
+        return object(), b"k" * size
+
+    def supprimer_memoire_partagee_securisee(self, mem):
+        self.removed.append(mem)
+
+
 class DummySHM:
     def __init__(self, name):
         self.name = name
@@ -75,7 +86,8 @@ def setup_init(monkeypatch):
     app_cfg = AppConfig.from_parser(cfg)
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
-    monkeypatch.setattr(sap, "EncryptionService", lambda lf: DummyEnc())
+    monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyEnc())
+    monkeypatch.setattr(sap, "SharedMemoryService", lambda lf: DummySHMService())
     sap.initialize("log.html", app_cfg)
     monkeypatch.setattr(
         sap,
@@ -120,6 +132,7 @@ def test_initialize_shared_memory(monkeypatch):
         sap, "shared_memory", types.SimpleNamespace(SharedMemory=DummySHM)
     )
     sap.context.encryption_service = DummyEnc()
+    sap.context.shared_memory_service = DummySHMService()
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
     result = sap.initialize_shared_memory()
     assert result[2] == b"user"
@@ -134,9 +147,9 @@ def test_main_flow(monkeypatch):
 
     monkeypatch.setattr(sap, "log_initialisation", lambda: None)
     monkeypatch.setattr(
-        sap,
+        sap.PSATimeAutomation,
         "initialize_shared_memory",
-        lambda: [b"k", object(), b"user", object(), b"pass", object()],
+        lambda self: [b"k", object(), b"user", object(), b"pass", object()],
     )
     monkeypatch.setattr(sap, "SeleniumDriverManager", DummyManager)
 
@@ -175,9 +188,9 @@ def test_main_flow(monkeypatch):
     monkeypatch.setattr(sap, "sys", types.SimpleNamespace(exit=lambda: None))
     cleanup_called = {}
     monkeypatch.setattr(
-        sap,
+        sap.PSATimeAutomation,
         "cleanup_resources",
-        lambda *a, **k: cleanup_called.setdefault("done", True),
+        lambda self, *a, **k: cleanup_called.setdefault("done", True),
     )
     monkeypatch.setattr(sap, "seprateur_menu_affichage_console", lambda: None)
     monkeypatch.setattr(__import__("builtins"), "input", lambda *a, **k: None)

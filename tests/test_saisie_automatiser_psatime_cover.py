@@ -8,6 +8,10 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 import pytest  # noqa: E402
 
 import saisie_automatiser_psatime as sap  # noqa: E402
+from tests.test_saisie_automatiser_psatime import (  # noqa: E402
+    DummySHMService,
+    setup_init,
+)
 
 
 class DummyManager:
@@ -52,7 +56,9 @@ def test_wait_for_dom(monkeypatch):
 
 
 def test_navigate_from_work_schedule_positive(monkeypatch):
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: True)
     actions = []
     monkeypatch.setattr(
@@ -106,7 +112,7 @@ def test_initialize_debug_mode_off(monkeypatch):
     monkeypatch.setattr(sap, "write_log", lambda msg, f, level: messages.append(msg))
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
-    monkeypatch.setattr(sap, "EncryptionService", lambda lf: DummyManager())
+    monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyManager())
     app_cfg.debug_mode = "OFF"
     sap.initialize("log.html", app_cfg)
     monkeypatch.setattr(
@@ -119,31 +125,52 @@ def test_initialize_debug_mode_off(monkeypatch):
 
 def test_switch_to_iframe_main_target_win0_no_element(monkeypatch):
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: False)
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     with pytest.raises(NameError):
         sap.switch_to_iframe_main_target_win0("drv")
 
 
 def test_navigate_from_home_to_date_entry_page_no_elements(monkeypatch):
+    setup_init(monkeypatch)
     seq = iter([False, False])
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: next(seq))
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
-    monkeypatch.setattr(sap, "switch_to_iframe_main_target_win0", lambda *a, **k: True)
+
+    def fake_wait(*a, **k):
+        try:
+            return next(seq)
+        except StopIteration:
+            return False
+
+    monkeypatch.setattr(sap, "wait_for_element", fake_wait)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
+    monkeypatch.setattr(
+        sap.PSATimeAutomation,
+        "switch_to_iframe_main_target_win0",
+        lambda self, *a, **k: True,
+    )
     sap.navigate_from_home_to_date_entry_page("drv")
 
 
 def test_handle_date_input_no_element(monkeypatch):
+    setup_init(monkeypatch)
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: None)
     log = []
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: log.append("log"))
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: log.append("dom"))
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: log.append("dom")
+    )
     sap.handle_date_input("drv", "10/07/2024")
     assert "dom" in log
 
 
 def test_submit_and_validate_additional_information_none(monkeypatch):
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: False)
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     with pytest.raises(NameError):
         sap.submit_and_validate_additional_information("drv")
 
@@ -152,5 +179,6 @@ def test_cleanup_resources_none(monkeypatch):
     mgr = DummyManager()
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
     sap.context.encryption_service = DummyManager()
+    sap.context.shared_memory_service = DummySHMService()
     sap.cleanup_resources(mgr, None, None, None)
     assert mgr.closed is True
