@@ -41,7 +41,7 @@ def get_runtime_config_path(log_file=None):
                 DEFAULT_LOG_LEVEL,
             )
     else:
-        write_log(f"🔹 Exécution en mode script.", log_file, DEFAULT_LOG_LEVEL)
+        write_log("🔹 Exécution en mode script.", log_file, DEFAULT_LOG_LEVEL)
 
     return current_dir_config
 
@@ -96,7 +96,7 @@ def get_runtime_resource_path(relative_path, log_file=None):
                     f"Permission refusée pour copier : {embedded_resource}"
                 )
     else:
-        write_log(f"🔹 Exécution en mode script.", log_file, DEFAULT_LOG_LEVEL)
+        write_log("🔹 Exécution en mode script.", log_file, DEFAULT_LOG_LEVEL)
 
     return current_dir_resource
 

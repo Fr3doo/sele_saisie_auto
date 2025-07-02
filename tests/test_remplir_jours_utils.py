@@ -3,12 +3,12 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
-from remplir_jours_feuille_de_temps import (
+from remplir_jours_feuille_de_temps import (  # noqa: E402
+    afficher_message_insertion,
+    ajouter_jour_a_jours_remplis,
+    clear_screen,
     est_en_mission,
     est_en_mission_presente,
-    ajouter_jour_a_jours_remplis,
-    afficher_message_insertion,
-    clear_screen,
 )
 
 

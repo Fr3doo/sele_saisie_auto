@@ -66,14 +66,14 @@ def wait_until_dom_is_stable(driver, timeout=10):
             unchanged_count = 0
 
         if unchanged_count >= required_stability_count:
-            write_log(f"Le DOM est stable.", LOG_FILE, "DEBUG")
+            write_log("Le DOM est stable.", LOG_FILE, "DEBUG")
             return True
 
         previous_dom_snapshot = current_dom_snapshot
         time.sleep(1)  # Attendre une seconde avant de vérifier à nouveau le DOM
 
     write_log(
-        f"Le DOM n'est pas complètement stable après le délai.", LOG_FILE, "WARNING"
+        "Le DOM n'est pas complètement stable après le délai.", LOG_FILE, "WARNING"
     )
     return False
 
@@ -97,7 +97,7 @@ def switch_to_iframe_by_id_or_name(driver, iframe_identifier):
 def switch_to_default_content(driver):
     """Revenir au contexte principal du document après avoir travaillé dans un iframe."""
     driver.switch_to.default_content()
-    write_log(f"Retour au contexte principal.", LOG_FILE, "DEBUG")
+    write_log("Retour au contexte principal.", LOG_FILE, "DEBUG")
 
 
 def wait_for_element(
@@ -111,7 +111,7 @@ def wait_for_element(
 
     if locator_value is None:
         write_log(
-            f"❌ Erreur : Le paramètre 'locator_value' doit être spécifié pour localiser l'élément.",
+            "❌ Erreur : Le paramètre 'locator_value' doit être spécifié pour localiser l'élément.",
             LOG_FILE,
             "ERROR",
         )
@@ -472,7 +472,7 @@ def ouvrir_navigateur_sur_ecran_principal(
 
     except WebDriverException as e:
         if "ERR_CONNECTION_CLOSED" in str(e):
-            write_log(f"❌ La connexion au serveur a été fermée.", LOG_FILE, "ERROR")
+            write_log("❌ La connexion au serveur a été fermée.", LOG_FILE, "ERROR")
         else:
             write_log(f"❌ Erreur WebDriver : {str(e)}", LOG_FILE, "ERROR")
         return None

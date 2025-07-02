@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import tkinter as tk
-from tkinter import messagebox
 
 from gui_builder import (
     create_button_without_style,
