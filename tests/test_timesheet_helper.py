@@ -4,7 +4,11 @@ from pathlib import Path
 # add project root to sys.path
 sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
-from remplir_jours_feuille_de_temps import remplir_jours, remplir_mission  # noqa: E402
+from remplir_jours_feuille_de_temps import (  # noqa: E402
+    TimeSheetHelper,
+    remplir_jours,
+    remplir_mission,
+)
 
 
 def test_remplir_jours_collects_filled_days(monkeypatch):
@@ -60,3 +64,23 @@ def test_remplir_mission_calls_helpers(monkeypatch):
     assert result == ["lundi", "mission_mardi"]
     assert calls["traiter"] == [("lundi", "desc1", "8")]
     assert calls["specifique"] == [("mardi", "8")]
+
+
+def test_timesheethelper_run_sequence(monkeypatch):
+    helper = TimeSheetHelper("log")
+    seq = []
+    monkeypatch.setattr(helper, "initialize", lambda: seq.append("init"))
+    monkeypatch.setattr(
+        helper, "fill_standard_days", lambda d, j: seq.append("std") or j
+    )
+    monkeypatch.setattr(
+        helper, "fill_work_missions", lambda d, j: seq.append("work") or j
+    )
+    monkeypatch.setattr(
+        helper, "handle_additional_fields", lambda d: seq.append("extra")
+    )
+    monkeypatch.setattr(
+        "remplir_jours_feuille_de_temps.write_log", lambda *a, **k: None
+    )
+    helper.run(None)
+    assert seq == ["init", "std", "work", "extra"]

@@ -12,4 +12,3 @@ def test_wait_for_dom_after_decorator(monkeypatch):
     )
     sap.submit_date_cible("drv")
     assert calls.count("dom") == 2
-
