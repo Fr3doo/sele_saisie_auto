@@ -392,7 +392,7 @@ def main(driver, log_file: str) -> None:
     """Point d'entrée principal du script pour remplir automatiquement les jours et les missions."""
     initialize(log_file)
     try:
-        jours_remplis = []  # Liste pour suivre les jours déjà remplis
+        jours_remplis: list[str] = []  # Liste pour suivre les jours déjà remplis
 
         write_log("Initialisation du processus de remplissage...", LOG_FILE, "DEBUG")
 
