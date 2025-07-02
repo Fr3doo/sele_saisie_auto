@@ -14,8 +14,8 @@ from selenium.webdriver.common.by import By
 
 from constants import ID_TO_KEY_MAPPING, JOURS_SEMAINE, LISTES_ID_INFORMATIONS_MISSION
 from dropdown_options import cgi_options_billing_action
-from logger_utils import write_log
 from error_handler import log_error
+from logger_utils import write_log
 from read_or_write_file_config_ini_utils import read_config_ini
 from selenium_utils import (
     controle_insertion,

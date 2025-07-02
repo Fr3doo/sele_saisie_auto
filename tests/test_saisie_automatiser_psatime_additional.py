@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+import console_ui
+
 sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
 import types  # noqa: E402
@@ -302,8 +304,8 @@ def test_main_exceptions(monkeypatch):
     monkeypatch.setattr(sap, "detecter_doublons_jours", lambda *a, **k: None)
     monkeypatch.setattr(sap, "seprateur_menu_affichage_console", lambda: None)
     monkeypatch.setattr(
-        __import__("builtins"),
-        "input",
+        console_ui,
+        "ask_continue",
         lambda *a, **k: (_ for _ in ()).throw(ValueError()),
     )
     cleanup = {}
