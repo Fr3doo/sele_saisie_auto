@@ -4,6 +4,7 @@ from configparser import ConfigParser
 from pathlib import Path
 
 import console_ui
+from locators import Locators
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
@@ -183,7 +184,7 @@ def test_main_flow(monkeypatch):
             def send_keys(self, v):
                 self.val = v
 
-        if ident == "EX_TIME_ADD_VW_PERIOD_END_DT":
+        if ident == Locators.DATE_INPUT.value:
             return Elem()
         return object()
 
