@@ -1,4 +1,3 @@
-# pragma: no cover
 # gui_builder.py
 """Fonctions utilitaires pour la création de widgets Tkinter."""
 
