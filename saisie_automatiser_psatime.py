@@ -63,6 +63,18 @@ class SaisieContext:
     descriptions: List[Dict[str, object]]
 
 
+@dataclass
+class Credentials:
+    """Encrypted credentials and their shared memory handles."""
+
+    aes_key: bytes
+    mem_key: shared_memory.SharedMemory
+    login: bytes
+    mem_login: shared_memory.SharedMemory
+    password: bytes
+    mem_password: shared_memory.SharedMemory
+
+
 # ----------------------------------------------------------------------------
 #
 # --------------------------- CLASSE PRINCIPALE ------------------------------
@@ -259,14 +271,14 @@ class PSATimeAutomation:
             )
             sys.exit(1)
 
-        return [
-            cle_aes,
-            memoire_cle,
-            nom_utilisateur_chiffre,
-            memoire_nom,
-            mot_de_passe_chiffre,
-            memoire_mdp,
-        ]
+        return Credentials(
+            aes_key=cle_aes,
+            mem_key=memoire_cle,
+            login=nom_utilisateur_chiffre,
+            mem_login=memoire_nom,
+            password=mot_de_passe_chiffre,
+            mem_password=memoire_mdp,
+        )
 
     @staticmethod
     def wait_for_dom(driver):
@@ -457,24 +469,16 @@ class PSATimeAutomation:
         app_cfg = manager.load()
         self.__init__(self.log_file, app_cfg)
         self.log_initialisation()
-        variables = self.initialize_shared_memory()
-        (
-            cle_aes,
-            memoire_cle,
-            nom_utilisateur_chiffre,
-            memoire_nom,
-            mot_de_passe_chiffre,
-            memoire_mdp,
-        ) = variables
+        credentials = self.initialize_shared_memory()
 
         with SeleniumDriverManager(self.log_file) as driver_manager:
             driver = self.setup_browser(driver_manager)
             try:
                 self.connect_to_psatime(
                     driver,
-                    cle_aes,
-                    nom_utilisateur_chiffre,
-                    mot_de_passe_chiffre,
+                    credentials.aes_key,
+                    credentials.login,
+                    credentials.password,
                 )
                 switched_to_iframe = self.navigate_from_home_to_date_entry_page(driver)
                 if switched_to_iframe:
@@ -595,7 +599,10 @@ class PSATimeAutomation:
                     pass
                 finally:
                     self.cleanup_resources(
-                        driver_manager, memoire_cle, memoire_nom, memoire_mdp
+                        driver_manager,
+                        credentials.mem_key,
+                        credentials.mem_login,
+                        credentials.mem_password,
                     )
 
 
