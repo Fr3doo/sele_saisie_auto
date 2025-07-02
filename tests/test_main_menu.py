@@ -1,10 +1,8 @@
 import sys
-from pathlib import Path
 import types
+from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-
-
 
 
 class DummyVar:
@@ -117,6 +115,7 @@ def fake_create_entry(*args, **kwargs):
 
 # Tests
 
+
 def test_main_menu_builds_and_commands(monkeypatch):
     created_vars.clear()
     created_entries.clear()
@@ -128,6 +127,7 @@ def test_main_menu_builds_and_commands(monkeypatch):
     )
     monkeypatch.setitem(sys.modules, "launcher", dummy_launcher)
     import importlib
+
     main_menu = importlib.import_module("main_menu")
 
     monkeypatch.setattr(
@@ -135,11 +135,17 @@ def test_main_menu_builds_and_commands(monkeypatch):
         "tk",
         types.SimpleNamespace(Tk=DummyTk, StringVar=fake_stringvar, Label=DummyLabel),
     )
-    monkeypatch.setattr(main_menu, "create_button_without_style", fake_create_button_without_style)
+    monkeypatch.setattr(
+        main_menu, "create_button_without_style", fake_create_button_without_style
+    )
     monkeypatch.setattr(main_menu, "create_labeled_frame", fake_create_labeled_frame)
     monkeypatch.setattr(main_menu, "create_Modern_entry_with_grid", fake_create_entry)
-    monkeypatch.setattr(main_menu, "create_Modern_entry_with_grid_for_password", fake_create_entry)
-    monkeypatch.setattr(main_menu, "create_Modern_label_with_grid", lambda *a, **k: DummyLabel())
+    monkeypatch.setattr(
+        main_menu, "create_Modern_entry_with_grid_for_password", fake_create_entry
+    )
+    monkeypatch.setattr(
+        main_menu, "create_Modern_label_with_grid", lambda *a, **k: DummyLabel()
+    )
 
     run_calls = {}
 
