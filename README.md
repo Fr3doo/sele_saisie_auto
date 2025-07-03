@@ -154,7 +154,20 @@ Les guidelines de contribution se trouvent dans [AGENT.md](AGENT.md). Ouvrez une
 - [TESTING.md](TESTING.md) — stratégie de tests et conseils
 
 ## 🚀 Publication d'une release
-TODO: définir la procédure de publication (Git tag, packaging, PyPI).
+1. Mettre à jour la version dans `pyproject.toml` :
+   ```bash
+   poetry version <patch|minor|major>
+   ```
+2. Créer puis pousser le tag Git correspondant :
+   ```bash
+   git tag -a v$(poetry version -s) -m "Release v$(poetry version -s)"
+   git push origin --tags
+   ```
+3. Générer et publier le package sur PyPI :
+   ```bash
+   poetry build
+   poetry publish
+   ```
 
 ## 🛡️ Licence
 Aucune licence spécifiée pour l'instant.
