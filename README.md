@@ -171,11 +171,12 @@ Les guidelines de contribution se trouvent dans [AGENT.md](AGENT.md). Ouvrez une
 
 ## 🚀 Publication d'une release
 1. Mettre à jour `docs/releases/changelog.md` pour décrire la nouvelle version.
-2. Incrémenter la version dans `pyproject.toml` :
+2. Incrémenter la version dans `pyproject.toml` puis commiter le fichier et le changelog :
    ```bash
    poetry version <patch|minor|major>
+   git add pyproject.toml docs/releases/changelog.md
+   git commit -m "chore(release): prepare v$(poetry version -s)"
    ```
-   Commiter le fichier et le changelog.
 3. Créer et pousser un tag Git :
    ```bash
    git tag -a v$(poetry version -s) -m "Release v$(poetry version -s)"
