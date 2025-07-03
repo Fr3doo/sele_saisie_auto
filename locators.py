@@ -5,7 +5,7 @@ class Locators(str, Enum):
     """Central Selenium locators used across modules."""
 
     USERNAME = "userid"
-    PASSWORD = "pwd"
+    PASSWORD = "pwd"  # nosec B105 - refers to field id, not credentials
     MAIN_FRAME = "main_target_win0"
     NAV_TO_DATE_ENTRY = "PTNUI_LAND_REC14$0_row_0"
     SIDE_MENU_BUTTON = "PT_SIDE$PIMG"
