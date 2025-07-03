@@ -113,6 +113,18 @@ L'utilisation de PyInstaller permet de générer un exécutable Windows.
 - `.coveragerc` : configuration de couverture
 - `.pre-commit-config.yaml` : hooks de lint et formatage
 
+## 🌐 Variables d'environnement
+Les valeurs de `config.ini` peuvent être surchargées via ces variables :
+
+- `PSATIME_URL` — URL du portail PSA Time
+- `PSATIME_DATE_CIBLE` — date cible au format `JJ/MM/AAAA`
+- `PSATIME_LOGIN` — identifiant chiffré
+- `PSATIME_MDP` — mot de passe chiffré
+- `PSATIME_DEBUG_MODE` — niveau de log (`INFO`, `DEBUG`, …)
+- `PSATIME_LISTE_ITEMS_PLANNING` — liste d'items de planning séparés par des virgules
+
+Les variables d'environnement ont priorité sur le fichier de configuration.
+
 ## 🧪 Tests
 ```bash
 poetry run pre-commit run --all-files

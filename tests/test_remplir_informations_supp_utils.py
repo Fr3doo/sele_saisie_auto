@@ -5,8 +5,8 @@ sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
 
 import remplir_informations_supp_utils as risu  # noqa: E402
 
-
 # Helper to build config dictionaries
+
 
 def make_config(**overrides):
     base_values = {day: f"val_{day}" for day in risu.JOURS_SEMAINE.values()}
