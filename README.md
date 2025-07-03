@@ -25,14 +25,19 @@ poetry run psatime-launcher
 - Python 3.11 et [Poetry](https://python-poetry.org/)
 
 ### Depuis les sources
-```bash
-poetry install --no-root
-```
-
-### Mode développement
-```bash
-poetry install
-```
+1. Clonez le dépôt puis placez-vous dans le dossier :
+   ```bash
+   git clone <URL> sele_saisie_auto
+   cd sele_saisie_auto
+   ```
+2. Installez les dépendances :
+   ```bash
+   poetry install --no-root
+   ```
+3. *(Optionnel)* Installez également la copie en mode développement :
+   ```bash
+   poetry install
+   ```
 
 ### Environnement virtuel
 Poetry gère automatiquement l'environnement virtuel du projet.
