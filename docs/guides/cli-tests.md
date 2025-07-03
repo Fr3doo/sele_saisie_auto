@@ -1,6 +1,6 @@
 # Tests du CLI
 
-Les tests CLI couvrent l'exécutable `NOM_DU_PROJET`. Ils s'assurent que la
+Les tests CLI couvrent l'exécutable `sele_saisie_auto`. Ils s'assurent que la
 commande renvoie la même solution que l'API Python, indique quand le cube est
 déjà résolu et gère les entrées invalides. Tous les scénarios sont regroupés
 dans `tests/test_cli.py`.
