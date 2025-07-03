@@ -34,7 +34,9 @@
       - executer `poetry run safety scan --apply-fixes`, pour effectuez une mise à jour des dépendances vulnérables. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
 
   6. Création de branche
+     
   Utilise **une branche par fonctionnalité ou correctif**, selon la convention suivante :
+
   | Type de branche | Préfixe recommandé     | Exemple                                  |
   |-----------------|------------------------|------------------------------------------|
   | Fonctionnalité  | `feature/` ou `feat/`  | `feature/inscription-utilisateur`        |
