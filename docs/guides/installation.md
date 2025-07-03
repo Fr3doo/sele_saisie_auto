@@ -1,6 +1,6 @@
 # Guide d’installation
 
-Ce guide explique comment installer et utiliser localement le **NOM_DU_PROJET**.
+Ce guide explique comment installer et utiliser localement le **sele_saisie_auto**.
 
 1. **Pré-requis**
 2. **Installation**
