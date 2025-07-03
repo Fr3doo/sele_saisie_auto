@@ -27,6 +27,8 @@ Certains fichiers ou portions de code sont **exclus des rapports de couverture**
 | `example_plugin.py` | Module d'exemple non exécuté en production |
 | `calendar_icon.png` | Ressource statique hors périmètre de tests |
 | `design_notes.md` | Notes techniques non exécutables |
+| `*/__init__.py` | Fichiers d'initialisation sans logique à tester |
+| `tests/helpers/` | Utilitaires de tests non soumis à la couverture |
 
 
 Ces éléments sont volontairement ignorés afin de concentrer la couverture sur la logique applicative réellement testable.
