@@ -21,6 +21,7 @@ Le module `logging` gère les niveaux standards :
 
 | Niveau    | Valeur numérique |
 | --------- | ---------------- |
+| NOTSET    | 0                |
 | DEBUG     | 10               |
 | INFO      | 20               |
 | WARNING   | 30               |
@@ -35,7 +36,7 @@ sans encombrer la sortie.
 ```python
 try:
     run_task()
-except CustomError as exc:
+except (DriverError, InvalidConfigError) as exc:
     logger.error("operation failed: %s", exc)
 ```
 
