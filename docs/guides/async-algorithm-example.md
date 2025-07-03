@@ -5,6 +5,9 @@ Ce guide explique comment écrire un `AlgorithmBase` dont le traitement est asyn
 ## Code
 
 ```python
+import asyncio
+
+
 class AsyncAlgorithm(AlgorithmBase):
     async def solve_async(self, cube):
         await asyncio.sleep(0.1)
@@ -12,6 +15,7 @@ class AsyncAlgorithm(AlgorithmBase):
 
 
 async def main():
+    cube = "demo"
     algo = AsyncAlgorithm()
     result = await algo.solve_async(cube)
     print(result)
