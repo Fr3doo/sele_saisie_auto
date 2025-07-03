@@ -33,11 +33,10 @@
       - executer `poetry run safety system-scan`, pour effectuez une analyse sur l’ensemble de la machine de développement. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
       - executer `poetry run safety scan --apply-fixes`, pour effectuez une mise à jour des dépendances vulnérables. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
 
-
-  ### ➕ Création de branche
+## 🌱 Nommage PR
+### ➕ Création de branche
 
 Utilise **une branche par fonctionnalité ou correctif**, selon la convention suivante :
-
 | Type de branche | Préfixe recommandé     | Exemple                                  |
 |-----------------|------------------------|------------------------------------------|
 | Fonctionnalité  | `feature/` ou `feat/`  | `feature/inscription-utilisateur`        |
