@@ -1,28 +1,37 @@
 # Architecture
 
-Le projet suit une architecture modulaire dans laquelle chaque agent assure une
-responsabilité unique. `SeleniumFiller` sert de point d'orchestration et fait
-appel aux modules dédiés comme `TimeSheetHelper` ou `ConfigManager`. Cette
-organisation facilite la maintenance et l'ajout de nouveaux plugins.
+Ce projet implémente une série de petits modules spécialisés, tous orchestrés
+par `SeleniumFiller`.  Chaque composant se concentre sur une responsabilité
+distincte afin de rendre l’ensemble extensible et facilement testable.
 
-Les tests unitaires résident dans le dossier `tests/` et sont exécutés avec
+Les principaux modules sont :
+
+- `SeleniumFiller` : point d’entrée coordonnant l’exécution.
+- `TimeSheetHelper` : insère les jours et missions dans PSA Time.
+- `ExtraInfoHelper` : renseigne les informations supplémentaires.
+- `ConfigManager` : charge et sauvegarde `config.ini`.
+- `EncryptionService` : chiffre et déchiffre les données sensibles.
+- `SeleniumDriverManager` : ouvre et ferme le WebDriver Selenium.
+- `Logger` : centralise l’écriture des journaux applicatifs.
+- `SharedMemoryService` : gère la mémoire partagée.
+
+Les tests unitaires résident dans le dossier `tests/` et s’exécutent avec
 `pytest`.
 
-## Vue d’ensemble des composants
+## Interactions principales
 
 ```mermaid
-graph TD
-    subgraph UI
-        A[Utilisateur] --> B(SeleniumFiller)
-    end
-    B --> C(TimeSheetHelper)
-    B --> D(ExtraInfoHelper)
-    B --> E(ConfigManager)
-    B --> F(EncryptionService)
-    C --> G(SeleniumUtils)
-    D --> G
-    E --> H(Logger)
-    F --> H
+flowchart TD
+    SeleniumFiller --> SeleniumDriverManager
+    SeleniumFiller --> TimeSheetHelper
+    SeleniumFiller --> ExtraInfoHelper
+    SeleniumFiller --> ConfigManager
+    SeleniumFiller --> EncryptionService
+    SeleniumFiller --> AppConfig
+    SeleniumFiller --> SharedMemoryService
+    TimeSheetHelper --> Logger
+    ExtraInfoHelper --> Logger
+    SharedMemoryService --> Logger
 ```
 
 
