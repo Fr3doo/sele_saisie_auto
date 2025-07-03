@@ -10,7 +10,18 @@ Les tests unitaires résident dans le dossier `tests/` et sont exécutés avec
 ## Vue d’ensemble des composants
 
 ```mermaid
-
+graph TD
+    subgraph UI
+        A[Utilisateur] --> B(SeleniumFiller)
+    end
+    B --> C(TimeSheetHelper)
+    B --> D(ExtraInfoHelper)
+    B --> E(ConfigManager)
+    B --> F(EncryptionService)
+    C --> G(SeleniumUtils)
+    D --> G
+    E --> H(Logger)
+    F --> H
 ```
 
 
