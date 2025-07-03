@@ -9,6 +9,7 @@ graph TD
     A[Action utilisateur] --> B(Application)
     B --> C[Logger]
     C --> D[Fichier de log]
+    D --> B
     B --> E[Message utilisateur]
 ```
 
@@ -25,7 +26,12 @@ import logging
 
 logger = logging.getLogger("sele_saisie_auto")
 logger.setLevel(logging.INFO)
-file_handler = logging.FileHandler("app.log")
+
+# Utilise un gestionnaire de fichiers pour conserver l'historique
+file_handler = logging.FileHandler("logs/app.log", encoding="utf-8")
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+file_handler.setFormatter(formatter)
+
 logger.addHandler(file_handler)
 ```
 
