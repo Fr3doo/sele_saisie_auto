@@ -126,8 +126,9 @@ Les valeurs de `config.ini` peuvent être surchargées via ces variables :
 - `PSATIME_MDP` — mot de passe chiffré
 - `PSATIME_DEBUG_MODE` — niveau de log (`INFO`, `DEBUG`, …)
 - `PSATIME_LISTE_ITEMS_PLANNING` — liste d'items de planning séparés par des virgules
-
 Les variables d'environnement ont priorité sur le fichier de configuration.
+Un fichier `.env` peut être utilisé pour définir ces variables mais sera
+écrasé si le même nom est déjà présent dans l'environnement système.
 
 ## 🧪 Tests
 ```bash
