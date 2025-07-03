@@ -26,6 +26,14 @@ Le `Dockerfile` part d'une image **Python** officielle, installe les dépendance
 de l'application et copie le code source avant de configurer **Nginx** pour
 servir les fichiers générés.
 
+```Dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY . .
+RUN pip install -r requirements.txt
+CMD ["python", "main.py"]
+```
+
 ```bash
 docker build --pull -t sele-app .
 docker stop sele && docker rm sele
