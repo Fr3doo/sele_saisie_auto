@@ -103,7 +103,7 @@ Utilisez cette commande avant d’ouvrir une pull request pour vous assurer que 
 
 ## 💡 Stack technique
 
-Ce projet repose exclusivement sur **nom_des_elements_technique** et les outils suivants :
+Ce projet repose exclusivement sur **Python, Tkinter et Selenium** et les outils suivants :
 
 - [Poetry](https://python-poetry.org/) pour la gestion des dépendances
 - [pytest](https://docs.pytest.org/) pour les tests
