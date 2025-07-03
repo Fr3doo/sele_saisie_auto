@@ -1,4 +1,5 @@
 """Minimal plugin registry for PSA Time automation."""
+
 from __future__ import annotations
 
 from collections import defaultdict

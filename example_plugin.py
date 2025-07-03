@@ -1,4 +1,5 @@
 """Example plugin demonstrating hook registration."""
+
 from __future__ import annotations
 
 from plugins import hook

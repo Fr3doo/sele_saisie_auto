@@ -35,13 +35,33 @@ def test_run_invokes_hook(monkeypatch):
     )
     monkeypatch.setattr(sap, "SeleniumDriverManager", DummyManager)
 
-    monkeypatch.setattr(sap.PSATimeAutomation, "connect_to_psatime", lambda *a, **k: None)
-    monkeypatch.setattr(sap.PSATimeAutomation, "handle_date_input", lambda *a, **k: None)
-    monkeypatch.setattr(sap.PSATimeAutomation, "submit_date_cible", lambda *a, **k: False)
-    monkeypatch.setattr(sap.PSATimeAutomation, "navigate_from_home_to_date_entry_page", lambda *a, **k: True)
-    monkeypatch.setattr(sap.PSATimeAutomation, "navigate_from_work_schedule_to_additional_information_page", lambda *a, **k: None)
-    monkeypatch.setattr(sap.PSATimeAutomation, "submit_and_validate_additional_information", lambda *a, **k: None)
-    monkeypatch.setattr(sap.PSATimeAutomation, "switch_to_iframe_main_target_win0", lambda *a, **k: True)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "connect_to_psatime", lambda *a, **k: None
+    )
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "handle_date_input", lambda *a, **k: None
+    )
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "submit_date_cible", lambda *a, **k: False
+    )
+    monkeypatch.setattr(
+        sap.PSATimeAutomation,
+        "navigate_from_home_to_date_entry_page",
+        lambda *a, **k: True,
+    )
+    monkeypatch.setattr(
+        sap.PSATimeAutomation,
+        "navigate_from_work_schedule_to_additional_information_page",
+        lambda *a, **k: None,
+    )
+    monkeypatch.setattr(
+        sap.PSATimeAutomation,
+        "submit_and_validate_additional_information",
+        lambda *a, **k: None,
+    )
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "switch_to_iframe_main_target_win0", lambda *a, **k: True
+    )
     monkeypatch.setattr(sap, "switch_to_default_content", lambda *a, **k: None)
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: object())
     monkeypatch.setattr(sap, "modifier_date_input", lambda *a, **k: None)
@@ -52,7 +72,9 @@ def test_run_invokes_hook(monkeypatch):
     monkeypatch.setattr(sap, "wait_until_dom_is_stable", lambda *a, **k: None)
     monkeypatch.setattr(sap, "wait_for_dom_ready", lambda *a, **k: None)
     monkeypatch.setattr(sap, "program_break_time", lambda *a, **k: None)
-    monkeypatch.setattr(sap.remplir_jours_feuille_de_temps, "main", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.remplir_jours_feuille_de_temps, "main", lambda *a, **k: None
+    )
     monkeypatch.setattr(sap, "traiter_description", lambda *a, **k: None)
     monkeypatch.setattr(sap, "detecter_doublons_jours", lambda *a, **k: None)
     monkeypatch.setattr(sap, "sys", types.SimpleNamespace(exit=lambda: None))

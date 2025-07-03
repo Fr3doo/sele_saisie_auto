@@ -38,3 +38,7 @@ profile = "black"
 python_version = "3.11"
 ignore_missing_imports = true
 strict = true
+
+[tool.poetry.scripts]
+psatime-launcher = "launcher:main"
+psatime-auto = "saisie_automatiser_psatime:main"
