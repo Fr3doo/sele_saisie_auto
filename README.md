@@ -133,7 +133,7 @@ Les guidelines de contribution se trouvent dans [AGENT.md](AGENT.md). Ouvrez une
 
 ## 📚 Documentation liée
 - [AGENT.md](AGENT.md) — rôles des différents agents
-- [AGENT.md](AGENT.md) — guide de structuration des agents
+- [design_notes.md](design_notes.md) — diagrammes et exemples d'utilisation
 - [TESTING.md](TESTING.md) — stratégie de tests et conseils
 
 ## 🚀 Publication d'une release
