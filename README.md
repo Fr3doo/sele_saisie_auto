@@ -17,7 +17,7 @@ Automatiser la saisie de la feuille de temps PSA Time via Selenium et une interf
 ## ⚡ Démarrage rapide
 ```bash
 poetry install --no-root
-poetry run python main.py
+poetry run psatime-launcher
 ```
 
 ## 🔧 Installation
@@ -40,7 +40,7 @@ Poetry gère automatiquement l'environnement virtuel du projet.
 ## ▶️ Lancement
 Après installation :
 ```bash
-poetry run python main.py
+poetry run psatime-launcher
 ```
 
 ## 📦 Utilisation
@@ -49,6 +49,10 @@ Une interface graphique Tkinter permet de renseigner vos identifiants chiffrés 
 ## ⚙️ Utilisation avancée
 - Configuration dans `config.ini`
 - Logs générés dans le dossier `logs/`
+- Exécution sans interface :
+  ```bash
+  poetry run psatime-auto
+  ```
 
 ## 🔌 Injection de dépendances
 Certaines fonctions acceptent les modules Selenium ou Logger en paramètres pour faciliter les tests. Voir [AGENT.md](AGENT.md) pour plus de détails.
