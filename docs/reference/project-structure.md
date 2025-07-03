@@ -1,23 +1,31 @@
 # Structure détaillée du projet
 
-Cette page décrit l’organisation générale des dossiers et fichiers principaux.
+Ce document présente l’arborescence principale du dépôt pour localiser rapidement les fichiers essentiels.
 
-```
+```text
 .
-├── docs/                # Documentation utilisateur et développeur
-├── src/
-│   └── sele_saisie_auto/    # Code source de la bibliothèque
-│       ├── .py
-│       ├── .py
-│       ├── .py
-│       ├── .py
-│       ├── .py
-│       ├── .py
-│       └── .py
-├── tests/               # Suite de tests Pytest
-│   ├── .py
-│   └── .py
-└── pyproject.toml       # Configuration du projet Poetry
+├── AGENT.md
+├── README.md
+├── TESTING.md
+├── app_config.py
+├── config.ini
+├── config_manager.py
+├── docs/
+│   ├── guides/
+│   ├── overview/
+│   ├── reference/
+│   └── releases/
+├── selenium_utils/
+│   ├── __init__.py
+│   ├── element_actions.py
+│   ├── navigation.py
+│   └── wait_helpers.py
+├── tests/
+│   ├── test_app_config.py
+│   ├── test_saisie_automatiser_psatime.py
+│   └── ...
+├── pyproject.toml
+└── requirements.txt
 ```
 
 Chaque dossier suit la philosophie « un rôle clair ». Les tests unitaires se trouvent dans `tests/`.
