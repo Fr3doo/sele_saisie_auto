@@ -231,7 +231,7 @@ def test_traiter_champs_mission_error(monkeypatch):
         "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
     )
 
-    class DummyEx(Exception):
+    class DummyError(Exception):
         pass
 
     monkeypatch.setattr(

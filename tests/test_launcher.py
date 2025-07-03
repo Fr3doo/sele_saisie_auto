@@ -163,8 +163,8 @@ def test_start_configuration_and_save(monkeypatch):
     monkeypatch.setattr(launcher.ttk, "Style", DummyStyle)
     monkeypatch.setattr(launcher, "create_tab", lambda *a, **k: object())
     monkeypatch.setattr(launcher, "create_a_frame", lambda *a, **k: object())
-    monkeypatch.setattr(launcher, "create_Modern_label_with_pack", lambda *a, **k: None)
-    monkeypatch.setattr(launcher, "create_Modern_entry_with_pack", lambda *a, **k: None)
+    monkeypatch.setattr(launcher, "create_modern_label_with_pack", lambda *a, **k: None)
+    monkeypatch.setattr(launcher, "create_modern_entry_with_pack", lambda *a, **k: None)
     monkeypatch.setattr(launcher, "create_combobox_with_pack", lambda *a, **k: None)
 
     def fake_button(frame, text, command):

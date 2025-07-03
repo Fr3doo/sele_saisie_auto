@@ -14,7 +14,7 @@ from selenium.webdriver.common.by import By
 
 from constants import ID_TO_KEY_MAPPING, JOURS_SEMAINE, LISTES_ID_INFORMATIONS_MISSION
 from dropdown_options import (
-    cgi_options_billing_action as DEFAULT_CGI_OPTIONS_BILLING_ACTION,
+    cgi_options_billing_action as default_cgi_options_billing_action,
 )
 from error_handler import log_error
 from logger_utils import write_log
@@ -67,7 +67,7 @@ def initialize(log_file: str) -> None:
     billing_map = (
         dict(config.items("cgi_options_billing_action"))
         if config.has_section("cgi_options_billing_action")
-        else DEFAULT_CGI_OPTIONS_BILLING_ACTION
+        else default_cgi_options_billing_action
     )
     INFORMATIONS_PROJET_MISSION = {
         item_projet: billing_map.get(value.lower(), value)

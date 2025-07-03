@@ -6,7 +6,7 @@ import time
 from functools import wraps
 
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
 from . import DEFAULT_TIMEOUT, LOG_FILE, write_log
@@ -54,7 +54,7 @@ def wait_for_element(
     driver,
     by=By.ID,
     locator_value=None,
-    condition=EC.presence_of_element_located,
+    condition=ec.presence_of_element_located,
     timeout=10,
 ):
     """Wait for an element to satisfy a condition or return None."""
@@ -89,7 +89,7 @@ def wait_for_element(
 def find_clickable(driver, by, locator_value, timeout=DEFAULT_TIMEOUT):
     """Return element when it becomes clickable."""
     return wait_for_element(
-        driver, by, locator_value, EC.element_to_be_clickable, timeout
+        driver, by, locator_value, ec.element_to_be_clickable, timeout
     )
 
 
@@ -99,7 +99,7 @@ def find_visible(driver, by, locator_value, timeout=DEFAULT_TIMEOUT):
         driver,
         by,
         locator_value,
-        EC.visibility_of_element_located,
+        ec.visibility_of_element_located,
         timeout,
     )
 
@@ -107,7 +107,7 @@ def find_visible(driver, by, locator_value, timeout=DEFAULT_TIMEOUT):
 def find_present(driver, by, locator_value, timeout=DEFAULT_TIMEOUT):
     """Return element when it is present in the DOM."""
     return wait_for_element(
-        driver, by, locator_value, EC.presence_of_element_located, timeout
+        driver, by, locator_value, ec.presence_of_element_located, timeout
     )
 
 

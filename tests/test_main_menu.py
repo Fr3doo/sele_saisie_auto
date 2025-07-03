@@ -139,12 +139,12 @@ def test_main_menu_builds_and_commands(monkeypatch):
         main_menu, "create_button_without_style", fake_create_button_without_style
     )
     monkeypatch.setattr(main_menu, "create_labeled_frame", fake_create_labeled_frame)
-    monkeypatch.setattr(main_menu, "create_Modern_entry_with_grid", fake_create_entry)
+    monkeypatch.setattr(main_menu, "create_modern_entry_with_grid", fake_create_entry)
     monkeypatch.setattr(
-        main_menu, "create_Modern_entry_with_grid_for_password", fake_create_entry
+        main_menu, "create_modern_entry_with_grid_for_password", fake_create_entry
     )
     monkeypatch.setattr(
-        main_menu, "create_Modern_label_with_grid", lambda *a, **k: DummyLabel()
+        main_menu, "create_modern_label_with_grid", lambda *a, **k: DummyLabel()
     )
 
     run_calls = {}
