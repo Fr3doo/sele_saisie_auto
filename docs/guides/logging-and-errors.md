@@ -2,7 +2,7 @@
 
 Le projet utilise le module standard `logging` pour enregistrer les différentes
 étapes de la résolution. Les exceptions personnalisées sont définies dans
-`src/sele_saisie_auto/exceptions.py`.
+`exceptions.py`.
 
 Pour activer un niveau de log détaillé :
 
@@ -40,7 +40,9 @@ except CustomError as exc:
 ```
 
 ## Fichier de log
+Les messages sont enregistres dans le dossier `logs/` sous forme de fichier HTML. Chaque execution ajoute de nouvelles entrees au meme fichier afin de conserver l'historique complet.
 ## Exceptions personnalisées
-| Exception                     | Raison de l'utilisation                                   |
-| ----------------------------- | --------------------------------------------------------- |
-
+| Exception | Raison de l'utilisation |
+| ------------------ | ---------------------------------------------------- |
+| `DriverError` | Échec lors de l'initialisation du WebDriver |
+| `InvalidConfigError` | Paramètres manquants ou incohérents dans `config.ini` |
