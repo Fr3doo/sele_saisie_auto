@@ -12,7 +12,7 @@ def __init__(self, driver, algorithm):
 ```
 
 
-### element_1
+### SeleniumFiller
 
-### element_2
+### GUIBuilder
 

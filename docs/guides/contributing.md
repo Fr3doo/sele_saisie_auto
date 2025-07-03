@@ -37,7 +37,7 @@ hooks `pre-commit`.
 
 3. **Respecte les hooks :**
 
-   (....) exécute automatiquement :
+   Le script `pre-commit` s'exécute automatiquement :
 
    ```bash
    pre-commit run
