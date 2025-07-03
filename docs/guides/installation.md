@@ -7,15 +7,24 @@ Ce guide explique comment installer et utiliser localement **sele_saisie_auto**.
 - Python 3.11 installé
 - Poetry disponible dans le `PATH`
 
-## 2. Installation
+## 2. Installation pas-à-pas
 
-Lancez :
+1. Clonez le dépôt puis positionnez-vous dans le dossier :
+   ```bash
+   git clone <URL> sele_saisie_auto
+   cd sele_saisie_auto
+   ```
+2. Installez les dépendances du projet :
+   ```bash
+   poetry install --no-root
+   ```
+3. Copiez le fichier `config.ini` si nécessaire et complétez vos identifiants.
+4. Lancez enfin l'application via :
+   ```bash
+   poetry run psatime-launcher
+   ```
 
-```bash
-poetry install --no-root
-```
-
-Cette commande installe les dépendances définies dans `pyproject.toml`.
+Cette suite de commandes installe tous les modules définis dans `pyproject.toml`.
 
 ## 3. Sans Poetry : création d’un environnement virtuel
 
