@@ -11,8 +11,126 @@ def __init__(self, driver, algorithm):
     résolution fourni."""
 ```
 
+## SeleniumFiller (``PSATimeAutomation``)
 
-### SeleniumFiller
+Classe principale localisée dans ``saisie_automatiser_psatime.py``. Elle pilote
+le navigateur Selenium pour remplir la feuille de temps.
 
-### GUIBuilder
+```python
+class PSATimeAutomation:
+    def __init__(self, log_file: str, app_config: AppConfig) -> None:
+        """Prépare la configuration et les services nécessaires."""
+```
+
+- ``log_initialisation() -> None`` – initialise les logs et vérifie les
+  paramètres essentiels.
+- ``initialize_shared_memory() -> Credentials`` – récupère les identifiants
+  chiffrés depuis la mémoire partagée.
+- ``setup_browser(driver_manager: SeleniumDriverManager)`` – ouvre et configure
+  le navigateur.
+- ``connect_to_psatime(driver, cle_aes, login_c, pwd_c)`` – authentifie
+  l’utilisateur.
+- ``run() -> None`` – lance toute la séquence d’automatisation.
+
+## TimeSheetHelper
+
+Situé dans ``remplir_jours_feuille_de_temps.py``. Orchestration du remplissage
+des jours et missions.
+
+```python
+class TimeSheetHelper:
+    def __init__(self, log_file: str) -> None:
+        """Enregistre le chemin du fichier de log."""
+```
+
+- ``initialize()`` – prépare les dépendances du module.
+- ``fill_standard_days(driver, jours_remplis: list[str]) -> list[str]`` –
+  renseigne les jours hors mission.
+- ``fill_work_missions(driver, jours_remplis: list[str]) -> list[str]`` –
+  gère les jours « En mission ».
+- ``handle_additional_fields(driver)`` – complète les champs supplémentaires.
+- ``run(driver)`` – exécute l’ensemble du processus.
+
+## ExtraInfoHelper
+
+Regroupe plusieurs fonctions d’aide pour remplir les informations
+supplémentaires (``remplir_informations_supp_utils.py``).
+
+- ``traiter_description(driver, config)`` – renseigne un champ selon la
+  configuration fournie.
+
+## ConfigManager
+
+Gestionnaire de ``config.ini`` exposé par ``config_manager.py``.
+
+```python
+class ConfigManager:
+    def load(self) -> AppConfig:
+        """Charge la configuration depuis le disque."""
+    def save(self) -> str:
+        """Sauvegarde l’instance courante dans ``config.ini``."""
+```
+
+## EncryptionService
+
+Service dédié au chiffrement (``encryption_utils.py``).
+
+```python
+class EncryptionService:
+    def generer_cle_aes(self, taille_cle: int = 32) -> bytes:
+        """Génère une clé AES aléatoire."""
+    def chiffrer_donnees(self, donnees: str, cle: bytes, taille_bloc: int = 128) -> bytes:
+        """Chiffre un texte en AES‑CBC."""
+    def dechiffrer_donnees(self, donnees_chiffrees: bytes, cle: bytes, taille_bloc: int = 128) -> str:
+        """Déchiffre un texte précédemment chiffré."""
+```
+
+## SeleniumDriverManager
+
+Enveloppe simplifiée autour du WebDriver (``selenium_driver_manager.py``).
+
+```python
+class SeleniumDriverManager:
+    def open(self, url: str, *, fullscreen=False, headless=False, no_sandbox=False) -> Optional[WebDriver]:
+        """Lance le navigateur sur l’URL cible."""
+    def close(self) -> None:
+        """Ferme le navigateur si nécessaire."""
+```
+
+## Logger utils
+
+Fonctions utilitaires pour écrire les journaux (``logger_utils.py``).
+
+- ``initialize_logger(config, log_level_override=None)`` – applique le niveau de
+  log.
+- ``write_log(message, log_file, level="INFO", ...)`` – ajoute une entrée dans le
+  fichier de log.
+- ``close_logs(log_file)`` – ferme proprement le fichier.
+
+## Shared utils
+
+Quelques fonctions de support communes (``shared_utils.py``).
+
+- ``setup_logs(log_dir="logs", log_format="html") -> str`` – prépare le
+  répertoire de logs.
+- ``get_log_file() -> str`` – retourne le chemin du log courant.
+- ``program_break_time(memorization_time: int, affichage_text: str)`` – affiche
+  un compte à rebours.
+
+## GUIBuilder
+
+Collection de fonctions Tkinter définies dans ``gui_builder.py``.
+
+- ``create_tab(notebook, title, style="Modern.TFrame", padding=20)`` – ajoute un
+  onglet.
+- ``create_a_frame(parent, style="Modern.TFrame", ...)`` – crée un conteneur.
+- ``create_labeled_frame(parent, text="", ...)`` – cadre avec titre.
+- ``create_modern_label_with_grid(frame, text, row, col, ...)`` – label stylisé.
+- ``create_modern_entry_with_grid(frame, var, row, col, ...)`` – champ de saisie
+  classique.
+- ``create_modern_entry_with_grid_for_password(frame, var, row, col, ...)`` –
+  champ de mot de passe.
+- ``create_combobox(frame, var, values, row, col, ...)`` – menu déroulant.
+- ``create_button_with_style(frame, text, command, ...)`` – bouton stylisé.
+- ``create_button_without_style(frame, text, command, ...)`` – bouton simple.
 
