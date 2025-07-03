@@ -7,22 +7,34 @@ Ce guide montre comment injecter des composants personnalisés dans `sele_saisie
 ## Code source
 
 ```python
+import logging
+import time
+
+
+def default_solver(cube):
+    """Retourne une liste de mouvements factices."""
+    return ["U"]
+
+
 class VerboseAlgorithm:
     def solve(self, cube):
         logging.debug("debut")
+        start = time.perf_counter()
         moves = default_solver(cube)
+        duration = time.perf_counter() - start
         logging.debug("mouvements %s", moves)
-        return moves
+        return moves, duration
 
 
 class MetricValidator:
     def validate(self, moves):
         return len(moves)
 
+
 algo = VerboseAlgorithm()
 validator = MetricValidator()
-result = validator.validate(algo.solve(cube))
-print("taille", result)
+moves, elapsed = algo.solve("cube")
+print(f"duree {elapsed:.2f}s, taille {validator.validate(moves)}")
 ```
 
 ## Exécuter l'exemple
@@ -36,5 +48,5 @@ Avec le niveau de débogage activé, vous verrez aussi les messages de log signa
 ```text
 DEBUG:root:debut
 DEBUG:root:mouvements ['U']
-taille 1
+duree 0.00s, taille 1
 ```
