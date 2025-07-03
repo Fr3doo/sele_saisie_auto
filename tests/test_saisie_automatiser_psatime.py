@@ -3,12 +3,12 @@ import types
 from configparser import ConfigParser
 from pathlib import Path
 
-import console_ui
-from locators import Locators
+from sele_saisie_auto import console_ui
+from sele_saisie_auto.locators import Locators
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
-import saisie_automatiser_psatime as sap  # noqa: E402
+from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
 
 
 class DummyEnc:
@@ -91,7 +91,7 @@ def make_config():
 
 def setup_init(monkeypatch):
     cfg = make_config()
-    from app_config import AppConfig
+    from sele_saisie_auto.app_config import AppConfig
 
     app_cfg = AppConfig.from_parser(cfg)
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)

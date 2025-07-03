@@ -5,8 +5,8 @@ import os
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 
-from logger_utils import write_log
-from shared_memory_service import SharedMemoryService
+from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.shared_memory_service import SharedMemoryService
 
 
 class EncryptionService:

@@ -1,9 +1,10 @@
 import sys
 from pathlib import Path
+import importlib
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
-from remplir_jours_feuille_de_temps import (  # noqa: E402
+from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     initialize,
     main,
     remplir_mission_specifique,
@@ -18,25 +19,25 @@ def test_traiter_jour_paths(monkeypatch):
 
     # row not found
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: None
     )
     result = traiter_jour(None, "lundi", "desc", "8", [])
     assert result == []
 
     # value already correct
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: 0
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: 0
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
     )
     calls = {}
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (object(), True),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.afficher_message_insertion",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.afficher_message_insertion",
         lambda *a: calls.setdefault("afficher", []).append(a),
     )
     result = traiter_jour(None, "lundi", "desc", "8", [])
@@ -45,19 +46,19 @@ def test_traiter_jour_paths(monkeypatch):
 
     # need insertion
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (object(), False),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.effacer_et_entrer_valeur",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.effacer_et_entrer_valeur",
         lambda *a, **k: calls.setdefault("effacer", True),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.program_break_time",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.program_break_time",
         lambda *a, **k: None,
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.controle_insertion", lambda *a, **k: True
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.controle_insertion", lambda *a, **k: True
     )
     result = traiter_jour(None, "mardi", "desc", "8", [])
     assert "mardi" in result
@@ -66,34 +67,34 @@ def test_traiter_jour_paths(monkeypatch):
 
 def test_remplir_mission_specifique(monkeypatch):
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (object(), True),
     )
     calls = {}
     jours = []
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.afficher_message_insertion",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.afficher_message_insertion",
         lambda *a: calls.setdefault("afficher", True),
     )
     remplir_mission_specifique(None, "lundi", "8", jours)
     assert jours == ["lundi"]
 
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (object(), False),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.effacer_et_entrer_valeur",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.effacer_et_entrer_valeur",
         lambda *a, **k: calls.setdefault("effacer", True),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.program_break_time", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.program_break_time", lambda *a, **k: None
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.controle_insertion", lambda *a, **k: True
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.controle_insertion", lambda *a, **k: True
     )
     jours2 = []
     remplir_mission_specifique(None, "mardi", "8", jours2)
@@ -111,15 +112,15 @@ def test_traiter_champs_mission(monkeypatch):
     info = {"project_code": "A"}
     log_calls = []
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
         lambda msg, *_: log_calls.append(msg),
     )
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.wait_for_dom", lambda *_: None)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom", lambda *_: None)
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (object(), True),
     )
     traiter_champs_mission(None, ids, mapping, info)
@@ -137,7 +138,7 @@ def test_main_invokes_helper(monkeypatch):
         def run(self, driver):
             called["run"] = True
 
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.TimeSheetHelper", DummyHelper)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.TimeSheetHelper", DummyHelper)
 
     main(None, "file")
     assert called == {"init": "file", "run": True}
@@ -151,23 +152,18 @@ def test_initialize_sets_globals(monkeypatch):
     fake["cgi_options_billing_action"] = {"Facturable": "B"}
 
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.read_config_ini", lambda lf: fake
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.read_config_ini", lambda lf: fake
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.set_log_file_selenium", lambda lf: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.set_log_file_selenium", lambda lf: None
     )
 
     initialize("logfile")
 
-    assert ["d1", "d2"] == __import__(
-        "remplir_jours_feuille_de_temps"
-    ).LISTE_ITEMS_DESCRIPTIONS
-    assert {"lun": ("En mission", "8")} == __import__(
-        "remplir_jours_feuille_de_temps"
-    ).JOURS_DE_TRAVAIL
-    assert {"billing_action": "B"} == __import__(
-        "remplir_jours_feuille_de_temps"
-    ).INFORMATIONS_PROJET_MISSION
+    mod = importlib.import_module("sele_saisie_auto.remplir_jours_feuille_de_temps")
+    assert ["d1", "d2"] == mod.LISTE_ITEMS_DESCRIPTIONS
+    assert {"lun": ("En mission", "8")} == mod.JOURS_DE_TRAVAIL
+    assert {"billing_action": "B"} == mod.INFORMATIONS_PROJET_MISSION
 
 
 def test_traiter_champs_mission_insert(monkeypatch):
@@ -175,26 +171,26 @@ def test_traiter_champs_mission_insert(monkeypatch):
     mapping = {"PROJECT_CODE$0": "project_code"}
     info = {"project_code": "VAL"}
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log", lambda *a, **k: None
     )
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.wait_for_dom", lambda *_: None)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom", lambda *_: None)
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
     )
     seq = []
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (object(), False),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.effacer_et_entrer_valeur",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.effacer_et_entrer_valeur",
         lambda *a, **k: seq.append("effacer"),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.program_break_time", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.program_break_time", lambda *a, **k: None
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.controle_insertion",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.controle_insertion",
         lambda *a, **k: seq.append("insert") or True,
     )
 
@@ -212,7 +208,7 @@ def test_main_with_mission(monkeypatch):
         def run(self, driver):
             seq.append("run")
 
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.TimeSheetHelper", DummyHelper)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.TimeSheetHelper", DummyHelper)
 
     main(None, "file")
     assert seq == ["init", "run"]
@@ -224,18 +220,18 @@ def test_traiter_champs_mission_error(monkeypatch):
     info = {"project_code": "VAL"}
     logs = []
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
     )
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.wait_for_dom", lambda *_: None)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom", lambda *_: None)
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
     )
 
     class DummyError(Exception):
         pass
 
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (_ for _ in ()).throw(
             __import__("selenium").common.exceptions.StaleElementReferenceException()
         ),
@@ -252,11 +248,11 @@ def test_main_handles_exception(monkeypatch):
         raise __import__("selenium").common.exceptions.TimeoutException()
 
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.TimeSheetHelper.fill_standard_days",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.TimeSheetHelper.fill_standard_days",
         raise_timeout,
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.log_error",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.log_error",
         lambda msg, *_: logs.append(msg),
     )
 

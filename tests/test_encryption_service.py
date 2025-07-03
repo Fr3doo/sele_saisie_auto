@@ -5,10 +5,10 @@ from uuid import uuid4
 
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
-from encryption_utils import EncryptionService  # noqa: E402
-from shared_memory_service import SharedMemoryService  # noqa: E402
+from sele_saisie_auto.encryption_utils import EncryptionService  # noqa: E402
+from sele_saisie_auto.shared_memory_service import SharedMemoryService  # noqa: E402
 
 
 def test_generer_cle_aes_default_length():
@@ -79,7 +79,7 @@ def test_chiffrer_donnees_error(monkeypatch):
         def __init__(self, *a, **k):
             raise ValueError("fail")
 
-    monkeypatch.setattr("encryption_utils.Cipher", DummyCipher)
+    monkeypatch.setattr("sele_saisie_auto.encryption_utils.Cipher", DummyCipher)
 
     with pytest.raises(ValueError):
         service.chiffrer_donnees("msg", key)
@@ -135,7 +135,7 @@ def test_dechiffrer_donnees_error(monkeypatch):
         def __init__(self, *a, **k):
             raise ValueError("boom")
 
-    monkeypatch.setattr("encryption_utils.Cipher", BadCipher)
+    monkeypatch.setattr("sele_saisie_auto.encryption_utils.Cipher", BadCipher)
 
     with pytest.raises(ValueError):
         service.dechiffrer_donnees(data, key)

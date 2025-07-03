@@ -2,7 +2,7 @@
 
 from multiprocessing import shared_memory
 
-from logging_service import Logger
+from sele_saisie_auto.logging_service import Logger
 
 
 class SharedMemoryService:

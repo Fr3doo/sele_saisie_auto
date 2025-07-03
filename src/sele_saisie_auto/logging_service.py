@@ -2,7 +2,7 @@ class Logger:
     """Simple logging wrapper around ``write_log``."""
 
     def __init__(self, log_file: str | None, log_format: str = "html", writer=None):
-        from logger_utils import write_log as default_write_log
+        from sele_saisie_auto.logger_utils import write_log as default_write_log
 
         self.log_file = log_file
         self.log_format = log_format

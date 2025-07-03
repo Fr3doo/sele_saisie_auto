@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
-import error_handler  # noqa: E402
+from sele_saisie_auto import error_handler  # noqa: E402
 
 
 def test_log_error(monkeypatch):

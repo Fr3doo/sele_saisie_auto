@@ -5,9 +5,9 @@ from typing import Optional
 
 from selenium.webdriver.common.by import By
 
-from constants import JOURS_SEMAINE
-from logger_utils import write_log
-from selenium_utils import (
+from sele_saisie_auto.constants import JOURS_SEMAINE
+from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.selenium_utils import (
     remplir_champ_texte,
     selectionner_option_menu_deroulant_type_select,
     trouver_ligne_par_description,

@@ -6,7 +6,7 @@ import shutil
 import sys
 from tkinter import messagebox
 
-from logger_utils import DEFAULT_LOG_LEVEL, write_log
+from sele_saisie_auto.logger_utils import DEFAULT_LOG_LEVEL, write_log
 
 
 def get_runtime_config_path(log_file=None):

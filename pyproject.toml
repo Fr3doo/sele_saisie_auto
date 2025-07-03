@@ -3,7 +3,10 @@ name = "sele_saisie_auto"
 version = "0.1.0"
 description = "Automatisation de saisie de feuille de temps"
 authors = ["Anonymous <example@example.com>"]
-package-mode = false
+package-mode = true
+packages = [
+    { include = "sele_saisie_auto", from = "src" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -40,5 +43,5 @@ ignore_missing_imports = true
 strict = true
 
 [tool.poetry.scripts]
-psatime-launcher = "launcher:main"
-psatime-auto = "saisie_automatiser_psatime:main"
+psatime-launcher = "sele_saisie_auto.launcher:main"
+psatime-auto = "sele_saisie_auto.saisie_automatiser_psatime:main"

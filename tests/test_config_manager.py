@@ -3,10 +3,10 @@ from pathlib import Path
 
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
-from app_config import AppConfig  # noqa: E402
-from config_manager import ConfigManager  # noqa: E402
+from sele_saisie_auto.app_config import AppConfig  # noqa: E402
+from sele_saisie_auto.config_manager import ConfigManager  # noqa: E402
 
 
 def test_load_and_save(tmp_path, monkeypatch):
@@ -15,7 +15,7 @@ def test_load_and_save(tmp_path, monkeypatch):
 
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
-        "read_or_write_file_config_ini_utils.messagebox.showinfo",
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.messagebox.showinfo",
         lambda *a, **k: None,
     )
 
@@ -49,7 +49,7 @@ def test_config_property_after_load(tmp_path, monkeypatch):
 
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
-        "read_or_write_file_config_ini_utils.messagebox.showinfo",
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.messagebox.showinfo",
         lambda *a, **k: None,
     )
 

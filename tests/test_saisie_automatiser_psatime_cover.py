@@ -3,11 +3,11 @@ import types
 from configparser import ConfigParser
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 import pytest  # noqa: E402
 
-import saisie_automatiser_psatime as sap  # noqa: E402
+from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
 from tests.test_saisie_automatiser_psatime import (  # noqa: E402
     DummySHMService,
     setup_init,
@@ -110,7 +110,7 @@ def test_submit_and_validate_additional_information_positive(monkeypatch):
 
 def test_initialize_debug_mode_off(monkeypatch):
     cfg = make_config()
-    from app_config import AppConfig
+    from sele_saisie_auto.app_config import AppConfig
 
     app_cfg = AppConfig.from_parser(cfg)
     monkeypatch.setattr(

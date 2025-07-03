@@ -2,7 +2,7 @@ import types
 
 import pytest
 
-import saisie_automatiser_psatime as sap
+from sele_saisie_auto import saisie_automatiser_psatime as sap
 from tests.test_saisie_automatiser_psatime import (
     DummyEnc,
     DummyManager,
@@ -16,7 +16,7 @@ from tests.test_saisie_automatiser_psatime import (
 def test_initialize_date_none(monkeypatch):
     cfg = make_config()
     cfg["settings"]["date_cible"] = "none"
-    from app_config import AppConfig
+    from sele_saisie_auto.app_config import AppConfig
 
     app_cfg = AppConfig.from_parser(cfg)
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)

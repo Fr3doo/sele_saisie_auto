@@ -9,7 +9,7 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
-from constants import JOURS_SEMAINE
+from sele_saisie_auto.constants import JOURS_SEMAINE
 
 from . import LOG_FILE, write_log
 

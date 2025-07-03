@@ -19,26 +19,26 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 
-import console_ui
-import plugins
-import remplir_jours_feuille_de_temps
-from app_config import AppConfig
-from config_manager import ConfigManager
-from encryption_utils import EncryptionService
-from error_handler import log_error
-from locators import Locators
-from logger_utils import write_log
-from remplir_informations_supp_utils import set_log_file as set_log_file_infos
-from remplir_informations_supp_utils import traiter_description
-from selenium_driver_manager import SeleniumDriverManager
-from selenium_utils import (
+from sele_saisie_auto import console_ui
+from sele_saisie_auto import plugins
+from sele_saisie_auto import remplir_jours_feuille_de_temps
+from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.config_manager import ConfigManager
+from sele_saisie_auto.encryption_utils import EncryptionService
+from sele_saisie_auto.error_handler import log_error
+from sele_saisie_auto.locators import Locators
+from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.remplir_informations_supp_utils import set_log_file as set_log_file_infos
+from sele_saisie_auto.remplir_informations_supp_utils import traiter_description
+from sele_saisie_auto.selenium_driver_manager import SeleniumDriverManager
+from sele_saisie_auto.selenium_utils import (
     click_element_without_wait,
     detecter_doublons_jours,
     modifier_date_input,
     send_keys_to_element,
 )
-from selenium_utils import set_log_file as set_log_file_selenium
-from selenium_utils import (
+from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
+from sele_saisie_auto.selenium_utils import (
     switch_to_default_content,
     switch_to_iframe_by_id_or_name,
     wait_for_dom_after,
@@ -46,8 +46,8 @@ from selenium_utils import (
     wait_for_element,
     wait_until_dom_is_stable,
 )
-from shared_memory_service import SharedMemoryService
-from shared_utils import program_break_time
+from sele_saisie_auto.shared_memory_service import SharedMemoryService
+from sele_saisie_auto.shared_utils import program_break_time
 
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #

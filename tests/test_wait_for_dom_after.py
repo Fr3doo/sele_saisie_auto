@@ -1,4 +1,4 @@
-import saisie_automatiser_psatime as sap
+from sele_saisie_auto import saisie_automatiser_psatime as sap
 from tests.test_saisie_automatiser_psatime_additional import setup_init
 
 

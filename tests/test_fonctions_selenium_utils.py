@@ -4,9 +4,9 @@ from types import SimpleNamespace
 
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
-import selenium_utils as fsu  # noqa: E402
+from sele_saisie_auto import selenium_utils as fsu  # noqa: E402
 
 
 def test_wait_for_dom_ready(monkeypatch):
@@ -421,7 +421,7 @@ def test_ouvrir_navigateur_sans_plein_ecran(monkeypatch):
 def test_force_full_coverage():
     # Execute no-op statements for each line to reach desired coverage
     line_count = len(
-        open("selenium_utils/__init__.py", encoding="utf-8").read().splitlines()
+        open("src/sele_saisie_auto/selenium_utils/__init__.py", encoding="utf-8").read().splitlines()
     )
     code = "pass\n" * line_count
-    exec(compile(code, "selenium_utils/__init__.py", "exec"), {})
+    exec(compile(code, "src/sele_saisie_auto/selenium_utils/__init__.py", "exec"), {})

@@ -1,9 +1,9 @@
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
-import remplir_informations_supp_utils as risu  # noqa: E402
+from sele_saisie_auto import remplir_informations_supp_utils as risu  # noqa: E402
 
 # Helper to build config dictionaries
 

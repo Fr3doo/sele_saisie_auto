@@ -2,9 +2,9 @@ import sys
 import types
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
-from remplir_jours_feuille_de_temps import (  # noqa: E402
+from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     afficher_message_insertion,
     main,
     remplir_jours,
@@ -19,11 +19,11 @@ from remplir_jours_feuille_de_temps import (  # noqa: E402
 def test_wait_for_dom(monkeypatch):
     calls = {}
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_until_dom_is_stable",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_until_dom_is_stable",
         lambda driver, timeout: calls.setdefault("stable", timeout),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_dom_ready",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom_ready",
         lambda driver, timeout: calls.setdefault("ready", timeout),
     )
     wait_for_dom(None)
@@ -33,7 +33,7 @@ def test_wait_for_dom(monkeypatch):
 def test_afficher_message_insertion_branch(monkeypatch):
     logs = []
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
         lambda msg, *_: logs.append(msg),
     )
     afficher_message_insertion("lun", "8", 1, "tentative d'insertion n°")
@@ -42,13 +42,13 @@ def test_afficher_message_insertion_branch(monkeypatch):
 
 def test_remplir_jours(monkeypatch):
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: 0
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: 0
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.verifier_champ_jour_rempli",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.verifier_champ_jour_rempli",
         lambda *a, **k: "lundi",
     )
     result = remplir_jours(None, ["desc"], {2: "lundi"}, [])
@@ -57,21 +57,21 @@ def test_remplir_jours(monkeypatch):
 
 def test_traiter_jour_failure(monkeypatch):
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: 0
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: 0
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (_ for _ in ()).throw(
             __import__("selenium").common.exceptions.StaleElementReferenceException()
         ),
     )
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1)
     logs = []
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
     )
     result = traiter_jour(None, "lundi", "desc", "8", [])
     assert result == []
@@ -86,11 +86,11 @@ def test_remplir_mission_dispatch(monkeypatch):
         return jr
 
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.traiter_jour",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.traiter_jour",
         fake_traiter,
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.remplir_mission_specifique",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.remplir_mission_specifique",
         lambda *a, **k: called.setdefault("spec", True),
     )
     remplir_mission(
@@ -106,18 +106,18 @@ def test_remplir_mission_dispatch(monkeypatch):
 
 def test_remplir_mission_specifique_failure(monkeypatch):
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (_ for _ in ()).throw(
             __import__("selenium").common.exceptions.StaleElementReferenceException()
         ),
     )
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1)
     logs = []
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
     )
     remplir_mission_specifique(None, "mardi", "8", [])
     assert any("Échec de l'insertion" in m for m in logs)
@@ -125,25 +125,25 @@ def test_remplir_mission_specifique_failure(monkeypatch):
 
 def test_remplir_mission_specifique_insertion_fail(monkeypatch):
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (object(), False),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.effacer_et_entrer_valeur", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.effacer_et_entrer_valeur", lambda *a, **k: None
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.program_break_time", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.program_break_time", lambda *a, **k: None
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.controle_insertion", lambda *a, **k: False
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.controle_insertion", lambda *a, **k: False
     )
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1)
     logs = []
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
     )
     remplir_mission_specifique(None, "mercredi", "8", [])
     assert any("Échec de l'insertion" in m for m in logs)
@@ -151,13 +151,13 @@ def test_remplir_mission_specifique_insertion_fail(monkeypatch):
 
 def test_run_as_script(monkeypatch):
     called = {}
-    fake_shared = types.ModuleType("shared_utils")
+    fake_shared = types.ModuleType("sele_saisie_auto.shared_utils")
     fake_shared.get_log_file = lambda: "file"
     fake_shared.program_break_time = lambda *a, **k: None
-    monkeypatch.setitem(sys.modules, "shared_utils", fake_shared)
+    monkeypatch.setitem(sys.modules, "sele_saisie_auto.shared_utils", fake_shared)
     import importlib
 
-    mod = importlib.import_module("remplir_jours_feuille_de_temps")
+    mod = importlib.import_module("sele_saisie_auto.remplir_jours_feuille_de_temps")
     monkeypatch.setattr(
         mod,
         "main",
@@ -167,7 +167,7 @@ def test_run_as_script(monkeypatch):
     prefix = "\n" * 469
     code = (
         prefix
-        + "if __name__ == '__main__':\n    from shared_utils import get_log_file\n\n    main(None, get_log_file())\n"
+        + "if __name__ == '__main__':\n    from sele_saisie_auto.shared_utils import get_log_file\n\n    main(None, get_log_file())\n"
     )
     exec(
         compile(code, mod.__file__, "exec"),
@@ -183,55 +183,55 @@ def test_run_as_script(monkeypatch):
 def test_remplir_jours_branches(monkeypatch):
     # row_index None branch
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: None
     )
     result = remplir_jours(None, ["x"], {1: "dimanche"}, [])
     assert result == []
 
     # element None branch
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: 0
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: 0
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: None
     )
     assert remplir_jours(None, ["x"], {1: "dimanche"}, []) == []
 
 
 def test_traiter_jour_no_element(monkeypatch):
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: 0
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: 0
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: None
     )
     assert traiter_jour(None, "lundi", "desc", "8", []) == []
 
 
 def test_traiter_jour_controle_insertion_fail(monkeypatch):
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: 0
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.trouver_ligne_par_description", lambda *a: 0
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (object(), False),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.effacer_et_entrer_valeur", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.effacer_et_entrer_valeur", lambda *a, **k: None
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.program_break_time", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.program_break_time", lambda *a, **k: None
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.controle_insertion", lambda *a, **k: False
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.controle_insertion", lambda *a, **k: False
     )
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 2)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 2)
     logs = []
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
     )
     assert traiter_jour(None, "lundi", "desc", "8", []) == []
     assert any("Échec de l'insertion" in m for m in logs)
@@ -239,7 +239,7 @@ def test_traiter_jour_controle_insertion_fail(monkeypatch):
 
 def test_remplir_mission_specifique_element_none(monkeypatch):
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: None
     )
     assert remplir_mission_specifique(None, "lundi", "8", []) is None
 
@@ -249,13 +249,13 @@ def test_traiter_champs_mission_element_none(monkeypatch):
     mapping = {"PROJECT_CODE$0": "project_code"}
     info = {"project_code": "A"}
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_dom", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom", lambda *a, **k: None
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: None
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log", lambda *a, **k: None
     )
     traiter_champs_mission(None, ids, mapping, info)
 
@@ -265,28 +265,28 @@ def test_traiter_champs_mission_insertion_fail(monkeypatch):
     mapping = {"PROJECT_CODE$0": "project_code"}
     info = {"project_code": "VAL"}
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_dom", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom", lambda *a, **k: None
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element", lambda *a, **k: object()
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (object(), False),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.effacer_et_entrer_valeur", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.effacer_et_entrer_valeur", lambda *a, **k: None
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.program_break_time", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.program_break_time", lambda *a, **k: None
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.controle_insertion", lambda *a, **k: False
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.controle_insertion", lambda *a, **k: False
     )
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1)
     logs = []
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log", lambda msg, *_: logs.append(msg)
     )
     traiter_champs_mission(None, ids, mapping, info, max_attempts=1)
     assert any("Échec de l'insertion" in m for m in logs)
@@ -294,15 +294,15 @@ def test_traiter_champs_mission_insertion_fail(monkeypatch):
 
 def test_main_handles_other_exceptions(monkeypatch):
     logs = []
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.initialize", lambda lf: None)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.initialize", lambda lf: None)
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.remplir_jours",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.remplir_jours",
         lambda *a, **k: (_ for _ in ()).throw(
             __import__("selenium").common.exceptions.NoSuchElementException()
         ),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
     )
     main(None, "log")
     assert any("introuvable" in m for m in logs)
@@ -310,15 +310,15 @@ def test_main_handles_other_exceptions(monkeypatch):
 
 def test_main_webdriver_exception(monkeypatch):
     logs = []
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.initialize", lambda lf: None)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.initialize", lambda lf: None)
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.remplir_jours",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.remplir_jours",
         lambda *a, **k: (_ for _ in ()).throw(
             __import__("selenium").common.exceptions.WebDriverException()
         ),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
     )
     main(None, "log")
     assert any("WebDriver" in m for m in logs)
@@ -326,15 +326,15 @@ def test_main_webdriver_exception(monkeypatch):
 
 def test_main_stale_exception(monkeypatch):
     logs = []
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.initialize", lambda lf: None)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.initialize", lambda lf: None)
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.remplir_jours",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.remplir_jours",
         lambda *a, **k: (_ for _ in ()).throw(
             __import__("selenium").common.exceptions.StaleElementReferenceException()
         ),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
     )
     main(None, "log")
     assert any("Référence obsolète" in m for m in logs)
@@ -342,13 +342,13 @@ def test_main_stale_exception(monkeypatch):
 
 def test_main_generic_exception(monkeypatch):
     logs = []
-    monkeypatch.setattr("remplir_jours_feuille_de_temps.initialize", lambda lf: None)
+    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.initialize", lambda lf: None)
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.remplir_jours",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.remplir_jours",
         lambda *a, **k: (_ for _ in ()).throw(Exception("boom")),
     )
     monkeypatch.setattr(
-        "remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.log_error", lambda msg, *_: logs.append(msg)
     )
     main(None, "log")
     assert any("inattendue" in m for m in logs)
