@@ -15,7 +15,7 @@ from selenium.common.exceptions import (
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import Select, WebDriverWait
 
-from logger_utils import write_log
+from sele_saisie_auto.logger_utils import write_log
 
 LOG_FILE: Optional[str] = None
 

@@ -7,14 +7,14 @@ from configparser import ConfigParser
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
-from dropdown_options import cgi_options as default_cgi_options
-from dropdown_options import (
+from sele_saisie_auto.dropdown_options import cgi_options as default_cgi_options
+from sele_saisie_auto.dropdown_options import (
     cgi_options_billing_action as default_cgi_options_billing_action,
 )
-from dropdown_options import cgi_options_dejeuner as default_cgi_options_dejeuner
-from dropdown_options import work_location_options as default_work_location_options
-from dropdown_options import work_schedule_options as default_work_schedule_options
-from read_or_write_file_config_ini_utils import read_config_ini
+from sele_saisie_auto.dropdown_options import cgi_options_dejeuner as default_cgi_options_dejeuner
+from sele_saisie_auto.dropdown_options import work_location_options as default_work_location_options
+from sele_saisie_auto.dropdown_options import work_schedule_options as default_work_schedule_options
+from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini
 
 
 @dataclass

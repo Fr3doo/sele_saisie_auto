@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from gui_builder import (
+from sele_saisie_auto.gui_builder import (
     create_button_without_style,
     create_labeled_frame,
     create_modern_entry_with_grid,
     create_modern_entry_with_grid_for_password,
     create_modern_label_with_grid,
 )
-from launcher import run_psatime_with_credentials, start_configuration
+from sele_saisie_auto.launcher import run_psatime_with_credentials, start_configuration
 
 
 def main_menu(cle_aes: bytes, log_file: str, encryption_service) -> None:

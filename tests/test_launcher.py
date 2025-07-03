@@ -3,13 +3,13 @@ import sys
 import types
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 
 def import_launcher(monkeypatch):
     stub = types.SimpleNamespace(main_menu=lambda *a, **k: None)
-    monkeypatch.setitem(sys.modules, "main_menu", stub)
-    return importlib.reload(importlib.import_module("launcher"))
+    monkeypatch.setitem(sys.modules, "sele_saisie_auto.main_menu", stub)
+    return importlib.reload(importlib.import_module("sele_saisie_auto.launcher"))
 
 
 class DummyMenu:
@@ -105,7 +105,7 @@ def test_run_psatime(monkeypatch):
             calls["log"] = msg
 
     fake_mod = types.SimpleNamespace(main=lambda lf: calls.setdefault("main", lf))
-    monkeypatch.setitem(sys.modules, "saisie_automatiser_psatime", fake_mod)
+    monkeypatch.setitem(sys.modules, "sele_saisie_auto.saisie_automatiser_psatime", fake_mod)
 
     launcher.run_psatime("file.html", menu, logger=DummyLogger())
 
@@ -181,7 +181,7 @@ def test_start_configuration_and_save(monkeypatch):
         launcher.messagebox, "showinfo", lambda *a: saved.setdefault("info", True)
     )
     monkeypatch.setattr(
-        launcher, "main_menu", lambda *a, **k: saved.setdefault("menu", True)
+        launcher, "sele_saisie_auto.main_menu", lambda *a, **k: saved.setdefault("menu", True)
     )
 
     launcher.start_configuration(b"k", "log", DummyEncryption())
@@ -217,7 +217,7 @@ def test_main(monkeypatch):
     )
     enc = DummyEncryption()
     monkeypatch.setattr(launcher, "EncryptionService", lambda lf: enc)
-    monkeypatch.setattr(launcher, "main_menu", lambda *a: init.setdefault("menu", a))
+    monkeypatch.setattr(launcher, "sele_saisie_auto.main_menu", lambda *a: init.setdefault("menu", a))
     monkeypatch.setattr(launcher, "close_logs", lambda lf: init.setdefault("close", lf))
 
     launcher.main([])

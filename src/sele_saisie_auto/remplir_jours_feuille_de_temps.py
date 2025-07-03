@@ -12,27 +12,27 @@ from selenium.common.exceptions import (
 )
 from selenium.webdriver.common.by import By
 
-from constants import ID_TO_KEY_MAPPING, JOURS_SEMAINE, LISTES_ID_INFORMATIONS_MISSION
-from dropdown_options import (
+from sele_saisie_auto.constants import ID_TO_KEY_MAPPING, JOURS_SEMAINE, LISTES_ID_INFORMATIONS_MISSION
+from sele_saisie_auto.dropdown_options import (
     cgi_options_billing_action as default_cgi_options_billing_action,
 )
-from error_handler import log_error
-from logger_utils import write_log
-from read_or_write_file_config_ini_utils import read_config_ini
-from selenium_utils import (
+from sele_saisie_auto.error_handler import log_error
+from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini
+from sele_saisie_auto.selenium_utils import (
     controle_insertion,
     detecter_et_verifier_contenu,
     effacer_et_entrer_valeur,
 )
-from selenium_utils import set_log_file as set_log_file_selenium
-from selenium_utils import (
+from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
+from sele_saisie_auto.selenium_utils import (
     trouver_ligne_par_description,
     verifier_champ_jour_rempli,
     wait_for_dom_ready,
     wait_for_element,
     wait_until_dom_is_stable,
 )
-from shared_utils import program_break_time
+from sele_saisie_auto.shared_utils import program_break_time
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
@@ -485,6 +485,6 @@ def main(driver, log_file: str) -> None:
 
 
 if __name__ == "__main__":
-    from shared_utils import get_log_file
+    from sele_saisie_auto.shared_utils import get_log_file
 
     main(None, get_log_file())

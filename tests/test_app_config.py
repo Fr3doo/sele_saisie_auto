@@ -1,9 +1,9 @@
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
-from app_config import AppConfig, load_config  # noqa: E402
+from sele_saisie_auto.app_config import AppConfig, load_config  # noqa: E402
 
 
 def test_load_config_parses(tmp_path, monkeypatch):
@@ -23,7 +23,7 @@ Facturable = B
     )
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
-        "read_or_write_file_config_ini_utils.write_log", lambda *a, **k: None
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", lambda *a, **k: None
     )
 
     app_cfg = load_config(str(tmp_path / "log.html"))
@@ -53,7 +53,7 @@ Facturable = B
     )
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
-        "read_or_write_file_config_ini_utils.write_log", lambda *a, **k: None
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", lambda *a, **k: None
     )
     monkeypatch.setenv("PSATIME_URL", "http://env")
     monkeypatch.setenv("PSATIME_DATE_CIBLE", "02/07/2024")

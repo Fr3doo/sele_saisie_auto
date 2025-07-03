@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
-import logger_utils  # noqa: E402
+from sele_saisie_auto import logger_utils  # noqa: E402
 
 
 def test_initialize_logger_override(tmp_path):

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from plugins import hook
+from sele_saisie_auto.plugins import hook
 
 
 @hook("before_submit")

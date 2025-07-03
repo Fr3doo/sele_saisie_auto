@@ -1,6 +1,6 @@
 """Utility functions for error logging and propagation."""
 
-from logger_utils import write_log
+from sele_saisie_auto.logger_utils import write_log
 
 
 def log_error(message: str, log_file: str, level: str = "ERROR") -> None:

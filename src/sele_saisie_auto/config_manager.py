@@ -4,8 +4,8 @@
 from configparser import ConfigParser
 from typing import Optional
 
-from app_config import AppConfig, load_config
-from read_or_write_file_config_ini_utils import write_config_ini
+from sele_saisie_auto.app_config import AppConfig, load_config
+from sele_saisie_auto.read_or_write_file_config_ini_utils import write_config_ini
 
 
 class ConfigManager:

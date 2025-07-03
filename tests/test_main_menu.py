@@ -2,7 +2,7 @@ import sys
 import types
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))
 
 
 class DummyVar:
@@ -125,10 +125,10 @@ def test_main_menu_builds_and_commands(monkeypatch):
         run_psatime_with_credentials=lambda *a, **k: None,
         start_configuration=lambda *a, **k: None,
     )
-    monkeypatch.setitem(sys.modules, "launcher", dummy_launcher)
+    monkeypatch.setitem(sys.modules, "sele_saisie_auto.launcher", dummy_launcher)
     import importlib
 
-    main_menu = importlib.import_module("main_menu")
+    main_menu = importlib.import_module("sele_saisie_auto.main_menu")
 
     monkeypatch.setattr(
         main_menu,

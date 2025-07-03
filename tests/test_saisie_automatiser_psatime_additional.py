@@ -1,9 +1,9 @@
 import sys
 from pathlib import Path
 
-import console_ui
+from sele_saisie_auto import console_ui
 
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 import types  # noqa: E402
 from configparser import ConfigParser  # noqa: E402
@@ -14,8 +14,8 @@ from selenium.common.exceptions import (  # noqa: E402
     WebDriverException,
 )
 
-import saisie_automatiser_psatime as sap  # noqa: E402
-from locators import Locators  # noqa: E402
+from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
+from sele_saisie_auto.locators import Locators  # noqa: E402
 
 
 class DummyEnc:
@@ -83,7 +83,7 @@ def make_config():
 
 def setup_init(monkeypatch):
     cfg = make_config()
-    from app_config import AppConfig
+    from sele_saisie_auto.app_config import AppConfig
 
     app_cfg = AppConfig.from_parser(cfg)
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)

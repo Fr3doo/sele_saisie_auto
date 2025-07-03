@@ -4,8 +4,8 @@ from typing import Optional
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from logger_utils import write_log
-from selenium_utils import (
+from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.selenium_utils import (
     LONG_TIMEOUT,
     definir_taille_navigateur,
     ouvrir_navigateur_sur_ecran_principal,

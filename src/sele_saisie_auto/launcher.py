@@ -7,8 +7,8 @@ import multiprocessing
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-from encryption_utils import EncryptionService
-from gui_builder import (
+from sele_saisie_auto.encryption_utils import EncryptionService
+from sele_saisie_auto.gui_builder import (
     create_a_frame,
     create_button_with_style,
     create_combobox_with_pack,
@@ -16,11 +16,12 @@ from gui_builder import (
     create_modern_label_with_pack,
     create_tab,
 )
-from logger_utils import LOG_LEVELS, close_logs, initialize_logger
-from logging_service import Logger
-from main_menu import main_menu
-from read_or_write_file_config_ini_utils import read_config_ini, write_config_ini
-from shared_utils import get_log_file
+from sele_saisie_auto.logger_utils import LOG_LEVELS, close_logs, initialize_logger
+from sele_saisie_auto.logging_service import Logger
+from sele_saisie_auto.main_menu import main_menu
+from sele_saisie_auto import saisie_automatiser_psatime
+from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini, write_config_ini
+from sele_saisie_auto.shared_utils import get_log_file
 
 DEFAULT_SETTINGS = {"date_cible": "", "debug_mode": "INFO"}
 
@@ -43,7 +44,6 @@ def run_psatime(log_file: str, menu: tk.Tk, logger: Logger | None = None) -> Non
     menu.destroy()
     log = logger or Logger(log_file)
     log.info("Launching PSA time")
-    import saisie_automatiser_psatime
 
     saisie_automatiser_psatime.main(log_file)
 

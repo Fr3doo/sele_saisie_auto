@@ -4,9 +4,9 @@ from pathlib import Path
 import pytest
 
 # add project root to sys.path
-sys.path.append(str(Path(__file__).resolve().parents[1]))  # noqa: E402
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
-from shared_utils import get_log_file, setup_logs  # noqa: E402
+from sele_saisie_auto.shared_utils import get_log_file, setup_logs  # noqa: E402
 
 
 def test_setup_logs_creates_path(tmp_path):
@@ -34,7 +34,7 @@ def test_setup_logs_oserror(monkeypatch):
     def raise_oserror(*args, **kwargs):
         raise OSError("boom")
 
-    monkeypatch.setattr("shared_utils.os.makedirs", raise_oserror)
+    monkeypatch.setattr("sele_saisie_auto.shared_utils.os.makedirs", raise_oserror)
     with pytest.raises(RuntimeError):
         setup_logs()
 
@@ -43,13 +43,13 @@ def test_setup_logs_generic_error(monkeypatch):
     def raise_value(*args, **kwargs):
         raise ValueError("nope")
 
-    monkeypatch.setattr("shared_utils.os.makedirs", raise_value)
+    monkeypatch.setattr("sele_saisie_auto.shared_utils.os.makedirs", raise_value)
     with pytest.raises(RuntimeError):
         setup_logs()
 
 
 def test_get_log_file_initializes(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr("shared_utils._log_file", None)
+    monkeypatch.setattr("sele_saisie_auto.shared_utils._log_file", None)
     log_file = get_log_file()
     assert log_file.endswith(".html")
