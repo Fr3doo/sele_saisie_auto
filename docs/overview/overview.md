@@ -1,8 +1,8 @@
 # Aperçu du projet
 
-Le **sele_saisie_auto** est une application Python permettant d'automatiser la saisie de la feuille de temps PSA Time.
-Il combine Selenium pour piloter le navigateur et Tkinter pour l'interface graphique.
-L'objectif est de gagner du temps lors du remplissage hebdomadaire tout en restant facile à intégrer dans d'autres projets.
+Le **sele_saisie_auto** vise à automatiser la saisie de la feuille de temps PSA Time.
+Il pilote le navigateur avec Selenium et propose une interface Tkinter pour fournir les identifiants.
+L'objectif est de gagner du temps sur cette tâche répétitive tout en restant simple à intégrer dans d'autres outils.
 
 ## Fonctionnalités principales
 
