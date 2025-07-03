@@ -20,6 +20,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 
 import console_ui
+import plugins
 import remplir_jours_feuille_de_temps
 from app_config import AppConfig
 from config_manager import ConfigManager
@@ -569,6 +570,7 @@ class PSATimeAutomation:
                 switched_to_iframe = self.switch_to_iframe_main_target_win0(driver)
                 if switched_to_iframe:
                     detecter_doublons_jours(driver)
+                    plugins.call("before_submit", driver)
                     if self.save_draft_and_validate(driver):
                         switch_to_default_content(driver)
                         alertes = [
