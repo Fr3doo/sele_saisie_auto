@@ -27,3 +27,23 @@ docker build --pull -t sele-app .
 docker stop sele && docker rm sele
 docker run -d -p 8080:80 --name sele sele-app
 ```
+
+### Recréer l'image sans utiliser le cache
+
+Si vous souhaitez forcer la reconstruction complète, ajoutez `--no-cache` :
+
+```bash
+docker build --no-cache -t sele-app .
+```
+
+## 4. Exemple minimal de `docker-compose.yml`
+
+```yaml
+version: "3"
+services:
+  app:
+    build: .
+    image: sele-app
+    ports:
+      - "8080:80"
+```
