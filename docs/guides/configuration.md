@@ -16,6 +16,8 @@ Les paramètres de sécurité sont définis dans `src/`.
 | LONG_TIMEOUT      | Délai prolongé utilisé lors de certaines opérations       | 20                |
 | DEFAULT_LOG_LEVEL | Niveau de journalisation appliqué par défaut              | INFO              |
 | DEFAULT_LOG_DIR   | Dossier où sont générés les fichiers de logs              | logs              |
+| HTML_FORMAT       | Extension utilisée pour les journaux HTML                 | html              |
+| TXT_FORMAT        | Extension utilisée pour les journaux texte                | txt               |
 
 Modifiez ces valeurs dans `config.ini` ou via des variables d’environnement si besoin.
 
@@ -25,8 +27,6 @@ Modifiez ces valeurs dans `config.ini` ou via des variables d’environnement si
 PSATIME_URL=https://psa.example.com
 PSATIME_LOGIN=encrypted_login
 PSATIME_MDP=encrypted_password
-PSATIME_DEBUG_MODE=INFO
-PSATIME_LISTE_ITEMS_PLANNING="En mission,Formation"
 ```
 
 ```python
