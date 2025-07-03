@@ -22,6 +22,11 @@ Certains fichiers ou portions de code sont **exclus des rapports de couverture**
 
 | Chemin                             | Justification                                                              |
 | ---------------------------------- | -------------------------------------------------------------------------- |
+| `tests/` | Les tests ne sont pas comptés dans la couverture |
+| `docs/` | Documentation sans logique métier |
+| `example_plugin.py` | Module d'exemple non exécuté en production |
+| `calendar_icon.png` | Ressource statique hors périmètre de tests |
+| `design_notes.md` | Notes techniques non exécutables |
 
 
 Ces éléments sont volontairement ignorés afin de concentrer la couverture sur la logique applicative réellement testable.
@@ -29,3 +34,5 @@ Ces éléments sont volontairement ignorés afin de concentrer la couverture sur
 ### 🌐 Cas spécifiques
 
 Pour l'instant, aucun cas spécifique supplémentaire n'est recensé.
+
+[⬅️ Retour au guide complet des tests](../../TESTING.md)
