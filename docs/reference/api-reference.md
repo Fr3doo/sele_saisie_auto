@@ -28,8 +28,15 @@ class PSATimeAutomation:
   chiffrés depuis la mémoire partagée.
 - ``setup_browser(driver_manager: SeleniumDriverManager)`` – ouvre et configure
   le navigateur.
-- ``connect_to_psatime(driver, cle_aes, login_c, pwd_c)`` – authentifie
-  l’utilisateur.
+- ``connect_to_psatime(driver, cle_aes, login_c, pwd_c)`` – authentifie l’utilisateur.
+- `switch_to_iframe_main_target_win0(driver)` – bascule dans l’iframe principale.
+- `navigate_from_home_to_date_entry_page(driver)` – ouvre la page de saisie de date.
+- `handle_date_input(driver, date_cible)` – prépare le champ date.
+- `submit_date_cible(driver)` – valide la date choisie.
+- `navigate_from_work_schedule_to_additional_information_page(driver)` – accède aux informations supplémentaires.
+- `submit_and_validate_additional_information(driver)` – remplit puis confirme les données complémentaires.
+- `save_draft_and_validate(driver)` – sauvegarde la feuille et déclenche la validation.
+- `cleanup_resources(driver_manager, mem_key, mem_login, mem_password)` – ferme le navigateur et libère la mémoire.
 - ``run() -> None`` – lance toute la séquence d’automatisation.
 
 ## TimeSheetHelper
@@ -133,4 +140,22 @@ Collection de fonctions Tkinter définies dans ``gui_builder.py``.
 - ``create_combobox(frame, var, values, row, col, ...)`` – menu déroulant.
 - ``create_button_with_style(frame, text, command, ...)`` – bouton stylisé.
 - ``create_button_without_style(frame, text, command, ...)`` – bouton simple.
+
+
+## Exemple minimal
+
+```python
+from config_manager import ConfigManager
+from selenium_driver_manager import SeleniumDriverManager
+from saisie_automatiser_psatime import PSATimeAutomation, TimeSheetHelper
+
+cfg = ConfigManager().load()
+filler = PSATimeAutomation("log.html", cfg)
+
+with SeleniumDriverManager("log.html") as dm:
+    driver = filler.setup_browser(dm)
+    creds = filler.initialize_shared_memory()
+    filler.connect_to_psatime(driver, creds.aes_key, creds.login, creds.password)
+    TimeSheetHelper("log.html").run(driver)
+```
 
