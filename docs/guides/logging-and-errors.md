@@ -4,6 +4,14 @@ Le projet utilise le module standard `logging` pour enregistrer les différentes
 étapes de la résolution. Les exceptions personnalisées sont définies dans
 `exceptions.py`.
 
+```mermaid
+graph TD
+    A[Utilisateur] --> B(Application)
+    B --> C[Logger]
+    C --> D[Fichier de log]
+    B --> E[Message utilisateur]
+```
+
 Pour activer un niveau de log détaillé :
 
 ```python
@@ -11,6 +19,12 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+```
+
+Pour enregistrer les messages dans un fichier dédié :
+
+```python
+logging.basicConfig(filename="app.log")
 ```
 
 Les erreurs courantes sont `DriverError`, `TimeoutError` et `InvalidConfigError`.
