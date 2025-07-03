@@ -160,9 +160,9 @@ Principales fonctions :
 - `create_tab(notebook, title, style="Modern.TFrame", padding=20) -> ttk.Frame`
 - `create_a_frame(parent, style="Modern.TFrame", ...) -> ttk.Frame`
 - `create_labeled_frame(parent, text="", ...) -> ttk.LabelFrame`
-- `create_Modern_label_with_grid(frame, text, row, col, ...) -> ttk.Label`
-- `create_Modern_entry_with_grid(frame, var, row, col, ...) -> ttk.Entry`
-- `create_Modern_entry_with_grid_for_password(frame, var, row, col, ...) -> ttk.Entry`
+ - `create_modern_label_with_grid(frame, text, row, col, ...) -> ttk.Label`
+ - `create_modern_entry_with_grid(frame, var, row, col, ...) -> ttk.Entry`
+ - `create_modern_entry_with_grid_for_password(frame, var, row, col, ...) -> ttk.Entry`
 - `create_combobox(frame, var, values, row, col, ...) -> ttk.Combobox`
 - `create_button_with_style(frame, text, command, ...) -> ttk.Button`
 - `create_button_without_style(frame, text, command, ...) -> tk.Button`

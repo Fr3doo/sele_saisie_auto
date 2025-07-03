@@ -22,18 +22,18 @@ class EncryptionService:
             log_file
         )
 
-    def generer_cle_aes(self, TAILLE_CLE: int = 32) -> bytes:
+    def generer_cle_aes(self, taille_cle: int = 32) -> bytes:
         """Génère aléatoirement une clé AES.
 
         Args:
-            TAILLE_CLE (int): Longueur de la clé en octets (32 par défaut pour
+            taille_cle (int): Longueur de la clé en octets (32 par défaut pour
                 AES-256).
 
         Returns:
             bytes: Clé AES générée.
         """
         try:
-            key = os.urandom(TAILLE_CLE)
+            key = os.urandom(taille_cle)
             write_log("💀 Clé AES générée avec succès.", self.log_file, "CRITICAL")
             return key
         except Exception as e:
@@ -45,25 +45,25 @@ class EncryptionService:
             raise
 
     def chiffrer_donnees(
-        self, donnees: str, cle: bytes, TAILLE_BLOC: int = 128
+        self, donnees: str, cle: bytes, taille_bloc: int = 128
     ) -> bytes:
         """Chiffre une chaîne de caractères avec AES en mode CBC.
 
         L'initialisation vector (IV) généré est préfixé aux données chiffrées
         pour pouvoir être réutilisé lors du déchiffrement. Un padding PKCS7 est
-        appliqué afin d'obtenir une longueur multiple de ``TAILLE_BLOC``.
+        appliqué afin d'obtenir une longueur multiple de ``taille_bloc``.
 
         Args:
             donnees (str): Texte à chiffrer.
             cle (bytes): Clé AES utilisée pour le chiffrement.
-            TAILLE_BLOC (int): Taille du bloc pour le padding PKCS7.
+            taille_bloc (int): Taille du bloc pour le padding PKCS7.
         Returns:
             bytes: IV suivi des données chiffrées.
         """
         try:
             chiffre = Cipher(algorithms.AES(cle), modes.CBC(os.urandom(16)))
             chiffreur = chiffre.encryptor()
-            padder = PKCS7(TAILLE_BLOC).padder()
+            padder = PKCS7(taille_bloc).padder()
 
             donnees_pad = padder.update(donnees.encode()) + padder.finalize()
             donnees_chiffrees = chiffreur.update(donnees_pad) + chiffreur.finalize()
@@ -79,7 +79,7 @@ class EncryptionService:
             raise
 
     def dechiffrer_donnees(
-        self, donnees_chiffrees: bytes, cle: bytes, TAILLE_BLOC: int = 128
+        self, donnees_chiffrees: bytes, cle: bytes, taille_bloc: int = 128
     ) -> str:
         """Déchiffre un message chiffré par :func:`chiffrer_donnees`.
 
@@ -90,7 +90,7 @@ class EncryptionService:
         Args:
             donnees_chiffrees (bytes): IV suivi du texte chiffré.
             cle (bytes): Clé AES utilisée pour le déchiffrement.
-            TAILLE_BLOC (int): Taille de bloc pour le padding PKCS7.
+            taille_bloc (int): Taille de bloc pour le padding PKCS7.
 
         Returns:
             str: Contenu original déchiffré.
@@ -104,7 +104,7 @@ class EncryptionService:
 
             donnees_pad = dechiffreur.update(message_chiffre) + dechiffreur.finalize()
 
-            unpadder = PKCS7(TAILLE_BLOC).unpadder()
+            unpadder = PKCS7(taille_bloc).unpadder()
             donnees = unpadder.update(donnees_pad) + unpadder.finalize()
 
             write_log("💀 Données déchiffrées avec succès.", self.log_file, "CRITICAL")

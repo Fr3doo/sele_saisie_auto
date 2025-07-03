@@ -6,13 +6,13 @@ from configparser import ConfigParser
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
-from dropdown_options import cgi_options as DEFAULT_CGI_OPTIONS
+from dropdown_options import cgi_options as default_cgi_options
 from dropdown_options import (
-    cgi_options_billing_action as DEFAULT_CGI_OPTIONS_BILLING_ACTION,
+    cgi_options_billing_action as default_cgi_options_billing_action,
 )
-from dropdown_options import cgi_options_dejeuner as DEFAULT_CGI_OPTIONS_DEJEUNER
-from dropdown_options import work_location_options as DEFAULT_WORK_LOCATION_OPTIONS
-from dropdown_options import work_schedule_options as DEFAULT_WORK_SCHEDULE_OPTIONS
+from dropdown_options import cgi_options_dejeuner as default_cgi_options_dejeuner
+from dropdown_options import work_location_options as default_work_location_options
+from dropdown_options import work_schedule_options as default_work_schedule_options
 from read_or_write_file_config_ini_utils import read_config_ini
 
 
@@ -111,25 +111,25 @@ class AppConfig:
         work_location_options = parse_list_from_section(
             "work_location_options",
             "values",
-            DEFAULT_WORK_LOCATION_OPTIONS,
+            default_work_location_options,
         )
         cgi_options = parse_list_from_section(
-            "cgi_options", "values", DEFAULT_CGI_OPTIONS
+            "cgi_options", "values", default_cgi_options
         )
         cgi_options_dejeuner = parse_list_from_section(
             "cgi_options_dejeuner",
             "values",
-            DEFAULT_CGI_OPTIONS_DEJEUNER,
+            default_cgi_options_dejeuner,
         )
         cgi_options_billing_action = (
             {k.lower(): v for k, v in parser.items("cgi_options_billing_action")}
             if parser.has_section("cgi_options_billing_action")
-            else DEFAULT_CGI_OPTIONS_BILLING_ACTION
+            else default_cgi_options_billing_action
         )
         work_schedule_options = parse_list_from_section(
             "work_schedule_options",
             "values",
-            DEFAULT_WORK_SCHEDULE_OPTIONS,
+            default_work_schedule_options,
         )
 
         return cls(

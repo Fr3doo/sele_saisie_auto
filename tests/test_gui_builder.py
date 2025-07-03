@@ -76,31 +76,31 @@ def test_build_widgets():
     assert isinstance(lframe, DummyWidget)
     assert lframe.pack_kwargs["expand"] is True
 
-    title = gui_builder.create_Title_label_with_grid(frame, "t", 0, 0)
+    title = gui_builder.create_title_label_with_grid(frame, "t", 0, 0)
     assert isinstance(title, DummyWidget)
     assert title.grid_kwargs["row"] == 0
 
-    lbl = gui_builder.create_Modern_label_with_pack(frame, "hi")
+    lbl = gui_builder.create_modern_label_with_pack(frame, "hi")
     assert isinstance(lbl, DummyWidget)
     assert lbl.pack_kwargs == {"side": None, "padx": 0, "pady": 0, "sticky": None}
 
-    entry = gui_builder.create_Modern_entry_with_pack(frame, var="v")
+    entry = gui_builder.create_modern_entry_with_pack(frame, var="v")
     assert isinstance(entry, DummyWidget)
     assert entry.pack_kwargs["padx"] == 0
 
-    chk = gui_builder.create_Modern_checkbox_with_pack(frame, var="c")
+    chk = gui_builder.create_modern_checkbox_with_pack(frame, var="c")
     assert isinstance(chk, DummyWidget)
     assert chk.pack_kwargs["side"] is None
 
-    label_g = gui_builder.create_Modern_label_with_grid(frame, "g", 1, 1)
+    label_g = gui_builder.create_modern_label_with_grid(frame, "g", 1, 1)
     assert isinstance(label_g, DummyWidget)
     assert label_g.grid_kwargs["column"] == 1
 
-    entry_g = gui_builder.create_Modern_entry_with_grid(frame, var="v", row=2, col=2)
+    entry_g = gui_builder.create_modern_entry_with_grid(frame, var="v", row=2, col=2)
     assert isinstance(entry_g, DummyWidget)
     assert entry_g.grid_kwargs["row"] == 2
 
-    pwd = gui_builder.create_Modern_entry_with_grid_for_password(
+    pwd = gui_builder.create_modern_entry_with_grid_for_password(
         frame, var="p", row=3, col=3
     )
     assert isinstance(pwd, DummyWidget)

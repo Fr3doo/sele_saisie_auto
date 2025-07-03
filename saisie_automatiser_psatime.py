@@ -17,7 +17,7 @@ from selenium.common.exceptions import (
 )
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as ec
 
 import console_ui
 import remplir_jours_feuille_de_temps
@@ -331,7 +331,7 @@ class PSATimeAutomation:
             driver,
             By.ID,
             Locators.NAV_TO_DATE_ENTRY.value,
-            EC.element_to_be_clickable,
+            ec.element_to_be_clickable,
             timeout=DEFAULT_TIMEOUT,
         )
         if element_present:
@@ -342,7 +342,7 @@ class PSATimeAutomation:
             driver,
             By.ID,
             Locators.SIDE_MENU_BUTTON.value,
-            EC.element_to_be_clickable,
+            ec.element_to_be_clickable,
             timeout=DEFAULT_TIMEOUT,
         )
         if element_present:
@@ -381,7 +381,7 @@ class PSATimeAutomation:
             driver,
             By.ID,
             Locators.ADD_BUTTON.value,
-            EC.element_to_be_clickable,
+            ec.element_to_be_clickable,
             timeout=DEFAULT_TIMEOUT,
         )
         if element_present:
@@ -396,7 +396,7 @@ class PSATimeAutomation:
             driver,
             By.ID,
             Locators.ADDITIONAL_INFO_LINK.value,
-            EC.element_to_be_clickable,
+            ec.element_to_be_clickable,
             timeout=DEFAULT_TIMEOUT,
         )
         if element_present:
@@ -429,7 +429,7 @@ class PSATimeAutomation:
             driver,
             By.ID,
             Locators.SAVE_ICON.value,
-            EC.element_to_be_clickable,
+            ec.element_to_be_clickable,
             timeout=DEFAULT_TIMEOUT,
         )
         if element_present:
@@ -441,7 +441,7 @@ class PSATimeAutomation:
             driver,
             By.ID,
             Locators.SAVE_DRAFT_BUTTON.value,
-            EC.element_to_be_clickable,
+            ec.element_to_be_clickable,
             timeout=DEFAULT_TIMEOUT,
         )
         if element_present:
@@ -540,7 +540,7 @@ class PSATimeAutomation:
                         driver,
                         By.ID,
                         Locators.OK_BUTTON.value,
-                        EC.element_to_be_clickable,
+                        ec.element_to_be_clickable,
                         timeout=DEFAULT_TIMEOUT,
                     )
                     if element_present:
@@ -552,7 +552,7 @@ class PSATimeAutomation:
                         driver,
                         By.ID,
                         Locators.COPY_TIME_BUTTON.value,
-                        EC.element_to_be_clickable,
+                        ec.element_to_be_clickable,
                         timeout=DEFAULT_TIMEOUT,
                     )
                     if element_present:

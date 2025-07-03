@@ -12,7 +12,7 @@ from selenium.common.exceptions import (
     StaleElementReferenceException,
     WebDriverException,
 )
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import Select, WebDriverWait
 
 from logger_utils import write_log
@@ -94,7 +94,7 @@ __all__ = [
     "requests",
     "webdriver",
     "WebDriverWait",
-    "EC",
+    "ec",
     "Select",
     "NoSuchElementException",
     "StaleElementReferenceException",

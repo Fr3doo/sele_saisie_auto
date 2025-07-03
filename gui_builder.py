@@ -26,7 +26,7 @@ def create_tab(
     return tab_frame
 
 
-def create_Title_label_with_grid(
+def create_title_label_with_grid(
     frame: ttk.Frame,
     text: str,
     row: int,
@@ -75,7 +75,7 @@ def create_labeled_frame(
     return label_frame
 
 
-def create_Modern_label_with_pack(
+def create_modern_label_with_pack(
     frame: ttk.Widget,
     text: str,
     style: str = "Modern.TLabel",
@@ -90,7 +90,7 @@ def create_Modern_label_with_pack(
     return modern_label_pack
 
 
-def create_Modern_entry_with_pack(
+def create_modern_entry_with_pack(
     frame: ttk.Widget,
     var: tk.Variable,
     width: int = 20,
@@ -105,7 +105,7 @@ def create_Modern_entry_with_pack(
     return modern_entry_pack
 
 
-def create_Modern_checkbox_with_pack(
+def create_modern_checkbox_with_pack(
     parent: ttk.Widget,
     var: tk.Variable,
     style_checkbox: str = "Modern.TCheckbutton",
@@ -119,7 +119,7 @@ def create_Modern_checkbox_with_pack(
     return checkbox
 
 
-def create_Modern_label_with_grid(
+def create_modern_label_with_grid(
     frame: ttk.Widget,
     text: str,
     row: int,
@@ -135,7 +135,7 @@ def create_Modern_label_with_grid(
     return modern_label_grid
 
 
-def create_Modern_entry_with_grid(
+def create_modern_entry_with_grid(
     frame: ttk.Widget,
     var: tk.Variable,
     row: int,
@@ -151,7 +151,7 @@ def create_Modern_entry_with_grid(
     return modern_entry_grid
 
 
-def create_Modern_entry_with_grid_for_password(
+def create_modern_entry_with_grid_for_password(
     frame: ttk.Widget,
     var: tk.Variable,
     row: int,

@@ -7,9 +7,9 @@ import tkinter as tk
 from gui_builder import (
     create_button_without_style,
     create_labeled_frame,
-    create_Modern_entry_with_grid,
-    create_Modern_entry_with_grid_for_password,
-    create_Modern_label_with_grid,
+    create_modern_entry_with_grid,
+    create_modern_entry_with_grid_for_password,
+    create_modern_label_with_grid,
 )
 from launcher import run_psatime_with_credentials, start_configuration
 
@@ -28,14 +28,14 @@ def main_menu(cle_aes: bytes, log_file: str, encryption_service) -> None:
     credentials = create_labeled_frame(
         menu, text="Identifiants", padx=20, pady=10, padding=(10, 5)
     )
-    create_Modern_label_with_grid(credentials, text="Login:", row=0, col=0)
-    login_entry = create_Modern_entry_with_grid(
+    create_modern_label_with_grid(credentials, text="Login:", row=0, col=0)
+    login_entry = create_modern_entry_with_grid(
         credentials, var=login_var, row=0, col=1
     )
-    create_Modern_label_with_grid(credentials, text="@cgi.com", row=0, col=2)
+    create_modern_label_with_grid(credentials, text="@cgi.com", row=0, col=2)
 
-    create_Modern_label_with_grid(credentials, text="Mot de passe:", row=1, col=0)
-    create_Modern_entry_with_grid_for_password(credentials, var=mdp_var, row=1, col=1)
+    create_modern_label_with_grid(credentials, text="Mot de passe:", row=1, col=0)
+    create_modern_entry_with_grid_for_password(credentials, var=mdp_var, row=1, col=1)
 
     launch = create_button_without_style(
         menu,

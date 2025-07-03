@@ -12,8 +12,8 @@ from gui_builder import (
     create_a_frame,
     create_button_with_style,
     create_combobox_with_pack,
-    create_Modern_entry_with_pack,
-    create_Modern_label_with_pack,
+    create_modern_entry_with_pack,
+    create_modern_label_with_pack,
     create_tab,
 )
 from logger_utils import LOG_LEVELS, close_logs, initialize_logger
@@ -93,11 +93,11 @@ def start_configuration(
     debug_var = tk.StringVar(value=config["settings"].get("debug_mode", "INFO"))
 
     date_row = create_a_frame(frame, padding=(10, 10))
-    create_Modern_label_with_pack(date_row, "Date cible:", side="left")
-    create_Modern_entry_with_pack(date_row, date_var, side="left")
+    create_modern_label_with_pack(date_row, "Date cible:", side="left")
+    create_modern_entry_with_pack(date_row, date_var, side="left")
 
     debug_row = create_a_frame(frame, padding=(10, 10))
-    create_Modern_label_with_pack(debug_row, "Log Level:", side="left")
+    create_modern_label_with_pack(debug_row, "Log Level:", side="left")
     create_combobox_with_pack(debug_row, debug_var, values=list(LOG_LEVELS.keys()))
 
     def save() -> None:
