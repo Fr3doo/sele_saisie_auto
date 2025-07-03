@@ -19,3 +19,10 @@ La couverture doit rester supérieure à 95 %.
 
 ## Dépannage
 
+Pour exécuter la CLI :
+
+```bash
+poetry run sele-saisie-auto --help
+poetry run sele-saisie-auto run config.ini
+```
+

@@ -7,7 +7,13 @@ paramètre `algorithm` du constructeur.
 ## Code
 
 ```python
+class CustomAlgorithm:
+    def solve(self, cube):
+        return ["L", "L", "U"]
 
+solver = SeleSaisieAuto(algorithm=CustomAlgorithm())
+result = solver.solve(cube)
+print(result)
 ```
 
 ## Utilisation
