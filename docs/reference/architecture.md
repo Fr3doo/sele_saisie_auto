@@ -32,13 +32,6 @@ flowchart TD
     TimeSheetHelper --> Logger
     ExtraInfoHelper --> Logger
     SharedMemoryService --> Logger
-
-
-
-
-
-
-
 ```
 
 
