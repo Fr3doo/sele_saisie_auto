@@ -33,6 +33,21 @@
       - executer `poetry run safety system-scan`, pour effectuez une analyse sur l’ensemble de la machine de développement. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
       - executer `poetry run safety scan --apply-fixes`, pour effectuez une mise à jour des dépendances vulnérables. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
 
+
+  ### ➕ Création de branche
+
+Utilise **une branche par fonctionnalité ou correctif**, selon la convention suivante :
+
+| Type de branche | Préfixe recommandé     | Exemple                                  |
+|-----------------|------------------------|------------------------------------------|
+| Fonctionnalité  | `feature/` ou `feat/`  | `feature/inscription-utilisateur`        |
+| Nouvelles règles métier  | `feature/` ou `feat/`  | `feature/gestion-rg-metier-x`        |
+| Correctif       | `bugfix/` ou `fix/`    | `bugfix/correction-affichage-date`       |
+| Refactorisation | `refactor/`            | `refactor/simplification-formulaires`    |
+| Documentation   | `docs/`                | `docs/ajout-guide-installation`          |
+| Hotfix          | `hotfix/`              | `hotfix/patch-urgent-en-prod`            |
+| Environnement   | `release/`             | `release/staging` ou `release/1.2.0`     |
+
 ## 4. Codex/ChatGPT Usage Tips
 > 🔧 Conseils pour guider l’IA dans ce repo
 - Limiter la recherche aux modules Python concernés (`*.py`).
