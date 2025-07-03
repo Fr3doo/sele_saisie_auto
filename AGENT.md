@@ -142,8 +142,8 @@ graph TD
 * Logs détaillés pour faciliter le débogage.
 
 ## 10. TODOs & Améliorations
-* [ ] Lier `AGENT.md` depuis le `README.md`.
-* [ ] Créer un workflow GitHub Actions pour les tests (`ci.yml`).
+* [x] Lier `AGENT.md` depuis le `README.md`.
+* [ ] Créer un workflow GitHub Actions pour les tests (`ci.yml`) *(déjà présent)*.
 * [ ] Ajouter des tests unitaires pour chaque agent.
 * [ ] Automatiser la génération du diagramme Mermaid.
 * [x] Documenter la procédure d’export en binaire via PyInstaller (voir `README.md`).
