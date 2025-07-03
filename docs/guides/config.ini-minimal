@@ -1,27 +1,3 @@
-# Usage classique de l'outil
-
-Pour executer la commande classique :
-```bash
-poetry run sele-saisie-auto run config.ini
-```
-
-Ce guide présente l'utilisation la plus simple de la bibliothèque.
-
-## Scénario "utilisation basique"
-
-L'utilisateur dispose d'un fichier `config.ini` minimal et souhaite renseigner sa feuille de temps sans interface graphique.
-
-### Commande
-
-```bash
-poetry run psatime-auto
-```
-
-Cette commande lit `config.ini` dans le répertoire courant et lance directement l'automatisation.
-
-### Exemple de configuration minimale
-
-```ini
 [credentials]
 login = enc_login
 mdp = enc_pwd
@@ -57,4 +33,3 @@ lundi = CGI
 
 [cgi_options_billing_action]
 Facturable = B
-```
