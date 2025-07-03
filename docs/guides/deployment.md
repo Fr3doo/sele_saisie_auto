@@ -22,6 +22,10 @@ Accédez à `http://localhost:8080` pour voir l'application.
 
 Si le code ou le `Dockerfile` (à la racine du dépôt) change, reconstruisez l'image :
 
+Le `Dockerfile` part d'une image **Python** officielle, installe les dépendances
+de l'application et copie le code source avant de configurer **Nginx** pour
+servir les fichiers générés.
+
 ```bash
 docker build --pull -t sele-app .
 docker stop sele && docker rm sele
