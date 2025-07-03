@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from configparser import ConfigParser
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
@@ -154,6 +155,26 @@ class AppConfig:
 
 
 def load_config(log_file: str | None) -> AppConfig:
-    """Load ``config.ini`` and return an :class:`AppConfig`."""
+    """Load ``config.ini`` and return an :class:`AppConfig`.
+
+    Environment variables take precedence over values found in the
+    configuration file.
+    """
     parser = read_config_ini(log_file=log_file)
+
+    env_map = {
+        ("credentials", "login"): "PSATIME_LOGIN",
+        ("credentials", "mdp"): "PSATIME_MDP",
+        ("settings", "url"): "PSATIME_URL",
+        ("settings", "date_cible"): "PSATIME_DATE_CIBLE",
+        ("settings", "debug_mode"): "PSATIME_DEBUG_MODE",
+        ("settings", "liste_items_planning"): "PSATIME_LISTE_ITEMS_PLANNING",
+    }
+    for (section, option), env_var in env_map.items():
+        value = os.getenv(env_var)
+        if value is not None:
+            if not parser.has_section(section):
+                parser.add_section(section)
+            parser.set(section, option, value)
+
     return AppConfig.from_parser(parser)
