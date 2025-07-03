@@ -40,7 +40,7 @@ Les rapports de couverture peuvent être générés au format **HTML**, **JSON**
 
 ### Seuils par défaut
 
-Il est recommandé de viser au moins **80 %** de couverture globale. Les seuils peuvent être ajustés dans la configuration de l’outil choisi.
+Il est recommandé de viser au moins **95 %** de couverture globale. Les seuils peuvent être ajustés dans la configuration de l’outil choisi.
 
 ---
 
