@@ -21,12 +21,12 @@ La documentation est organisée dans les dossiers suivants :
 - [`overview/limitations.md`](overview/limitations.md) – Limitations connues de l’application.
 
 ### Guides
-- [`guides/advanced_usage_example.md`](guides/advanced_usage_example.md) – Injecter des composants personnalisés et collecter des métriques.
+- [`guides/advanced-usage-example.md`](guides/advanced-usage-example.md) – Injecter des composants personnalisés et collecter des métriques.
 - [`guides/advanced-testing.md`](guides/advanced-testing.md) – Couvrir les cas avancés grâce au mocking et au monkeypatching.
 - [`guides/cli-tests.md`](guides/cli-tests.md) – Exécuter les tests en ligne de commande.
 - [`guides/configuration.md`](guides/configuration.md) – Comment ajuster les paramètres de sécurité et d’exécution.
 - [`guides/contributing.md`](guides/contributing.md) – Étapes pour configurer le projet et soumettre des modifications.
-- [`guides/custom_algorithm_example.md`](guides/custom_algorithm_example.md) – Intégrer votre propre algorithme de résolution.
+- [`guides/custom-algorithm-example.md`](guides/custom-algorithm-example.md) – Intégrer votre propre algorithme de résolution.
 - [`guides/documentation-style.md`](guides/documentation-style.md) – Guide de style documentaire.
 - [`guides/deployment.md`](guides/deployment.md) – Construire et lancer l'application avec Docker.
 - [`guides/installation.md`](guides/installation.md) – Instructions d’installation locale.
