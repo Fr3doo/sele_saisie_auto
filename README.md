@@ -64,6 +64,17 @@ Les exceptions sont journalisées via `logger_utils.py`. Reportez-vous à la doc
 ## 📝 Formats d'entrée
 Les paramètres sont lus depuis `config.ini` (login, mot de passe chiffré, planning, etc.).
 
+## Exemple d'algorithme factice
+Vous pouvez fournir votre propre logique via le paramètre `algorithm` :
+
+```python
+class CustomAlgorithm:
+    def solve(self, cube):
+        return ["L", "L", "U"]
+```
+
+`SeleSaisieAuto` appellera `solve` pour obtenir les mouvements. La fonction `sele_saisie_auto_with_timeout` ignore actuellement totalement le paramètre `timeout`.
+
 ## 🧠 Architecture
 ```mermaid
 graph TD
