@@ -102,7 +102,7 @@ def test_modifier_and_switch(monkeypatch):
             return f"element-{ident}"
 
     d = Driver()
-    fsu.switch_to_iframe_by_id_or_name(d, "if1")
+    fsu.switch_to_frame_by_id(d, "if1")
     fsu.switch_to_default_content(d)
     assert d.switch_to.frame_arg == "element-if1"
     assert d.switch_to.default
@@ -416,6 +416,31 @@ def test_ouvrir_navigateur_sans_plein_ecran(monkeypatch):
     assert isinstance(br, Browser)
     assert br.url == "http://ok"
     assert br.maximized is False
+
+
+def test_ouvrir_navigateur_headless_and_no_sandbox(monkeypatch):
+    class Browser:
+        def __init__(self):
+            self.url = None
+
+        def get(self, url):
+            self.url = url
+
+        def maximize_window(self):
+            pass
+
+    monkeypatch.setattr(fsu.navigation, "verifier_accessibilite_url", lambda u: True)
+    monkeypatch.setattr(
+        fsu.navigation.webdriver, "Edge", lambda options=None: Browser()
+    )
+    br = fsu.ouvrir_navigateur_sur_ecran_principal(
+        True,
+        url="http://ok",
+        headless=True,
+        no_sandbox=True,
+    )
+    assert isinstance(br, Browser)
+    assert br.url == "http://ok"
 
 
 def test_force_full_coverage():

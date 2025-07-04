@@ -1,5 +1,6 @@
-import pytest
 from configparser import ConfigParser
+
+import pytest
 
 
 class DummyLogger:
