@@ -33,6 +33,7 @@ def test_load_and_save(tmp_path, monkeypatch):
 
 def test_config_property_without_load(tmp_path):
     manager = ConfigManager(log_file=str(tmp_path / "log.html"))
+    assert not manager.is_loaded
     with pytest.raises(RuntimeError):
         _ = manager.config
 
@@ -54,7 +55,9 @@ def test_config_property_after_load(tmp_path, monkeypatch):
     )
 
     manager = ConfigManager(log_file=str(tmp_path / "log.html"))
+    assert not manager.is_loaded
     config = manager.load()
+    assert manager.is_loaded
     assert manager.config == config.raw
 
 
@@ -68,3 +71,19 @@ def test_load_missing_config(tmp_path, monkeypatch):
     manager = ConfigManager(log_file=str(tmp_path / "log.html"))
     with pytest.raises(FileNotFoundError):
         manager.load()
+
+
+def test_is_loaded_property(tmp_path, monkeypatch):
+    cfg_file = tmp_path / "config.ini"
+    cfg_file.write_text("[section]\nkey=value\n", encoding="utf-8")
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.messagebox.showinfo",
+        lambda *a, **k: None,
+    )
+
+    manager = ConfigManager(log_file=str(tmp_path / "log.html"))
+    assert not manager.is_loaded
+    manager.load()
+    assert manager.is_loaded

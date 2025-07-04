@@ -20,6 +20,11 @@ class ConfigManager:
         self._config: ConfigParser | None = None
 
     @property
+    def is_loaded(self) -> bool:
+        """Return ``True`` if a configuration is currently loaded."""
+        return self._config is not None
+
+    @property
     def config(self) -> ConfigParser:
         if self._config is None:
             raise RuntimeError("La configuration n'est pas chargée. Utilisez load().")
