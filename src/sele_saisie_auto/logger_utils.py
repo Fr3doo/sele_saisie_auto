@@ -11,12 +11,18 @@ COLUMN_WIDTHS = {"timestamp": "10%", "level": "6%", "message": "84%"}
 ROW_HEIGHT = "20px"
 FONT_SIZE = "12px"
 PADDING = "2px"
-LOG_LEVELS = {"INFO": 10, "DEBUG": 20, "WARNING": 30, "ERROR": 40, "CRITICAL": 50}
+LOG_LEVELS = {
+    "INFO": 10,
+    "DEBUG": 20,
+    "WARNING": 30,
+    "ERROR": 40,
+    "CRITICAL": 50,
+    "OFF": 0,
+}
 
 # Par défaut, on commence avec un niveau de log minimal (par ex., "INFO")
 DEFAULT_LOG_LEVEL = "INFO"
 LOG_LEVEL_FILTER = DEFAULT_LOG_LEVEL
-DEBUG_MODE = False
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS --------------------------------------------- #
@@ -134,32 +140,13 @@ def write_log(
     try:
         # Vérifier si le niveau de log est valide
         if level not in LOG_LEVELS:
-            if DEBUG_MODE:
-                debug_print(
-                    f"Niveau non valide ignoré : {level}"
-                )  # Log pour niveau inconnu
             return
 
         # Appliquer le filtre de niveau (gère les niveaux supérieurs ou égaux à LOG_LEVEL_FILTER)
         if LOG_LEVELS[level] > LOG_LEVELS[LOG_LEVEL_FILTER]:
-            if DEBUG_MODE:
-                debug_print(
-                    f"Niveau ignoré par filtre : {level}"
-                )  # Log pour niveau filtré
             return
 
         # Securité supplementaire pour les logs: Si le mode DEBUG est désactivé, n'afficher que les logs INFO
-        # if not DEBUG_MODE:
-        #     if level != "INFO":
-        #         # debug_print(f"Niveau ignoré - seul INFO est affiché : {level}")
-        #         return
-
-        # Si on passe ici, le niveau est autorisé
-        if DEBUG_MODE:
-            # Vérifiez l'encodage du message (débogage)
-            log_message = f"<tr><td>{datetime.now()}</td><td>{level}</td><td>{message}</td></tr>\n"
-            debug_print(f"Écriture dans le fichier pour : {level}")
-
         # Écriture dans le fichier
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -172,8 +159,6 @@ def write_log(
 
             # Ajout du message
             with open(log_file, "a", encoding="utf-8") as f:
-                if DEBUG_MODE:
-                    debug_print(f"Ajout dans le fichier HTML : {message}")
                 f.write(log_message)
             # Ajouter fermeture propre si auto_close est activé
             if auto_close:
@@ -182,20 +167,12 @@ def write_log(
         else:  # Format texte brut
             log_message = f"[{timestamp}] {level}: {message}\n"
             with open(log_file, "a", encoding="utf-8") as f:
-                if DEBUG_MODE:
-                    debug_print(f"Ajout dans le fichier TXT : {message}")
                 f.write(log_message)
 
     except OSError as e:
         raise RuntimeError(f"Erreur liée au système de fichiers : {e}")
     except Exception as e:
         raise RuntimeError(f"Erreur inattendue lors de l'écriture des logs : {e}")
-
-
-def debug_print(message):
-    """Affiche un message de débogage uniquement si DEBUG_MODE est activé."""
-    if DEBUG_MODE:
-        print(message)
 
 
 def close_logs(log_file, log_format=HTML_FORMAT):

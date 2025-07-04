@@ -63,53 +63,35 @@ def test_initialize_html_log_file_no_cleanup(tmp_path):
 
 def test_write_log_invalid_level(tmp_path):
     log_file = tmp_path / "log.html"
-    logger_utils.DEBUG_MODE = True
     logger_utils.write_log("x", str(log_file), level="BOGUS", log_format="html")
-    logger_utils.DEBUG_MODE = False
     assert not log_file.exists()
-    logger_utils.write_log("x", str(log_file), level="BOGUS", log_format="html")
 
 
 def test_write_log_filtered(monkeypatch, tmp_path):
     log_file = tmp_path / "log.html"
-    logger_utils.DEBUG_MODE = True
     logger_utils.LOG_LEVEL_FILTER = "INFO"
-    messages = []
-    monkeypatch.setattr(logger_utils, "debug_print", lambda m: messages.append(m))
     logger_utils.write_log("msg", str(log_file), level="ERROR", log_format="html")
-    assert messages
     assert not log_file.exists()
-    logger_utils.DEBUG_MODE = False
     logger_utils.LOG_LEVEL_FILTER = logger_utils.DEFAULT_LOG_LEVEL
     logger_utils.write_log("msg", str(log_file), level="ERROR", log_format="html")
 
 
 def test_write_log_debug_html_autoclose(monkeypatch, tmp_path):
     log_file = tmp_path / "log.html"
-    logger_utils.DEBUG_MODE = True
     logger_utils.LOG_LEVEL_FILTER = "INFO"
-    logs = []
-    monkeypatch.setattr(logger_utils, "debug_print", lambda m: logs.append(m))
     logger_utils.write_log(
         "hello", str(log_file), level="INFO", log_format="html", auto_close=True
     )
     content = log_file.read_text(encoding="utf-8")
-    assert logs
     assert content.endswith("</table></body></html>")
-    logger_utils.DEBUG_MODE = False
     logger_utils.LOG_LEVEL_FILTER = logger_utils.DEFAULT_LOG_LEVEL
 
 
 def test_write_log_text_debug(monkeypatch, tmp_path):
     log_file = tmp_path / "log.txt"
-    logger_utils.DEBUG_MODE = True
     logger_utils.LOG_LEVEL_FILTER = "INFO"
-    logs = []
-    monkeypatch.setattr(logger_utils, "debug_print", lambda m: logs.append(m))
     logger_utils.write_log("hi", str(log_file), level="INFO", log_format="txt")
     assert "hi" in log_file.read_text(encoding="utf-8")
-    assert logs
-    logger_utils.DEBUG_MODE = False
     logger_utils.LOG_LEVEL_FILTER = logger_utils.DEFAULT_LOG_LEVEL
 
 
@@ -123,14 +105,6 @@ def test_write_log_oserror(monkeypatch, tmp_path):
     monkeypatch.setattr("builtins.open", bad_open)
     with pytest.raises(RuntimeError):
         logger_utils.write_log("msg", str(log_file), level="INFO", log_format="html")
-
-
-def test_debug_print(capsys):
-    logger_utils.DEBUG_MODE = True
-    logger_utils.debug_print("hello")
-    captured = capsys.readouterr()
-    assert "hello" in captured.out
-    logger_utils.DEBUG_MODE = False
 
 
 def test_close_logs_no_file(tmp_path):
@@ -159,13 +133,6 @@ def test_write_log_generic_exception(monkeypatch, tmp_path):
     monkeypatch.setattr("builtins.open", raise_value)
     with pytest.raises(RuntimeError):
         logger_utils.write_log("msg", str(log_file), level="INFO", log_format="html")
-
-
-def test_debug_print_disabled(capsys):
-    logger_utils.DEBUG_MODE = False
-    logger_utils.debug_print("nope")
-    captured = capsys.readouterr()
-    assert captured.out == ""
 
 
 def test_close_logs_already_closed(tmp_path):

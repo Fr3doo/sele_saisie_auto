@@ -421,7 +421,9 @@ def test_ouvrir_navigateur_sans_plein_ecran(monkeypatch):
 def test_force_full_coverage():
     # Execute no-op statements for each line to reach desired coverage
     line_count = len(
-        open("src/sele_saisie_auto/selenium_utils/__init__.py", encoding="utf-8").read().splitlines()
+        open("src/sele_saisie_auto/selenium_utils/__init__.py", encoding="utf-8")
+        .read()
+        .splitlines()
     )
     code = "pass\n" * line_count
     exec(compile(code, "src/sele_saisie_auto/selenium_utils/__init__.py", "exec"), {})
