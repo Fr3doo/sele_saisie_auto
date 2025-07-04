@@ -72,6 +72,8 @@ Une interface graphique Tkinter permet de renseigner vos identifiants chiffrés 
   ```bash
   poetry run psatime-auto
   ```
+  Cette commande crée automatiquement un fichier de log dans le répertoire
+  `logs/` si aucun chemin n'est spécifié.
 - Exécution directe des scripts :
   ```bash
   python -m sele_saisie_auto.launcher
