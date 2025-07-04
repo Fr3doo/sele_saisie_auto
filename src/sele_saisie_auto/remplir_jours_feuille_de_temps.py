@@ -11,6 +11,7 @@ from selenium.common.exceptions import (
 )
 from selenium.webdriver.common.by import By
 
+from sele_saisie_auto import messages
 from sele_saisie_auto.constants import (
     ID_TO_KEY_MAPPING,
     JOURS_SEMAINE,
@@ -115,15 +116,17 @@ def ajouter_jour_a_jours_remplis(jour, jours_remplis):
 
 def afficher_message_insertion(jour, valeur, tentative, message):
     """Affiche un message d'insertion de la valeur."""
-    if message == "tentative d'insertion n°":
+    if message == messages.TENTATIVE_INSERTION:
         write_log(
-            f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' ({message}{tentative + 1})",
+            f"{messages.CONFIRMED_VALUE} ({message}{tentative + 1})".format(
+                valeur=valeur, jour=jour
+            ),
             LOG_FILE,
             "DEBUG",
         )
     else:
         write_log(
-            f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' {message})",
+            f"{messages.CONFIRMED_VALUE} {message})".format(valeur=valeur, jour=jour),
             LOG_FILE,
             "DEBUG",
         )
@@ -195,7 +198,10 @@ def traiter_jour(driver, jour, description_cible, valeur_a_remplir, jours_rempli
                             jour, jours_remplis
                         )
                         afficher_message_insertion(
-                            jour, valeur_a_remplir, attempt, "tentative d'insertion n°"
+                            jour,
+                            valeur_a_remplir,
+                            attempt,
+                            messages.TENTATIVE_INSERTION,
                         )
                         break
 
@@ -218,7 +224,7 @@ def traiter_jour(driver, jour, description_cible, valeur_a_remplir, jours_rempli
 
                 except StaleElementReferenceException:
                     write_log(
-                        f"Référence obsolète pour '{jour}', tentative {attempt + 1}",
+                        f"{messages.REFERENCE_OBSOLETE} pour '{jour}', tentative {attempt + 1}",
                         LOG_FILE,
                         "DEBUG",
                     )
@@ -228,7 +234,7 @@ def traiter_jour(driver, jour, description_cible, valeur_a_remplir, jours_rempli
             # Si toutes les tentatives échouent, indiquer un message d'échec
             if attempt == MAX_ATTEMPTS:
                 write_log(
-                    f"Échec de l'insertion de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {MAX_ATTEMPTS} tentatives.",
+                    f"{messages.ECHEC_INSERTION} de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {MAX_ATTEMPTS} tentatives.",
                     LOG_FILE,
                     "DEBUG",
                 )
@@ -278,7 +284,7 @@ def remplir_mission_specifique(driver, jour, valeur_a_remplir, jours_remplis):
                 if is_correct_value:
                     jours_remplis = ajouter_jour_a_jours_remplis(jour, jours_remplis)
                     afficher_message_insertion(
-                        jour, valeur_a_remplir, attempt, "tentative d'insertion n°"
+                        jour, valeur_a_remplir, attempt, messages.TENTATIVE_INSERTION
                     )
                     break
 
@@ -299,7 +305,7 @@ def remplir_mission_specifique(driver, jour, valeur_a_remplir, jours_remplis):
 
             except StaleElementReferenceException:
                 write_log(
-                    f"Référence obsolète pour '{jour}', tentative {attempt + 1}",
+                    f"{messages.REFERENCE_OBSOLETE} pour '{jour}', tentative {attempt + 1}",
                     LOG_FILE,
                     "DEBUG",
                 )
@@ -309,7 +315,7 @@ def remplir_mission_specifique(driver, jour, valeur_a_remplir, jours_remplis):
         # Si toutes les tentatives échouent, indiquer un message d'échec
         if attempt == MAX_ATTEMPTS:
             write_log(
-                f"Échec de l'insertion de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {MAX_ATTEMPTS} tentatives.",
+                f"{messages.ECHEC_INSERTION} de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {MAX_ATTEMPTS} tentatives.",
                 LOG_FILE,
                 "DEBUG",
             )
@@ -356,7 +362,7 @@ def _insert_value_with_retries(driver, field_id, value, max_attempts, waiter):
                 return
         except StaleElementReferenceException:
             write_log(
-                f"Référence obsolète pour '{field_id}', tentative {attempt + 1}.",
+                f"{messages.REFERENCE_OBSOLETE} pour '{field_id}', tentative {attempt + 1}.",
                 LOG_FILE,
                 "ERROR",
             )
@@ -364,7 +370,7 @@ def _insert_value_with_retries(driver, field_id, value, max_attempts, waiter):
         attempt += 1
 
     write_log(
-        f"Échec de l'insertion pour '{field_id}' après {max_attempts} tentatives.",
+        f"{messages.ECHEC_INSERTION} pour '{field_id}' après {max_attempts} tentatives.",
         LOG_FILE,
         "ERROR",
     )
@@ -488,15 +494,15 @@ class TimeSheetHelper:
             )
 
         except NoSuchElementException as e:
-            log_error(f"Élément introuvable : {str(e)}.", LOG_FILE)
+            log_error(f"Élément {messages.INTROUVABLE} : {str(e)}.", LOG_FILE)
         except TimeoutException as e:
             log_error(f"Temps d'attente dépassé pour un élément : {str(e)}.", LOG_FILE)
         except StaleElementReferenceException as e:
-            log_error(f"Référence obsolète détectée : {str(e)}.", LOG_FILE)
+            log_error(f"{messages.REFERENCE_OBSOLETE} détectée : {str(e)}.", LOG_FILE)
         except WebDriverException as e:
-            log_error(f"Erreur WebDriver : {str(e)}.", LOG_FILE)
+            log_error(f"Erreur {messages.WEBDRIVER} : {str(e)}.", LOG_FILE)
         except Exception as e:
-            log_error(f"Erreur inattendue : {str(e)}.", LOG_FILE)
+            log_error(f"{messages.ERREUR_INATTENDUE} : {str(e)}.", LOG_FILE)
 
 
 def main(driver, log_file: str) -> None:

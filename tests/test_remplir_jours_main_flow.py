@@ -8,6 +8,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 pytestmark = pytest.mark.slow
 
+from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     initialize,
     main,
@@ -139,7 +140,7 @@ def test_traiter_champs_mission(monkeypatch):
     )
     traiter_champs_mission(None, ids, mapping, info)
     assert any("PROJECT_CODE$0" in m for m in log_calls)
-    assert any("Aucune valeur" in m for m in log_calls)
+    assert any(messages.AUCUNE_VALEUR in m for m in log_calls)
 
 
 def test_main_invokes_helper(monkeypatch):
@@ -267,7 +268,7 @@ def test_traiter_champs_mission_error(monkeypatch):
     )
 
     traiter_champs_mission(None, ids, mapping, info, max_attempts=1)
-    assert any("Référence obsolète" in m for m in logs)
+    assert any(messages.REFERENCE_OBSOLETE in m for m in logs)
 
 
 def test_main_handles_exception(monkeypatch):
