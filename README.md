@@ -193,4 +193,5 @@ Les guidelines de contribution se trouvent dans [AGENT.md](AGENT.md). Ouvrez une
    Les notes de version sont reprises du changelog.
 
 ## 🛡️ Licence
-Aucune licence spécifiée pour l'instant.
+Ce projet est publié sous l'[Unlicense](LICENSE).
+
