@@ -2,7 +2,11 @@ import importlib
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
+
+pytestmark = pytest.mark.slow
 
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     initialize,

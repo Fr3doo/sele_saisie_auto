@@ -11,6 +11,8 @@ from tests.test_saisie_automatiser_psatime import (
     setup_init,
 )
 
+pytestmark = pytest.mark.slow
+
 
 def test_initialize_date_none(monkeypatch, sample_config):
     cfg = sample_config

@@ -2,6 +2,8 @@ import sys
 import types
 from pathlib import Path
 
+import pytest
+
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
@@ -14,6 +16,8 @@ from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     traiter_jour,
     wait_for_dom,
 )
+
+pytestmark = pytest.mark.slow
 
 
 def test_wait_for_dom(monkeypatch):

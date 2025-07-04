@@ -1,8 +1,12 @@
 import types
 
+import pytest
+
 from sele_saisie_auto import console_ui, plugins
 from sele_saisie_auto import saisie_automatiser_psatime as sap
 from tests.test_saisie_automatiser_psatime import DummyManager, setup_init
+
+pytestmark = pytest.mark.slow
 
 
 def test_register_and_call():

@@ -2,12 +2,16 @@ import sys
 import types
 from pathlib import Path
 
+import pytest
+
 from sele_saisie_auto import console_ui
 from sele_saisie_auto.locators import Locators
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
+
+pytestmark = pytest.mark.slow
 
 
 class DummyEnc:
