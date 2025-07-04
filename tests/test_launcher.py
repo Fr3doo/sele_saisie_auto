@@ -3,7 +3,11 @@ import sys
 import types
 from pathlib import Path
 
+import pytest
+
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
+
+pytestmark = pytest.mark.slow
 
 
 def import_launcher(monkeypatch):

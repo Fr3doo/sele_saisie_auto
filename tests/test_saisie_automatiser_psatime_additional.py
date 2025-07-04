@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 from sele_saisie_auto import console_ui
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
@@ -14,6 +16,8 @@ from selenium.common.exceptions import (  # noqa: E402
 )
 
 from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
+
+pytestmark = pytest.mark.slow
 from sele_saisie_auto.locators import Locators  # noqa: E402
 
 

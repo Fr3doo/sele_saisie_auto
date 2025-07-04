@@ -1,9 +1,13 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto import gui_builder  # noqa: E402
+
+pytestmark = pytest.mark.slow
 
 sep_instance = None
 

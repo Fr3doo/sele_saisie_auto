@@ -12,6 +12,8 @@ from tests.test_saisie_automatiser_psatime import (  # noqa: E402
     setup_init,
 )
 
+pytestmark = pytest.mark.slow
+
 
 class DummyManager:
     def __init__(self):
