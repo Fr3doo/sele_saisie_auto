@@ -24,6 +24,7 @@ from sele_saisie_auto import (
     plugins,
     remplir_jours_feuille_de_temps,
 )
+from sele_saisie_auto.additional_info_locators import AdditionalInfoLocators
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import EncryptionService
@@ -113,8 +114,8 @@ class PSATimeAutomation:
             descriptions=[
                 {
                     "description_cible": "Temps de repos de 11h entre 2 jours travaillés respecté",
-                    "id_value_ligne": "DESCR100$",
-                    "id_value_jours": "UC_DAILYREST",
+                    "id_value_ligne": AdditionalInfoLocators.ROW_DESCR100.value,
+                    "id_value_jours": AdditionalInfoLocators.DAY_UC_DAILYREST.value,
                     "type_element": "select",
                     "valeurs_a_remplir": app_config.additional_information[
                         "periode_repos_respectee"
@@ -124,8 +125,8 @@ class PSATimeAutomation:
                     "description_cible": (
                         "Mon temps de travail effectif a débuté entre 8h00 et 10h00 et Mon temps de travail effectif a pris fin entre 16h30 et 19h00"
                     ),
-                    "id_value_ligne": "DESCR100$",
-                    "id_value_jours": "UC_DAILYREST",
+                    "id_value_ligne": AdditionalInfoLocators.ROW_DESCR100.value,
+                    "id_value_jours": AdditionalInfoLocators.DAY_UC_DAILYREST.value,
                     "type_element": "select",
                     "valeurs_a_remplir": app_config.additional_information[
                         "horaire_travail_effectif"
@@ -133,8 +134,8 @@ class PSATimeAutomation:
                 },
                 {
                     "description_cible": "J’ai travaillé plus d’une demi-journée",
-                    "id_value_ligne": "DESCR100$",
-                    "id_value_jours": "UC_DAILYREST",
+                    "id_value_ligne": AdditionalInfoLocators.ROW_DESCR100.value,
+                    "id_value_jours": AdditionalInfoLocators.DAY_UC_DAILYREST.value,
                     "type_element": "select",
                     "valeurs_a_remplir": app_config.additional_information[
                         "plus_demi_journee_travaillee"
@@ -142,8 +143,8 @@ class PSATimeAutomation:
                 },
                 {
                     "description_cible": "Durée de la pause déjeuner",
-                    "id_value_ligne": "UC_TIME_LIN_WRK_DESCR200$",
-                    "id_value_jours": "UC_TIME_LIN_WRK_UC_DAILYREST",
+                    "id_value_ligne": AdditionalInfoLocators.ROW_DESCR200.value,
+                    "id_value_jours": AdditionalInfoLocators.DAY_UC_DAILYREST_SPECIAL.value,
                     "type_element": "input",
                     "valeurs_a_remplir": app_config.additional_information[
                         "duree_pause_dejeuner"
@@ -151,15 +152,15 @@ class PSATimeAutomation:
                 },
                 {
                     "description_cible": "Matin",
-                    "id_value_ligne": "DESCR$",
-                    "id_value_jours": "UC_LOCATION_A",
+                    "id_value_ligne": AdditionalInfoLocators.ROW_DESCR.value,
+                    "id_value_jours": AdditionalInfoLocators.DAY_UC_LOCATION_A.value,
                     "type_element": "select",
                     "valeurs_a_remplir": app_config.work_location_am,
                 },
                 {
                     "description_cible": "Après-midi",
-                    "id_value_ligne": "DESCR$",
-                    "id_value_jours": "UC_LOCATION_A",
+                    "id_value_ligne": AdditionalInfoLocators.ROW_DESCR.value,
+                    "id_value_jours": AdditionalInfoLocators.DAY_UC_LOCATION_A.value,
                     "type_element": "select",
                     "valeurs_a_remplir": app_config.work_location_pm,
                 },

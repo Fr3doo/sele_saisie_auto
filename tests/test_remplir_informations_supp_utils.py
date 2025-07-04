@@ -5,6 +5,9 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto import remplir_informations_supp_utils as risu  # noqa: E402
+from sele_saisie_auto.additional_info_locators import (  # noqa: E402
+    AdditionalInfoLocators,
+)
 
 # Helper to build config dictionaries
 
@@ -13,8 +16,8 @@ def make_config(**overrides):
     base_values = {day: f"val_{day}" for day in risu.JOURS_SEMAINE.values()}
     cfg = {
         "description_cible": "desc",
-        "id_value_ligne": "ROW",
-        "id_value_jours": "DAY_",
+        "id_value_ligne": AdditionalInfoLocators.ROW_DESCR100.value,
+        "id_value_jours": AdditionalInfoLocators.DAY_UC_DAILYREST.value,
         "type_element": "input",
         "valeurs_a_remplir": base_values,
     }
@@ -68,7 +71,7 @@ def test_traiter_description_fill_input(monkeypatch):
     del cfg["valeurs_a_remplir"]["mardi"]
     risu.traiter_description(None, cfg)
 
-    assert "DAY_1$1" in ids
+    assert f"{AdditionalInfoLocators.DAY_UC_DAILYREST.value}1$1" in ids
 
     assert ("lundi", "val_lundi") not in filled  # element missing
     assert ("mardi", "val_mardi") not in filled  # value missing
