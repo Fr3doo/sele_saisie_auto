@@ -42,4 +42,11 @@ utilisé en dernier recours.
 
 ## 4. Conseils pour la production
 
+- Activez la rotation des journaux avec `logger_utils.write_log`. Limitez la
+  taille du fichier grâce à l'option `max_size_mb` pour éviter un stockage
+  excessif.
+- Sauvegardez le fichier `config.ini` après chaque modification et conservez une
+  copie sécurisée sur un serveur interne.
+- Chaque paramètre peut être surchargé par une variable d'environnement. La
+  valeur de cette dernière prime sur celles de `.env` et de `config.ini`.
 
