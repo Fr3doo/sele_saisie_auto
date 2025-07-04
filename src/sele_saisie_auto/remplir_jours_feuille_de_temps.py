@@ -1,8 +1,6 @@
 # pragma: no cover
 # remplir_jours_feuille_de_temps.py
 
-import os
-import subprocess  # nosec B404
 
 # Import des bibliothèques nécessaires
 from selenium.common.exceptions import (
@@ -96,18 +94,6 @@ def wait_for_dom(driver, waiter: Waiter | None = None):
     else:
         waiter.wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
         waiter.wait_for_dom_ready(driver, LONG_TIMEOUT)
-
-
-def clear_screen():
-    """Clear console output."""
-    cmd = "cls" if os.name == "nt" else "clear"
-    subprocess.run(
-        cmd,
-        shell=True,
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )  # nosec B603 B607 B602
 
 
 def est_en_mission(description):

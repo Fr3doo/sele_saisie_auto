@@ -3,6 +3,7 @@ import types
 import pytest
 
 from sele_saisie_auto import saisie_automatiser_psatime as sap
+from sele_saisie_auto import shared_utils
 from tests.test_saisie_automatiser_psatime import (
     DummyEnc,
     DummyManager,
@@ -35,17 +36,17 @@ def test_initialize_date_none(monkeypatch, sample_config):
 def test_clear_screen_windows(monkeypatch):
     called = []
     monkeypatch.setattr(
-        sap,
+        shared_utils,
         "os",
         types.SimpleNamespace(name="nt"),
         raising=False,
     )
     monkeypatch.setattr(
-        sap.subprocess,
+        shared_utils.subprocess,
         "run",
         lambda cmd, *a, **k: called.append(cmd),
     )
-    sap.clear_screen()
+    shared_utils.clear_screen()
     assert "cls" in called[0]
 
 

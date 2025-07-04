@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from sele_saisie_auto import console_ui
+from sele_saisie_auto import console_ui, shared_utils
 from sele_saisie_auto.locators import Locators
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
@@ -101,11 +101,11 @@ def test_helpers(monkeypatch, sample_config):
         "lundi", "8", 0, "tentative d'insertion n°", "log.html"
     )
     monkeypatch.setattr(
-        sap.subprocess,
+        shared_utils.subprocess,
         "run",
         lambda cmd, *a, **k: messages.append(cmd),
     )
-    sap.clear_screen()
+    shared_utils.clear_screen()
     sap.seprateur_menu_affichage_log("log.html")
     with monkeypatch.context() as m:
         called = []
