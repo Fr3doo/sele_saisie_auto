@@ -2,7 +2,7 @@
 
 Bienvenue dans le centre de documentation. Cette page liste tous les documents disponibles pour comprendre, utiliser et contribuer au projet.
 
-Pour l’installation et l’utilisation de base, voir [README.md](../README.md). Les contributeurs doivent également lire [AGENT.md](../AGENT.md).
+Pour l’installation et l’utilisation de base, voir [README.md](../README.md). Les contributeurs doivent également lire [guides/contributing.md](guides/contributing.md).
 Pour les tests, consultez [TESTING.md](../TESTING.md).
 
 La documentation est organisée dans les dossiers suivants :

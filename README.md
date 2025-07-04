@@ -162,7 +162,7 @@ Rapports de couverture disponibles dans `htmlcov/` via `pytest --cov-report html
 - Typage statique : `mypy`
 
 ## 🤝 Contribuer
-Les guidelines de contribution se trouvent dans [AGENT.md](AGENT.md). Ouvrez une issue avant toute grosse modification.
+Les guidelines de contribution se trouvent dans [docs/guides/contributing.md](docs/guides/contributing.md). Ouvrez une issue avant toute grosse modification.
 
 ## 📚 Documentation liée
 - [AGENT.md](AGENT.md) — rôles des différents agents
