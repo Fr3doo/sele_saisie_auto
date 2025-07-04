@@ -5,6 +5,17 @@
 [![CI](https://img.shields.io/badge/CI-GitHub_Actions-inactive.svg)](#)
 [![Coverage](https://img.shields.io/badge/coverage-0%25-red.svg)](#)
 
+## Sommaire
+- [Objectif du projet](#objectif-du-projet)
+- [Installation](#installation)
+- [Lancement](#lancement)
+- [Utilisation](#utilisation)
+- [Architecture](#architecture)
+- [Tests](#tests)
+- [Contribuer](#contribuer)
+- [Publication d'une release](#publication-dune-release)
+
+<a id="objectif-du-projet"></a>
 ## 🚀 Objectif du projet
 Automatiser la saisie de la feuille de temps PSA Time via Selenium et une interface Tkinter.
 
@@ -20,6 +31,7 @@ poetry install --no-root
 poetry run psatime-launcher
 ```
 
+<a id="installation"></a>
 ## 🔧 Installation
 ### Pré-requis système
 - Python 3.11 et [Poetry](https://python-poetry.org/)
@@ -42,12 +54,14 @@ poetry run psatime-launcher
 ### Environnement virtuel
 Poetry gère automatiquement l'environnement virtuel du projet.
 
+<a id="lancement"></a>
 ## ▶️ Lancement
 Après installation :
 ```bash
 poetry run psatime-launcher
 ```
 
+<a id="utilisation"></a>
 ## 📦 Utilisation
 Une interface graphique Tkinter permet de renseigner vos identifiants chiffrés et déclenche l'automatisation Selenium.
 
@@ -80,6 +94,7 @@ class CustomAlgorithm:
 
 `SeleSaisieAuto` appellera `solve` pour obtenir les mouvements. La fonction `sele_saisie_auto_with_timeout` ignore actuellement totalement le paramètre `timeout`.
 
+<a id="architecture"></a>
 ## 🧠 Architecture
 ```mermaid
 graph TD
@@ -146,6 +161,7 @@ Les variables d'environnement ont priorité sur le fichier de configuration.
 Un fichier `.env` peut être utilisé pour définir ces variables mais sera
 écrasé si le même nom est déjà présent dans l'environnement système.
 
+<a id="tests"></a>
 ## 🧪 Tests
 ```bash
 poetry run pre-commit run --all-files
@@ -161,6 +177,7 @@ Rapports de couverture disponibles dans `htmlcov/` via `pytest --cov-report html
 - Analyse de sécurité : `bandit` et `safety`
 - Typage statique : `mypy`
 
+<a id="contribuer"></a>
 ## 🤝 Contribuer
 Les guidelines de contribution se trouvent dans [docs/guides/contributing.md](docs/guides/contributing.md). Ouvrez une issue avant toute grosse modification.
 
@@ -169,6 +186,7 @@ Les guidelines de contribution se trouvent dans [docs/guides/contributing.md](do
 - [design_notes.md](design_notes.md) — diagrammes et exemples d'utilisation
 - [TESTING.md](TESTING.md) — stratégie de tests et conseils
 
+<a id="publication-dune-release"></a>
 ## 🚀 Publication d'une release
 1. Mettre à jour `docs/releases/changelog.md` pour décrire la nouvelle version.
 2. Incrémenter la version dans `pyproject.toml` puis commiter le fichier et le changelog :

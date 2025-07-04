@@ -5,6 +5,15 @@ Bienvenue dans le centre de documentation. Cette page liste tous les documents d
 Pour l’installation et l’utilisation de base, voir [README.md](../README.md). Les contributeurs doivent également lire [guides/contributing.md](guides/contributing.md).
 Pour les tests, consultez [TESTING.md](../TESTING.md).
 
+## Sommaire
+- [Documents disponibles](#documents-disponibles)
+  - [Overview](#overview)
+  - [Guides](#guides)
+  - [Reference](#reference)
+  - [Releases](#releases)
+- [Générer la documentation](#generer-la-documentation-optionnel)
+- [Contact](#contact)
+
 La documentation est organisée dans les dossiers suivants :
 - `overview/` – aperçu du projet
 - `guides/` – guides pratiques
