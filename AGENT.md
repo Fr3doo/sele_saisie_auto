@@ -1,60 +1,17 @@
 # 🤖 Agent Guide – Projet sele_saisie_auto
 
-## 1. Dev Environment Tips
-> ℹ️ Comment configurer et lancer l’environnement local
-- Installer les dépendances : `poetry install --no-root`
-- Pour cibler un agent : exécuter directement le fichier Python correspondant (ex. `python saisie_automatiser_psatime.py`)
-- Les scripts utilisent `config.ini` pour les paramètres. Vérifier son contenu avant exécution.
+## 1. À propos de ce guide
+Ce fichier décrit le rôle des différents agents qui composent le projet. Pour la configuration de l'environnement, l'exécution des tests et toutes les étapes nécessaires avant de soumettre une Pull Request, consultez [docs/guides/contributing.md](docs/guides/contributing.md).
 
-## 2. Testing Instructions
-> ⚠️ Les modifications doivent passer tous les tests et le lint
-- CI YAML : `.github/workflows/ci.yml` (non configuré pour le moment)
-- Lancer les tests : `pytest`
-- Pour un seul test : `pytest -k "<pattern>"`
-- Après refactorings : `flake8` (ou autre outil de lint à configurer).
 
-## 3. Pull Request (PR) Instructions
-- **Titre** : `[<nom_agent>] <Résumé concis>`
-- **Description** :
-  1. Contexte et objectif en français
-  2. Étapes pour tester
-  3. Impact éventuel sur les autres agents
-  4. CodecovIA : ajouter à la fin du commentaire PR :
-      - `@codecov-ai-reviewer review`
-      - `@codecov-ai-reviewer test`
-  5. Avant d’ouvrir la PR :
-      - exécuter `poetry install` et `poetry.lock`
-      - exécuter `poetry run pre-commit run --all-files`, `poetry run pytest` et `poetry run pytest --cov=sele_saisie_auto --cov-report=term-missing`. Les deux doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
-      - executer `poetry run ruff .` et `poetry run ruff check . --fix`. Les controles doivent réussir. Si erreur, corrige-les en acceptant les modifications de ruff avant d’ouvrir la PR.
-      - executer `poetry run radon cc src/ -s` et `poetry run radon mi src/` et `poetry run radon html src/ -o radon-report`. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
-      - executer `poetry run bandit -r src/` et `poetry run bandit -r src/ -lll -iii`. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
-      - executer `poetry run safety auth`, pour démarrer le flux d'authentification ou l'état d'affichage.  Les controles doivent réussir. 
-      - executer `poetry run safety scan`, pour effectuer une analyse de vulnérabilité dans le répertoire actuel. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
-      - executer `poetry run safety system-scan`, pour effectuez une analyse sur l’ensemble de la machine de développement. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
-      - executer `poetry run safety scan --apply-fixes`, pour effectuez une mise à jour des dépendances vulnérables. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
-
-  6. Création de branche
-     
-  Utilise **une branche par fonctionnalité ou correctif**, selon la convention suivante :
-
-  | Type de branche | Préfixe recommandé     | Exemple                                  |
-  |-----------------|------------------------|------------------------------------------|
-  | Fonctionnalité  | `feature/` ou `feat/`  | `feature/inscription-utilisateur`        |
-  | Nouvelles règles métier  | `feature/` ou `feat/`  | `feature/gestion-rg-metier-x`        |
-  | Correctif       | `bugfix/` ou `fix/`    | `bugfix/correction-affichage-date`       |
-  | Refactorisation | `refactor/`            | `refactor/simplification-formulaires`    |
-  | Documentation   | `docs/`                | `docs/ajout-guide-installation`          |
-  | Hotfix          | `hotfix/`              | `hotfix/patch-urgent-en-prod`            |
-  | Environnement   | `release/`             | `release/staging` ou `release/1.2.0`     |
-
-## 4. Codex/ChatGPT Usage Tips
+## 2. Codex/ChatGPT Usage Tips
 > 🔧 Conseils pour guider l’IA dans ce repo
 - Limiter la recherche aux modules Python concernés (`*.py`).
 - Fournir des extraits de stack trace ou de logs pour le débogage.
 - Demander à l’agent de dessiner un diagramme ASCII/Mermaid avant d’écrire le code.
 - Scinder les grandes tâches en étapes : réécriture, tests, documentation.
 
-## 5. Vue d’ensemble des agents
+## 3. Vue d’ensemble des agents
 
 | Agent                   | Rôle principal                                | Fichier                                   | Entrées               | Sorties                      |
 |-------------------------|-----------------------------------------------|-------------------------------------------|-----------------------|------------------------------|
@@ -66,7 +23,7 @@
 | `Logger`                | Gestion et rotation des logs                  | `logger_utils.py`                         | Messages à enregistrer| Fichier HTML/TXT de logs     |
 | `SeleniumDriverManager` | Initialise et ferme le WebDriver             | `selenium_driver_manager.py`             | URL, options          | Instance WebDriver |
 | `SeleniumUtils`         | Fonctions utilitaires pour Selenium           | `selenium_utils/`             | WebDriver, ID, valeurs| Éléments manipulés          |
-## 6. Détails par agent
+## 4. Détails par agent
 
 ### `SeleniumFiller`
 - **Rôle** : Automatiser la saisie des temps dans PSA Time.
@@ -109,7 +66,7 @@
 - **Sorties** : instance Selenium prête à l'emploi.
 - **Dépendances** : `SeleniumUtils`, `Logger`.
 
-## 7. Schéma d’interaction
+## 5. Schéma d’interaction
 
 ```mermaid
 graph TD
@@ -126,7 +83,7 @@ graph TD
   F --> H
 ```
 
-## 8. Ajouter un nouvel agent
+## 6. Ajouter un nouvel agent
 
 1. Isoler une responsabilité unique.
 2. Créer un fichier Python dans `./` ou un sous-répertoire avec la classe ou fonction principale.
@@ -134,20 +91,20 @@ graph TD
 4. Ajouter des tests dans `tests/`.
 5. Mettre à jour `AGENT.md`.
 
-## 9. Meilleures pratiques
+## 7. Meilleures pratiques
 
 * Un agent = une responsabilité (Single Responsibility).
 * Fonctions courtes pour faciliter les tests.
 * Dépendances injectées.
 * Logs détaillés pour faciliter le débogage.
 
-## 10. TODOs & Améliorations
+## 8. TODOs & Améliorations
 * [x] Lier `AGENT.md` depuis le `README.md`.
 * [x] Créer un workflow GitHub Actions pour les tests (`ci.yml`) *(déjà présent)*.
 * [x] Documenter la procédure d’export en binaire via PyInstaller (voir `README.md`).
 * [ ] Ajouter des tests unitaires pour chaque agent.
 
-## 11. Interfaces détaillées des agents
+## 9. Interfaces détaillées des agents
 
 ### `EncryptionService` (`encryption_utils.py`)
 Service chargé du chiffrement et de la mémoire partagée.

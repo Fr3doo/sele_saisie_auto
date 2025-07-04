@@ -3,6 +3,8 @@
 Merci de contribuer à ce projet ! 🙌
 Voici les étapes et conventions à respecter avant de proposer une Pull Request (PR).
 
+Pour la description des différents agents, consultez [AGENT.md](../../AGENT.md).
+
 ---
 
 ## 🔧 Configuration de l’environnement
@@ -16,6 +18,17 @@ pre-commit install
 
 Ces commandes installent les dépendances de développement et configurent les
 hooks `pre-commit`.
+Pour installer sans l'environnement isol de Poetry, utilisez :
+```bash
+poetry install --no-root
+```
+
+Pour lancer un agent directement :
+```bash
+python saisie_automatiser_psatime.py
+```
+Les scripts lisent leurs paramètres dans `config.ini`. Vérifiez son contenu avant exécution.
+
 
 ---
 
