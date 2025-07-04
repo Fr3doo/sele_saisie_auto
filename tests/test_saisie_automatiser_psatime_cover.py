@@ -1,6 +1,5 @@
 import sys
 import types
-from configparser import ConfigParser
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
@@ -26,26 +25,6 @@ class DummyManager:
 
     def __exit__(self, exc_type, exc, tb):
         self.close()
-
-
-def make_config():
-    cfg = ConfigParser()
-    cfg["credentials"] = {"login": "enc_login", "mdp": "enc_pwd"}
-    cfg["settings"] = {
-        "url": "http://test",
-        "date_cible": "01/07/2024",
-        "liste_items_planning": '"desc"',
-    }
-    cfg["work_schedule"] = {"lundi": "En mission,8"}
-    cfg["project_information"] = {"billing_action": "Facturable"}
-    cfg["additional_information_rest_period_respected"] = {"lundi": "Oui"}
-    cfg["additional_information_work_time_range"] = {"lundi": "8-16"}
-    cfg["additional_information_half_day_worked"] = {"lundi": "Non"}
-    cfg["additional_information_lunch_break_duration"] = {"lundi": "1"}
-    cfg["work_location_am"] = {"lundi": "CGI"}
-    cfg["work_location_pm"] = {"lundi": "CGI"}
-    cfg["cgi_options_billing_action"] = {"Facturable": "B"}
-    return cfg
 
 
 def test_wait_for_dom(monkeypatch):
@@ -108,8 +87,8 @@ def test_submit_and_validate_additional_information_positive(monkeypatch):
     assert "ok" in records
 
 
-def test_initialize_debug_mode_off(monkeypatch):
-    cfg = make_config()
+def test_initialize_debug_mode_off(monkeypatch, sample_config):
+    cfg = sample_config
     from sele_saisie_auto.app_config import AppConfig
 
     app_cfg = AppConfig.from_parser(cfg)
@@ -142,8 +121,8 @@ def test_switch_to_iframe_main_target_win0_no_element(monkeypatch):
         sap.switch_to_iframe_main_target_win0("drv")
 
 
-def test_navigate_from_home_to_date_entry_page_no_elements(monkeypatch):
-    setup_init(monkeypatch)
+def test_navigate_from_home_to_date_entry_page_no_elements(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     seq = iter([False, False])
 
     def fake_wait(*a, **k):
@@ -164,8 +143,8 @@ def test_navigate_from_home_to_date_entry_page_no_elements(monkeypatch):
     sap.navigate_from_home_to_date_entry_page("drv")
 
 
-def test_handle_date_input_no_element(monkeypatch):
-    setup_init(monkeypatch)
+def test_handle_date_input_no_element(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: None)
     log = []
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: log.append("log"))
