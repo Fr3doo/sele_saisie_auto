@@ -695,8 +695,20 @@ def afficher_message_insertion(jour, valeur, tentative, message, log_file: str) 
 # ------------------------------------------------------------------------------------------------------------------ #
 
 
-def main(log_file: str) -> None:  # pragma: no cover
-    """Point d'entrée principal du script."""
+def main(log_file: str | None = None) -> None:  # pragma: no cover
+    """Point d'entrée principal du script.
+
+    Parameters
+    ----------
+    log_file : str | None, optional
+        Chemin du fichier log. S'il vaut ``None``, il sera déterminé via
+        :func:`get_log_file`.
+    """
+    if log_file is None:
+        from sele_saisie_auto.shared_utils import get_log_file
+
+        log_file = get_log_file()
+
     cfg = ConfigManager(log_file=log_file).load()
     PSATimeAutomation(log_file, cfg).run()
 
@@ -801,6 +813,4 @@ def wait_for_dom(driver):
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation
-    from sele_saisie_auto.shared_utils import get_log_file
-
-    main(get_log_file())
+    main()

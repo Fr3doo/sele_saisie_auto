@@ -17,7 +17,7 @@ L'utilisateur dispose d'un fichier `config.ini` minimal et souhaite renseigner s
 poetry run psatime-auto
 ```
 
-Cette commande lit `config.ini` dans le répertoire courant et lance directement l'automatisation.
+Cette commande lit `config.ini` dans le répertoire courant et lance directement l'automatisation. Un fichier de log est créé automatiquement sous `logs/` si aucun chemin n'est spécifié.
 
 ### Exemple de configuration minimale
 
