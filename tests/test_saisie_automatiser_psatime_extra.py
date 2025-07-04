@@ -33,8 +33,17 @@ def test_initialize_date_none(monkeypatch):
 
 def test_clear_screen_windows(monkeypatch):
     called = []
-    monkeypatch.setattr(sap.os, "name", "nt", raising=False)
-    monkeypatch.setattr(sap.os, "system", lambda cmd: called.append(cmd))
+    monkeypatch.setattr(
+        sap,
+        "os",
+        types.SimpleNamespace(name="nt"),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        sap.subprocess,
+        "run",
+        lambda cmd, *a, **k: called.append(cmd),
+    )
     sap.clear_screen()
     assert "cls" in called[0]
 

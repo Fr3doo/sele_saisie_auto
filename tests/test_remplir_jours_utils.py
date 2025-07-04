@@ -32,6 +32,9 @@ def test_utilities(monkeypatch):
     assert logs
 
     called = {}
-    monkeypatch.setattr("os.system", lambda cmd: called.setdefault("cmd", cmd))
+    monkeypatch.setattr(
+        "subprocess.run",
+        lambda cmd, *a, **k: called.setdefault("cmd", cmd),
+    )
     clear_screen()
     assert called["cmd"] in {"cls", "clear"}

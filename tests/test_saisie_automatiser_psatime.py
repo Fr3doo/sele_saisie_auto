@@ -118,7 +118,11 @@ def test_helpers(monkeypatch):
     sap.afficher_message_insertion(
         "lundi", "8", 0, "tentative d'insertion n°", "log.html"
     )
-    monkeypatch.setattr(sap.os, "system", lambda cmd: messages.append(cmd))
+    monkeypatch.setattr(
+        sap.subprocess,
+        "run",
+        lambda cmd, *a, **k: messages.append(cmd),
+    )
     sap.clear_screen()
     sap.seprateur_menu_affichage_log("log.html")
     with monkeypatch.context() as m:
