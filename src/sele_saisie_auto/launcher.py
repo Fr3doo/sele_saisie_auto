@@ -18,7 +18,6 @@ from sele_saisie_auto.gui_builder import (
 )
 from sele_saisie_auto.logger_utils import LOG_LEVELS, close_logs, initialize_logger
 from sele_saisie_auto.logging_service import Logger
-from sele_saisie_auto.main_menu import main_menu
 from sele_saisie_auto.read_or_write_file_config_ini_utils import (
     read_config_ini,
     write_config_ini,
@@ -97,6 +96,8 @@ def start_configuration(
         write_config_ini(config, log_file)
         messagebox.showinfo("Info", "Configuration enregistrée")
         root.destroy()
+        from sele_saisie_auto.main_menu import main_menu
+
         main_menu(cle_aes, log_file, encryption_service)
 
     btn_row = create_a_frame(frame, padding=(10, 10))
@@ -119,6 +120,8 @@ def main(argv: list[str] | None = None) -> None:
     multiprocessing.freeze_support()
     with EncryptionService(log_file) as encryption_service:
         cle_aes = encryption_service.cle_aes
+        from sele_saisie_auto.main_menu import main_menu
+
         main_menu(cle_aes, log_file, encryption_service)
     close_logs(log_file)
 
