@@ -189,11 +189,11 @@ Les guidelines de contribution se trouvent dans [docs/guides/contributing.md](do
 <a id="publication-dune-release"></a>
 ## 🚀 Publication d'une release
 1. Mettre à jour `docs/releases/changelog.md` pour décrire la nouvelle version.
-2. Incrémenter la version dans `pyproject.toml` puis commiter le fichier et le changelog :
+2. Utiliser `bumpversion` pour mettre à jour tous les fichiers liés à la version :
    ```bash
-   poetry version <patch|minor|major>
-   git add pyproject.toml docs/releases/changelog.md
-   git commit -m "chore(release): prepare v$(poetry version -s)"
+   bumpversion patch|minor|major
+   git add pyproject.toml README.md docs/releases/changelog.md .bumpversion.cfg
+   git commit -m "chore(release): prepare v$(bumpversion --dry-run --list | awk -F= '/new_version/ {print $2}')"
    ```
 3. Créer et pousser un tag Git :
    ```bash
