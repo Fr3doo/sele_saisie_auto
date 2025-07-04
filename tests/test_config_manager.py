@@ -56,3 +56,15 @@ def test_config_property_after_load(tmp_path, monkeypatch):
     manager = ConfigManager(log_file=str(tmp_path / "log.html"))
     config = manager.load()
     assert manager.config == config.raw
+
+
+def test_load_missing_config(tmp_path, monkeypatch):
+    """Vérifie qu'une erreur explicite est levée si ``config.ini`` manque."""
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.messagebox.showinfo",
+        lambda *a, **k: None,
+    )
+    manager = ConfigManager(log_file=str(tmp_path / "log.html"))
+    with pytest.raises(FileNotFoundError):
+        manager.load()
