@@ -14,6 +14,7 @@ def test_import_does_not_run(monkeypatch):
     mod = importlib.import_module("sele_saisie_auto.main")
     importlib.reload(mod)
     assert called == {}
+    sys.modules.pop("sele_saisie_auto.main", None)
 
 
 def test_run_as_script(monkeypatch):
@@ -24,5 +25,6 @@ def test_run_as_script(monkeypatch):
 
     dummy = types.SimpleNamespace(main=fake_main)
     monkeypatch.setitem(sys.modules, "sele_saisie_auto.launcher", dummy)
+    sys.modules.pop("sele_saisie_auto.main", None)
     runpy.run_module("sele_saisie_auto.main", run_name="__main__")
     assert called == {"run": True}
