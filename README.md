@@ -134,9 +134,12 @@ Voir [AGENT.md](AGENT.md) pour la description complète des agents.
 L'utilisation de PyInstaller permet de générer un exécutable Windows.
 
 ### Génération pas à pas
-1. Exporter puis installer les dépendances :
+Le script `scripts/export_requirements.py` se charge d'exécuter
+`poetry export` pour générer le fichier `requirements.txt` nécessaire à
+l'installation des dépendances hors de l'environnement Poetry.
+1. Exporter puis installer les dépendances :
    ```bash
-   poetry export -f requirements.txt --output requirements.txt --without-hashes
+   python scripts/export_requirements.py
    pip install -r requirements.txt
    ```
 2. Depuis le répertoire racine, exécuter PyInstaller avec les fichiers à embarquer :
