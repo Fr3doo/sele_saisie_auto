@@ -47,6 +47,7 @@ from .element_actions import (
 from .navigation import (
     definir_taille_navigateur,
     ouvrir_navigateur_sur_ecran_principal,
+    switch_to_frame_by_id,
     verifier_accessibilite_url,
 )
 from .wait_helpers import (
@@ -74,6 +75,7 @@ __all__ = [
     "find_visible",
     "find_present",
     "modifier_date_input",
+    "switch_to_frame_by_id",
     "switch_to_iframe_by_id_or_name",
     "switch_to_default_content",
     "click_element_without_wait",

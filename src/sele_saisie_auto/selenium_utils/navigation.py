@@ -5,6 +5,7 @@ from __future__ import annotations
 import requests  # type: ignore[import]
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.options import Options as EdgeOptions
 
 from . import LOG_FILE, write_log
@@ -43,6 +44,17 @@ def verifier_accessibilite_url(url):
     except requests.exceptions.RequestException as req_err:
         write_log(f"❌ Erreur de connexion à l'URL : {req_err}", LOG_FILE, "ERROR")
         return False
+
+
+def switch_to_frame_by_id(driver, frame_id):
+    """Switch into a frame identified by its DOM id."""
+    driver.switch_to.frame(driver.find_element(By.ID, frame_id))
+    write_log(
+        f"Bascule dans l'iframe '{frame_id}' réussie.",
+        LOG_FILE,
+        "DEBUG",
+    )
+    return True
 
 
 def ouvrir_navigateur_sur_ecran_principal(

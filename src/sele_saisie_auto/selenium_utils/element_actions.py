@@ -12,6 +12,7 @@ from selenium.webdriver.support.ui import Select
 from sele_saisie_auto.constants import JOURS_SEMAINE
 
 from . import LOG_FILE, write_log
+from .navigation import switch_to_frame_by_id
 
 
 def modifier_date_input(date_field, new_date, update_message):
@@ -23,11 +24,7 @@ def modifier_date_input(date_field, new_date, update_message):
 
 def switch_to_iframe_by_id_or_name(driver, iframe_identifier):
     """Switch into the iframe identified by id or name."""
-    driver.switch_to.frame(driver.find_element(By.ID, iframe_identifier))
-    write_log(
-        f"Bascule dans l'iframe '{iframe_identifier}' réussie.", LOG_FILE, "DEBUG"
-    )
-    return True
+    return switch_to_frame_by_id(driver, iframe_identifier)
 
 
 def switch_to_default_content(driver):
