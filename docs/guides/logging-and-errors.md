@@ -61,3 +61,22 @@ Les messages sont enregistres dans le dossier `logs/` sous forme de fichier HTML
 | ------------------ | ---------------------------------------------------- |
 | `DriverError` | Échec lors de l'initialisation du WebDriver |
 | `InvalidConfigError` | Paramètres manquants ou incohérents dans `config.ini` |
+| `TimeoutError` | Temps d'attente dépassé lors d'une action Selenium |
+| `WebDriverException` | Erreur générique du moteur Selenium |
+| `FileNotFoundError` | Fichier de configuration ou de log introuvable |
+| `PermissionError` | Droits insuffisants pour accéder au fichier |
+| `UnicodeDecodeError` | Caractères invalides lors de la lecture d'un fichier |
+| `RuntimeError` | État inattendu de l'application |
+| `NameError` | Objet ou identifiant manquant dans le code |
+
+## Exemple de sortie de log
+
+```
+2024-06-01 14:32:11 [INFO] Ouverture du navigateur
+2024-06-01 14:32:15 [ERROR] Timeout lors du remplissage du champ
+```
+
+Pour plus d'informations sur la configuration ou l'utilisation avancée,
+consultez également [configuration](configuration.md) et
+[advanced-usage-example](advanced-usage-example.md).
+
