@@ -70,6 +70,3 @@ current_version = "0.1.0"
 config_file = ".bumpversion.cfg"
 commit = true
 tag = true
-
-[bumpversion:file:pyproject.toml]
-[bumpversion:file:sele_saisie_auto/__init__.py]
