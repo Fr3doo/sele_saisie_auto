@@ -169,6 +169,30 @@ poetry run pytest
 ```
 Rapports de couverture disponibles dans `htmlcov/` via `pytest --cov-report html`.
 
+Pour reproduire fidèlement la configuration utilisée en production, certains
+tests lisent les variables d'environnement suivantes :
+
+- `PSATIME_URL`
+- `PSATIME_DATE_CIBLE`
+- `PSATIME_LOGIN`
+- `PSATIME_MDP`
+- `PSATIME_DEBUG_MODE`
+- `PSATIME_LISTE_ITEMS_PLANNING`
+
+Un fichier `config.ini` minimal doit également être présent à la racine du
+projet. Les tests créent des copies temporaires si nécessaire.
+
+Exemple :
+
+```bash
+PSATIME_URL=http://localhost \
+PSATIME_LOGIN=enc_user \
+PSATIME_MDP=enc_pass \
+poetry run pytest
+```
+
+Consultez [TESTING.md](TESTING.md) pour plus de détails.
+
 ## 🔍 Qualité du code
 - Formatage : `black`
 - Tri des imports : `isort`
