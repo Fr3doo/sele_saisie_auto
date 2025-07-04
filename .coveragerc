@@ -1,7 +1,6 @@
 [run]
 branch = True
-source =
-    .
+source = sele_saisie_auto
 
 [report]
 omit =
