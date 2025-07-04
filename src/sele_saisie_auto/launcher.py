@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import argparse
 import multiprocessing
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-from sele_saisie_auto import saisie_automatiser_psatime
+from sele_saisie_auto import cli, saisie_automatiser_psatime
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.gui_builder import (
     create_a_frame,
@@ -27,19 +26,6 @@ from sele_saisie_auto.read_or_write_file_config_ini_utils import (
 from sele_saisie_auto.shared_utils import get_log_file
 
 DEFAULT_SETTINGS = {"date_cible": "", "debug_mode": "INFO"}
-
-
-def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    """Parse command line arguments."""
-
-    parser = argparse.ArgumentParser(description="Launch PSA Time automation")
-    parser.add_argument(
-        "-l",
-        "--log-level",
-        choices=list(LOG_LEVELS.keys()),
-        help="Override log level",
-    )
-    return parser.parse_args(argv)
 
 
 def run_psatime(log_file: str, menu: tk.Tk, logger: Logger | None = None) -> None:
@@ -121,7 +107,7 @@ def start_configuration(
 
 def main(argv: list[str] | None = None) -> None:
     """Entry point."""
-    args = parse_args(argv)
+    args = cli.parse_args(argv)
 
     log_file = get_log_file()
     logger = Logger(log_file)
