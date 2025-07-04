@@ -8,6 +8,7 @@ from selenium.webdriver.common.by import By
 from sele_saisie_auto.constants import JOURS_SEMAINE
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.selenium_utils import (
+    Waiter,
     remplir_champ_texte,
     selectionner_option_menu_deroulant_type_select,
     trouver_ligne_par_description,
@@ -35,7 +36,7 @@ LONG_TIMEOUT = 20
 # ------------------------------------------------------------------------------------------- #
 
 
-def traiter_description(driver, config):
+def traiter_description(driver, config, waiter: Waiter | None = None):
     """
     Traite une description en fonction d'une configuration donnée.
 
@@ -90,7 +91,12 @@ def traiter_description(driver, config):
         else:
             input_id = f"{id_value_jours}{i}${row_index}"
 
-        element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
+        if waiter:
+            element = waiter.wait_for_element(
+                driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
+            )
+        else:
+            element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
         if element:
             jour = jours_semaine[i]
             write_log(
@@ -116,7 +122,12 @@ def traiter_description(driver, config):
         else:
             input_id = f"{id_value_jours}{i}${row_index}"
 
-        element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
+        if waiter:
+            element = waiter.wait_for_element(
+                driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
+            )
+        else:
+            element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
         if element:
             jour = jours_semaine[i]
             if jour not in jours_remplis:
@@ -151,3 +162,13 @@ def traiter_description(driver, config):
                 LOG_FILE,
                 "DEBUG",
             )
+
+
+class ExtraInfoHelper:
+    """Facade class using ``traiter_description`` with a shared ``Waiter``."""
+
+    def __init__(self, waiter: Waiter | None = None) -> None:
+        self.waiter = waiter or Waiter()
+
+    def traiter_description(self, driver, config):
+        traiter_description(driver, config, waiter=self.waiter)

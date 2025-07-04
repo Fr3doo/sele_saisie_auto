@@ -51,6 +51,7 @@ from .navigation import (
     verifier_accessibilite_url,
 )
 from .wait_helpers import (
+    Waiter,
     find_clickable,
     find_present,
     find_visible,
@@ -74,6 +75,7 @@ __all__ = [
     "find_clickable",
     "find_visible",
     "find_present",
+    "Waiter",
     "modifier_date_input",
     "switch_to_frame_by_id",
     "switch_to_iframe_by_id_or_name",

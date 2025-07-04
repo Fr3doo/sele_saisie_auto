@@ -27,6 +27,7 @@ from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini
 from sele_saisie_auto.selenium_utils import (
+    Waiter,
     controle_insertion,
     detecter_et_verifier_contenu,
     effacer_et_entrer_valeur,
@@ -87,11 +88,13 @@ def initialize(log_file: str) -> None:
 # ----------------------------------------------------------------------------- #
 
 
-def wait_for_dom(driver):
-    wait_until_dom_is_stable(
-        driver, timeout=DEFAULT_TIMEOUT
-    )  # Attendre que le DOM soit stable
-    wait_for_dom_ready(driver, LONG_TIMEOUT)  # chargé le DOM de page
+def wait_for_dom(driver, waiter: Waiter | None = None):
+    if waiter is None:
+        wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
+        wait_for_dom_ready(driver, LONG_TIMEOUT)
+    else:
+        waiter.wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
+        waiter.wait_for_dom_ready(driver, LONG_TIMEOUT)
 
 
 def clear_screen():
@@ -331,6 +334,7 @@ def traiter_champs_mission(
     id_to_key_mapping,
     informations_projet_mission,
     max_attempts=5,
+    waiter: Waiter | None = None,
 ):
     """Traite les champs associés aux missions ('En mission') en insérant les valeurs nécessaires."""
     for id in listes_id_informations_mission:
@@ -354,10 +358,17 @@ def traiter_champs_mission(
         )
         attempt = 0
 
-        wait_for_dom(driver)  # Attente que le DOM soit prêt
+        if waiter is not None:
+            wait_for_dom(driver, waiter=waiter)  # Attente que le DOM soit prêt
+        else:
+            wait_for_dom(driver)
 
         # Vérifier la présence de l'élément et gérer les tentatives d'insertion
-        element = wait_for_element(driver, By.ID, id, timeout=DEFAULT_TIMEOUT)
+        element = (
+            waiter.wait_for_element(driver, By.ID, id, timeout=DEFAULT_TIMEOUT)
+            if waiter
+            else wait_for_element(driver, By.ID, id, timeout=DEFAULT_TIMEOUT)
+        )
         if element:
             while attempt < max_attempts:
                 try:
@@ -411,8 +422,13 @@ def traiter_champs_mission(
 class TimeSheetHelper:
     """Helper class orchestrating the time sheet filling steps."""
 
-    def __init__(self, log_file: str) -> None:
+    def __init__(self, log_file: str, waiter: Waiter | None = None) -> None:
         self.log_file = log_file
+        self.waiter = waiter or Waiter()
+
+    def wait_for_dom(self, driver) -> None:
+        self.waiter.wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
+        self.waiter.wait_for_dom_ready(driver, LONG_TIMEOUT)
 
     def initialize(self) -> None:
         initialize(self.log_file)
@@ -447,6 +463,7 @@ class TimeSheetHelper:
                 LISTES_ID_INFORMATIONS_MISSION,
                 ID_TO_KEY_MAPPING,
                 INFORMATIONS_PROJET_MISSION,
+                waiter=self.waiter,
             )
         else:
             write_log("Aucun Jour 'En mission' détecté.", LOG_FILE, "DEBUG")
