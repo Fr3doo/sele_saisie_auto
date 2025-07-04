@@ -70,11 +70,14 @@ def initialize(log_file: str) -> None:
         day: (value.partition(",")[0].strip(), value.partition(",")[2].strip())
         for day, value in config.items("work_schedule")
     }
-    billing_map = (
-        dict(config.items("cgi_options_billing_action"))
-        if config.has_section("cgi_options_billing_action")
-        else default_cgi_options_billing_action
-    )
+    if config.has_section("cgi_options_billing_action"):
+        billing_map = {
+            k.lower(): v for k, v in config.items("cgi_options_billing_action")
+        }
+    else:
+        billing_map = {
+            opt.label.lower(): opt.code for opt in default_cgi_options_billing_action
+        }
     INFORMATIONS_PROJET_MISSION = {
         item_projet: billing_map.get(value.lower(), value)
         for item_projet, value in config.items("project_information")

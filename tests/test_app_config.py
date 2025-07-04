@@ -33,7 +33,8 @@ Facturable = B
     assert app_cfg.date_cible == "01/07/2024"
     assert app_cfg.liste_items_planning == ["a", "b"]
     assert app_cfg.raw.get("credentials", "login") == "enc"
-    assert app_cfg.cgi_options_billing_action["facturable"] == "B"
+    billing = {o.label.lower(): o.code for o in app_cfg.cgi_options_billing_action}
+    assert billing["facturable"] == "B"
 
 
 def test_env_vars_override(tmp_path, monkeypatch):

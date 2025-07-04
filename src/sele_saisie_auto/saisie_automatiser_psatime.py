@@ -100,9 +100,10 @@ class PSATimeAutomation:
             encryption_service=EncryptionService(log_file, shm_service),
             shared_memory_service=shm_service,
             informations_projet_mission={
-                item_projet: app_config.cgi_options_billing_action.get(
-                    value.lower(), value
-                )
+                item_projet: {
+                    opt.label.lower(): opt.code
+                    for opt in app_config.cgi_options_billing_action
+                }.get(value.lower(), value)
                 for item_projet, value in app_config.project_information.items()
             },
             descriptions=[

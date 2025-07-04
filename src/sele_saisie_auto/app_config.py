@@ -7,6 +7,13 @@ from configparser import ConfigParser
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
+from sele_saisie_auto.dropdown_options import (
+    BillingActionOption,
+    CGILunchOption,
+    CGIOption,
+    WorkLocationOption,
+    WorkScheduleOption,
+)
 from sele_saisie_auto.dropdown_options import cgi_options as default_cgi_options
 from sele_saisie_auto.dropdown_options import (
     cgi_options_billing_action as default_cgi_options_billing_action,
@@ -38,11 +45,11 @@ class AppConfig:
     additional_information: Dict[str, Dict[str, str]]
     work_location_am: Dict[str, str]
     work_location_pm: Dict[str, str]
-    work_location_options: List[str]
-    cgi_options: List[str]
-    cgi_options_dejeuner: List[str]
-    cgi_options_billing_action: Dict[str, str]
-    work_schedule_options: List[str]
+    work_location_options: List[WorkLocationOption]
+    cgi_options: List[CGIOption]
+    cgi_options_dejeuner: List[CGILunchOption]
+    cgi_options_billing_action: List[BillingActionOption]
+    work_schedule_options: List[WorkScheduleOption]
     raw: ConfigParser
 
     @classmethod
@@ -103,13 +110,21 @@ class AppConfig:
             else {}
         )
 
+        from typing import List as _List
+        from typing import Type, TypeVar
+
+        T = TypeVar("T")
+
         def parse_list_from_section(
-            section: str, option: str, default: List[str]
-        ) -> List[str]:
+            section: str,
+            option: str,
+            default: _List[T],
+            cls: Type[T],
+        ) -> _List[T]:
             if parser.has_section(section):
                 values = parser.get(section, option, fallback="")
                 return [
-                    item.strip().strip('"')
+                    cls(item.strip().strip('"'))
                     for item in values.split(",")
                     if item.strip()
                 ]
@@ -119,24 +134,32 @@ class AppConfig:
             "work_location_options",
             "values",
             default_work_location_options,
+            WorkLocationOption,
         )
         cgi_options = parse_list_from_section(
-            "cgi_options", "values", default_cgi_options
+            "cgi_options",
+            "values",
+            default_cgi_options,
+            CGIOption,
         )
         cgi_options_dejeuner = parse_list_from_section(
             "cgi_options_dejeuner",
             "values",
             default_cgi_options_dejeuner,
+            CGILunchOption,
         )
-        cgi_options_billing_action = (
-            {k.lower(): v for k, v in parser.items("cgi_options_billing_action")}
-            if parser.has_section("cgi_options_billing_action")
-            else default_cgi_options_billing_action
-        )
+        if parser.has_section("cgi_options_billing_action"):
+            cgi_options_billing_action = [
+                BillingActionOption(label=k, code=v)
+                for k, v in parser.items("cgi_options_billing_action")
+            ]
+        else:
+            cgi_options_billing_action = default_cgi_options_billing_action
         work_schedule_options = parse_list_from_section(
             "work_schedule_options",
             "values",
             default_work_schedule_options,
+            WorkScheduleOption,
         )
 
         return cls(
