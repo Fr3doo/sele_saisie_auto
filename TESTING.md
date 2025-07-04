@@ -38,6 +38,30 @@ Un exemple avec génération de couverture :
 poetry run pytest --cov=sele_saisie_auto --cov-report=term-missing
 ```
 
+## Configuration de l'environnement de test
+
+Certains tests utilisent des variables d'environnement pour surcharger les
+valeurs du fichier `config.ini`. Les principales variables reconnues sont :
+
+- `PSATIME_URL` – URL du portail PSA Time
+- `PSATIME_DATE_CIBLE` – date cible par défaut
+- `PSATIME_LOGIN` – identifiant chiffré
+- `PSATIME_MDP` – mot de passe chiffré
+- `PSATIME_DEBUG_MODE` – niveau de log
+- `PSATIME_LISTE_ITEMS_PLANNING` – liste d'items de planning
+
+Un fichier `config.ini` doit être présent à la racine du projet. Les tests
+créent au besoin une copie temporaire dans un répertoire isolé.
+
+### Exemple d'exécution
+
+```bash
+PSATIME_URL=http://localhost \
+PSATIME_LOGIN=enc_user \
+PSATIME_MDP=enc_pass \
+poetry run pytest
+```
+
 ---
 
 ## Commandes de couverture
