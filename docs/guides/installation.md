@@ -25,6 +25,10 @@ Ce guide explique comment installer et utiliser localement **sele_saisie_auto**.
    ```
 
 Cette suite de commandes installe tous les modules définis dans `pyproject.toml`.
+Pour générer un rapport de complexité au format HTML, ajoute également le plugin `radon-html` :
+```bash
+poetry add --group dev radon-html
+```
 
 ## 3. Sans Poetry : création d’un environnement virtuel
 

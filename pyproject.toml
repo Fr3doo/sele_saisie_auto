@@ -26,6 +26,7 @@ pre-commit = "^3.7"
 coverage = "^7.5"
 ruff = "^0.12.1"
 radon = "^6.0.1"
+radon-html = "*"
 bandit = "^1.8.5"
 safety = "^3.5.2"
 pyinstaller = {version = "^6.11.1", markers = "python_version < '3.14'"}
