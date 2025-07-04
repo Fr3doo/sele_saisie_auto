@@ -2,6 +2,9 @@
 name = "sele_saisie_auto"
 version = "0.1.0"
 description = "Automatisation de saisie de feuille de temps"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/<user>/sele_saisie_auto"
 authors = ["Anonymous <example@example.com>"]
 package-mode = true
 packages = [
@@ -17,6 +20,8 @@ requests = "^2.32.4"
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4"
 pytest-cov = "^5.0"
+pytest-xdist = "^3.6"
+pytest-mock  = "^3.14"
 flake8 = "^7.0"
 pylint = "^3.0"
 mypy = "^1.10"
@@ -26,14 +31,16 @@ pre-commit = "^3.7"
 coverage = "^7.5"
 ruff = "^0.12.1"
 radon = "^6.0.1"
-radon-html = "*"
 bandit = "^1.8.5"
 safety = "^3.5.2"
+types-requests = "^2.32"
+types-pyinstaller = "^6.11"
 pyinstaller = {version = "^6.11.1", markers = "python_version < '3.14'"}
 pyinstaller-hooks-contrib = {version = "^2024.10", markers = "python_version < '3.14'"}
 
 [tool.black]
 line-length = 88
+target-version = ["py311"]
 
 [tool.isort]
 profile = "black"
@@ -52,7 +59,7 @@ line-length = 88
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "C90"]
+select = ["E", "F", "I", "UP", "C90", "N", "B"]
 ignore = ["E501"]
 
 [tool.ruff.lint.mccabe]
@@ -61,3 +68,8 @@ max-complexity = 10
 [tool.bumpversion]
 current_version = "0.1.0"
 config_file = ".bumpversion.cfg"
+commit = true
+tag = true
+
+[bumpversion:file:pyproject.toml]
+[bumpversion:file:sele_saisie_auto/__init__.py]
