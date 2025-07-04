@@ -45,3 +45,7 @@ strict = true
 [tool.poetry.scripts]
 psatime-launcher = "sele_saisie_auto.launcher:main"
 psatime-auto = "sele_saisie_auto.saisie_automatiser_psatime:main"
+
+[tool.bumpversion]
+current_version = "0.1.0"
+config_file = ".bumpversion.cfg"
