@@ -7,6 +7,7 @@ import multiprocessing
 import tkinter as tk
 from tkinter import messagebox, ttk
 
+from sele_saisie_auto import saisie_automatiser_psatime
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.gui_builder import (
     create_a_frame,
@@ -19,8 +20,10 @@ from sele_saisie_auto.gui_builder import (
 from sele_saisie_auto.logger_utils import LOG_LEVELS, close_logs, initialize_logger
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.main_menu import main_menu
-from sele_saisie_auto import saisie_automatiser_psatime
-from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini, write_config_ini
+from sele_saisie_auto.read_or_write_file_config_ini_utils import (
+    read_config_ini,
+    write_config_ini,
+)
 from sele_saisie_auto.shared_utils import get_log_file
 
 DEFAULT_SETTINGS = {"date_cible": "", "debug_mode": "INFO"}
@@ -50,7 +53,6 @@ def run_psatime(log_file: str, menu: tk.Tk, logger: Logger | None = None) -> Non
 
 def run_psatime_with_credentials(
     encryption_service: EncryptionService,
-    cle_aes: bytes,
     login_var: tk.StringVar,
     mdp_var: tk.StringVar,
     log_file: str,
@@ -64,11 +66,14 @@ def run_psatime_with_credentials(
         messagebox.showerror("Erreur", "Veuillez entrer vos identifiants")
         return
 
+    cle_aes = encryption_service.cle_aes
+    if cle_aes is None:
+        messagebox.showerror("Erreur", "Clé AES manquante")
+        return
+
     data_login = encryption_service.chiffrer_donnees(login, cle_aes)
     data_pwd = encryption_service.chiffrer_donnees(password, cle_aes)
-    shm_service = encryption_service.shared_memory_service
-    shm_service.stocker_en_memoire_partagee("memoire_nom", data_login)
-    shm_service.stocker_en_memoire_partagee("memoire_mdp", data_pwd)
+    encryption_service.store_credentials(data_login, data_pwd)
 
     run_psatime(log_file, menu, logger=logger)
 
@@ -126,9 +131,9 @@ def main(argv: list[str] | None = None) -> None:
     initialize_logger(config, log_level_override=args.log_level)
 
     multiprocessing.freeze_support()
-    encryption_service = EncryptionService(log_file)
-    cle_aes = encryption_service.generer_cle_aes(32)
-    main_menu(cle_aes, log_file, encryption_service)
+    with EncryptionService(log_file) as encryption_service:
+        cle_aes = encryption_service.cle_aes
+        main_menu(cle_aes, log_file, encryption_service)
     close_logs(log_file)
 
 

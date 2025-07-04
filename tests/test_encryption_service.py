@@ -139,3 +139,13 @@ def test_dechiffrer_donnees_error(monkeypatch):
 
     with pytest.raises(ValueError):
         service.dechiffrer_donnees(data, key)
+
+
+def test_context_manager_stores_and_cleans():
+    service = EncryptionService()
+    with service as enc:
+        assert enc.cle_aes and len(enc.cle_aes) == 32
+        enc.store_credentials(b"login", b"pwd")
+        assert enc._memoires
+    # after context exit memories list should be cleared
+    assert enc._memoires == []

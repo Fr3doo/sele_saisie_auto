@@ -41,12 +41,23 @@ class DummyEncryption:
             )
         )
 
+    def __enter__(self):
+        self.cle_aes = b"k" * 32
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.stored.clear()
+
     def chiffrer_donnees(self, val, key):
         self.encrypted.append((val, key))
         return val.encode()
 
     def generer_cle_aes(self, size):
         return b"k" * size
+
+    def store_credentials(self, login, pwd):
+        self.stored.append(("memoire_nom", login))
+        self.stored.append(("memoire_mdp", pwd))
 
 
 class DummyRoot:
@@ -105,7 +116,10 @@ def test_run_psatime(monkeypatch):
             calls["log"] = msg
 
     fake_mod = types.SimpleNamespace(main=lambda lf: calls.setdefault("main", lf))
-    monkeypatch.setitem(sys.modules, "sele_saisie_auto.saisie_automatiser_psatime", fake_mod)
+    monkeypatch.setitem(
+        sys.modules, "sele_saisie_auto.saisie_automatiser_psatime", fake_mod
+    )
+    monkeypatch.setattr(launcher, "saisie_automatiser_psatime", fake_mod)
 
     launcher.run_psatime("file.html", menu, logger=DummyLogger())
 
@@ -117,6 +131,7 @@ def test_run_psatime(monkeypatch):
 def test_run_psatime_with_credentials(monkeypatch):
     launcher = import_launcher(monkeypatch)
     enc = DummyEncryption()
+    enc.cle_aes = b"k" * 32
     login = DummyVar("user")
     pwd = DummyVar("pass")
     menu = DummyMenu()
@@ -127,9 +142,7 @@ def test_run_psatime_with_credentials(monkeypatch):
         "run_psatime",
         lambda lf, m, logger=None: run_called.setdefault("run", lf),
     )
-    launcher.run_psatime_with_credentials(
-        enc, b"k", login, pwd, "log", menu, logger=None
-    )
+    launcher.run_psatime_with_credentials(enc, login, pwd, "log", menu, logger=None)
 
     assert ("memoire_nom", b"user") in enc.stored
     assert ("memoire_mdp", b"pass") in enc.stored
@@ -139,13 +152,14 @@ def test_run_psatime_with_credentials(monkeypatch):
 def test_run_psatime_with_credentials_missing(monkeypatch):
     launcher = import_launcher(monkeypatch)
     enc = DummyEncryption()
+    enc.cle_aes = b"k" * 32
     login = DummyVar("")
     pwd = DummyVar("")
     menu = DummyMenu()
     errors = []
 
     monkeypatch.setattr(launcher.messagebox, "showerror", lambda *a: errors.append(a))
-    launcher.run_psatime_with_credentials(enc, b"k", login, pwd, "log", menu)
+    launcher.run_psatime_with_credentials(enc, login, pwd, "log", menu)
 
     assert errors
     assert not enc.stored
@@ -181,7 +195,7 @@ def test_start_configuration_and_save(monkeypatch):
         launcher.messagebox, "showinfo", lambda *a: saved.setdefault("info", True)
     )
     monkeypatch.setattr(
-        launcher, "sele_saisie_auto.main_menu", lambda *a, **k: saved.setdefault("menu", True)
+        launcher, "main_menu", lambda *a, **k: saved.setdefault("menu", True)
     )
 
     launcher.start_configuration(b"k", "log", DummyEncryption())
@@ -217,7 +231,7 @@ def test_main(monkeypatch):
     )
     enc = DummyEncryption()
     monkeypatch.setattr(launcher, "EncryptionService", lambda lf: enc)
-    monkeypatch.setattr(launcher, "sele_saisie_auto.main_menu", lambda *a: init.setdefault("menu", a))
+    monkeypatch.setattr(launcher, "main_menu", lambda *a: init.setdefault("menu", a))
     monkeypatch.setattr(launcher, "close_logs", lambda lf: init.setdefault("close", lf))
 
     launcher.main([])
