@@ -9,7 +9,6 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from multiprocessing import shared_memory
-from typing import Dict, List
 
 from selenium.common.exceptions import (
     NoSuchElementException,
@@ -62,8 +61,8 @@ class SaisieContext:
     config: "AppConfig"
     encryption_service: EncryptionService
     shared_memory_service: SharedMemoryService
-    informations_projet_mission: Dict[str, str]
-    descriptions: List[Dict[str, object]]
+    informations_projet_mission: dict[str, str]
+    descriptions: list[dict[str, object]]
 
 
 @dataclass
@@ -473,6 +472,88 @@ class PSATimeAutomation:
             "INFO",
         )
 
+    def _handle_date_alert(self, driver) -> None:
+        switch_to_default_content(driver)
+        alerte = Locators.ALERT_CONTENT_0.value
+        if wait_for_element(driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT):
+            click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
+            write_log(
+                "\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)",
+                self.log_file,
+                "INFO",
+            )
+            write_log(
+                "--> Modifier la date du PSATime dans le fichier ini. Le programme va s'arreter.",
+                self.log_file,
+                "INFO",
+            )
+            sys.exit()
+        else:
+            write_log("Date validée avec succès.", self.log_file, "DEBUG")
+
+    def _click_action_button(self, driver) -> None:
+        if CHOIX_USER:
+            elem_id = Locators.OK_BUTTON.value
+        else:
+            elem_id = Locators.COPY_TIME_BUTTON.value
+        element_present = wait_for_element(
+            driver,
+            By.ID,
+            elem_id,
+            ec.element_to_be_clickable,
+            timeout=DEFAULT_TIMEOUT,
+        )
+        if element_present:
+            click_element_without_wait(driver, By.ID, elem_id)
+
+    def _handle_save_alerts(self, driver) -> None:
+        alerts = [
+            Locators.ALERT_CONTENT_1.value,
+            Locators.ALERT_CONTENT_2.value,
+            Locators.ALERT_CONTENT_3.value,
+        ]
+        switch_to_default_content(driver)
+        for alerte in alerts:
+            if wait_for_element(driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT):
+                click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
+                write_log(
+                    "⚠️ Alerte rencontrée lors de la sauvegarde.",
+                    self.log_file,
+                    "INFO",
+                )
+                break
+
+    def _process_date_entry(self, driver) -> None:
+        self.handle_date_input(driver, self.context.config.date_cible)
+        program_break_time(
+            1,
+            "Veuillez patienter. Court délai pour stabilisation du DOM",
+        )
+        print()
+        if self.submit_date_cible(driver):
+            self._handle_date_alert(driver)
+
+    def _fill_and_save_timesheet(self, driver) -> None:
+        self.wait_for_dom(driver)
+        self.switch_to_iframe_main_target_win0(driver)
+        program_break_time(
+            1,
+            "Veuillez patienter. Court délai pour stabilisation du DOM",
+        )
+        print()
+        self._click_action_button(driver)
+        self.wait_for_dom(driver)
+        remplir_jours_feuille_de_temps.main(driver, self.log_file)
+        self.navigate_from_work_schedule_to_additional_information_page(driver)
+        self.submit_and_validate_additional_information(driver)
+        switch_to_default_content(driver)
+        self.wait_for_dom(driver)
+        if self.switch_to_iframe_main_target_win0(driver):
+            detecter_doublons_jours(driver)
+            plugins.call("before_submit", driver)
+            if self.save_draft_and_validate(driver):
+                self._handle_save_alerts(driver)
+
     def run(self) -> None:  # pragma: no cover
         """Point d'entrée principal de l'automatisation."""
         manager = ConfigManager(log_file=self.log_file)
@@ -490,105 +571,9 @@ class PSATimeAutomation:
                     credentials.login,
                     credentials.password,
                 )
-                switched_to_iframe = self.navigate_from_home_to_date_entry_page(driver)
-                if switched_to_iframe:
-                    self.handle_date_input(driver, self.context.config.date_cible)
-                    program_break_time(
-                        1, "Veuillez patienter. Court délai pour stabilisation du DOM"
-                    )
-                    print()
-                    element_present = self.submit_date_cible(driver)
-                    if element_present:
-                        switch_to_default_content(driver)
-                        alertes = [Locators.ALERT_CONTENT_0.value]
-                        for alerte in alertes:
-                            element_present = wait_for_element(
-                                driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT
-                            )
-                            if element_present:
-                                click_element_without_wait(
-                                    driver, By.ID, Locators.CONFIRM_OK.value
-                                )
-                                if alerte == alertes[0]:
-                                    write_log(
-                                        "\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)",
-                                        self.log_file,
-                                        "INFO",
-                                    )
-                                    write_log(
-                                        "--> Modifier la date du PSATime dans le fichier ini. Le programme va s'arreter.",
-                                        self.log_file,
-                                        "INFO",
-                                    )
-                                sys.exit()
-                        else:
-                            write_log(
-                                "Date validée avec succès.", self.log_file, "DEBUG"
-                            )
-
-                self.wait_for_dom(driver)
-                switched_to_iframe = self.switch_to_iframe_main_target_win0(driver)
-                program_break_time(
-                    1, "Veuillez patienter. Court délai pour stabilisation du DOM"
-                )
-                print()
-
-                if CHOIX_USER:
-                    element_present = wait_for_element(
-                        driver,
-                        By.ID,
-                        Locators.OK_BUTTON.value,
-                        ec.element_to_be_clickable,
-                        timeout=DEFAULT_TIMEOUT,
-                    )
-                    if element_present:
-                        click_element_without_wait(
-                            driver, By.ID, Locators.OK_BUTTON.value
-                        )
-                else:
-                    element_present = wait_for_element(
-                        driver,
-                        By.ID,
-                        Locators.COPY_TIME_BUTTON.value,
-                        ec.element_to_be_clickable,
-                        timeout=DEFAULT_TIMEOUT,
-                    )
-                    if element_present:
-                        click_element_without_wait(
-                            driver, By.ID, Locators.COPY_TIME_BUTTON.value
-                        )
-
-                self.wait_for_dom(driver)
-                remplir_jours_feuille_de_temps.main(driver, self.log_file)
-                self.navigate_from_work_schedule_to_additional_information_page(driver)
-                self.submit_and_validate_additional_information(driver)
-                switch_to_default_content(driver)
-                self.wait_for_dom(driver)
-                switched_to_iframe = self.switch_to_iframe_main_target_win0(driver)
-                if switched_to_iframe:
-                    detecter_doublons_jours(driver)
-                    plugins.call("before_submit", driver)
-                    if self.save_draft_and_validate(driver):
-                        switch_to_default_content(driver)
-                        alertes = [
-                            Locators.ALERT_CONTENT_1.value,
-                            Locators.ALERT_CONTENT_2.value,
-                            Locators.ALERT_CONTENT_3.value,
-                        ]
-                        for alerte in alertes:
-                            element_present = wait_for_element(
-                                driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT
-                            )
-                            if element_present:
-                                click_element_without_wait(
-                                    driver, By.ID, Locators.CONFIRM_OK.value
-                                )
-                                write_log(
-                                    "⚠️ Alerte rencontrée lors de la sauvegarde.",
-                                    self.log_file,
-                                    "INFO",
-                                )
-                                break
+                if self.navigate_from_home_to_date_entry_page(driver):
+                    self._process_date_entry(driver)
+                    self._fill_and_save_timesheet(driver)
                 self.wait_for_dom(driver)
                 self.switch_to_iframe_main_target_win0(driver)
                 self.wait_for_dom(driver)
