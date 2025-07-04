@@ -2,39 +2,45 @@
 
 ---
 
-## ✅ Configuration des tests
+## Installation des dépendances
 
-Ce projet utilise principalement **pytest** pour les tests unitaires. Pour d’autres environnements, il est possible d’adapter la configuration à des outils comme **Vitest** ou **Jest**.
+Ce projet utilise **pytest** pour les tests unitaires.
 
-1. Installer les dépendances nécessaires :
-   ```bash
-   poetry install --no-root
-   # ou pour un projet JS/TS
-   npm install
-   ```
-2. Placer la configuration spécifique à l’outil de test dans un fichier à la racine (ex. `pytest.ini`, `vitest.config.ts`).
+```bash
+poetry install --no-root
+```
+
+Placer la configuration spécifique aux tests dans un fichier à la racine du projet (ex. `pytest.ini`).
 
 ---
 
-## ✅ Outils de test
+## Exécution de `pre-commit`
 
-* [PyTest](https://docs.pytest.org/) pour la logique Python.
-* [Testing Library](https://testing-library.com/docs/) pour les composants front-end (React, Vue, etc.).
-* [MSW](https://mswjs.io/) pour simuler les appels réseau.
-* [Vitest](https://vitest.dev/) ou [Jest](https://jestjs.io/) pour les projets TypeScript/JavaScript.
+L’analyse automatique du code se lance avec :
 
----
-
-## ✅ Scripts disponibles
-
-* `npm run test` — lance l’ensemble des tests.
-* `npm run test:watch` — exécution en mode surveillance continue.
-* `npm run coverage` — génère les rapports de couverture.
-* `npm run lint` — analyse statique du code (flake8, ESLint...).
+```bash
+poetry run pre-commit run --all-files
+```
 
 ---
 
-## ✅ Rapports de couverture
+## Exécution de `pytest`
+
+Lancer l’ensemble des tests :
+
+```bash
+poetry run pytest
+```
+
+Un exemple avec génération de couverture :
+
+```bash
+poetry run pytest --cov=sele_saisie_auto --cov-report=term-missing
+```
+
+---
+
+## Commandes de couverture
 
 Les rapports de couverture peuvent être générés au format **HTML**, **JSON** ou directement dans la console.
 
@@ -44,7 +50,7 @@ Il est recommandé de viser au moins **95 %** de couverture globale. Les seuils
 
 ---
 
-## ✅ Structure des tests
+## Structure des tests
 
 ```text
 project-root/
