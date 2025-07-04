@@ -508,7 +508,7 @@ def main(driver, log_file: str) -> None:
     TimeSheetHelper(log_file).run(driver)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover - manual invocation
     from sele_saisie_auto.shared_utils import get_log_file
 
     main(None, get_log_file())

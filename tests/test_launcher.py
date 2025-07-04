@@ -165,6 +165,22 @@ def test_run_psatime_with_credentials_missing(monkeypatch):
     assert not enc.stored
 
 
+def test_run_psatime_with_credentials_no_key(monkeypatch):
+    launcher = import_launcher(monkeypatch)
+    enc = DummyEncryption()
+    enc.cle_aes = None
+    login = DummyVar("user")
+    pwd = DummyVar("pass")
+    menu = DummyMenu()
+    errors = []
+
+    monkeypatch.setattr(launcher.messagebox, "showerror", lambda *a: errors.append(a))
+    launcher.run_psatime_with_credentials(enc, login, pwd, "log", menu)
+
+    assert errors
+    assert not enc.stored
+
+
 def test_start_configuration_and_save(monkeypatch):
     launcher = import_launcher(monkeypatch)
     created_vars.clear()

@@ -104,3 +104,15 @@ def test_run_invokes_hook(monkeypatch, sample_config):
 
     assert "hook" in calls
     assert "save" in calls
+
+
+def test_hook_decorator_registers():
+    plugins.clear()
+    calls = []
+
+    @plugins.hook("after_run")
+    def cb(data):
+        calls.append(data)
+
+    plugins.call("after_run", 123)
+    assert calls == [123]

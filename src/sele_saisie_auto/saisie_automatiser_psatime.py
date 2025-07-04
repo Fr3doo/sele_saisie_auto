@@ -799,7 +799,7 @@ def wait_for_dom(driver):
     PSATimeAutomation.wait_for_dom(driver)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover - manual invocation
     from sele_saisie_auto.shared_utils import get_log_file
 
     main(get_log_file())

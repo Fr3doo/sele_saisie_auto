@@ -211,6 +211,20 @@ def test_field_helpers(monkeypatch):
     with pytest.raises(fsu.NoSuchElementException):
         fsu.detecter_et_verifier_contenu(bad_driver, "id1", "8")
 
+    stale_driver = SimpleNamespace(
+        find_element=lambda b, i: (_ for _ in ()).throw(
+            fsu.StaleElementReferenceException("stale")
+        )
+    )
+    with pytest.raises(fsu.StaleElementReferenceException):
+        fsu.detecter_et_verifier_contenu(stale_driver, "id1", "8")
+
+    error_driver = SimpleNamespace(
+        find_element=lambda b, i: (_ for _ in ()).throw(Exception("boom"))
+    )
+    with pytest.raises(Exception):
+        fsu.detecter_et_verifier_contenu(error_driver, "id1", "8")
+
     fsu.effacer_et_entrer_valeur(field2, "9")
     assert field2.sent == "9"
     assert fsu.controle_insertion(field2, "9")
