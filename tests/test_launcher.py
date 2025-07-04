@@ -98,11 +98,11 @@ def fake_stringvar(value=""):
 
 
 def test_parse_args_basic(monkeypatch):
-    launcher = import_launcher(monkeypatch)
-    args = launcher.parse_args([])
+    mod = importlib.reload(importlib.import_module("sele_saisie_auto.cli"))
+    args = mod.parse_args([])
     assert args.log_level is None
 
-    args = launcher.parse_args(["-l", "DEBUG"])
+    args = mod.parse_args(["-l", "DEBUG"])
     assert args.log_level == "DEBUG"
 
 
@@ -210,7 +210,7 @@ def test_start_configuration_and_save(monkeypatch):
 def test_main(monkeypatch):
     launcher = import_launcher(monkeypatch)
     dummy_args = types.SimpleNamespace(log_level="ERROR")
-    monkeypatch.setattr(launcher, "parse_args", lambda argv: dummy_args)
+    monkeypatch.setattr(launcher.cli, "parse_args", lambda argv: dummy_args)
     monkeypatch.setattr(launcher, "get_log_file", lambda: "log.html")
     cfg = {"settings": {}}
     monkeypatch.setattr(launcher, "read_config_ini", lambda lf: cfg)
