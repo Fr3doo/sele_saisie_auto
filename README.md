@@ -72,6 +72,12 @@ Une interface graphique Tkinter permet de renseigner vos identifiants chiffrés 
   ```bash
   poetry run psatime-auto
   ```
+- Exécution directe des scripts :
+  ```bash
+  python -m sele_saisie_auto.launcher
+  python -m sele_saisie_auto.saisie_automatiser_psatime
+  python -m sele_saisie_auto.remplir_jours_feuille_de_temps
+  ```
 
 ## 🔌 Injection de dépendances
 Certaines fonctions acceptent les modules Selenium ou Logger en paramètres pour faciliter les tests. Voir [AGENT.md](AGENT.md) pour plus de détails.

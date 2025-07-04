@@ -790,3 +790,9 @@ def cleanup_resources(driver_manager, memoire_cle, memoire_nom, memoire_mdp):
 
 def wait_for_dom(driver):
     PSATimeAutomation.wait_for_dom(driver)
+
+
+if __name__ == "__main__":
+    from sele_saisie_auto.shared_utils import get_log_file
+
+    main(get_log_file())
