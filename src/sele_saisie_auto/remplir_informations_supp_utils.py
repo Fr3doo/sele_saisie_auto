@@ -1,7 +1,6 @@
 # remplir_informations_supp_france.py
 
 # Import des bibliothèques nécessaires
-from typing import Optional
 
 from selenium.webdriver.common.by import By
 
@@ -19,7 +18,7 @@ from sele_saisie_auto.selenium_utils import (
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
-LOG_FILE: Optional[str] = None
+LOG_FILE: str | None = None
 
 
 def set_log_file(log_file: str) -> None:
@@ -36,67 +35,24 @@ LONG_TIMEOUT = 20
 # ------------------------------------------------------------------------------------------- #
 
 
-def traiter_description(driver, config, waiter: Waiter | None = None):
-    """
-    Traite une description en fonction d'une configuration donnée.
+def _build_input_id(id_value_jours: str, idx: int, row_index: int) -> str:
+    if "UC_TIME_LIN_WRK_UC_DAILYREST" in id_value_jours:
+        return f"{id_value_jours}{10 + idx}$0"
+    return f"{id_value_jours}{idx}${row_index}"
 
-    Args:
-        driver (webdriver): Instance du navigateur Selenium.
-        config (dict): Configuration contenant toutes les informations nécessaires.
-            - "description_cible" : Description à rechercher.
-            - "id_value_ligne" : Préfixe des IDs pour identifier les lignes.
-            - "id_value_jours" : Préfixe des IDs pour manipuler les jours.
-            - "type_element" : Type des éléments à manipuler ("select" ou "input").
-            - "valeurs_a_remplir" : Dictionnaire contenant les valeurs à remplir par jour.
-    """
-    description_cible = config["description_cible"]
-    id_value_ligne = config["id_value_ligne"]  # Pour trouver la ligne
-    id_value_jours = config["id_value_jours"]  # Pour les jours de la semaine
-    type_element = config["type_element"]
-    valeurs_a_remplir = config["valeurs_a_remplir"]
-    jours_semaine = JOURS_SEMAINE
 
-    # 1. Recherche de la ligne correspondant à la description
-    write_log(
-        f"🔍 Début du traitement pour la description : '{description_cible}'",
-        LOG_FILE,
-        "DEBUG",
-    )
-    row_index = trouver_ligne_par_description(driver, description_cible, id_value_ligne)
-    if row_index is None:
-        write_log(
-            f"❌ Description '{description_cible}' non trouvée avec l'id_value '{id_value_ligne}'.",
-            LOG_FILE,
-            "DEBUG",
-        )
-        return
-    write_log(
-        f"✅ Description '{description_cible}' trouvée à l'index {row_index}.",
-        LOG_FILE,
-        "DEBUG",
-    )
+def _get_element(driver, waiter: Waiter | None, input_id: str):
+    if waiter:
+        return waiter.wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
+    return wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
 
-    jours_remplis = []  # Suivre les jours déjà remplis
 
-    # 2. Boucle pour parcourir tous les jours (Dimanche = 1, Samedi = 7 ). Vérification des jours remplis.
-    write_log(
-        f"🔍 Vérification des jours déjà remplis pour '{description_cible}'.",
-        LOG_FILE,
-        "DEBUG",
-    )
-    for i in range(1, 8):  # Dimanche = 1, Samedi = 7
-        # Gestion des cas où l'ID doit inclure une différence (exemple : ajout d'un décalage pour "Durée de la pause déjeuner")
-        if "UC_TIME_LIN_WRK_UC_DAILYREST" in id_value_jours:
-            input_id = f"{id_value_jours}{10 + i}$0"  # Cas particulier
-        else:
-            input_id = f"{id_value_jours}{i}${row_index}"
-
-        if waiter:
-            element = waiter.wait_for_element(
-                driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
-            )
-        else:
-            element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
+def _collect_filled_days(driver, waiter, id_value_jours, row_index, jours_semaine):
+    jours_remplis = []
+    write_log("🔍 Vérification des jours déjà remplis...", LOG_FILE, "DEBUG")
+    for i in range(1, 8):
+        input_id = _build_input_id(id_value_jours, i, row_index)
+        element = _get_element(driver, waiter, input_id)
         if element:
             jour = jours_semaine[i]
             write_log(
@@ -111,23 +67,22 @@ def traiter_description(driver, config, waiter: Waiter | None = None):
             write_log(
                 f"❌ Élément non trouvé pour l'ID : {input_id}", LOG_FILE, "DEBUG"
             )
+    return jours_remplis
 
-    # 3. Remplir les jours (Dimanche = 1, Samedi = 7), s'ils sont encore vides.
-    write_log(
-        f"✍️ Remplissage des jours vides pour '{description_cible}'.", LOG_FILE, "DEBUG"
-    )
-    for i in range(1, 8):  # Dimanche = 1, Samedi = 7
-        if "UC_TIME_LIN_WRK_UC_DAILYREST" in id_value_jours:
-            input_id = f"{id_value_jours}{10 + i}$0"  # Cas particulier
-        else:
-            input_id = f"{id_value_jours}{i}${row_index}"
 
-        if waiter:
-            element = waiter.wait_for_element(
-                driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
-            )
-        else:
-            element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
+def _fill_missing_days(
+    driver,
+    waiter,
+    id_value_jours,
+    row_index,
+    jours_semaine,
+    jours_remplis,
+    valeurs_a_remplir,
+    type_element,
+):
+    for i in range(1, 8):
+        input_id = _build_input_id(id_value_jours, i, row_index)
+        element = _get_element(driver, waiter, input_id)
         if element:
             jour = jours_semaine[i]
             if jour not in jours_remplis:
@@ -162,6 +117,65 @@ def traiter_description(driver, config, waiter: Waiter | None = None):
                 LOG_FILE,
                 "DEBUG",
             )
+
+
+def traiter_description(driver, config, waiter: Waiter | None = None):
+    """
+    Traite une description en fonction d'une configuration donnée.
+
+    Args:
+        driver (webdriver): Instance du navigateur Selenium.
+        config (dict): Configuration contenant toutes les informations nécessaires.
+            - "description_cible" : Description à rechercher.
+            - "id_value_ligne" : Préfixe des IDs pour identifier les lignes.
+            - "id_value_jours" : Préfixe des IDs pour manipuler les jours.
+            - "type_element" : Type des éléments à manipuler ("select" ou "input").
+            - "valeurs_a_remplir" : Dictionnaire contenant les valeurs à remplir par jour.
+    """
+    description_cible = config["description_cible"]
+    id_value_ligne = config["id_value_ligne"]  # Pour trouver la ligne
+    id_value_jours = config["id_value_jours"]  # Pour les jours de la semaine
+    type_element = config["type_element"]
+    valeurs_a_remplir = config["valeurs_a_remplir"]
+    jours_semaine = JOURS_SEMAINE
+
+    write_log(
+        f"🔍 Début du traitement pour la description : '{description_cible}'",
+        LOG_FILE,
+        "DEBUG",
+    )
+    row_index = trouver_ligne_par_description(driver, description_cible, id_value_ligne)
+    if row_index is None:
+        write_log(
+            f"❌ Description '{description_cible}' non trouvée avec l'id_value '{id_value_ligne}'.",
+            LOG_FILE,
+            "DEBUG",
+        )
+        return
+    write_log(
+        f"✅ Description '{description_cible}' trouvée à l'index {row_index}.",
+        LOG_FILE,
+        "DEBUG",
+    )
+
+    jours_remplis = _collect_filled_days(
+        driver, waiter, id_value_jours, row_index, jours_semaine
+    )
+    write_log(
+        f"✍️ Remplissage des jours vides pour '{description_cible}'.",
+        LOG_FILE,
+        "DEBUG",
+    )
+    _fill_missing_days(
+        driver,
+        waiter,
+        id_value_jours,
+        row_index,
+        jours_semaine,
+        jours_remplis,
+        valeurs_a_remplir,
+        type_element,
+    )
 
 
 class ExtraInfoHelper:

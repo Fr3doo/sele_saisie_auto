@@ -3,7 +3,6 @@
 # ruff: noqa: E402
 # flake8: noqa: E402
 import time
-from typing import Optional
 
 import requests  # type: ignore[import]
 from selenium import webdriver
@@ -17,7 +16,7 @@ from selenium.webdriver.support.ui import Select, WebDriverWait
 
 from sele_saisie_auto.logger_utils import write_log
 
-LOG_FILE: Optional[str] = None
+LOG_FILE: str | None = None
 
 
 def set_log_file(log_file: str) -> None:

@@ -5,8 +5,6 @@ import os
 import subprocess  # nosec B404
 
 # Import des bibliothèques nécessaires
-from typing import Optional
-
 from selenium.common.exceptions import (
     NoSuchElementException,
     StaleElementReferenceException,
@@ -46,7 +44,7 @@ from sele_saisie_auto.shared_utils import program_break_time
 # ----------------------------------- CONSTANTE --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
 # Variables initialisées lors de l'``initialize``
-LOG_FILE: Optional[str] = None
+LOG_FILE: str | None = None
 config = None
 LISTE_ITEMS_DESCRIPTIONS = []
 JOURS_DE_TRAVAIL = {}
@@ -328,6 +326,61 @@ def remplir_mission_specifique(driver, jour, valeur_a_remplir, jours_remplis):
             )
 
 
+def _insert_value_with_retries(driver, field_id, value, max_attempts, waiter):
+    if waiter is not None:
+        wait_for_dom(driver, waiter=waiter)
+    else:
+        wait_for_dom(driver)
+
+    element = (
+        waiter.wait_for_element(driver, By.ID, field_id, timeout=DEFAULT_TIMEOUT)
+        if waiter
+        else wait_for_element(driver, By.ID, field_id, timeout=DEFAULT_TIMEOUT)
+    )
+    if not element:
+        return
+
+    attempt = 0
+    while attempt < max_attempts:
+        try:
+            input_field, is_correct_value = detecter_et_verifier_contenu(
+                driver, field_id, value
+            )
+            if is_correct_value:
+                write_log(
+                    f"Valeur correcte déjà présente pour '{field_id}'.",
+                    LOG_FILE,
+                    "DEBUG",
+                )
+                return
+
+            effacer_et_entrer_valeur(input_field, value)
+            program_break_time(1, "Stabilisation du DOM après insertion.")
+            print()
+
+            if controle_insertion(input_field, value):
+                write_log(
+                    f"Valeur '{value}' insérée avec succès pour '{field_id}'.",
+                    LOG_FILE,
+                    "DEBUG",
+                )
+                return
+        except StaleElementReferenceException:
+            write_log(
+                f"Référence obsolète pour '{field_id}', tentative {attempt + 1}.",
+                LOG_FILE,
+                "ERROR",
+            )
+
+        attempt += 1
+
+    write_log(
+        f"Échec de l'insertion pour '{field_id}' après {max_attempts} tentatives.",
+        LOG_FILE,
+        "ERROR",
+    )
+
+
 def traiter_champs_mission(
     driver,
     listes_id_informations_mission,
@@ -356,64 +409,13 @@ def traiter_champs_mission(
             LOG_FILE,
             "DEBUG",
         )
-        attempt = 0
-
-        if waiter is not None:
-            wait_for_dom(driver, waiter=waiter)  # Attente que le DOM soit prêt
-        else:
-            wait_for_dom(driver)
-
-        # Vérifier la présence de l'élément et gérer les tentatives d'insertion
-        element = (
-            waiter.wait_for_element(driver, By.ID, id, timeout=DEFAULT_TIMEOUT)
-            if waiter
-            else wait_for_element(driver, By.ID, id, timeout=DEFAULT_TIMEOUT)
+        _insert_value_with_retries(
+            driver,
+            id,
+            valeur_a_remplir,
+            max_attempts,
+            waiter,
         )
-        if element:
-            while attempt < max_attempts:
-                try:
-                    # Étape 1 : Vérification de la valeur actuelle
-                    input_field, is_correct_value = detecter_et_verifier_contenu(
-                        driver, id, valeur_a_remplir
-                    )
-                    if is_correct_value:
-                        write_log(
-                            f"Valeur correcte déjà présente pour '{id}'.",
-                            LOG_FILE,
-                            "DEBUG",
-                        )
-                        break
-
-                    # Étape 2 : Effacer et insérer la nouvelle valeur
-                    effacer_et_entrer_valeur(input_field, valeur_a_remplir)
-                    program_break_time(1, "Stabilisation du DOM après insertion.")
-                    print()
-
-                    # Étape 3 : Vérification de l'insertion
-                    if controle_insertion(input_field, valeur_a_remplir):
-                        write_log(
-                            f"Valeur '{valeur_a_remplir}' insérée avec succès pour '{id}'.",
-                            LOG_FILE,
-                            "DEBUG",
-                        )
-                        break
-
-                except StaleElementReferenceException:
-                    write_log(
-                        f"Référence obsolète pour '{id}', tentative {attempt + 1}.",
-                        LOG_FILE,
-                        "ERROR",
-                    )
-
-                attempt += 1
-
-            # Si toutes les tentatives échouent
-            if attempt == max_attempts:
-                write_log(
-                    f"Échec de l'insertion pour '{id}' après {max_attempts} tentatives.",
-                    LOG_FILE,
-                    "ERROR",
-                )
 
 
 # ----------------------------------------------------------------------------- #

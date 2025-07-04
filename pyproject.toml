@@ -46,6 +46,17 @@ strict = true
 psatime-launcher = "sele_saisie_auto.launcher:main"
 psatime-auto = "sele_saisie_auto.saisie_automatiser_psatime:main"
 
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "C90"]
+ignore = ["E501"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
 [tool.bumpversion]
 current_version = "0.1.0"
 config_file = ".bumpversion.cfg"
