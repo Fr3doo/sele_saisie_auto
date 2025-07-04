@@ -106,14 +106,10 @@ def test_parse_args_basic(monkeypatch):
     assert args.log_level == "DEBUG"
 
 
-def test_run_psatime(monkeypatch):
+def test_run_psatime(monkeypatch, dummy_logger):
     launcher = import_launcher(monkeypatch)
     menu = DummyMenu()
     calls = {}
-
-    class DummyLogger:
-        def info(self, msg):
-            calls["log"] = msg
 
     fake_mod = types.SimpleNamespace(main=lambda lf: calls.setdefault("main", lf))
     monkeypatch.setitem(
@@ -121,10 +117,10 @@ def test_run_psatime(monkeypatch):
     )
     monkeypatch.setattr(launcher, "saisie_automatiser_psatime", fake_mod)
 
-    launcher.run_psatime("file.html", menu, logger=DummyLogger())
+    launcher.run_psatime("file.html", menu, logger=dummy_logger)
 
     assert menu.destroy_called
-    assert calls["log"].startswith("Launching")
+    assert dummy_logger.records["info"][0].startswith("Launching")
     assert calls["main"] == "file.html"
 
 

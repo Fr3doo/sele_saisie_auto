@@ -8,13 +8,12 @@ from tests.test_saisie_automatiser_psatime import (
     DummyManager,
     DummySHM,
     DummySHMService,
-    make_config,
     setup_init,
 )
 
 
-def test_initialize_date_none(monkeypatch):
-    cfg = make_config()
+def test_initialize_date_none(monkeypatch, sample_config):
+    cfg = sample_config
     cfg["settings"]["date_cible"] = "none"
     from sele_saisie_auto.app_config import AppConfig
 
@@ -66,8 +65,8 @@ def test_log_initialisation_no_log():
         sap.log_initialisation()
 
 
-def test_initialize_shared_memory_error(monkeypatch):
-    setup_init(monkeypatch)
+def test_initialize_shared_memory_error(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     monkeypatch.setattr(
         sap, "shared_memory", types.SimpleNamespace(SharedMemory=DummySHM)
     )

@@ -13,8 +13,8 @@ def test_register_and_call():
     assert calls == ["drv"]
 
 
-def test_run_invokes_hook(monkeypatch):
-    setup_init(monkeypatch)
+def test_run_invokes_hook(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     sap.context.config.url = "http://test"
     sap.context.config.date_cible = "06/07/2024"
     sap.CHOIX_USER = True

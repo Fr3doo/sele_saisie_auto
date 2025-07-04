@@ -1,6 +1,5 @@
 import sys
 import types
-from configparser import ConfigParser
 from pathlib import Path
 
 from sele_saisie_auto import console_ui
@@ -69,28 +68,7 @@ class DummyManager:
         self.close()
 
 
-def make_config():
-    cfg = ConfigParser()
-    cfg["credentials"] = {"login": "enc_login", "mdp": "enc_pwd"}
-    cfg["settings"] = {
-        "url": "http://test",
-        "date_cible": "01/07/2024",
-        "liste_items_planning": '"desc1", "desc2"',
-    }
-    cfg["work_schedule"] = {"lundi": "En mission,8"}
-    cfg["project_information"] = {"billing_action": "Facturable"}
-    cfg["additional_information_rest_period_respected"] = {"lundi": "Oui"}
-    cfg["additional_information_work_time_range"] = {"lundi": "8-16"}
-    cfg["additional_information_half_day_worked"] = {"lundi": "Non"}
-    cfg["additional_information_lunch_break_duration"] = {"lundi": "1"}
-    cfg["work_location_am"] = {"lundi": "CGI"}
-    cfg["work_location_pm"] = {"lundi": "CGI"}
-    cfg["cgi_options_billing_action"] = {"Facturable": "B"}
-    return cfg
-
-
-def setup_init(monkeypatch):
-    cfg = make_config()
+def setup_init(monkeypatch, cfg):
     from sele_saisie_auto.app_config import AppConfig
 
     app_cfg = AppConfig.from_parser(cfg)
@@ -106,8 +84,8 @@ def setup_init(monkeypatch):
     )
 
 
-def test_helpers(monkeypatch):
-    setup_init(monkeypatch)
+def test_helpers(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     messages = []
     monkeypatch.setattr(sap, "write_log", lambda msg, f, level: messages.append(msg))
     assert sap.get_next_saturday_if_not_saturday("01/07/2024") == "06/07/2024"
@@ -133,15 +111,15 @@ def test_helpers(monkeypatch):
     assert messages
 
 
-def test_initialize_sets_globals(monkeypatch):
-    setup_init(monkeypatch)
+def test_initialize_sets_globals(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     assert sap.context.config.url == "http://test"
     assert sap.context.config.work_schedule["lundi"] == ("En mission", "8")
     assert sap.context.informations_projet_mission["billing_action"] == "B"
 
 
-def test_initialize_shared_memory(monkeypatch):
-    setup_init(monkeypatch)
+def test_initialize_shared_memory(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     monkeypatch.setattr(
         sap, "shared_memory", types.SimpleNamespace(SharedMemory=DummySHM)
     )
@@ -153,8 +131,8 @@ def test_initialize_shared_memory(monkeypatch):
     assert result.password == b"pass"
 
 
-def test_main_flow(monkeypatch):
-    setup_init(monkeypatch)
+def test_main_flow(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     sap.context.config.url = "http://test"
     sap.context.config.date_cible = "06/07/2024"
     sap.CHOIX_USER = True
