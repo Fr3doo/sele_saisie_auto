@@ -35,6 +35,7 @@ poetry run psatime-launcher
 ## 🔧 Installation
 ### Pré-requis système
 - Python 3.11 et [Poetry](https://python-poetry.org/)
+- Sous Windows, suivez [ce guide](docs/guides/install_poetry_windows.md) pour installer Poetry.
 
 ### Depuis les sources
 1. Clonez le dépôt puis placez-vous dans le dossier :
