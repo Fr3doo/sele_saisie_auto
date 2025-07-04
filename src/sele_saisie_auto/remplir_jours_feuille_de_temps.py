@@ -1,6 +1,9 @@
 # pragma: no cover
 # remplir_jours_feuille_de_temps.py
 
+import os
+import subprocess  # nosec B404
+
 # Import des bibliothèques nécessaires
 from typing import Optional
 
@@ -12,7 +15,11 @@ from selenium.common.exceptions import (
 )
 from selenium.webdriver.common.by import By
 
-from sele_saisie_auto.constants import ID_TO_KEY_MAPPING, JOURS_SEMAINE, LISTES_ID_INFORMATIONS_MISSION
+from sele_saisie_auto.constants import (
+    ID_TO_KEY_MAPPING,
+    JOURS_SEMAINE,
+    LISTES_ID_INFORMATIONS_MISSION,
+)
 from sele_saisie_auto.dropdown_options import (
     cgi_options_billing_action as default_cgi_options_billing_action,
 )
@@ -89,9 +96,14 @@ def wait_for_dom(driver):
 
 def clear_screen():
     """Clear console output."""
-    import os
-
-    os.system("cls" if os.name == "nt" else "clear")  # nosec B605
+    cmd = "cls" if os.name == "nt" else "clear"
+    subprocess.run(
+        cmd,
+        shell=True,
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )  # nosec B603 B607 B602
 
 
 def est_en_mission(description):

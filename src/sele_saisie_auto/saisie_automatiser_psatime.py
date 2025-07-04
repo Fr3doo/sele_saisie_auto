@@ -4,6 +4,7 @@
 # ---------------- Import des bibliothèques nécessaires ----------------------- #
 # ----------------------------------------------------------------------------- #
 import os
+import subprocess  # nosec B404
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -19,16 +20,16 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 
-from sele_saisie_auto import console_ui
-from sele_saisie_auto import plugins
-from sele_saisie_auto import remplir_jours_feuille_de_temps
+from sele_saisie_auto import console_ui, plugins, remplir_jours_feuille_de_temps
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import write_log
-from sele_saisie_auto.remplir_informations_supp_utils import set_log_file as set_log_file_infos
+from sele_saisie_auto.remplir_informations_supp_utils import (
+    set_log_file as set_log_file_infos,
+)
 from sele_saisie_auto.remplir_informations_supp_utils import traiter_description
 from sele_saisie_auto.selenium_driver_manager import SeleniumDriverManager
 from sele_saisie_auto.selenium_utils import (
@@ -643,10 +644,14 @@ TAILLE_BLOC = 128  # Taille de bloc AES pour le padding
 # ----------------------------------- FONCTIONS UTILS --------------------------------------------- #
 # ------------------------------------------------------------------------------------------------- #
 def clear_screen():
-    if os.name == "posix":
-        os.system("clear")  # nosec B605 B607
-    else:
-        os.system("cls")  # nosec B605 B607
+    cmd = "clear" if os.name == "posix" else "cls"
+    subprocess.run(
+        cmd,
+        shell=True,
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )  # nosec B603 B607 B602
 
 
 def seprateur_menu_affichage_log(log_file: str) -> None:
