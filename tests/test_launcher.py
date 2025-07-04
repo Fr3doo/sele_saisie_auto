@@ -211,7 +211,9 @@ def test_start_configuration_and_save(monkeypatch):
         launcher.messagebox, "showinfo", lambda *a: saved.setdefault("info", True)
     )
     monkeypatch.setattr(
-        launcher, "main_menu", lambda *a, **k: saved.setdefault("menu", True)
+        sys.modules["sele_saisie_auto.main_menu"],
+        "main_menu",
+        lambda *a, **k: saved.setdefault("menu", True),
     )
 
     launcher.start_configuration(b"k", "log", DummyEncryption())
@@ -247,7 +249,11 @@ def test_main(monkeypatch):
     )
     enc = DummyEncryption()
     monkeypatch.setattr(launcher, "EncryptionService", lambda lf: enc)
-    monkeypatch.setattr(launcher, "main_menu", lambda *a: init.setdefault("menu", a))
+    monkeypatch.setattr(
+        sys.modules["sele_saisie_auto.main_menu"],
+        "main_menu",
+        lambda *a: init.setdefault("menu", a),
+    )
     monkeypatch.setattr(launcher, "close_logs", lambda lf: init.setdefault("close", lf))
 
     launcher.main([])
