@@ -118,15 +118,13 @@ def afficher_message_insertion(jour, valeur, tentative, message):
     """Affiche un message d'insertion de la valeur."""
     if message == messages.TENTATIVE_INSERTION:
         write_log(
-            f"{messages.CONFIRMED_VALUE} ({message}{tentative + 1})".format(
-                valeur=valeur, jour=jour
-            ),
+            f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' ({message}{tentative + 1})",
             LOG_FILE,
             "DEBUG",
         )
     else:
         write_log(
-            f"{messages.CONFIRMED_VALUE} {message})".format(valeur=valeur, jour=jour),
+            f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' {message})",
             LOG_FILE,
             "DEBUG",
         )
