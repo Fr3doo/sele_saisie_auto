@@ -26,7 +26,7 @@ from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.locators import Locators
-from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logger_utils import initialize_logger, write_log
 from sele_saisie_auto.remplir_informations_supp_utils import (
     set_log_file as set_log_file_infos,
 )
@@ -94,6 +94,7 @@ class PSATimeAutomation:
         self.log_file = log_file
         set_log_file_selenium(log_file)
         set_log_file_infos(log_file)
+        initialize_logger(app_config.raw, log_level_override=app_config.debug_mode)
         shm_service = SharedMemoryService(log_file)
         self.context = SaisieContext(
             config=app_config,
@@ -161,68 +162,63 @@ class PSATimeAutomation:
             ],
         )
 
-        if self.context.config.debug_mode.upper() != "OFF":
-            write_log("📌 Chargement des configurations...", self.log_file, "INFO")
+        write_log("📌 Chargement des configurations...", self.log_file, "DEBUG")
+        write_log(
+            f"👉 Login : {self.context.config.encrypted_login} - pas visible, normal",
+            self.log_file,
+            "DEBUG",
+        )
+        write_log(
+            f"👉 Password : {self.context.config.encrypted_mdp} - pas visible, normal",
+            self.log_file,
+            "DEBUG",
+        )
+        write_log(f"👉 URL : {self.context.config.url}", self.log_file, "DEBUG")
+        write_log(
+            f"👉 Date cible : {self.context.config.date_cible}",
+            self.log_file,
+            "DEBUG",
+        )
+
+        write_log("👉 Planning de travail de la semaine:", self.log_file, "DEBUG")
+        for day, (activity, hours) in self.context.config.work_schedule.items():
             write_log(
-                f"👉 Login : {self.context.config.encrypted_login} - pas visible, normal",
+                f"🔹 '{day}': ('{activity}', '{hours}')",
                 self.log_file,
-                "CRITICAL",
-            )
-            write_log(
-                f"👉 Password : {self.context.config.encrypted_mdp} - pas visible, normal",
-                self.log_file,
-                "CRITICAL",
-            )
-            write_log(f"👉 URL : {self.context.config.url}", self.log_file, "CRITICAL")
-            write_log(
-                f"👉 Date cible : {self.context.config.date_cible}",
-                self.log_file,
-                "INFO",
+                "DEBUG",
             )
 
-            write_log("👉 Planning de travail de la semaine:", self.log_file, "INFO")
-            for day, (activity, hours) in self.context.config.work_schedule.items():
-                write_log(
-                    f"🔹 '{day}': ('{activity}', '{hours}')",
-                    self.log_file,
-                    "INFO",
-                )
+        write_log("👉 Infos_supp_cgi_periode_repos_respectee:", self.log_file, "DEBUG")
+        for day, status in self.context.config.additional_information[
+            "periode_repos_respectee"
+        ].items():
+            write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
 
-            write_log(
-                "👉 Infos_supp_cgi_periode_repos_respectee:", self.log_file, "INFO"
-            )
-            for day, status in self.context.config.additional_information[
-                "periode_repos_respectee"
-            ].items():
-                write_log(f"🔹 '{day}': '{status}'", self.log_file, "INFO")
+        write_log("👉 Infos_supp_cgi_horaire_travail_effectif:", self.log_file, "DEBUG")
+        for day, status in self.context.config.additional_information[
+            "horaire_travail_effectif"
+        ].items():
+            write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
 
-            write_log(
-                "👉 Infos_supp_cgi_horaire_travail_effectif:", self.log_file, "INFO"
-            )
-            for day, status in self.context.config.additional_information[
-                "horaire_travail_effectif"
-            ].items():
-                write_log(f"🔹 '{day}': '{status}'", self.log_file, "INFO")
+        write_log("👉 Planning de travail de la semaine:", self.log_file, "DEBUG")
+        for day, status in self.context.config.additional_information[
+            "plus_demi_journee_travaillee"
+        ].items():
+            write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
 
-            write_log("👉 Planning de travail de la semaine:", self.log_file, "INFO")
-            for day, status in self.context.config.additional_information[
-                "plus_demi_journee_travaillee"
-            ].items():
-                write_log(f"🔹 '{day}': '{status}'", self.log_file, "INFO")
+        write_log("👉 Infos_supp_cgi_duree_pause_dejeuner:", self.log_file, "DEBUG")
+        for day, status in self.context.config.additional_information[
+            "duree_pause_dejeuner"
+        ].items():
+            write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
 
-            write_log("👉 Infos_supp_cgi_duree_pause_dejeuner:", self.log_file, "INFO")
-            for day, status in self.context.config.additional_information[
-                "duree_pause_dejeuner"
-            ].items():
-                write_log(f"🔹 '{day}': '{status}'", self.log_file, "INFO")
+        write_log("👉 Lieu de travail Matin:", self.log_file, "DEBUG")
+        for day, location in self.context.config.work_location_am.items():
+            write_log(f"🔹 '{day}': '{location}'", self.log_file, "DEBUG")
 
-            write_log("👉 Lieu de travail Matin:", self.log_file, "INFO")
-            for day, location in self.context.config.work_location_am.items():
-                write_log(f"🔹 '{day}': '{location}'", self.log_file, "INFO")
-
-            write_log("👉 Lieu de travail Apres-midi:", self.log_file, "INFO")
-            for day, location in self.context.config.work_location_pm.items():
-                write_log(f"🔹 '{day}': '{location}'", self.log_file, "INFO")
+        write_log("👉 Lieu de travail Apres-midi:", self.log_file, "DEBUG")
+        for day, location in self.context.config.work_location_pm.items():
+            write_log(f"🔹 '{day}': '{location}'", self.log_file, "DEBUG")
 
     def log_initialisation(self) -> None:
         """Initialise les logs et vérifie les configurations essentielles."""

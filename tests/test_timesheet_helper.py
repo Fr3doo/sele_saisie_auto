@@ -54,9 +54,12 @@ def test_remplir_mission_calls_helpers(monkeypatch):
         calls["specifique"].append((jour, val))
         jours.append(f"mission_{jour}")
 
-    monkeypatch.setattr("sele_saisie_auto.remplir_jours_feuille_de_temps.traiter_jour", fake_traiter)
     monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.remplir_mission_specifique", fake_specifique
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.traiter_jour", fake_traiter
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.remplir_mission_specifique",
+        fake_specifique,
     )
 
     result = remplir_mission(None, jours_de_travail, jours_remplis)
@@ -80,7 +83,8 @@ def test_timesheethelper_run_sequence(monkeypatch):
         helper, "handle_additional_fields", lambda d: seq.append("extra")
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log", lambda *a, **k: None
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
+        lambda *a, **k: None,
     )
     helper.run(None)
     assert seq == ["init", "std", "work", "extra"]

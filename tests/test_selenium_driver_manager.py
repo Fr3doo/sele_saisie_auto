@@ -19,13 +19,16 @@ def test_open_calls_utils(monkeypatch):
         return Dummy()
 
     monkeypatch.setattr(
-        "sele_saisie_auto.selenium_driver_manager.ouvrir_navigateur_sur_ecran_principal", fake_open
+        "sele_saisie_auto.selenium_driver_manager.ouvrir_navigateur_sur_ecran_principal",
+        fake_open,
     )
     monkeypatch.setattr(
         "sele_saisie_auto.selenium_driver_manager.definir_taille_navigateur",
         lambda driver, w, h: driver,
     )
-    monkeypatch.setattr("sele_saisie_auto.selenium_driver_manager.wait_for_dom_ready", lambda d, t: None)
+    monkeypatch.setattr(
+        "sele_saisie_auto.selenium_driver_manager.wait_for_dom_ready", lambda d, t: None
+    )
 
     manager = SeleniumDriverManager("log.html")
     driver = manager.open("http://test", fullscreen=True, headless=True)

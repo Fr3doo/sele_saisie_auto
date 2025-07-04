@@ -87,6 +87,8 @@ def test_submit_and_validate_additional_information_positive(monkeypatch):
     assert "ok" in records
 
 
+
+
 def test_initialize_debug_mode_off(monkeypatch, sample_config):
     cfg = sample_config
     from sele_saisie_auto.app_config import AppConfig
@@ -97,19 +99,18 @@ def test_initialize_debug_mode_off(monkeypatch, sample_config):
         "ConfigManager",
         lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
     )
-    messages = []
-    monkeypatch.setattr(sap, "write_log", lambda msg, f, level: messages.append(msg))
+    log_path = tmp_path / "log.html"
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
     monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyManager())
     app_cfg.debug_mode = "OFF"
-    sap.initialize("log.html", app_cfg)
+    sap.initialize(str(log_path), app_cfg)
     monkeypatch.setattr(
         sap,
         "ConfigManager",
         lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
     )
-    assert not messages  # no debug logs when debug_mode is OFF
+    assert not log_path.exists() or log_path.read_text(encoding="utf-8") == ""
 
 
 def test_switch_to_iframe_main_target_win0_no_element(monkeypatch):

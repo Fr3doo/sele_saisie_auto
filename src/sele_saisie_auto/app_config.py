@@ -11,9 +11,15 @@ from sele_saisie_auto.dropdown_options import cgi_options as default_cgi_options
 from sele_saisie_auto.dropdown_options import (
     cgi_options_billing_action as default_cgi_options_billing_action,
 )
-from sele_saisie_auto.dropdown_options import cgi_options_dejeuner as default_cgi_options_dejeuner
-from sele_saisie_auto.dropdown_options import work_location_options as default_work_location_options
-from sele_saisie_auto.dropdown_options import work_schedule_options as default_work_schedule_options
+from sele_saisie_auto.dropdown_options import (
+    cgi_options_dejeuner as default_cgi_options_dejeuner,
+)
+from sele_saisie_auto.dropdown_options import (
+    work_location_options as default_work_location_options,
+)
+from sele_saisie_auto.dropdown_options import (
+    work_schedule_options as default_work_schedule_options,
+)
 from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini
 
 

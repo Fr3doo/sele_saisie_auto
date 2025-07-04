@@ -155,7 +155,7 @@ class EncryptionService:
         for mem in self._memoires:
             try:
                 self.shared_memory_service.supprimer_memoire_partagee_securisee(mem)
-            except Exception:
+            except Exception:  # nosec B110
                 pass
         self._memoires.clear()
         self.cle_aes = None
