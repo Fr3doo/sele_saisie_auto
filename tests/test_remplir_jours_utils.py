@@ -6,10 +6,10 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     afficher_message_insertion,
     ajouter_jour_a_jours_remplis,
-    clear_screen,
     est_en_mission,
     est_en_mission_presente,
 )
+from sele_saisie_auto.shared_utils import clear_screen  # noqa: E402
 
 
 def test_utilities(monkeypatch):
@@ -33,7 +33,7 @@ def test_utilities(monkeypatch):
 
     called = {}
     monkeypatch.setattr(
-        "subprocess.run",
+        "sele_saisie_auto.shared_utils.subprocess.run",
         lambda cmd, *a, **k: called.setdefault("cmd", cmd),
     )
     clear_screen()

@@ -1,5 +1,6 @@
 # shared_utils.py
 import os
+import subprocess  # nosec B404
 import time
 from datetime import datetime
 
@@ -71,3 +72,15 @@ def program_break_time(memorization_time, affichage_text):
         time.sleep(1)
         print(".", end="", flush=True)
         duree_restante_avant_lancement -= 1
+
+
+def clear_screen():
+    """Clear console output."""
+    cmd = "cls" if os.name == "nt" else "clear"
+    subprocess.run(
+        cmd,
+        shell=True,
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )  # nosec B603 B607 B602

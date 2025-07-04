@@ -3,8 +3,7 @@
 # ----------------------------------------------------------------------------- #
 # ---------------- Import des bibliothèques nécessaires ----------------------- #
 # ----------------------------------------------------------------------------- #
-import os
-import subprocess  # nosec B404
+
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -625,15 +624,6 @@ TAILLE_BLOC = 128  # Taille de bloc AES pour le padding
 # ------------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS UTILS --------------------------------------------- #
 # ------------------------------------------------------------------------------------------------- #
-def clear_screen():
-    cmd = "clear" if os.name == "posix" else "cls"
-    subprocess.run(
-        cmd,
-        shell=True,
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )  # nosec B603 B607 B602
 
 
 def seprateur_menu_affichage_log(log_file: str) -> None:
