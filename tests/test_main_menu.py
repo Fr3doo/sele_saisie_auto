@@ -149,7 +149,7 @@ def test_main_menu_builds_and_commands(monkeypatch):
 
     run_calls = {}
 
-    def fake_run_psa(enc_service, key, login_var, pwd_var, log_file, menu):
+    def fake_run_psa(enc_service, login_var, pwd_var, log_file, menu):
         run_calls["login"] = login_var.get()
         run_calls["pwd"] = pwd_var.get()
         run_calls["destroyed"] = menu.destroy_called

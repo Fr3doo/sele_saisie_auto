@@ -21,6 +21,8 @@ class EncryptionService:
         self.shared_memory_service = shared_memory_service or SharedMemoryService(
             log_file
         )
+        self.cle_aes: bytes | None = None
+        self._memoires: list[object] = []
 
     def generer_cle_aes(self, taille_cle: int = 32) -> bytes:
         """Génère aléatoirement une clé AES.
@@ -116,3 +118,44 @@ class EncryptionService:
                 "ERROR",
             )
             raise
+
+    # ------------------------------------------------------------------
+    # Context manager utilities
+    # ------------------------------------------------------------------
+
+    def __enter__(self) -> "EncryptionService":
+        """Generate and store the AES key in shared memory."""
+        self.cle_aes = self.generer_cle_aes()
+        mem = self.shared_memory_service.stocker_en_memoire_partagee(
+            "memoire_partagee_cle",
+            self.cle_aes,
+        )
+        self._memoires.append(mem)
+        return self
+
+    def store_credentials(self, login_data: bytes, password_data: bytes) -> None:
+        """Save encrypted credentials in shared memory."""
+        mem_login = self.shared_memory_service.stocker_en_memoire_partagee(
+            "memoire_nom",
+            login_data,
+        )
+        mem_pwd = self.shared_memory_service.stocker_en_memoire_partagee(
+            "memoire_mdp",
+            password_data,
+        )
+        self._memoires.extend([mem_login, mem_pwd])
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: object | None,
+    ) -> None:
+        """Securely remove all allocated shared memories."""
+        for mem in self._memoires:
+            try:
+                self.shared_memory_service.supprimer_memoire_partagee_securisee(mem)
+            except Exception:
+                pass
+        self._memoires.clear()
+        self.cle_aes = None
