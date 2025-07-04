@@ -5,14 +5,17 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto import remplir_informations_supp_utils as risu  # noqa: E402
+from sele_saisie_auto.additional_info_locators import (  # noqa: E402
+    AdditionalInfoLocators,
+)
 
 
 def make_config(**overrides):
     base_values = {day: f"val_{day}" for day in risu.JOURS_SEMAINE.values()}
     cfg = {
         "description_cible": "desc",
-        "id_value_ligne": "ID_LINE_",
-        "id_value_jours": "ID_DAY_",
+        "id_value_ligne": AdditionalInfoLocators.ROW_DESCR100.value,
+        "id_value_jours": AdditionalInfoLocators.DAY_UC_DAILYREST.value,
         "type_element": "input",
         "valeurs_a_remplir": base_values,
     }
@@ -87,7 +90,8 @@ def test_traiter_description_select_special(monkeypatch):
     )
 
     cfg = make_config(
-        type_element="select", id_value_jours="UC_TIME_LIN_WRK_UC_DAILYREST"
+        type_element="select",
+        id_value_jours=AdditionalInfoLocators.DAY_UC_DAILYREST_SPECIAL.value,
     )
     del cfg["valeurs_a_remplir"]["mardi"]
     risu.traiter_description(None, cfg)
