@@ -9,6 +9,7 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
+from sele_saisie_auto import messages
 from sele_saisie_auto.constants import JOURS_SEMAINE
 
 from . import LOG_FILE, write_log
@@ -96,21 +97,21 @@ def detecter_et_verifier_contenu(driver, element_id, input_value):
         return day_input_field, is_correct_value
     except NoSuchElementException as e:
         write_log(
-            f"❌ Élément avec id='{element_id}' introuvable. {str(e)}",
+            f"❌ Élément avec id='{element_id}' {messages.INTROUVABLE}. {str(e)}",
             LOG_FILE,
             "ERROR",
         )
         raise
     except StaleElementReferenceException as e:
         write_log(
-            f"❌ Référence obsolète pour l'élément id='{element_id}'. {str(e)}",
+            f"❌ {messages.REFERENCE_OBSOLETE} pour l'élément id='{element_id}'. {str(e)}",
             LOG_FILE,
             "ERROR",
         )
         raise
     except Exception as e:  # noqa: BLE001
         write_log(
-            f"❌ Erreur inattendue lors de la détection et de la vérification du contenu : {str(e)}",
+            f"❌ {messages.ERREUR_INATTENDUE} lors de la détection et de la vérification du contenu : {str(e)}",
             LOG_FILE,
             "ERROR",
         )
@@ -218,7 +219,7 @@ def detecter_doublons_jours(driver):
                             filled_days_tracker[day_name] = [line_description]
                 except NoSuchElementException:
                     write_log(
-                        f"Impossible de trouver l'élément pour le jour '{JOURS_SEMAINE[day_counter]}' avec l'ID '{day_input_id}'",
+                        f"{messages.IMPOSSIBLE_DE_TROUVER} l'élément pour le jour '{JOURS_SEMAINE[day_counter]}' avec l'ID '{day_input_id}'",
                         LOG_FILE,
                         "WARNING",
                     )

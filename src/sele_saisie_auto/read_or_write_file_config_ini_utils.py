@@ -6,6 +6,7 @@ import shutil
 import sys
 from tkinter import messagebox
 
+from sele_saisie_auto import messages
 from sele_saisie_auto.logger_utils import DEFAULT_LOG_LEVEL, write_log
 
 
@@ -79,12 +80,12 @@ def get_runtime_resource_path(relative_path, log_file=None):
                 )
             except FileNotFoundError:
                 write_log(
-                    f"🔴 Fichier embarqué introuvable : {embedded_resource}",
+                    f"🔴 Fichier embarqué {messages.INTROUVABLE} : {embedded_resource}",
                     log_file,
                     "ERROR",
                 )
                 raise FileNotFoundError(
-                    f"Impossible de trouver le fichier embarqué : {embedded_resource}"
+                    f"{messages.IMPOSSIBLE_DE_TROUVER} le fichier embarqué : {embedded_resource}"
                 )
             except PermissionError:
                 write_log(
@@ -109,12 +110,12 @@ def read_config_ini(log_file=None):
     # Vérifier si le fichier existe
     if not os.path.exists(config_file_ini):
         write_log(
-            f"🔹 Le fichier '{config_file_ini}' est introuvable.",
+            f"🔹 Le fichier '{config_file_ini}' est {messages.INTROUVABLE}.",
             log_file,
             DEFAULT_LOG_LEVEL,
         )
         raise FileNotFoundError(
-            f"Le fichier de configuration '{config_file_ini}' est introuvable."
+            f"Le fichier de configuration '{config_file_ini}' est {messages.INTROUVABLE}."
         )
     else:
         write_log(
@@ -147,7 +148,7 @@ def read_config_ini(log_file=None):
         ) from e
     except Exception as e:
         write_log(
-            f"🔹 Une erreur inattendue est survenue lors de la lecture du fichier '{config_file_ini}': {e}",
+            f"🔹 {messages.ERREUR_INATTENDUE} lors de la lecture du fichier '{config_file_ini}': {e}",
             log_file,
             DEFAULT_LOG_LEVEL,
         )
@@ -167,12 +168,12 @@ def write_config_ini(configuration_personnel, log_file=None):
     # Vérifier si le fichier existe
     if not os.path.exists(config_file_ini):
         write_log(
-            f"🔹 Le fichier '{config_file_ini}' est introuvable.",
+            f"🔹 Le fichier '{config_file_ini}' est {messages.INTROUVABLE}.",
             log_file,
             DEFAULT_LOG_LEVEL,
         )
         raise FileNotFoundError(
-            f"Le fichier de configuration '{config_file_ini}' est introuvable."
+            f"Le fichier de configuration '{config_file_ini}' est {messages.INTROUVABLE}."
         )
     else:
         write_log(
@@ -203,7 +204,7 @@ def write_config_ini(configuration_personnel, log_file=None):
         ) from e
     except Exception as e:
         write_log(
-            f"🔹 Une erreur inattendue est survenue lors de la lecture du fichier '{config_file_ini}': {e}",
+            f"🔹 {messages.ERREUR_INATTENDUE} lors de la lecture du fichier '{config_file_ini}': {e}",
             log_file,
             DEFAULT_LOG_LEVEL,
         )

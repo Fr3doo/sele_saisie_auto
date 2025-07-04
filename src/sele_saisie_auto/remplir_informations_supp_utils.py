@@ -4,6 +4,7 @@
 
 from selenium.webdriver.common.by import By
 
+from sele_saisie_auto import messages
 from sele_saisie_auto.constants import JOURS_SEMAINE
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.selenium_utils import (
@@ -89,7 +90,7 @@ def _fill_missing_days(
                 valeur_a_remplir = valeurs_a_remplir.get(jour)
                 if valeur_a_remplir:
                     write_log(
-                        f"✏️ Remplissage de '{jour}' avec la valeur '{valeur_a_remplir}'.",
+                        f"✏️ {messages.REMPLISSAGE} de '{jour}' avec la valeur '{valeur_a_remplir}'.",
                         LOG_FILE,
                         "DEBUG",
                     )
@@ -101,7 +102,7 @@ def _fill_missing_days(
                         remplir_champ_texte(element, jour, valeur_a_remplir)
                 else:
                     write_log(
-                        f"⚠️ Aucune valeur définie pour le jour '{jour}' dans 'valeurs_a_remplir'.",
+                        f"⚠️ {messages.AUCUNE_VALEUR} définie pour le jour '{jour}' dans 'valeurs_a_remplir'.",
                         LOG_FILE,
                         "DEBUG",
                     )
@@ -113,7 +114,7 @@ def _fill_missing_days(
                 )
         else:
             write_log(
-                f"❌ Impossible de trouver l'élément pour l'ID : {input_id}",
+                f"❌ {messages.IMPOSSIBLE_DE_TROUVER} l'élément pour l'ID : {input_id}",
                 LOG_FILE,
                 "DEBUG",
             )

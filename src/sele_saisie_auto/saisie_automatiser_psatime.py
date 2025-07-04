@@ -18,7 +18,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 
-from sele_saisie_auto import console_ui, plugins, remplir_jours_feuille_de_temps
+from sele_saisie_auto import (
+    console_ui,
+    messages,
+    plugins,
+    remplir_jours_feuille_de_temps,
+)
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import EncryptionService
@@ -222,7 +227,7 @@ class PSATimeAutomation:
     def log_initialisation(self) -> None:
         """Initialise les logs et vérifie les configurations essentielles."""
         if not self.log_file:
-            raise RuntimeError("Fichier de log introuvable.")
+            raise RuntimeError(f"Fichier de log {messages.INTROUVABLE}.")
         write_log(
             "📌 Démarrage de la fonction 'saisie_automatiser_psatime.run()'",
             self.log_file,
@@ -585,9 +590,11 @@ class PSATimeAutomation:
                     self.log_file,
                 )
             except WebDriverException as e:
-                log_error(f"❌ Erreur liée au WebDriver : {str(e)}", self.log_file)
+                log_error(
+                    f"❌ Erreur liée au {messages.WEBDRIVER} : {str(e)}", self.log_file
+                )
             except Exception as e:
-                log_error(f"❌ Erreur inattendue : {str(e)}", self.log_file)
+                log_error(f"❌ {messages.ERREUR_INATTENDUE} : {str(e)}", self.log_file)
             finally:
                 try:
                     if driver_manager.driver is not None:
@@ -663,15 +670,17 @@ def ajouter_jour_a_jours_remplis(jour, jours_remplis):
 
 def afficher_message_insertion(jour, valeur, tentative, message, log_file: str) -> None:
     """Affiche un message d'insertion de la valeur."""
-    if message == "tentative d'insertion n°":
+    if message == messages.TENTATIVE_INSERTION:
         write_log(
-            f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' ({message}{tentative + 1})",
+            f"{messages.CONFIRMED_VALUE} ({message}{tentative + 1})".format(
+                valeur=valeur, jour=jour
+            ),
             log_file,
             "DEBUG",
         )
     else:
         write_log(
-            f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' {message})",
+            f"{messages.CONFIRMED_VALUE} {message})".format(valeur=valeur, jour=jour),
             log_file,
             "DEBUG",
         )

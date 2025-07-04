@@ -9,6 +9,7 @@ from sele_saisie_auto.locators import Locators
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
 
 pytestmark = pytest.mark.slow
@@ -90,20 +91,20 @@ def setup_init(monkeypatch, cfg):
 
 def test_helpers(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
-    messages = []
-    monkeypatch.setattr(sap, "write_log", lambda msg, f, level: messages.append(msg))
+    logs = []
+    monkeypatch.setattr(sap, "write_log", lambda msg, f, level: logs.append(msg))
     assert sap.get_next_saturday_if_not_saturday("01/07/2024") == "06/07/2024"
     assert sap.get_next_saturday_if_not_saturday("06/07/2024") == "06/07/2024"
     assert sap.est_en_mission("En mission") is True
     jours = []
     assert sap.ajouter_jour_a_jours_remplis("lundi", jours) == ["lundi"]
     sap.afficher_message_insertion(
-        "lundi", "8", 0, "tentative d'insertion n°", "log.html"
+        "lundi", "8", 0, messages.TENTATIVE_INSERTION, "log.html"
     )
     monkeypatch.setattr(
         shared_utils.subprocess,
         "run",
-        lambda cmd, *a, **k: messages.append(cmd),
+        lambda cmd, *a, **k: logs.append(cmd),
     )
     shared_utils.clear_screen()
     sap.seprateur_menu_affichage_log("log.html")

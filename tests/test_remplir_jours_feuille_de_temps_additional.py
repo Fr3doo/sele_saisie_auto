@@ -6,6 +6,7 @@ import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     afficher_message_insertion,
     main,
@@ -40,8 +41,8 @@ def test_afficher_message_insertion_branch(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
         lambda msg, *_: logs.append(msg),
     )
-    afficher_message_insertion("lun", "8", 1, "tentative d'insertion n°")
-    assert "tentative d'insertion n°2" in logs[0]
+    afficher_message_insertion("lun", "8", 1, messages.TENTATIVE_INSERTION)
+    assert f"{messages.TENTATIVE_INSERTION}2" in logs[0]
 
 
 def test_remplir_jours(monkeypatch):
@@ -86,7 +87,7 @@ def test_traiter_jour_failure(monkeypatch):
     )
     result = traiter_jour(None, "lundi", "desc", "8", [])
     assert result == []
-    assert any("Échec de l'insertion" in m for m in logs)
+    assert any(messages.ECHEC_INSERTION in m for m in logs)
 
 
 def test_remplir_mission_dispatch(monkeypatch):
@@ -135,7 +136,7 @@ def test_remplir_mission_specifique_failure(monkeypatch):
         lambda msg, *_: logs.append(msg),
     )
     remplir_mission_specifique(None, "mardi", "8", [])
-    assert any("Échec de l'insertion" in m for m in logs)
+    assert any(messages.ECHEC_INSERTION in m for m in logs)
 
 
 def test_remplir_mission_specifique_insertion_fail(monkeypatch):
@@ -168,7 +169,7 @@ def test_remplir_mission_specifique_insertion_fail(monkeypatch):
         lambda msg, *_: logs.append(msg),
     )
     remplir_mission_specifique(None, "mercredi", "8", [])
-    assert any("Échec de l'insertion" in m for m in logs)
+    assert any(messages.ECHEC_INSERTION in m for m in logs)
 
 
 def test_run_as_script(monkeypatch):
@@ -269,7 +270,7 @@ def test_traiter_jour_controle_insertion_fail(monkeypatch):
         lambda msg, *_: logs.append(msg),
     )
     assert traiter_jour(None, "lundi", "desc", "8", []) == []
-    assert any("Échec de l'insertion" in m for m in logs)
+    assert any(messages.ECHEC_INSERTION in m for m in logs)
 
 
 def test_remplir_mission_specifique_element_none(monkeypatch):
@@ -336,7 +337,7 @@ def test_traiter_champs_mission_insertion_fail(monkeypatch):
         lambda msg, *_: logs.append(msg),
     )
     traiter_champs_mission(None, ids, mapping, info, max_attempts=1)
-    assert any("Échec de l'insertion" in m for m in logs)
+    assert any(messages.ECHEC_INSERTION in m for m in logs)
 
 
 def test_main_handles_other_exceptions(monkeypatch):
@@ -355,7 +356,7 @@ def test_main_handles_other_exceptions(monkeypatch):
         lambda msg, *_: logs.append(msg),
     )
     main(None, "log")
-    assert any("introuvable" in m for m in logs)
+    assert any(messages.INTROUVABLE in m for m in logs)
 
 
 def test_main_webdriver_exception(monkeypatch):
@@ -374,7 +375,7 @@ def test_main_webdriver_exception(monkeypatch):
         lambda msg, *_: logs.append(msg),
     )
     main(None, "log")
-    assert any("WebDriver" in m for m in logs)
+    assert any(messages.WEBDRIVER in m for m in logs)
 
 
 def test_main_stale_exception(monkeypatch):
@@ -393,7 +394,7 @@ def test_main_stale_exception(monkeypatch):
         lambda msg, *_: logs.append(msg),
     )
     main(None, "log")
-    assert any("Référence obsolète" in m for m in logs)
+    assert any(messages.REFERENCE_OBSOLETE in m for m in logs)
 
 
 def test_main_generic_exception(monkeypatch):
@@ -410,4 +411,4 @@ def test_main_generic_exception(monkeypatch):
         lambda msg, *_: logs.append(msg),
     )
     main(None, "log")
-    assert any("inattendue" in m for m in logs)
+    assert any(messages.ERREUR_INATTENDUE in m for m in logs)

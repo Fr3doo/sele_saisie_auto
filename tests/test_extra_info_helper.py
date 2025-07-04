@@ -3,6 +3,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto import remplir_informations_supp_utils as risu  # noqa: E402
 
 
@@ -61,7 +62,7 @@ def test_traiter_description_input(monkeypatch):
 
     assert ("lundi", "val_lundi") in filled
     assert ("dimanche", "val_dimanche") not in filled
-    assert any("Remplissage" in m for m in logs)
+    assert any(messages.REMPLISSAGE in m for m in logs)
 
 
 def test_traiter_description_select_special(monkeypatch):
@@ -93,8 +94,8 @@ def test_traiter_description_select_special(monkeypatch):
 
     assert f"{cfg['id_value_jours']}11$0" in ids
     assert selected
-    assert any("Aucune valeur" in m for m in logs)
-    assert any("Impossible de trouver" in m for m in logs)
+    assert any(messages.AUCUNE_VALEUR in m for m in logs)
+    assert any(messages.IMPOSSIBLE_DE_TROUVER in m for m in logs)
 
 
 def test_set_log_file(tmp_path, monkeypatch):

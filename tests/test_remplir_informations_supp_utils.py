@@ -3,6 +3,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto import remplir_informations_supp_utils as risu  # noqa: E402
 
 # Helper to build config dictionaries
@@ -72,8 +73,8 @@ def test_traiter_description_fill_input(monkeypatch):
     assert ("lundi", "val_lundi") not in filled  # element missing
     assert ("mardi", "val_mardi") not in filled  # value missing
     assert ("mercredi", "val_mercredi") in filled
-    assert any("Aucune valeur" in m for m in logs)
-    assert any("Impossible de trouver" in m for m in logs)
+    assert any(messages.AUCUNE_VALEUR in m for m in logs)
+    assert any(messages.IMPOSSIBLE_DE_TROUVER in m for m in logs)
 
 
 def test_traiter_description_select(monkeypatch):
