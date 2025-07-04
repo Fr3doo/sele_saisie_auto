@@ -150,6 +150,7 @@ L'utilisation de PyInstaller permet de générer un exécutable Windows.
 
 ## 🛠️ Fichiers de configuration
 - `config.ini` : paramètres de connexion et de planning
+- `examples/config_example.ini` : modèle listant toutes les sections nécessaires
 - `pytest.ini` : options de tests
 - `.coveragerc` : configuration de couverture
 - `.pre-commit-config.yaml` : hooks de lint et formatage
