@@ -112,6 +112,10 @@ graph TD
   end
   B --> C(TimeSheetHelper)
   B --> D(ExtraInfoHelper)
+  B --> X(BrowserSession)
+  B --> Y(LoginHandler)
+  B --> Z(DateEntryPage)
+  B --> AA(AdditionalInfoPage)
   B --> E(ConfigManager)
   B --> F(EncryptionService)
   C --> G(SeleniumUtils)
