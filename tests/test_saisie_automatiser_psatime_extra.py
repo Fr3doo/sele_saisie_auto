@@ -169,7 +169,9 @@ def test_fill_and_save_timesheet(monkeypatch, sample_config):
     )
     monkeypatch.setattr(auto, "_click_action_button", lambda d: calls.append("click"))
     monkeypatch.setattr(
-        sap.remplir_jours_feuille_de_temps, "main", lambda *a, **k: calls.append("fill")
+        sap.remplir_jours_feuille_de_temps.TimeSheetHelper,
+        "run",
+        lambda self, drv: calls.append("fill"),
     )
     monkeypatch.setattr(
         auto,

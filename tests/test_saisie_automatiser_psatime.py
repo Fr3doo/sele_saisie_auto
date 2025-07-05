@@ -265,7 +265,9 @@ def test_main_flow(monkeypatch, sample_config):
     )
     monkeypatch.setattr(sap, "program_break_time", lambda *a, **k: None)
     monkeypatch.setattr(
-        sap.remplir_jours_feuille_de_temps, "main", lambda *a, **k: None
+        sap.remplir_jours_feuille_de_temps.TimeSheetHelper,
+        "run",
+        lambda self, drv: None,
     )
     monkeypatch.setattr(sap, "traiter_description", lambda *a, **k: None)
     monkeypatch.setattr(sap, "detecter_doublons_jours", lambda *a, **k: None)

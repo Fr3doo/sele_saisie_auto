@@ -414,7 +414,10 @@ class PSATimeAutomation:
         print()
         self._click_action_button(driver)
         self.wait_for_dom(driver)
-        remplir_jours_feuille_de_temps.main(driver, self.log_file)
+        ctx = remplir_jours_feuille_de_temps.context_from_app_config(
+            self.context.config, self.log_file
+        )
+        remplir_jours_feuille_de_temps.TimeSheetHelper(ctx).run(driver)
         self.navigate_from_work_schedule_to_additional_information_page(driver)
         self.submit_and_validate_additional_information(driver)
         switch_to_default_content(driver)
