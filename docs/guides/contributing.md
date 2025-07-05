@@ -9,6 +9,15 @@ Pour la description des différents agents, consultez [AGENT.md](../../AGENT.md)
 
 ## 🔧 Configuration de l’environnement
 
+Vérifie d’abord que Poetry est disponible :
+
+```bash
+poetry --version
+```
+
+Si la commande est introuvable, lance `scripts/install_poetry_windows.ps1` ou
+consulte le [guide d’installation](installation.md).
+
 Installe les dépendances et les hooks Git :
 
 ```bash
