@@ -9,6 +9,7 @@ pytestmark = pytest.mark.slow
 
 from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
+    TimeSheetContext,
     initialize,
     main,
     remplir_mission_specifique,
@@ -19,14 +20,15 @@ from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
 
 def test_traiter_jour_paths(monkeypatch):
     # already filled
-    assert traiter_jour(None, "lundi", "desc", "8", ["lundi"]) == ["lundi"]
+    ctx = TimeSheetContext("log", [], {}, {})
+    assert traiter_jour(None, "lundi", "desc", "8", ["lundi"], ctx) == ["lundi"]
 
     # row not found
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.trouver_ligne_par_description",
         lambda *a: None,
     )
-    result = traiter_jour(None, "lundi", "desc", "8", [])
+    result = traiter_jour(None, "lundi", "desc", "8", [], ctx)
     assert result == []
 
     # value already correct
@@ -47,7 +49,7 @@ def test_traiter_jour_paths(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.afficher_message_insertion",
         lambda *a: calls.setdefault("afficher", []).append(a),
     )
-    result = traiter_jour(None, "lundi", "desc", "8", [])
+    result = traiter_jour(None, "lundi", "desc", "8", [], ctx)
     assert result == ["lundi"]
     assert calls["afficher"]
 
@@ -68,7 +70,7 @@ def test_traiter_jour_paths(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.controle_insertion",
         lambda *a, **k: True,
     )
-    result = traiter_jour(None, "mardi", "desc", "8", [])
+    result = traiter_jour(None, "mardi", "desc", "8", [], ctx)
     assert "mardi" in result
     assert calls["effacer"]
 
@@ -88,7 +90,8 @@ def test_remplir_mission_specifique(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.afficher_message_insertion",
         lambda *a: calls.setdefault("afficher", True),
     )
-    remplir_mission_specifique(None, "lundi", "8", jours)
+    ctx = TimeSheetContext("log", [], {}, {})
+    remplir_mission_specifique(None, "lundi", "8", jours, ctx)
     assert jours == ["lundi"]
 
     monkeypatch.setattr(
@@ -108,7 +111,7 @@ def test_remplir_mission_specifique(monkeypatch):
         lambda *a, **k: True,
     )
     jours2 = []
-    remplir_mission_specifique(None, "mardi", "8", jours2)
+    remplir_mission_specifique(None, "mardi", "8", jours2, ctx)
     assert "mardi" in jours2
     assert calls["effacer"]
 
@@ -137,7 +140,8 @@ def test_traiter_champs_mission(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (object(), True),
     )
-    traiter_champs_mission(None, ids, mapping, info)
+    ctx = TimeSheetContext("log", [], {}, {})
+    traiter_champs_mission(None, ids, mapping, info, ctx)
     assert any("PROJECT_CODE$0" in m for m in log_calls)
     assert any(messages.AUCUNE_VALEUR in m for m in log_calls)
 
@@ -216,7 +220,8 @@ def test_traiter_champs_mission_insert(monkeypatch):
         lambda *a, **k: seq.append("insert") or True,
     )
 
-    traiter_champs_mission(None, ids, mapping, info)
+    ctx = TimeSheetContext("log", [], {}, {})
+    traiter_champs_mission(None, ids, mapping, info, ctx)
     assert seq == ["effacer", "insert"]
 
 
@@ -265,7 +270,8 @@ def test_traiter_champs_mission_error(monkeypatch):
         ),
     )
 
-    traiter_champs_mission(None, ids, mapping, info, max_attempts=1)
+    ctx = TimeSheetContext("log", [], {}, {})
+    traiter_champs_mission(None, ids, mapping, info, ctx, max_attempts=1)
     assert any(messages.REFERENCE_OBSOLETE in m for m in logs)
 
 

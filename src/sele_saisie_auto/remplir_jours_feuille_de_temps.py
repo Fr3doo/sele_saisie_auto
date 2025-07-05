@@ -152,7 +152,13 @@ def afficher_message_insertion(jour, valeur, tentative, message):
 # ------------------------------------------------------------------------------------------- #
 
 
-def remplir_jours(driver, liste_items_descriptions, jours_semaine, jours_remplis):
+def remplir_jours(
+    driver,
+    liste_items_descriptions,
+    jours_semaine,
+    jours_remplis,
+    context: TimeSheetContext,
+):
     """Remplir les jours dans l'application web."""
     # Parcourir chaque description dans liste_items_descriptions
     for description_cible in liste_items_descriptions:
@@ -181,7 +187,14 @@ def remplir_jours(driver, liste_items_descriptions, jours_semaine, jours_remplis
     return jours_remplis
 
 
-def traiter_jour(driver, jour, description_cible, valeur_a_remplir, jours_remplis):
+def traiter_jour(
+    driver,
+    jour,
+    description_cible,
+    valeur_a_remplir,
+    jours_remplis,
+    context: TimeSheetContext,
+):
     """Traiter un jour spécifique pour le remplissage."""
     attempt = 0
 
@@ -240,7 +253,7 @@ def traiter_jour(driver, jour, description_cible, valeur_a_remplir, jours_rempli
                 except StaleElementReferenceException:
                     write_log(
                         f"{messages.REFERENCE_OBSOLETE} pour '{jour}', tentative {attempt + 1}",
-                        LOG_FILE,
+                        context.log_file,
                         "DEBUG",
                     )
 
@@ -250,14 +263,19 @@ def traiter_jour(driver, jour, description_cible, valeur_a_remplir, jours_rempli
             if attempt == MAX_ATTEMPTS:
                 write_log(
                     f"{messages.ECHEC_INSERTION} de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {MAX_ATTEMPTS} tentatives.",
-                    LOG_FILE,
+                    context.log_file,
                     "DEBUG",
                 )
 
     return jours_remplis
 
 
-def remplir_mission(driver, jours_de_travail, jours_remplis):
+def remplir_mission(
+    driver,
+    jours_de_travail,
+    jours_remplis,
+    context: TimeSheetContext,
+):
     """Remplir les jours de travail pour les missions."""
     for jour, (description_cible, valeur_a_remplir) in jours_de_travail.items():
         if (
@@ -266,18 +284,31 @@ def remplir_mission(driver, jours_de_travail, jours_remplis):
             and jour not in jours_remplis
         ):
             jours_remplis = traiter_jour(
-                driver, jour, description_cible, valeur_a_remplir, jours_remplis
+                driver,
+                jour,
+                description_cible,
+                valeur_a_remplir,
+                jours_remplis,
+                context,
             )
         elif (
             description_cible
             and est_en_mission(description_cible)
             and jour not in jours_remplis
         ):
-            remplir_mission_specifique(driver, jour, valeur_a_remplir, jours_remplis)
+            remplir_mission_specifique(
+                driver, jour, valeur_a_remplir, jours_remplis, context
+            )
     return jours_remplis
 
 
-def remplir_mission_specifique(driver, jour, valeur_a_remplir, jours_remplis):
+def remplir_mission_specifique(
+    driver,
+    jour,
+    valeur_a_remplir,
+    jours_remplis,
+    context: TimeSheetContext,
+):
     """Cas spécifique pour les jours en mission.
     Cas où description_cible est "En mission", on écrit directement dans les IDs spécifiques sans utiliser `description_cible`
     """
@@ -321,7 +352,7 @@ def remplir_mission_specifique(driver, jour, valeur_a_remplir, jours_remplis):
             except StaleElementReferenceException:
                 write_log(
                     f"{messages.REFERENCE_OBSOLETE} pour '{jour}', tentative {attempt + 1}",
-                    LOG_FILE,
+                    context.log_file,
                     "DEBUG",
                 )
 
@@ -331,7 +362,7 @@ def remplir_mission_specifique(driver, jour, valeur_a_remplir, jours_remplis):
         if attempt == MAX_ATTEMPTS:
             write_log(
                 f"{messages.ECHEC_INSERTION} de la valeur '{valeur_a_remplir}' dans le jour '{jour}' après {MAX_ATTEMPTS} tentatives.",
-                LOG_FILE,
+                context.log_file,
                 "DEBUG",
             )
 
@@ -396,6 +427,7 @@ def traiter_champs_mission(
     listes_id_informations_mission,
     id_to_key_mapping,
     informations_projet_mission,
+    context: TimeSheetContext,
     max_attempts=5,
     waiter: Waiter | None = None,
 ):
@@ -409,14 +441,14 @@ def traiter_champs_mission(
         if not valeur_a_remplir:
             write_log(
                 f"Aucune valeur trouvée pour le champ '{key}' (ID: {id}).",
-                LOG_FILE,
+                context.log_file,
                 "DEBUG",
             )
             continue
 
         write_log(
             f"Traitement de l'élément : {key} avec ID : {id} et valeur : {valeur_a_remplir}.",
-            LOG_FILE,
+            context.log_file,
             "DEBUG",
         )
         _insert_value_with_retries(
@@ -456,7 +488,8 @@ class TimeSheetHelper:
             "DEBUG",
         )
         liste = [] if self.context is None else self.context.liste_items_descriptions
-        return remplir_jours(driver, liste, JOURS_SEMAINE, jours_remplis)
+        ctx = self.context or TimeSheetContext(self.log_file, [], {}, {})
+        return remplir_jours(driver, liste, JOURS_SEMAINE, jours_remplis, ctx)
 
     def fill_work_missions(self, driver, jours_remplis: list[str]) -> list[str]:
         write_log(
@@ -465,7 +498,8 @@ class TimeSheetHelper:
             "DEBUG",
         )
         jours_de_travail = {} if self.context is None else self.context.jours_de_travail
-        return remplir_mission(driver, jours_de_travail, jours_remplis)
+        ctx = self.context or TimeSheetContext(self.log_file, [], {}, {})
+        return remplir_mission(driver, jours_de_travail, jours_remplis, ctx)
 
     def handle_additional_fields(self, driver) -> None:
         if self.context and est_en_mission_presente(self.context.jours_de_travail):
@@ -479,6 +513,7 @@ class TimeSheetHelper:
                 LISTES_ID_INFORMATIONS_MISSION,
                 ID_TO_KEY_MAPPING,
                 self.context.informations_projet_mission,
+                self.context,
                 waiter=self.waiter,
             )
         else:
