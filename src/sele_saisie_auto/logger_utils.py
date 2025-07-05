@@ -137,6 +137,7 @@ def write_log(
     log_format=HTML_FORMAT,
     auto_close=False,
 ):
+    """Écrit un message dans le fichier de log."""
     try:
         # Vérifier si le niveau de log est valide
         if level not in LOG_LEVELS:

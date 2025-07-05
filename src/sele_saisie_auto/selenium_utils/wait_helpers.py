@@ -20,6 +20,7 @@ class Waiter:
     def __init__(
         self, default_timeout: int = DEFAULT_TIMEOUT, long_timeout: int = LONG_TIMEOUT
     ) -> None:  # pragma: no cover - simple initializer
+        """Configure les délais d'attente par défaut."""
         self.default_timeout = default_timeout
         self.long_timeout = long_timeout
 
@@ -134,6 +135,7 @@ def wait_for_dom_ready(
 def wait_until_dom_is_stable(
     driver, timeout: int | None = None, waiter: Waiter | None = None
 ) -> bool:
+    """Retourne ``True`` si le DOM reste inchangé pendant ``timeout`` secondes."""
     w = waiter or DEFAULT_WAITER
     return w.wait_until_dom_is_stable(driver, timeout)
 
@@ -146,6 +148,7 @@ def wait_for_element(
     timeout: int | None = None,
     waiter: Waiter | None = None,
 ):
+    """Attend qu'un élément réponde à ``condition``."""
     w = waiter or DEFAULT_WAITER
     return w.wait_for_element(driver, by, locator_value, condition, timeout)
 
@@ -157,6 +160,7 @@ def find_clickable(
     timeout: int | None = None,
     waiter: Waiter | None = None,
 ):
+    """Retourne l'élément lorsqu'il devient cliquable."""
     w = waiter or DEFAULT_WAITER
     return w.find_clickable(driver, by, locator_value, timeout)
 
@@ -168,6 +172,7 @@ def find_visible(
     timeout: int | None = None,
     waiter: Waiter | None = None,
 ):
+    """Retourne l'élément lorsqu'il est visible."""
     w = waiter or DEFAULT_WAITER
     return w.find_visible(driver, by, locator_value, timeout)
 
@@ -179,6 +184,7 @@ def find_present(
     timeout: int | None = None,
     waiter: Waiter | None = None,
 ):
+    """Retourne l'élément dès qu'il est présent dans le DOM."""
     w = waiter or DEFAULT_WAITER
     return w.find_present(driver, by, locator_value, timeout)
 
@@ -188,6 +194,7 @@ def wait_for_dom_after(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
+        """Exécute ``func`` puis attend que le DOM soit prêt."""
         result = func(*args, **kwargs)
         if args:
             instance = args[0]

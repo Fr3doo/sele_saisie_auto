@@ -19,6 +19,7 @@ def hook(name: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator registering a function for a hook."""
 
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        """Ajoute ``func`` au registre des hooks."""
         register(name, func)
         return func
 

@@ -12,6 +12,7 @@ from . import LOG_FILE, write_log
 
 
 def verifier_accessibilite_url(url):
+    """Teste l'accessibilité d'une URL."""
     try:
         response = requests.get(url, timeout=10, verify=True)
         if response.status_code == 200:

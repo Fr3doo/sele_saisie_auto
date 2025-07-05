@@ -94,6 +94,7 @@ def start_configuration(
     create_combobox_with_pack(debug_row, debug_var, values=list(LOG_LEVELS.keys()))
 
     def save() -> None:
+        """Enregistre la configuration saisie."""
         config["settings"]["date_cible"] = date_var.get()
         config["settings"]["debug_mode"] = debug_var.get()
         write_config_ini(config, log_file)

@@ -123,6 +123,7 @@ class AppConfig:
             default: list[T],
             cls: type[T],
         ) -> list[T]:
+            """Extrait et convertit une liste depuis ``section``."""
             if parser.has_section(section):
                 values = parser.get(section, option, fallback="")
                 return [

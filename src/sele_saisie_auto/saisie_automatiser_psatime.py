@@ -332,6 +332,7 @@ class PSATimeAutomation:
 
     @wait_for_dom_after
     def switch_to_iframe_main_target_win0(self, driver):
+        """Bascule vers l'iframe principale ``main_target_win0``."""
         switched_to_iframe = None
         element_present = wait_for_element(
             driver, By.ID, Locators.MAIN_FRAME.value, timeout=DEFAULT_TIMEOUT
@@ -379,6 +380,7 @@ class PSATimeAutomation:
         memoire_nom,
         memoire_mdp,
     ) -> None:
+        """Ferme le navigateur et libère les mémoires partagées."""
         if memoire_cle:
             self.context.shared_memory_service.supprimer_memoire_partagee_securisee(
                 memoire_cle
@@ -400,15 +402,19 @@ class PSATimeAutomation:
         )
 
     def _handle_date_alert(self, driver) -> None:
+        """Gère l'alerte liée à la date cible."""
         self.date_entry_page._handle_date_alert(driver)
 
     def _click_action_button(self, driver) -> None:
+        """Clique sur le bouton d'action principal."""
         self.date_entry_page._click_action_button(driver, self.choix_user)
 
     def _process_date_entry(self, driver) -> None:
+        """Renseigne la date cible dans l'interface."""
         self.date_entry_page.process_date(driver, self.context.config.date_cible)
 
     def _fill_and_save_timesheet(self, driver) -> None:
+        """Remplit la feuille de temps puis la sauvegarde."""
         self.wait_for_dom(driver)
         self.switch_to_iframe_main_target_win0(driver)
         program_break_time(
@@ -496,6 +502,7 @@ class PSATimeAutomation:
 
 
 def seprateur_menu_affichage_log(log_file: str) -> None:
+    """Affiche un séparateur dans le fichier de log."""
     write_log(
         "*************************************************************",
         log_file,
@@ -504,6 +511,7 @@ def seprateur_menu_affichage_log(log_file: str) -> None:
 
 
 def seprateur_menu_affichage_console():
+    """Affiche un séparateur dans la console."""
     console_ui.show_separator()
 
 
@@ -603,48 +611,56 @@ def initialize(
 
 
 def log_initialisation() -> None:
+    """Enregistre les informations initiales dans les logs."""
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     _AUTOMATION.log_initialisation()
 
 
 def initialize_shared_memory():
+    """Récupère les identifiants chiffrés depuis la mémoire partagée."""
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     return _AUTOMATION.initialize_shared_memory()
 
 
 def setup_browser(session: BrowserSession):
+    """Instancie le navigateur Selenium."""
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     return _AUTOMATION.setup_browser(session)
 
 
 def connect_to_psatime(driver, cle_aes, login_c, pwd_c):
+    """Ouvre la session PSA Time avec les identifiants fournis."""
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     return _AUTOMATION.login_handler.connect_to_psatime(driver, cle_aes, login_c, pwd_c)
 
 
 def switch_to_iframe_main_target_win0(driver):
+    """Bascule vers l'iframe principale."""
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     return _AUTOMATION.switch_to_iframe_main_target_win0(driver)
 
 
 def navigate_from_home_to_date_entry_page(driver):
+    """Atteint la page de saisie des dates."""
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     return _AUTOMATION.navigate_from_home_to_date_entry_page(driver)
 
 
 def submit_date_cible(driver):
+    """Valide la date cible sélectionnée."""
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     return _AUTOMATION.submit_date_cible(driver)
 
 
 def navigate_from_work_schedule_to_additional_information_page(driver):
+    """Ouvre la fenêtre d'informations supplémentaires."""
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     return _AUTOMATION.navigate_from_work_schedule_to_additional_information_page(
@@ -653,24 +669,28 @@ def navigate_from_work_schedule_to_additional_information_page(driver):
 
 
 def submit_and_validate_additional_information(driver):
+    """Soumet les informations complémentaires."""
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     return _AUTOMATION.submit_and_validate_additional_information(driver)
 
 
 def save_draft_and_validate(driver):
+    """Enregistre le brouillon et valide la feuille de temps."""
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     return _AUTOMATION.save_draft_and_validate(driver)
 
 
 def cleanup_resources(session, memoire_cle, memoire_nom, memoire_mdp):
+    """Nettoie les ressources utilisées par l'automatisation."""
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     return _AUTOMATION.cleanup_resources(session, memoire_cle, memoire_nom, memoire_mdp)
 
 
 def wait_for_dom(driver):
+    """Attend la stabilisation du DOM via l'automate."""
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     _AUTOMATION.wait_for_dom(driver)

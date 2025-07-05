@@ -16,6 +16,7 @@ class ConfigManager:
     """Charge et sauvegarde ``config.ini`` au besoin."""
 
     def __init__(self, log_file: str | None = None) -> None:
+        """Initialise le gestionnaire avec un fichier log optionnel."""
         self.log_file = log_file
         self._config: ConfigParser | None = None
 
@@ -26,6 +27,7 @@ class ConfigManager:
 
     @property
     def config(self) -> ConfigParser:
+        """Retourne la configuration chargée."""
         if self._config is None:
             raise RuntimeError("La configuration n'est pas chargée. Utilisez load().")
         return self._config

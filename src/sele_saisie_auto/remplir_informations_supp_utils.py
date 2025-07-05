@@ -30,12 +30,14 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def _build_input_id(id_value_jours: str, idx: int, row_index: int) -> str:
+    """Construire l'identifiant complet d'un champ jour."""
     if "UC_TIME_LIN_WRK_UC_DAILYREST" in id_value_jours:
         return f"{id_value_jours}{10 + idx}$0"
     return f"{id_value_jours}{idx}${row_index}"
 
 
 def _get_element(driver, waiter: Waiter | None, input_id: str):
+    """Récupérer l'élément correspondant à ``input_id``."""
     if waiter:
         return waiter.wait_for_element(driver, By.ID, input_id)
     return wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
@@ -44,6 +46,7 @@ def _get_element(driver, waiter: Waiter | None, input_id: str):
 def _collect_filled_days(
     driver, waiter, id_value_jours, row_index, jours_semaine, log_file: str
 ):
+    """Retourne la liste des jours déjà remplis."""
     jours_remplis = []
     write_log("🔍 Vérification des jours déjà remplis...", log_file, "DEBUG")
     for i in range(1, 8):
@@ -79,6 +82,7 @@ def _fill_missing_days(
     type_element,
     log_file: str,
 ):
+    """Complète les jours encore vides."""
     for i in range(1, 8):
         input_id = _build_input_id(id_value_jours, i, row_index)
         element = _get_element(driver, waiter, input_id)
@@ -188,6 +192,7 @@ class ExtraInfoHelper:
         page: AdditionalInfoPage | None = None,
         app_config: AppConfig | None = None,
     ) -> None:
+        """Initialise l'assistant avec ou sans ``Waiter`` personnalisé."""
         if waiter is None:
             timeout = app_config.default_timeout if app_config else DEFAULT_TIMEOUT
             long_timeout = app_config.long_timeout if app_config else LONG_TIMEOUT
@@ -198,15 +203,18 @@ class ExtraInfoHelper:
         self.log_file = log_file
 
     def set_page(self, page: AdditionalInfoPage) -> None:
+        """Définit la page d'informations supplémentaires."""
         self.page = page
 
     def traiter_description(self, driver, config):
+        """Applique :func:`traiter_description` en utilisant l'instance courante."""
         traiter_description(driver, config, self.log_file, waiter=self.waiter)
 
     # ------------------------------------------------------------------
     # Delegation to :class:`AdditionalInfoPage`
     # ------------------------------------------------------------------
     def navigate_from_work_schedule_to_additional_information_page(self, driver):
+        """Ouvre la fenêtre des informations supplémentaires."""
         if not self.page:
             raise RuntimeError("AdditionalInfoPage not configured")
         return self.page.navigate_from_work_schedule_to_additional_information_page(
@@ -214,6 +222,7 @@ class ExtraInfoHelper:
         )
 
     def submit_and_validate_additional_information(self, driver):
+        """Valide les informations supplémentaires et ferme la fenêtre."""
         if not self.page:
             raise RuntimeError("AdditionalInfoPage not configured")
         return self.page.submit_and_validate_additional_information(driver)

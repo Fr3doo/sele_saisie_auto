@@ -9,6 +9,7 @@ class SharedMemoryService:
     """Service to store and retrieve bytes in shared memory."""
 
     def __init__(self, log_file: str | None = None) -> None:
+        """Initialise le service avec un ``Logger``."""
         self.logger = Logger(log_file)
 
     def stocker_en_memoire_partagee(self, nom: str, donnees: bytes):

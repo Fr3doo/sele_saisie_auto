@@ -17,6 +17,7 @@ class EncryptionService:
         log_file: str | None = None,
         shared_memory_service: SharedMemoryService | None = None,
     ) -> None:
+        """Prépare le service de chiffrement."""
         self.log_file = log_file
         self.shared_memory_service = shared_memory_service or SharedMemoryService(
             log_file
