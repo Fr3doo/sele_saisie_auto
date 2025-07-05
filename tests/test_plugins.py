@@ -4,7 +4,7 @@ import pytest
 
 from sele_saisie_auto import console_ui, plugins
 from sele_saisie_auto import saisie_automatiser_psatime as sap
-from tests.test_saisie_automatiser_psatime import DummyManager, setup_init
+from tests.test_saisie_automatiser_psatime import setup_init
 
 pytestmark = pytest.mark.slow
 
@@ -37,7 +37,7 @@ def test_run_invokes_hook(monkeypatch, sample_config):
         ),
     )
 
-    monkeypatch.setattr(sap.LoginHandler, "login", lambda *a, **k: None)
+    monkeypatch.setattr(sap.LoginHandler, "connect_to_psatime", lambda *a, **k: None)
     monkeypatch.setattr(sap.DateEntryPage, "handle_date_input", lambda *a, **k: None)
     monkeypatch.setattr(
         sap.PSATimeAutomation, "submit_date_cible", lambda *a, **k: False
