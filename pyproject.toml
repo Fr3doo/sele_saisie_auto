@@ -1,6 +1,7 @@
 [tool.poetry]
 name = "sele_saisie_auto"
 version = "0.1.0"
+python = ">=3.11,<3.14"
 description = "Automatisation de saisie de feuille de temps"
 readme = "README.md"
 license = "MIT"
@@ -14,7 +15,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.11"
 selenium = "4.25.0"
-cryptography = "^43.0"
+cryptography = ">=45,<46"
 requests = "^2.32.4"
 
 [tool.poetry.group.dev.dependencies]
@@ -32,11 +33,16 @@ coverage = "^7.5"
 ruff = "^0.12.1"
 radon = "^6.0.1"
 bandit = "^1.8.5"
-safety = "^3.5.2"
 types-requests = "^2.32"
 types-pyinstaller = "^6.11"
 pyinstaller = {version = "^6.11.1", markers = "python_version < '3.14'"}
 pyinstaller-hooks-contrib = {version = "^2024.10", markers = "python_version < '3.14'"}
+
+
+[[tool.poetry.source]]
+name = "safety"
+url = "https://pkgs.safetycli.com/repository/cgi-0e4b6/project/sele_saisie_auto/pypi/simple/"
+priority = "primary"
 
 [tool.black]
 line-length = 88
