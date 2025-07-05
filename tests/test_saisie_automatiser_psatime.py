@@ -150,7 +150,12 @@ def setup_init(monkeypatch, cfg):
     monkeypatch.setattr(sap, "LoginHandler", DummyLoginHandler)
     monkeypatch.setattr(sap, "DateEntryPage", DummyDateEntryPage)
     monkeypatch.setattr(sap, "AdditionalInfoPage", DummyAdditionalInfoPage)
-    sap.initialize("log.html", app_cfg)
+    sap.initialize(
+        "log.html",
+        app_cfg,
+        choix_user=True,
+        memory_config=sap.MemoryConfig(),
+    )
     monkeypatch.setattr(
         sap,
         "ConfigManager",
@@ -190,6 +195,8 @@ def test_initialize_sets_globals(monkeypatch, sample_config):
     assert sap.context.config.url == "http://test"
     assert sap.context.config.work_schedule["lundi"] == ("En mission", "8")
     assert sap.context.informations_projet_mission["billing_action"] == "B"
+    assert sap._AUTOMATION.choix_user is True
+    assert isinstance(sap._AUTOMATION.memory_config, sap.MemoryConfig)
 
 
 def test_initialize_shared_memory(monkeypatch, sample_config):

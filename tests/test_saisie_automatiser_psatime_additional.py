@@ -72,7 +72,12 @@ def setup_init(monkeypatch, cfg):
     monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
     monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyEnc())
     monkeypatch.setattr(sap, "SharedMemoryService", lambda lf: DummySHMService())
-    sap.initialize("log.html", app_cfg)
+    sap.initialize(
+        "log.html",
+        app_cfg,
+        choix_user=True,
+        memory_config=sap.MemoryConfig(),
+    )
     monkeypatch.setattr(
         sap,
         "ConfigManager",
