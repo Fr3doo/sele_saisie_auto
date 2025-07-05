@@ -107,7 +107,7 @@ Utilisez cette commande avant d’ouvrir une pull request pour vous assurer que 
   5. Avant d’ouvrir la PR :
       - exécuter `poetry install` et `poetry.lock`
       - exécuter `poetry run pre-commit run --all-files`, `poetry run pytest` et `poetry run pytest --cov=sele_saisie_auto --cov-report=term-missing`. Les deux doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
-      - executer `poetry run ruff .` et `poetry run ruff check . --fix`. Les controles doivent réussir. Si erreur, corrige-les en acceptant les modifications de ruff avant d’ouvrir la PR.
+      - executer `poetry run ruff check >/tmp/ruff.log` et `poetry run ruff check . --fix`. Les controles doivent réussir. Si erreur, corrige-les en acceptant les modifications de ruff avant d’ouvrir la PR.
       - exécuter `poetry run radon cc src/ -s` et `poetry run radon mi src/`. Pour produire un rapport HTML, installe d’abord le plugin [`radon-html`](https://pypi.org/project/radon-html/) via `poetry add --group dev radon-html` puis lance `poetry run radon html src/ -o radon-report`. Les contrôles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
       - executer `poetry run bandit -r src/` et `poetry run bandit -r src/ -lll -iii`. Les controles doivent réussir. Si erreur, corrige-les avant d’ouvrir la PR.
 
