@@ -184,13 +184,13 @@ class ExtraInfoHelper:
         self,
         log_file: str,
         waiter: Waiter | None = None,
-        page: "AdditionalInfoPage" | None = None,
+        page: AdditionalInfoPage | None = None,
     ) -> None:
         self.waiter = waiter or Waiter()
         self.page = page
         self.log_file = log_file
 
-    def set_page(self, page: "AdditionalInfoPage") -> None:
+    def set_page(self, page: AdditionalInfoPage) -> None:
         self.page = page
 
     def traiter_description(self, driver, config):

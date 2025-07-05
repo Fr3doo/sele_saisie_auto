@@ -3,6 +3,9 @@
 
 
 # Import des bibliothèques nécessaires
+from configparser import ConfigParser
+from dataclasses import dataclass
+
 from selenium.common.exceptions import (
     NoSuchElementException,
     StaleElementReferenceException,
@@ -40,31 +43,38 @@ from sele_saisie_auto.selenium_utils import (
 from sele_saisie_auto.shared_utils import program_break_time
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
+
+@dataclass
+class TimeSheetContext:
+    """Context loaded during :func:`initialize`."""
+
+    log_file: str
+    liste_items_descriptions: list[str]
+    jours_de_travail: dict[str, tuple[str, str]]
+    informations_projet_mission: dict[str, str]
+    config: ConfigParser | None = None
+
+
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
 # Variables initialisées lors de l'``initialize``
 LOG_FILE: str | None = None
-config = None
-LISTE_ITEMS_DESCRIPTIONS = []
-JOURS_DE_TRAVAIL = {}
-INFORMATIONS_PROJET_MISSION = {}
 
 MAX_ATTEMPTS = 5
 
 
-def initialize(log_file: str) -> None:
-    """Initialise la configuration du module."""
-    global LOG_FILE, config, LISTE_ITEMS_DESCRIPTIONS, JOURS_DE_TRAVAIL, INFORMATIONS_PROJET_MISSION
+def initialize(log_file: str) -> TimeSheetContext:
+    """Load configuration and return a :class:`TimeSheetContext`."""
 
-    LOG_FILE = log_file
     set_log_file_selenium(log_file)
     config = read_config_ini(log_file)
-    LISTE_ITEMS_DESCRIPTIONS = [
+    liste_items_descriptions = [
         item.strip().strip('"')
         for item in config.get("settings", "liste_items_planning").split(",")
+        if item.strip()
     ]
-    JOURS_DE_TRAVAIL = {
+    jours_de_travail = {
         day: (value.partition(",")[0].strip(), value.partition(",")[2].strip())
         for day, value in config.items("work_schedule")
     }
@@ -76,10 +86,18 @@ def initialize(log_file: str) -> None:
         billing_map = {
             opt.label.lower(): opt.code for opt in default_cgi_options_billing_action
         }
-    INFORMATIONS_PROJET_MISSION = {
+    informations_projet_mission = {
         item_projet: billing_map.get(value.lower(), value)
         for item_projet, value in config.items("project_information")
     }
+
+    return TimeSheetContext(
+        log_file=log_file,
+        liste_items_descriptions=liste_items_descriptions,
+        jours_de_travail=jours_de_travail,
+        informations_projet_mission=informations_projet_mission,
+        config=config,
+    )
 
 
 # ----------------------------------------------------------------------------- #
@@ -419,13 +437,17 @@ class TimeSheetHelper:
     def __init__(self, log_file: str, waiter: Waiter | None = None) -> None:
         self.log_file = log_file
         self.waiter = waiter or Waiter()
+        self.context: TimeSheetContext | None = None
 
     def wait_for_dom(self, driver) -> None:
         self.waiter.wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
         self.waiter.wait_for_dom_ready(driver, LONG_TIMEOUT)
 
-    def initialize(self) -> None:
-        initialize(self.log_file)
+    def initialize(self) -> TimeSheetContext:
+        self.context = initialize(self.log_file)
+        global LOG_FILE
+        LOG_FILE = self.log_file
+        return self.context
 
     def fill_standard_days(self, driver, jours_remplis: list[str]) -> list[str]:
         write_log(
@@ -433,9 +455,8 @@ class TimeSheetHelper:
             LOG_FILE,
             "DEBUG",
         )
-        return remplir_jours(
-            driver, LISTE_ITEMS_DESCRIPTIONS, JOURS_SEMAINE, jours_remplis
-        )
+        liste = [] if self.context is None else self.context.liste_items_descriptions
+        return remplir_jours(driver, liste, JOURS_SEMAINE, jours_remplis)
 
     def fill_work_missions(self, driver, jours_remplis: list[str]) -> list[str]:
         write_log(
@@ -443,10 +464,11 @@ class TimeSheetHelper:
             LOG_FILE,
             "DEBUG",
         )
-        return remplir_mission(driver, JOURS_DE_TRAVAIL, jours_remplis)
+        jours_de_travail = {} if self.context is None else self.context.jours_de_travail
+        return remplir_mission(driver, jours_de_travail, jours_remplis)
 
     def handle_additional_fields(self, driver) -> None:
-        if est_en_mission_presente(JOURS_DE_TRAVAIL):
+        if self.context and est_en_mission_presente(self.context.jours_de_travail):
             write_log(
                 "Jour 'En mission' détecté. Traitement des champs associés...",
                 LOG_FILE,
@@ -456,14 +478,15 @@ class TimeSheetHelper:
                 driver,
                 LISTES_ID_INFORMATIONS_MISSION,
                 ID_TO_KEY_MAPPING,
-                INFORMATIONS_PROJET_MISSION,
+                self.context.informations_projet_mission,
                 waiter=self.waiter,
             )
         else:
             write_log("Aucun Jour 'En mission' détecté.", LOG_FILE, "DEBUG")
 
     def run(self, driver) -> None:
-        self.initialize()
+        if self.initialize() is None:
+            self.context = TimeSheetContext(self.log_file, [], {}, {})
         try:
             jours_remplis: list[str] = []
 

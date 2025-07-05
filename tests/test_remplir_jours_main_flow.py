@@ -1,4 +1,3 @@
-import importlib
 import sys
 from pathlib import Path
 
@@ -177,12 +176,11 @@ def test_initialize_sets_globals(monkeypatch):
         lambda lf: None,
     )
 
-    initialize("logfile")
+    ctx = initialize("logfile")
 
-    mod = importlib.import_module("sele_saisie_auto.remplir_jours_feuille_de_temps")
-    assert ["d1", "d2"] == mod.LISTE_ITEMS_DESCRIPTIONS
-    assert {"lun": ("En mission", "8")} == mod.JOURS_DE_TRAVAIL
-    assert {"billing_action": "B"} == mod.INFORMATIONS_PROJET_MISSION
+    assert ["d1", "d2"] == ctx.liste_items_descriptions
+    assert {"lun": ("En mission", "8")} == ctx.jours_de_travail
+    assert {"billing_action": "B"} == ctx.informations_projet_mission
 
 
 def test_traiter_champs_mission_insert(monkeypatch):

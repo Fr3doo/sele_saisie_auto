@@ -33,7 +33,6 @@ from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import initialize_logger, write_log
-from sele_saisie_auto.remplir_informations_supp_utils import traiter_description
 from sele_saisie_auto.selenium_utils import click_element_without_wait  # noqa: F401
 from sele_saisie_auto.selenium_utils import modifier_date_input  # noqa: F401
 from sele_saisie_auto.selenium_utils import send_keys_to_element  # noqa: F401
