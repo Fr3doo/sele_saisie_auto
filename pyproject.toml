@@ -10,6 +10,7 @@ package-mode = true
 packages = [
     { include = "sele_saisie_auto", from = "src" },
 ]
+exclude = ["examples/*"]
 
 [tool.poetry.dependencies]
 python = "^3.11"

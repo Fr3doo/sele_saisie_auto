@@ -10,7 +10,7 @@ L'objectif est de gagner du temps sur cette tâche répétitive tout en restant 
 * Chiffrement AES des identifiants stockés dans `config.ini`
 * Remplissage automatique des jours et tâches PSA Time via Selenium
 * Journalisation HTML pour suivre l'exécution
-* Système de plugins permettant d'ajouter des hooks personnalisés
+* Système de plugins permettant d'ajouter des hooks personnalisés (voir `examples/example_plugin.py`)
 
 ## Mise en route rapide
 

@@ -1,6 +1,7 @@
 import importlib
 
-from sele_saisie_auto import example_plugin, plugins
+from examples import example_plugin
+from sele_saisie_auto import plugins
 
 
 def test_example_plugin_hook(capsys):
