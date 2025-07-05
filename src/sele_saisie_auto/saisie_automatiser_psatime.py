@@ -26,6 +26,7 @@ from sele_saisie_auto import (
 )
 from sele_saisie_auto.additional_info_locators import AdditionalInfoLocators
 from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.automation.date_entry_page import DateEntryPage
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.error_handler import log_error
@@ -166,6 +167,7 @@ class PSATimeAutomation:
                 },
             ],
         )
+        self.date_entry_page = DateEntryPage(self)
 
         write_log("📌 Chargement des configurations...", self.log_file, "DEBUG")
         write_log(
@@ -328,69 +330,17 @@ class PSATimeAutomation:
             raise NameError("main_target_win0 not found")
         return switched_to_iframe
 
-    @wait_for_dom_after
     def navigate_from_home_to_date_entry_page(self, driver):
-        element_present = wait_for_element(
-            driver,
-            By.ID,
-            Locators.NAV_TO_DATE_ENTRY.value,
-            ec.element_to_be_clickable,
-            timeout=DEFAULT_TIMEOUT,
-        )
-        if element_present:
-            click_element_without_wait(driver, By.ID, Locators.NAV_TO_DATE_ENTRY.value)
-        self.wait_for_dom(driver)
-
-        element_present = wait_for_element(
-            driver,
-            By.ID,
-            Locators.SIDE_MENU_BUTTON.value,
-            ec.element_to_be_clickable,
-            timeout=DEFAULT_TIMEOUT,
-        )
-        if element_present:
-            click_element_without_wait(driver, By.ID, Locators.SIDE_MENU_BUTTON.value)
-        self.wait_for_dom(driver)
-
-        return self.switch_to_iframe_main_target_win0(driver)
+        """Delegate navigation to :class:`DateEntryPage`."""
+        return self.date_entry_page.navigate_from_home_to_date_entry_page(driver)
 
     def handle_date_input(self, driver, date_cible):
-        date_input = wait_for_element(
-            driver, By.ID, Locators.DATE_INPUT.value, timeout=DEFAULT_TIMEOUT
-        )
-        if date_input:
-            current_date_value = date_input.get_attribute("value")
-            if date_cible and date_cible.strip():
-                modifier_date_input(date_input, date_cible, "Date cible appliquée")
-            else:
-                new_date_value = get_next_saturday_if_not_saturday(current_date_value)
-                if new_date_value != current_date_value:
-                    modifier_date_input(
-                        date_input,
-                        new_date_value,
-                        "Prochain samedi appliqué",
-                    )
-                else:
-                    write_log(
-                        "Aucune modification de la date nécessaire.",
-                        self.log_file,
-                        "DEBUG",
-                    )
-        self.wait_for_dom(driver)
+        """Delegate date input to :class:`DateEntryPage`."""
+        return self.date_entry_page.handle_date_input(driver, date_cible)
 
-    @wait_for_dom_after
     def submit_date_cible(self, driver):
-        element_present = wait_for_element(
-            driver,
-            By.ID,
-            Locators.ADD_BUTTON.value,
-            ec.element_to_be_clickable,
-            timeout=DEFAULT_TIMEOUT,
-        )
-        if element_present:
-            send_keys_to_element(driver, By.ID, Locators.ADD_BUTTON.value, Keys.RETURN)
-        self.wait_for_dom(driver)
-        return element_present
+        """Delegate submission to :class:`DateEntryPage`."""
+        return self.date_entry_page.submit_date_cible(driver)
 
     @wait_for_dom_after
     def navigate_from_work_schedule_to_additional_information_page(self, driver):
@@ -479,38 +429,10 @@ class PSATimeAutomation:
         )
 
     def _handle_date_alert(self, driver) -> None:
-        switch_to_default_content(driver)
-        alerte = Locators.ALERT_CONTENT_0.value
-        if wait_for_element(driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT):
-            click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
-            write_log(
-                "\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)",
-                self.log_file,
-                "INFO",
-            )
-            write_log(
-                "--> Modifier la date du PSATime dans le fichier ini. Le programme va s'arreter.",
-                self.log_file,
-                "INFO",
-            )
-            sys.exit()
-        else:
-            write_log("Date validée avec succès.", self.log_file, "DEBUG")
+        self.date_entry_page._handle_date_alert(driver)
 
     def _click_action_button(self, driver) -> None:
-        if CHOIX_USER:
-            elem_id = Locators.OK_BUTTON.value
-        else:
-            elem_id = Locators.COPY_TIME_BUTTON.value
-        element_present = wait_for_element(
-            driver,
-            By.ID,
-            elem_id,
-            ec.element_to_be_clickable,
-            timeout=DEFAULT_TIMEOUT,
-        )
-        if element_present:
-            click_element_without_wait(driver, By.ID, elem_id)
+        self.date_entry_page._click_action_button(driver, CHOIX_USER)
 
     def _handle_save_alerts(self, driver) -> None:
         alerts = [

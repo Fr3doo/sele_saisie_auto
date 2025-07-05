@@ -4,8 +4,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.locators import Locators
+from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.selenium_utils import send_keys_to_element
 
 
