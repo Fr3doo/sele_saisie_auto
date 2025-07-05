@@ -1,7 +1,6 @@
 [tool.poetry]
 name = "sele_saisie_auto"
 version = "0.1.0"
-python = ">=3.11,<3.14"
 description = "Automatisation de saisie de feuille de temps"
 readme = "README.md"
 license = "MIT"
@@ -35,8 +34,8 @@ radon = "^6.0.1"
 bandit = "^1.8.5"
 types-requests = "^2.32"
 types-pyinstaller = "^6.11"
-pyinstaller = {version = "^6.11.1", markers = "python_version < '3.14'"}
-pyinstaller-hooks-contrib = {version = "^2024.10", markers = "python_version < '3.14'"}
+pyinstaller = {version = "^6.13.0", markers = "python_version < '3.14'"}
+pyinstaller-hooks-contrib = {version = "^2025.2", markers = "python_version < '3.14'"}
 
 
 [[tool.poetry.source]]
