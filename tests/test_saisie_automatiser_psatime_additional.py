@@ -91,10 +91,13 @@ def test_connect_to_psatime(monkeypatch, sample_config):
         lambda driver, by, ident, value: actions.append((ident, value)),
     )
     sap.context.encryption_service = DummyEnc()
-    creds = types.SimpleNamespace(aes_key=b"key", login=b"user", password=b"pass")
-    sap._AUTOMATION.login_handler.login("drv", creds, sap.context.encryption_service)
+    sap._AUTOMATION.login_handler.browser_session.wait_for_dom = (
+        lambda d: actions.append("dom")
+    )
+    sap._AUTOMATION.login_handler.connect_to_psatime("drv", b"key", b"user", b"pass")
     assert (Locators.USERNAME.value, "user") in actions
     assert (Locators.PASSWORD.value, "pass") in actions
+    assert "dom" in actions
 
 
 def test_switch_to_iframe(monkeypatch):

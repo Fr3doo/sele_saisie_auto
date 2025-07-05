@@ -23,15 +23,23 @@ class DummyCreds:
         self.aes_key = b"key"
 
 
+class DummySession:
+    def __init__(self):
+        self.wait_calls = []
+
+    def wait_for_dom(self, driver):
+        self.wait_calls.append(driver)
+
+
 def test_login_calls_send_keys(monkeypatch):
     actions = []
     monkeypatch.setattr(
         "sele_saisie_auto.automation.login_handler.send_keys_to_element",
         lambda driver, by, ident, value: actions.append((ident, value)),
     )
-    handler = LoginHandler("log.html")
     enc = DummyEnc()
-    handler.login("driver", DummyCreds(), enc)
+    handler = LoginHandler("log.html", enc, DummySession())
+    handler.login("driver", DummyCreds())
 
     assert (Locators.USERNAME.value, "user") in actions
     assert (Locators.PASSWORD.value, "pass") in actions
@@ -45,9 +53,9 @@ def test_login_presses_return(monkeypatch):
         "sele_saisie_auto.automation.login_handler.send_keys_to_element",
         lambda driver, by, ident, value: actions.append(value),
     )
-    handler = LoginHandler("log.html")
     enc = DummyEnc()
-    handler.login("driver", DummyCreds(), enc)
+    handler = LoginHandler("log.html", enc, DummySession())
+    handler.login("driver", DummyCreds())
 
     from selenium.webdriver.common.keys import Keys
 

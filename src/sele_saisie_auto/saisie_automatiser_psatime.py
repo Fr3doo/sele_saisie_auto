@@ -5,7 +5,6 @@
 # ----------------------------------------------------------------------------- #
 
 import sys
-import types
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from multiprocessing import shared_memory
@@ -37,17 +36,17 @@ from sele_saisie_auto.logger_utils import initialize_logger, write_log
 from sele_saisie_auto.remplir_informations_supp_utils import (
     set_log_file as set_log_file_infos,
 )
-from sele_saisie_auto.selenium_utils import click_element_without_wait  # noqa: F401
-from sele_saisie_auto.selenium_utils import modifier_date_input  # noqa: F401
-from sele_saisie_auto.selenium_utils import send_keys_to_element  # noqa: F401
-from sele_saisie_auto.selenium_utils import detecter_doublons_jours
-from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.selenium_utils import (
+    click_element_without_wait,  # noqa: F401
+    detecter_doublons_jours,
+    modifier_date_input,  # noqa: F401
+    send_keys_to_element,  # noqa: F401
     switch_to_default_content,
     switch_to_iframe_by_id_or_name,
     wait_for_dom_after,
     wait_for_element,
 )
+from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.shared_utils import program_break_time
 
@@ -174,7 +173,11 @@ class PSATimeAutomation:
             ],
         )
         self.browser_session = BrowserSession(log_file)
-        self.login_handler = LoginHandler(log_file)
+        self.login_handler = LoginHandler(
+            log_file,
+            self.context.encryption_service,
+            self.browser_session,
+        )
         self.date_entry_page = DateEntryPage(self)
         self.additional_info_page = AdditionalInfoPage(self)
 
@@ -424,12 +427,12 @@ class PSATimeAutomation:
         with self.browser_session as session:
             driver = self.setup_browser(session)
             try:
-                creds = types.SimpleNamespace(
-                    aes_key=credentials.aes_key,
-                    login=credentials.login,
-                    password=credentials.password,
+                self.login_handler.connect_to_psatime(
+                    driver,
+                    credentials.aes_key,
+                    credentials.login,
+                    credentials.password,
                 )
-                self.login_handler.login(driver, creds, self.context.encryption_service)
                 if self.navigate_from_home_to_date_entry_page(driver):
                     self._process_date_entry(driver)
                     self._fill_and_save_timesheet(driver)
@@ -599,6 +602,12 @@ def setup_browser(session: BrowserSession):
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     return _AUTOMATION.setup_browser(session)
+
+
+def connect_to_psatime(driver, cle_aes, login_c, pwd_c):
+    if not _AUTOMATION:
+        raise RuntimeError("Automation non initialisée")
+    return _AUTOMATION.login_handler.connect_to_psatime(driver, cle_aes, login_c, pwd_c)
 
 
 def switch_to_iframe_main_target_win0(driver):

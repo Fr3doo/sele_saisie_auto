@@ -94,12 +94,12 @@ class DummyBrowserSession:
 
 
 class DummyLoginHandler:
-    def __init__(self, log_file):
+    def __init__(self, log_file, enc, session):
         self.log_file = log_file
         self.calls = []
 
-    def login(self, driver, creds, enc):
-        self.calls.append((driver, creds, enc))
+    def connect_to_psatime(self, driver, key, login, pwd):
+        self.calls.append((driver, key, login, pwd))
 
 
 class DummyDateEntryPage:

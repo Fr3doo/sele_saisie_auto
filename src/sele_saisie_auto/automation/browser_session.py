@@ -20,7 +20,7 @@ class SeleniumDriverManager:
         self.log_file = log_file
         self.driver: WebDriver | None = None
 
-    def __enter__(self) -> "SeleniumDriverManager":
+    def __enter__(self) -> SeleniumDriverManager:
         return self
 
     def __exit__(
