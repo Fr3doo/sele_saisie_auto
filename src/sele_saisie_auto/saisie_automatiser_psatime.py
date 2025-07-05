@@ -5,6 +5,7 @@
 # ----------------------------------------------------------------------------- #
 
 import sys
+import types
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from multiprocessing import shared_memory
@@ -27,7 +28,9 @@ from sele_saisie_auto import (
 from sele_saisie_auto.additional_info_locators import AdditionalInfoLocators
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation.additional_info_page import AdditionalInfoPage
+from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.automation.date_entry_page import DateEntryPage
+from sele_saisie_auto.automation.login_handler import LoginHandler
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.error_handler import log_error
@@ -168,6 +171,8 @@ class PSATimeAutomation:
                 },
             ],
         )
+        self.browser_session = BrowserSession(log_file)
+        self.login_handler = LoginHandler(log_file)
         self.date_entry_page = DateEntryPage(self)
         self.additional_info_page = AdditionalInfoPage(self)
 
@@ -295,9 +300,9 @@ class PSATimeAutomation:
         wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
         wait_for_dom_ready(driver, LONG_TIMEOUT)
 
-    def setup_browser(self, driver_manager: SeleniumDriverManager):
-        """Configure et démarre le navigateur."""
-        return driver_manager.open(
+    def setup_browser(self, driver_manager: SeleniumDriverManager | None = None):
+        """Configure et démarre le navigateur via :class:`BrowserSession`."""
+        return self.browser_session.open(
             self.context.config.url, fullscreen=False, headless=False
         )
 
@@ -306,16 +311,15 @@ class PSATimeAutomation:
         self, driver, cle_aes, nom_utilisateur_chiffre, mot_de_passe_chiffre
     ):
         """Connecte l'utilisateur au portail PSATime."""
-        nom_utilisateur = self.context.encryption_service.dechiffrer_donnees(
-            nom_utilisateur_chiffre, cle_aes
+        creds = types.SimpleNamespace(
+            aes_key=cle_aes,
+            login=nom_utilisateur_chiffre,
+            password=mot_de_passe_chiffre,
         )
-        mot_de_passe = self.context.encryption_service.dechiffrer_donnees(
-            mot_de_passe_chiffre, cle_aes
-        )
-        send_keys_to_element(driver, By.ID, Locators.USERNAME.value, nom_utilisateur)
-        send_keys_to_element(driver, By.ID, Locators.PASSWORD.value, mot_de_passe)
-        send_keys_to_element(driver, By.ID, Locators.PASSWORD.value, Keys.RETURN)
-        self.wait_for_dom(driver)
+        from sele_saisie_auto.automation import login_handler as lh
+
+        lh.send_keys_to_element = send_keys_to_element
+        self.login_handler.login(driver, creds, self.context.encryption_service)
 
     @wait_for_dom_after
     def switch_to_iframe_main_target_win0(self, driver):
@@ -365,7 +369,7 @@ class PSATimeAutomation:
 
     def cleanup_resources(
         self,
-        driver_manager: SeleniumDriverManager,
+        driver_manager,
         memoire_cle,
         memoire_nom,
         memoire_mdp,
@@ -382,7 +386,8 @@ class PSATimeAutomation:
             self.context.shared_memory_service.supprimer_memoire_partagee_securisee(
                 memoire_mdp
             )
-        driver_manager.close()
+        if driver_manager is not None:
+            driver_manager.close()
         write_log(
             "🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier saisie_automatiser_psatime.",
             self.log_file,
@@ -434,8 +439,8 @@ class PSATimeAutomation:
         self.log_initialisation()
         credentials = self.initialize_shared_memory()
 
-        with SeleniumDriverManager(self.log_file) as driver_manager:
-            driver = self.setup_browser(driver_manager)
+        with self.browser_session as session:
+            driver = self.setup_browser(session)
             try:
                 self.connect_to_psatime(
                     driver,
@@ -464,7 +469,7 @@ class PSATimeAutomation:
                 log_error(f"❌ {messages.ERREUR_INATTENDUE} : {str(e)}", self.log_file)
             finally:
                 try:
-                    if driver_manager.driver is not None:
+                    if session.driver is not None:
                         console_ui.ask_continue(
                             "INFO : Controler et soumettez votre PSATime, Puis appuyer sur ENTRER "
                         )
@@ -477,7 +482,7 @@ class PSATimeAutomation:
                     pass
                 finally:
                     self.cleanup_resources(
-                        driver_manager,
+                        session,
                         credentials.mem_key,
                         credentials.mem_login,
                         credentials.mem_password,
