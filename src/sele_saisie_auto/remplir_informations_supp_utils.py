@@ -182,17 +182,19 @@ class ExtraInfoHelper:
 
     def __init__(
         self,
+        log_file: str,
         waiter: Waiter | None = None,
         page: "AdditionalInfoPage" | None = None,
     ) -> None:
         self.waiter = waiter or Waiter()
         self.page = page
+        self.log_file = log_file
 
     def set_page(self, page: "AdditionalInfoPage") -> None:
         self.page = page
 
-    def traiter_description(self, driver, config, log_file: str):
-        traiter_description(driver, config, log_file, waiter=self.waiter)
+    def traiter_description(self, driver, config):
+        traiter_description(driver, config, self.log_file, waiter=self.waiter)
 
     # ------------------------------------------------------------------
     # Delegation to :class:`AdditionalInfoPage`

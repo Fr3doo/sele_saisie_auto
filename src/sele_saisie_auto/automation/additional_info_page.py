@@ -20,7 +20,7 @@ class AdditionalInfoPage:
 
     def __init__(self, automation: PSATimeAutomation) -> None:
         self._automation = automation
-        self.helper = ExtraInfoHelper(page=self)
+        self.helper = ExtraInfoHelper(log_file=self.log_file, page=self)
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
         sap.traiter_description = self.helper.traiter_description
@@ -73,7 +73,7 @@ class AdditionalInfoPage:
 
         if switched_to_iframe:
             for config in self._automation.context.descriptions:
-                sap.traiter_description(driver, config, self.log_file)
+                sap.traiter_description(driver, config)
             write_log(
                 "Validation des informations supplémentaires terminée.",
                 self.log_file,
