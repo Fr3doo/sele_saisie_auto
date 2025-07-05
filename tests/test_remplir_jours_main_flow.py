@@ -150,8 +150,8 @@ def test_main_invokes_helper(monkeypatch):
     called = {}
 
     class DummyHelper:
-        def __init__(self, log_file):
-            called["init"] = log_file
+        def __init__(self, ctx):
+            called["init"] = ctx.log_file
 
         def run(self, driver):
             called["run"] = True
@@ -229,7 +229,7 @@ def test_main_with_mission(monkeypatch):
     seq = []
 
     class DummyHelper:
-        def __init__(self, log_file):
+        def __init__(self, ctx):
             seq.append("init")
 
         def run(self, driver):

@@ -73,9 +73,8 @@ def test_remplir_mission_calls_helpers(monkeypatch):
 
 
 def test_timesheethelper_run_sequence(monkeypatch):
-    helper = TimeSheetHelper("log")
+    helper = TimeSheetHelper(TimeSheetContext("log", [], {}, {}))
     seq = []
-    monkeypatch.setattr(helper, "initialize", lambda: seq.append("init"))
     monkeypatch.setattr(
         helper, "fill_standard_days", lambda d, j: seq.append("std") or j
     )
@@ -90,4 +89,4 @@ def test_timesheethelper_run_sequence(monkeypatch):
         lambda *a, **k: None,
     )
     helper.run(None)
-    assert seq == ["init", "std", "work", "extra"]
+    assert seq == ["std", "work", "extra"]

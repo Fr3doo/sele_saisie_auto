@@ -15,6 +15,7 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.by import By
 
 from sele_saisie_auto import messages
+from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.constants import (
     ID_TO_KEY_MAPPING,
     JOURS_SEMAINE,
@@ -53,6 +54,28 @@ class TimeSheetContext:
     jours_de_travail: dict[str, tuple[str, str]]
     informations_projet_mission: dict[str, str]
     config: ConfigParser | None = None
+
+
+def context_from_app_config(
+    app_config: AppConfig, log_file: str
+) -> TimeSheetContext:  # pragma: no cover - simple mapper
+    """Create a :class:`TimeSheetContext` from :class:`AppConfig`."""
+
+    billing_map = {
+        opt.label.lower(): opt.code for opt in app_config.cgi_options_billing_action
+    }
+    informations = {
+        item: billing_map.get(value.lower(), value)
+        for item, value in app_config.project_information.items()
+    }
+
+    return TimeSheetContext(
+        log_file=log_file,
+        liste_items_descriptions=app_config.liste_items_planning,
+        jours_de_travail=app_config.work_schedule,
+        informations_projet_mission=informations,
+        config=app_config.raw,
+    )
 
 
 # ------------------------------------------------------------------------------------------- #
@@ -466,19 +489,19 @@ def traiter_champs_mission(
 class TimeSheetHelper:
     """Helper class orchestrating the time sheet filling steps."""
 
-    def __init__(self, log_file: str, waiter: Waiter | None = None) -> None:
-        self.log_file = log_file
+    def __init__(self, context: TimeSheetContext, waiter: Waiter | None = None) -> None:
+        self.context = context
+        self.log_file = context.log_file
         self.waiter = waiter or Waiter()
-        self.context: TimeSheetContext | None = None
+        global LOG_FILE
+        LOG_FILE = self.log_file
 
     def wait_for_dom(self, driver) -> None:
         self.waiter.wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
         self.waiter.wait_for_dom_ready(driver, LONG_TIMEOUT)
 
     def initialize(self) -> TimeSheetContext:
-        self.context = initialize(self.log_file)
-        global LOG_FILE
-        LOG_FILE = self.log_file
+        """Return the current context without reloading from disk."""
         return self.context
 
     def fill_standard_days(self, driver, jours_remplis: list[str]) -> list[str]:
@@ -520,8 +543,8 @@ class TimeSheetHelper:
             write_log("Aucun Jour 'En mission' détecté.", LOG_FILE, "DEBUG")
 
     def run(self, driver) -> None:
-        if self.initialize() is None:
-            self.context = TimeSheetContext(self.log_file, [], {}, {})
+        if self.context is None:  # pragma: no cover - guard clause
+            raise RuntimeError("TimeSheetContext not provided")
         try:
             jours_remplis: list[str] = []
 
@@ -562,7 +585,10 @@ class TimeSheetHelper:
 
 def main(driver, log_file: str) -> None:
     """Minimal orchestrator creating the helper and launching the process."""
-    TimeSheetHelper(log_file).run(driver)
+    ctx = initialize(log_file)
+    if ctx is None:  # pragma: no cover - fallback path
+        ctx = TimeSheetContext(log_file, [], {}, {})
+    TimeSheetHelper(ctx).run(driver)
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation
