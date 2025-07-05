@@ -9,7 +9,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
-from . import DEFAULT_TIMEOUT, LOG_FILE, write_log
+from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
+
+from . import LOG_FILE, write_log
 
 
 class Waiter:

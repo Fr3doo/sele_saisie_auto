@@ -49,6 +49,7 @@ from sele_saisie_auto.selenium_utils import (
 )
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.shared_utils import program_break_time
+from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
@@ -468,8 +469,6 @@ class PSATimeAutomation:
 
 
 CHOIX_USER = True  # true pour créer une nouvelle feuille de temps
-DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut
-LONG_TIMEOUT = 20
 
 # Configuration memoire partagée et cryptage
 MEMOIRE_PARTAGEE_CLE = "memoire_partagee_cle"

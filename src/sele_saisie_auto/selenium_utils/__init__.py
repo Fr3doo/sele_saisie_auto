@@ -15,6 +15,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import Select, WebDriverWait
 
 from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 LOG_FILE: str | None = None
 
@@ -24,9 +25,6 @@ def set_log_file(log_file: str) -> None:
     global LOG_FILE
     LOG_FILE = log_file
 
-
-DEFAULT_TIMEOUT = 10
-LONG_TIMEOUT = 20
 
 from .element_actions import (
     click_element_without_wait,

@@ -38,6 +38,7 @@ from sele_saisie_auto.selenium_utils import (
     wait_until_dom_is_stable,
 )
 from sele_saisie_auto.shared_utils import program_break_time
+from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
@@ -50,8 +51,6 @@ JOURS_DE_TRAVAIL = {}
 INFORMATIONS_PROJET_MISSION = {}
 
 MAX_ATTEMPTS = 5
-DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut
-LONG_TIMEOUT = 20
 
 
 def initialize(log_file: str) -> None:
