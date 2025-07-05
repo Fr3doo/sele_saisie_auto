@@ -104,7 +104,12 @@ def test_initialize_debug_mode_off(monkeypatch, sample_config, tmp_path):
     monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
     monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyManager())
     app_cfg.debug_mode = "OFF"
-    sap.initialize(str(log_path), app_cfg)
+    sap.initialize(
+        str(log_path),
+        app_cfg,
+        choix_user=True,
+        memory_config=sap.MemoryConfig(),
+    )
     monkeypatch.setattr(
         sap,
         "ConfigManager",

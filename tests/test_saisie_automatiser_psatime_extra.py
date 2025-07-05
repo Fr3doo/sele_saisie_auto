@@ -24,7 +24,12 @@ def test_initialize_date_none(monkeypatch, sample_config):
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
     monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyEnc())
-    sap.initialize("log.html", app_cfg)
+    sap.initialize(
+        "log.html",
+        app_cfg,
+        choix_user=True,
+        memory_config=sap.MemoryConfig(),
+    )
     monkeypatch.setattr(
         sap,
         "ConfigManager",
