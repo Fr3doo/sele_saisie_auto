@@ -133,6 +133,7 @@ def controle_insertion(day_input_field, input_value):
 
 
 def selectionner_option_menu_deroulant_type_select(dropdown_field, visible_text):
+    """Choisit ``visible_text`` dans un ``Select`` Selenium."""
     try:
         select = Select(dropdown_field)
         select.select_by_visible_text(visible_text)

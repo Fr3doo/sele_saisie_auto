@@ -129,6 +129,7 @@ def initialize(log_file: str) -> TimeSheetContext:
 
 
 def wait_for_dom(driver, waiter: Waiter | None = None):
+    """Attend que le DOM soit chargé et stable."""
     if waiter is None:
         wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
         wait_for_dom_ready(driver, LONG_TIMEOUT)
@@ -295,6 +296,7 @@ def remplir_mission_specifique(
 def _insert_value_with_retries(
     driver, field_id, value, max_attempts, waiter  # pragma: no cover
 ):  # pragma: no cover  # pragma: no cover
+    """Essaye d'insérer la valeur plusieurs fois si nécessaire."""
     if waiter is not None:  # pragma: no cover
         # pragma: no cover
         wait_for_dom(driver, waiter=waiter)  # pragma: no cover
@@ -417,6 +419,7 @@ class TimeSheetHelper:
     """Helper class orchestrating the time sheet filling steps."""
 
     def __init__(self, context: TimeSheetContext, waiter: Waiter | None = None) -> None:
+        """Crée l'assistant avec son contexte et un ``Waiter`` optionnel."""
         self.context = context
         self.log_file = context.log_file
         if waiter is None:
@@ -434,6 +437,7 @@ class TimeSheetHelper:
         LOG_FILE = self.log_file
 
     def wait_for_dom(self, driver) -> None:
+        """Attend que le DOM soit prêt via ``Waiter``."""
         self.waiter.wait_until_dom_is_stable(driver)
         self.waiter.wait_for_dom_ready(driver)
 
@@ -442,6 +446,7 @@ class TimeSheetHelper:
         return self.context
 
     def fill_standard_days(self, driver, jours_remplis: list[str]) -> list[str]:
+        """Remplit les jours hors mission."""
         write_log(
             "Début du remplissage des jours hors mission...",
             LOG_FILE,
@@ -452,6 +457,7 @@ class TimeSheetHelper:
         return remplir_jours(driver, liste, JOURS_SEMAINE, jours_remplis, ctx)
 
     def fill_work_missions(self, driver, jours_remplis: list[str]) -> list[str]:
+        """Traite les jours en mission."""
         write_log(
             "Début du traitement des jours de travail et des missions...",
             LOG_FILE,
@@ -462,6 +468,7 @@ class TimeSheetHelper:
         return remplir_mission(driver, jours_de_travail, jours_remplis, ctx)
 
     def handle_additional_fields(self, driver) -> None:
+        """Insère les champs complémentaires liés aux missions."""
         if self.context and est_en_mission_presente(self.context.jours_de_travail):
             write_log(
                 "Jour 'En mission' détecté. Traitement des champs associés...",
@@ -480,6 +487,7 @@ class TimeSheetHelper:
             write_log("Aucun Jour 'En mission' détecté.", LOG_FILE, "DEBUG")
 
     def run(self, driver) -> None:
+        """Orchestre toutes les étapes de remplissage."""
         if self.context is None:  # pragma: no cover - guard clause
             raise RuntimeError("TimeSheetContext not provided")
         try:
