@@ -32,7 +32,15 @@ Pour installer sans l'environnement isol de Poetry, utilisez :
 poetry install --no-root
 ```
 
-Pour lancer un agent directement :
+Pour lancer l'automatisation en ligne de commande :
+```bash
+poetry run psatime-auto
+```
+Pour démarrer l'interface graphique :
+```bash
+poetry run psatime-launcher
+```
+L'ancienne commande reste possible :
 ```bash
 python saisie_automatiser_psatime.py
 ```
