@@ -26,6 +26,7 @@ from sele_saisie_auto import (
 )
 from sele_saisie_auto.additional_info_locators import AdditionalInfoLocators
 from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.automation.additional_info_page import AdditionalInfoPage
 from sele_saisie_auto.automation.date_entry_page import DateEntryPage
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import EncryptionService
@@ -168,6 +169,7 @@ class PSATimeAutomation:
             ],
         )
         self.date_entry_page = DateEntryPage(self)
+        self.additional_info_page = AdditionalInfoPage(self)
 
         write_log("📌 Chargement des configurations...", self.log_file, "DEBUG")
         write_log(
@@ -344,63 +346,22 @@ class PSATimeAutomation:
 
     @wait_for_dom_after
     def navigate_from_work_schedule_to_additional_information_page(self, driver):
-        self.wait_for_dom(driver)
-        element_present = wait_for_element(
-            driver,
-            By.ID,
-            Locators.ADDITIONAL_INFO_LINK.value,
-            ec.element_to_be_clickable,
-            timeout=DEFAULT_TIMEOUT,
+        """Delegate to :class:`AdditionalInfoPage`."""
+        return self.additional_info_page.navigate_from_work_schedule_to_additional_information_page(
+            driver
         )
-        if element_present:
-            click_element_without_wait(
-                driver, By.ID, Locators.ADDITIONAL_INFO_LINK.value
-            )
-        switch_to_default_content(driver)
-        self.wait_for_dom(driver)
 
     @wait_for_dom_after
     def submit_and_validate_additional_information(self, driver):
-        element_present = wait_for_element(
-            driver, By.ID, Locators.MODAL_FRAME.value, timeout=DEFAULT_TIMEOUT
+        """Delegate to :class:`AdditionalInfoPage`."""
+        return self.additional_info_page.submit_and_validate_additional_information(
+            driver
         )
-        if element_present:
-            switched_to_iframe = switch_to_iframe_by_id_or_name(
-                driver, Locators.MODAL_FRAME.value
-            )
-
-        if switched_to_iframe:
-            for config_description in self.context.descriptions:
-                traiter_description(driver, config_description)
-            write_log(
-                "Validation des informations supplémentaires terminée.",
-                self.log_file,
-                "INFO",
-            )
-
-        element_present = wait_for_element(
-            driver,
-            By.ID,
-            Locators.SAVE_ICON.value,
-            ec.element_to_be_clickable,
-            timeout=DEFAULT_TIMEOUT,
-        )
-        if element_present:
-            click_element_without_wait(driver, By.ID, Locators.SAVE_ICON.value)
 
     @wait_for_dom_after
     def save_draft_and_validate(self, driver):
-        element_present = wait_for_element(
-            driver,
-            By.ID,
-            Locators.SAVE_DRAFT_BUTTON.value,
-            ec.element_to_be_clickable,
-            timeout=DEFAULT_TIMEOUT,
-        )
-        if element_present:
-            click_element_without_wait(driver, By.ID, Locators.SAVE_DRAFT_BUTTON.value)
-            self.wait_for_dom(driver)
-        return element_present
+        """Delegate to :class:`AdditionalInfoPage`."""
+        return self.additional_info_page.save_draft_and_validate(driver)
 
     def cleanup_resources(
         self,
@@ -434,23 +395,6 @@ class PSATimeAutomation:
     def _click_action_button(self, driver) -> None:
         self.date_entry_page._click_action_button(driver, CHOIX_USER)
 
-    def _handle_save_alerts(self, driver) -> None:
-        alerts = [
-            Locators.ALERT_CONTENT_1.value,
-            Locators.ALERT_CONTENT_2.value,
-            Locators.ALERT_CONTENT_3.value,
-        ]
-        switch_to_default_content(driver)
-        for alerte in alerts:
-            if wait_for_element(driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT):
-                click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
-                write_log(
-                    "⚠️ Alerte rencontrée lors de la sauvegarde.",
-                    self.log_file,
-                    "INFO",
-                )
-                break
-
     def _process_date_entry(self, driver) -> None:
         self.handle_date_input(driver, self.context.config.date_cible)
         program_break_time(
@@ -480,7 +424,7 @@ class PSATimeAutomation:
             detecter_doublons_jours(driver)
             plugins.call("before_submit", driver)
             if self.save_draft_and_validate(driver):
-                self._handle_save_alerts(driver)
+                self.additional_info_page._handle_save_alerts(driver)
 
     def run(self) -> None:  # pragma: no cover
         """Point d'entrée principal de l'automatisation."""
