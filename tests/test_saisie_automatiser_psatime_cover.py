@@ -101,7 +101,6 @@ def test_initialize_debug_mode_off(monkeypatch, sample_config, tmp_path):
     )
     log_path = tmp_path / "log.html"
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
-    monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
     monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyManager())
     app_cfg.debug_mode = "OFF"
     sap.initialize(

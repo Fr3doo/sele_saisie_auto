@@ -27,7 +27,7 @@ def test_traiter_description_not_found(monkeypatch):
     messages = []
     monkeypatch.setattr(risu, "write_log", lambda msg, f, level: messages.append(msg))
     monkeypatch.setattr(risu, "trouver_ligne_par_description", lambda *a, **k: None)
-    risu.traiter_description(None, make_config())
+    risu.traiter_description(None, make_config(), "log")
     assert any("non trouv\u00e9e" in m for m in messages)
 
 
@@ -61,7 +61,7 @@ def test_traiter_description_input(monkeypatch):
         risu, "remplir_champ_texte", lambda el, jour, val: filled.append((jour, val))
     )
 
-    risu.traiter_description(None, make_config())
+    risu.traiter_description(None, make_config(), "log")
 
     assert ("lundi", "val_lundi") in filled
     assert ("dimanche", "val_dimanche") not in filled
@@ -94,21 +94,12 @@ def test_traiter_description_select_special(monkeypatch):
         id_value_jours=AdditionalInfoLocators.DAY_UC_DAILYREST_SPECIAL.value,
     )
     del cfg["valeurs_a_remplir"]["mardi"]
-    risu.traiter_description(None, cfg)
+    risu.traiter_description(None, cfg, "log")
 
     assert f"{cfg['id_value_jours']}11$0" in ids
     assert selected
     assert any(messages.AUCUNE_VALEUR in m for m in logs)
     assert any(messages.IMPOSSIBLE_DE_TROUVER in m for m in logs)
-
-
-def test_set_log_file(tmp_path, monkeypatch):
-    import importlib
-
-    module = importlib.reload(risu)
-    path = tmp_path / "log.txt"
-    module.set_log_file(str(path))
-    assert module.LOG_FILE == str(path)
 
 
 def test_traiter_description_unknown_type(monkeypatch):
@@ -126,5 +117,5 @@ def test_traiter_description_unknown_type(monkeypatch):
         risu, "remplir_champ_texte", lambda *a, **k: called.append("input")
     )
     cfg = make_config(type_element="other")
-    risu.traiter_description(None, cfg)
+    risu.traiter_description(None, cfg, "log")
     assert not called
