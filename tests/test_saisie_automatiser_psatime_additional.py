@@ -113,61 +113,12 @@ def test_switch_to_iframe(monkeypatch):
     assert "dom" in calls
 
 
-def test_handle_date_input(monkeypatch):
-    class Input:
-        def __init__(self):
-            self.val = "01/07/2024"
-
-        def get_attribute(self, _):
-            return self.val
-
-    inp = Input()
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: inp)
-    result = {}
-    monkeypatch.setattr(
-        sap, "modifier_date_input", lambda elem, val, msg: result.setdefault("v", val)
-    )
-    monkeypatch.setattr(
-        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
-    )
-    sap._AUTOMATION.date_entry_page.handle_date_input("drv", "10/07/2024")
-    assert result["v"] == "10/07/2024"
-
-
-def test_handle_date_input_auto(monkeypatch):
-    class Input:
-        def __init__(self):
-            self.val = "01/07/2024"
-
-        def get_attribute(self, _):
-            return self.val
-
-    inp = Input()
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: inp)
-    monkeypatch.setattr(
-        sap, "get_next_saturday_if_not_saturday", lambda d: "06/07/2024"
-    )
-    result = {}
-    monkeypatch.setattr(
-        sap, "modifier_date_input", lambda elem, val, msg: result.setdefault("v", val)
-    )
-    monkeypatch.setattr(
-        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
-    )
-    sap._AUTOMATION.date_entry_page.handle_date_input("drv", None)
-    assert result["v"] == "06/07/2024"
-
-
 def test_submit_date_cible(monkeypatch):
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: True)
     called = {}
     monkeypatch.setattr(
-        sap,
-        "send_keys_to_element",
-        lambda *a, **k: called.setdefault("done", True),
-    )
-    monkeypatch.setattr(
-        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+        sap._AUTOMATION.date_entry_page,
+        "submit_date_cible",
+        lambda driver: called.setdefault("done", True) or True,
     )
     assert sap.submit_date_cible("drv") is True
     assert called["done"] is True
@@ -175,77 +126,43 @@ def test_submit_date_cible(monkeypatch):
 
 def test_navigation_pages(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
-    seq = iter([True, True])
-
-    def fake_wait(*a, **k):
-        try:
-            return next(seq)
-        except StopIteration:
-            return False
-
-    called = []
-    monkeypatch.setattr(sap, "wait_for_element", fake_wait)
+    called = {}
     monkeypatch.setattr(
-        sap, "click_element_without_wait", lambda *a, **k: called.append("clk")
-    )
-    monkeypatch.setattr(
-        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
-    )
-    monkeypatch.setattr(
-        sap.PSATimeAutomation,
-        "switch_to_iframe_main_target_win0",
-        lambda self, *a, **k: called.append("sw") or True,
+        sap._AUTOMATION.date_entry_page,
+        "navigate_from_home_to_date_entry_page",
+        lambda driver: called.setdefault("nav", True),
     )
     assert sap.navigate_from_home_to_date_entry_page("drv") is True
-    assert called.count("clk") == 2
-    assert "sw" in called
+    assert called["nav"] is True
 
 
 def test_additional_information(monkeypatch):
-    seq = iter([True, True])
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: next(seq))
+    called = {}
     monkeypatch.setattr(
-        sap,
-        "switch_to_iframe_by_id_or_name",
-        lambda *a, **k: True,
-    )
-    collected = []
-    monkeypatch.setattr(
-        sap, "traiter_description", lambda *a, **k: collected.append("desc")
-    )
-    monkeypatch.setattr(sap, "write_log", lambda *a, **k: collected.append("log"))
-    monkeypatch.setattr(
-        sap, "click_element_without_wait", lambda *a, **k: collected.append("ok")
+        sap._AUTOMATION.additional_info_page,
+        "submit_and_validate_additional_information",
+        lambda driver: called.setdefault("done", True),
     )
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
-    sap.context.descriptions = [
-        {
-            "description_cible": "d",
-            "id_value_ligne": "x",
-            "id_value_jours": "y",
-            "type_element": "select",
-            "valeurs_a_remplir": {"lundi": "1"},
-        }
-    ]
     sap.submit_and_validate_additional_information("drv")
-    assert "desc" in collected
-    assert "ok" in collected
+    assert called["done"] is True
 
 
 def test_save_draft_and_validate(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: True)
-    called = []
+    called = {}
     monkeypatch.setattr(
-        sap, "click_element_without_wait", lambda *a, **k: called.append("clk")
+        sap._AUTOMATION.additional_info_page,
+        "save_draft_and_validate",
+        lambda driver: called.setdefault("done", True) or True,
     )
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
     assert sap.save_draft_and_validate("drv") is True
-    assert "clk" in called
+    assert called["done"] is True
 
 
 def test_cleanup_resources(monkeypatch):

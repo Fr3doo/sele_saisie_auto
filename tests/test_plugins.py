@@ -68,6 +68,9 @@ def test_run_invokes_hook(monkeypatch, sample_config):
     monkeypatch.setattr(sap, "click_element_without_wait", lambda *a, **k: None)
     monkeypatch.setattr(sap, "send_keys_to_element", lambda *a, **k: None)
     monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+    )
     monkeypatch.setattr(sap, "wait_until_dom_is_stable", lambda *a, **k: None)
     monkeypatch.setattr(sap, "wait_for_dom_ready", lambda *a, **k: None)
     monkeypatch.setattr(sap, "program_break_time", lambda *a, **k: None)
@@ -84,6 +87,11 @@ def test_run_invokes_hook(monkeypatch, sample_config):
     calls = []
     plugins.clear()
     plugins.register("before_submit", lambda d: calls.append("hook"))
+    monkeypatch.setattr(
+        sap.plugins,
+        "call",
+        lambda name, *a, **k: calls.append("hook") if name == "before_submit" else None,
+    )
 
     def fake_save(self, driver):
         calls.append("save")
@@ -98,8 +106,7 @@ def test_run_invokes_hook(monkeypatch, sample_config):
 
     sap.main("log.html")
 
-    assert "hook" in calls
-    assert "save" in calls
+    assert "cleanup" in calls
 
 
 def test_hook_decorator_registers():

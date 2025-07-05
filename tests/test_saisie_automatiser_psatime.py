@@ -73,6 +73,71 @@ class DummyManager:
         self.close()
 
 
+class DummyBrowserSession:
+    def __init__(self, log_file):
+        self.log_file = log_file
+        self.open_calls = []
+        self.driver = types.SimpleNamespace(page_source="")
+
+    def open(self, url, fullscreen=False, headless=False, no_sandbox=False):
+        self.open_calls.append((url, fullscreen, headless, no_sandbox))
+        return self.driver
+
+    def close(self):
+        self.driver = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+
+
+class DummyLoginHandler:
+    def __init__(self, log_file):
+        self.log_file = log_file
+        self.calls = []
+
+    def login(self, driver, creds, enc):
+        self.calls.append((driver, creds, enc))
+
+
+class DummyDateEntryPage:
+    def __init__(self, automation):
+        self.automation = automation
+        self.calls = []
+
+    def navigate_from_home_to_date_entry_page(self, driver):
+        self.calls.append("nav")
+        return True
+
+    def handle_date_input(self, driver, date):
+        self.calls.append(("handle", date))
+
+    def submit_date_cible(self, driver):
+        self.calls.append("submit")
+        return True
+
+
+class DummyAdditionalInfoPage:
+    def __init__(self, automation):
+        self.automation = automation
+        self.calls = []
+        sap.traiter_description = lambda *a, **k: None
+
+    def navigate_from_work_schedule_to_additional_information_page(self, driver):
+        self.calls.append("nav_add")
+        return True
+
+    def submit_and_validate_additional_information(self, driver):
+        self.calls.append("submit_add")
+        return True
+
+    def save_draft_and_validate(self, driver):
+        self.calls.append("save")
+        return True
+
+
 def setup_init(monkeypatch, cfg):
     from sele_saisie_auto.app_config import AppConfig
 
@@ -81,6 +146,10 @@ def setup_init(monkeypatch, cfg):
     monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
     monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyEnc())
     monkeypatch.setattr(sap, "SharedMemoryService", lambda lf: DummySHMService())
+    monkeypatch.setattr(sap, "BrowserSession", DummyBrowserSession)
+    monkeypatch.setattr(sap, "LoginHandler", DummyLoginHandler)
+    monkeypatch.setattr(sap, "DateEntryPage", DummyDateEntryPage)
+    monkeypatch.setattr(sap, "AdditionalInfoPage", DummyAdditionalInfoPage)
     sap.initialize("log.html", app_cfg)
     monkeypatch.setattr(
         sap,

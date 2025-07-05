@@ -37,3 +37,18 @@ def test_login_calls_send_keys(monkeypatch):
     assert (Locators.PASSWORD.value, "pass") in actions
     assert enc.calls[0] == (b"user", b"key")
     assert enc.calls[1] == (b"pass", b"key")
+
+
+def test_login_presses_return(monkeypatch):
+    actions = []
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.login_handler.send_keys_to_element",
+        lambda driver, by, ident, value: actions.append(value),
+    )
+    handler = LoginHandler("log.html")
+    enc = DummyEnc()
+    handler.login("driver", DummyCreds(), enc)
+
+    from selenium.webdriver.common.keys import Keys
+
+    assert actions[-1] == Keys.RETURN
