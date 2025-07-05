@@ -74,6 +74,10 @@ def test_traiter_jour_failure(monkeypatch):
         lambda *a, **k: object(),
     )
     monkeypatch.setattr(
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom",
+        lambda *a, **k: None,
+    )
+    monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (_ for _ in ()).throw(
             __import__("selenium").common.exceptions.StaleElementReferenceException()
@@ -127,6 +131,10 @@ def test_remplir_mission_specifique_failure(monkeypatch):
         lambda *a, **k: object(),
     )
     monkeypatch.setattr(
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom",
+        lambda *a, **k: None,
+    )
+    monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (_ for _ in ()).throw(
             __import__("selenium").common.exceptions.StaleElementReferenceException()
@@ -149,6 +157,10 @@ def test_remplir_mission_specifique_insertion_fail(monkeypatch):
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element",
         lambda *a, **k: object(),
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom",
+        lambda *a, **k: None,
     )
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
@@ -253,6 +265,10 @@ def test_traiter_jour_controle_insertion_fail(monkeypatch):
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element",
         lambda *a, **k: object(),
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom",
+        lambda *a, **k: None,
     )
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
