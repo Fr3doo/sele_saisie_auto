@@ -19,7 +19,7 @@ class AdditionalInfoPage:
 
     def __init__(self, automation: PSATimeAutomation) -> None:
         self._automation = automation
-        self.helper = ExtraInfoHelper()
+        self.helper = ExtraInfoHelper(page=self)
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
         sap.traiter_description = self.helper.traiter_description

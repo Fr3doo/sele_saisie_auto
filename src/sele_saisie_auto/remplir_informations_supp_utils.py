@@ -1,6 +1,6 @@
-# remplir_informations_supp_france.py
+from __future__ import annotations
 
-# Import des bibliothèques nécessaires
+from typing import TYPE_CHECKING
 
 from selenium.webdriver.common.by import By
 
@@ -15,6 +15,11 @@ from sele_saisie_auto.selenium_utils import (
     verifier_champ_jour_rempli,
     wait_for_element,
 )
+
+# remplir_informations_supp_france.py
+
+if TYPE_CHECKING:  # pragma: no cover
+    from sele_saisie_auto.automation.additional_info_page import AdditionalInfoPage
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- CONSTANTE --------------------------------------------- #
@@ -182,8 +187,31 @@ def traiter_description(driver, config, waiter: Waiter | None = None):
 class ExtraInfoHelper:
     """Facade class using ``traiter_description`` with a shared ``Waiter``."""
 
-    def __init__(self, waiter: Waiter | None = None) -> None:
+    def __init__(
+        self,
+        waiter: Waiter | None = None,
+        page: "AdditionalInfoPage" | None = None,
+    ) -> None:
         self.waiter = waiter or Waiter()
+        self.page = page
+
+    def set_page(self, page: "AdditionalInfoPage") -> None:
+        self.page = page
 
     def traiter_description(self, driver, config):
         traiter_description(driver, config, waiter=self.waiter)
+
+    # ------------------------------------------------------------------
+    # Delegation to :class:`AdditionalInfoPage`
+    # ------------------------------------------------------------------
+    def navigate_from_work_schedule_to_additional_information_page(self, driver):
+        if not self.page:
+            raise RuntimeError("AdditionalInfoPage not configured")
+        return self.page.navigate_from_work_schedule_to_additional_information_page(
+            driver
+        )
+
+    def submit_and_validate_additional_information(self, driver):
+        if not self.page:
+            raise RuntimeError("AdditionalInfoPage not configured")
+        return self.page.submit_and_validate_additional_information(driver)
