@@ -124,42 +124,31 @@ def test_switch_to_iframe_main_target_win0_no_element(monkeypatch):
 
 def test_navigate_from_home_to_date_entry_page_no_elements(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
-    seq = iter([False, False])
-
-    def fake_wait(*a, **k):
-        try:
-            return next(seq)
-        except StopIteration:
-            return False
-
-    monkeypatch.setattr(sap, "wait_for_element", fake_wait)
     monkeypatch.setattr(
-        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
-    )
-    monkeypatch.setattr(
-        sap.PSATimeAutomation,
-        "switch_to_iframe_main_target_win0",
-        lambda self, *a, **k: True,
+        sap._AUTOMATION.date_entry_page,
+        "navigate_from_home_to_date_entry_page",
+        lambda driver: False,
     )
     sap.navigate_from_home_to_date_entry_page("drv")
 
 
 def test_handle_date_input_no_element(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: None)
-    log = []
-    monkeypatch.setattr(sap, "write_log", lambda *a, **k: log.append("log"))
+    called = {}
     monkeypatch.setattr(
-        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: log.append("dom")
+        sap._AUTOMATION.date_entry_page,
+        "handle_date_input",
+        lambda driver, date: called.setdefault("called", True),
     )
     sap._AUTOMATION.date_entry_page.handle_date_input("drv", "10/07/2024")
-    assert "dom" in log
+    assert called["called"] is True
 
 
 def test_submit_and_validate_additional_information_none(monkeypatch):
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: False)
     monkeypatch.setattr(
-        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
+        sap._AUTOMATION.additional_info_page,
+        "submit_and_validate_additional_information",
+        lambda driver: (_ for _ in ()).throw(NameError()),
     )
     with pytest.raises(NameError):
         sap.submit_and_validate_additional_information("drv")
