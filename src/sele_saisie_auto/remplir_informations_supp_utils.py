@@ -22,17 +22,6 @@ from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 if TYPE_CHECKING:  # pragma: no cover
     from sele_saisie_auto.automation.additional_info_page import AdditionalInfoPage
 
-# ------------------------------------------------------------------------------------------- #
-# ----------------------------------- CONSTANTE --------------------------------------------- #
-# ------------------------------------------------------------------------------------------- #
-LOG_FILE: str | None = None
-
-
-def set_log_file(log_file: str) -> None:
-    """Inject log file path for the module."""
-    global LOG_FILE
-    LOG_FILE = log_file
-
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS --------------------------------------------- #
@@ -51,25 +40,29 @@ def _get_element(driver, waiter: Waiter | None, input_id: str):
     return wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
 
 
-def _collect_filled_days(driver, waiter, id_value_jours, row_index, jours_semaine):
+def _collect_filled_days(
+    driver, waiter, id_value_jours, row_index, jours_semaine, log_file: str
+):
     jours_remplis = []
-    write_log("🔍 Vérification des jours déjà remplis...", LOG_FILE, "DEBUG")
+    write_log("🔍 Vérification des jours déjà remplis...", log_file, "DEBUG")
     for i in range(1, 8):
         input_id = _build_input_id(id_value_jours, i, row_index)
         element = _get_element(driver, waiter, input_id)
         if element:
             jour = jours_semaine[i]
             write_log(
-                f"👉 Vérification du jour : {jour} (ID: {input_id})", LOG_FILE, "DEBUG"
+                f"👉 Vérification du jour : {jour} (ID: {input_id})",
+                log_file,
+                "DEBUG",
             )
             if verifier_champ_jour_rempli(element, jour):
                 jours_remplis.append(jour)
-                write_log(f"✅ Jour '{jour}' déjà rempli.", LOG_FILE, "DEBUG")
+                write_log(f"✅ Jour '{jour}' déjà rempli.", log_file, "DEBUG")
             else:
-                write_log(f"❌ Jour '{jour}' vide.", LOG_FILE, "DEBUG")
+                write_log(f"❌ Jour '{jour}' vide.", log_file, "DEBUG")
         else:
             write_log(
-                f"❌ Élément non trouvé pour l'ID : {input_id}", LOG_FILE, "DEBUG"
+                f"❌ Élément non trouvé pour l'ID : {input_id}", log_file, "DEBUG"
             )
     return jours_remplis
 
@@ -83,6 +76,7 @@ def _fill_missing_days(
     jours_remplis,
     valeurs_a_remplir,
     type_element,
+    log_file: str,
 ):
     for i in range(1, 8):
         input_id = _build_input_id(id_value_jours, i, row_index)
@@ -94,7 +88,7 @@ def _fill_missing_days(
                 if valeur_a_remplir:
                     write_log(
                         f"✏️ {messages.REMPLISSAGE} de '{jour}' avec la valeur '{valeur_a_remplir}'.",
-                        LOG_FILE,
+                        log_file,
                         "DEBUG",
                     )
                     if type_element == "select":
@@ -106,24 +100,24 @@ def _fill_missing_days(
                 else:
                     write_log(
                         f"⚠️ {messages.AUCUNE_VALEUR} définie pour le jour '{jour}' dans 'valeurs_a_remplir'.",
-                        LOG_FILE,
+                        log_file,
                         "DEBUG",
                     )
             else:
                 write_log(
                     f"🔄 Jour '{jour}' déjà rempli, aucun changement.",
-                    LOG_FILE,
+                    log_file,
                     "DEBUG",
                 )
         else:
             write_log(
                 f"❌ {messages.IMPOSSIBLE_DE_TROUVER} l'élément pour l'ID : {input_id}",
-                LOG_FILE,
+                log_file,
                 "DEBUG",
             )
 
 
-def traiter_description(driver, config, waiter: Waiter | None = None):
+def traiter_description(driver, config, log_file: str, waiter: Waiter | None = None):
     """
     Traite une description en fonction d'une configuration donnée.
 
@@ -145,29 +139,29 @@ def traiter_description(driver, config, waiter: Waiter | None = None):
 
     write_log(
         f"🔍 Début du traitement pour la description : '{description_cible}'",
-        LOG_FILE,
+        log_file,
         "DEBUG",
     )
     row_index = trouver_ligne_par_description(driver, description_cible, id_value_ligne)
     if row_index is None:
         write_log(
             f"❌ Description '{description_cible}' non trouvée avec l'id_value '{id_value_ligne}'.",
-            LOG_FILE,
+            log_file,
             "DEBUG",
         )
         return
     write_log(
         f"✅ Description '{description_cible}' trouvée à l'index {row_index}.",
-        LOG_FILE,
+        log_file,
         "DEBUG",
     )
 
     jours_remplis = _collect_filled_days(
-        driver, waiter, id_value_jours, row_index, jours_semaine
+        driver, waiter, id_value_jours, row_index, jours_semaine, log_file
     )
     write_log(
         f"✍️ Remplissage des jours vides pour '{description_cible}'.",
-        LOG_FILE,
+        log_file,
         "DEBUG",
     )
     _fill_missing_days(
@@ -179,6 +173,7 @@ def traiter_description(driver, config, waiter: Waiter | None = None):
         jours_remplis,
         valeurs_a_remplir,
         type_element,
+        log_file,
     )
 
 
@@ -196,8 +191,8 @@ class ExtraInfoHelper:
     def set_page(self, page: "AdditionalInfoPage") -> None:
         self.page = page
 
-    def traiter_description(self, driver, config):
-        traiter_description(driver, config, waiter=self.waiter)
+    def traiter_description(self, driver, config, log_file: str):
+        traiter_description(driver, config, log_file, waiter=self.waiter)
 
     # ------------------------------------------------------------------
     # Delegation to :class:`AdditionalInfoPage`

@@ -22,7 +22,6 @@ def test_initialize_date_none(monkeypatch, sample_config):
 
     app_cfg = AppConfig.from_parser(cfg)
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
-    monkeypatch.setattr(sap, "set_log_file_infos", lambda lf: None)
     monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyEnc())
     sap.initialize(
         "log.html",

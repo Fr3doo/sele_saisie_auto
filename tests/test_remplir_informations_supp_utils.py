@@ -29,7 +29,7 @@ def test_traiter_description_row_not_found(monkeypatch):
     logs = []
     monkeypatch.setattr(risu, "write_log", lambda msg, f, level: logs.append(msg))
     monkeypatch.setattr(risu, "trouver_ligne_par_description", lambda *a, **k: None)
-    risu.traiter_description(None, make_config())
+    risu.traiter_description(None, make_config(), "log")
     assert any("non trouv" in m for m in logs)
 
 
@@ -69,7 +69,7 @@ def test_traiter_description_fill_input(monkeypatch):
 
     cfg = make_config()
     del cfg["valeurs_a_remplir"]["mardi"]
-    risu.traiter_description(None, cfg)
+    risu.traiter_description(None, cfg, "log")
 
     assert f"{AdditionalInfoLocators.DAY_UC_DAILYREST.value}1$1" in ids
 
@@ -92,5 +92,5 @@ def test_traiter_description_select(monkeypatch):
     )
 
     cfg = make_config(type_element="select")
-    risu.traiter_description(None, cfg)
+    risu.traiter_description(None, cfg, "log")
     assert "val_lundi" in selected

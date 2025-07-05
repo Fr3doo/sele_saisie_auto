@@ -73,7 +73,7 @@ class AdditionalInfoPage:
 
         if switched_to_iframe:
             for config in self._automation.context.descriptions:
-                sap.traiter_description(driver, config)
+                sap.traiter_description(driver, config, self.log_file)
             write_log(
                 "Validation des informations supplémentaires terminée.",
                 self.log_file,
