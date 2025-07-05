@@ -79,10 +79,21 @@ class Credentials:
     mem_password: shared_memory.SharedMemory
 
 
+@dataclass
+class MemoryConfig:
+    """Shared memory configuration constants."""
+
+    cle_name: str = "memoire_partagee_cle"
+    data_name: str = "memoire_partagee_donnees"
+    key_size: int = 32  # AES-256
+    block_size: int = 128  # padding block
+
+
 __all__ = [
     "PSATimeAutomation",
     "SaisieContext",
     "Credentials",
+    "MemoryConfig",
     "modifier_date_input",
     "send_keys_to_element",
     "click_element_without_wait",
@@ -103,6 +114,7 @@ class PSATimeAutomation:
         """Initialise la configuration et les dépendances."""
 
         self.log_file = log_file
+        self.memory_config = MemoryConfig()
         set_log_file_selenium(log_file)
         set_log_file_infos(log_file)
         initialize_logger(app_config.raw, log_level_override=app_config.debug_mode)
@@ -261,7 +273,7 @@ class PSATimeAutomation:
 
         memoire_cle, cle_aes = (
             self.context.shared_memory_service.recuperer_de_memoire_partagee(
-                MEMOIRE_PARTAGEE_CLE, TAILLE_CLE
+                self.memory_config.cle_name, self.memory_config.key_size
             )
         )
         write_log(f"💀 Clé AES récupérée : {cle_aes.hex()}", self.log_file, "CRITICAL")
@@ -469,12 +481,6 @@ class PSATimeAutomation:
 
 
 CHOIX_USER = True  # true pour créer une nouvelle feuille de temps
-
-# Configuration memoire partagée et cryptage
-MEMOIRE_PARTAGEE_CLE = "memoire_partagee_cle"
-MEMOIRE_PARTAGEE_DONNEES = "memoire_partagee_donnees"
-TAILLE_CLE = 32  # 256 bits pour AES-256
-TAILLE_BLOC = 128  # Taille de bloc AES pour le padding
 
 
 # ------------------------------------------------------------------------------------------------- #
