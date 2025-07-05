@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 from configparser import ConfigParser
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
 
 from sele_saisie_auto.dropdown_options import (
     BillingActionOption,
@@ -37,23 +36,23 @@ class AppConfig:
     encrypted_login: str
     encrypted_mdp: str
     url: str
-    date_cible: Optional[str]
+    date_cible: str | None
     debug_mode: str
-    liste_items_planning: List[str]
-    work_schedule: Dict[str, Tuple[str, str]]
-    project_information: Dict[str, str]
-    additional_information: Dict[str, Dict[str, str]]
-    work_location_am: Dict[str, str]
-    work_location_pm: Dict[str, str]
-    work_location_options: List[WorkLocationOption]
-    cgi_options: List[CGIOption]
-    cgi_options_dejeuner: List[CGILunchOption]
-    cgi_options_billing_action: List[BillingActionOption]
-    work_schedule_options: List[WorkScheduleOption]
+    liste_items_planning: list[str]
+    work_schedule: dict[str, tuple[str, str]]
+    project_information: dict[str, str]
+    additional_information: dict[str, dict[str, str]]
+    work_location_am: dict[str, str]
+    work_location_pm: dict[str, str]
+    work_location_options: list[WorkLocationOption]
+    cgi_options: list[CGIOption]
+    cgi_options_dejeuner: list[CGILunchOption]
+    cgi_options_billing_action: list[BillingActionOption]
+    work_schedule_options: list[WorkScheduleOption]
     raw: ConfigParser
 
     @classmethod
-    def from_parser(cls, parser: ConfigParser) -> "AppConfig":
+    def from_parser(cls, parser: ConfigParser) -> AppConfig:
         """Build an ``AppConfig`` instance from a ``ConfigParser``."""
         encrypted_login = parser.get("credentials", "login", fallback="")
         encrypted_mdp = parser.get("credentials", "mdp", fallback="")
@@ -67,7 +66,7 @@ class AppConfig:
             item.strip().strip('"') for item in liste_items.split(",") if item.strip()
         ]
 
-        work_schedule: Dict[str, Tuple[str, str]] = {}
+        work_schedule: dict[str, tuple[str, str]] = {}
         if parser.has_section("work_schedule"):
             for day, value in parser.items("work_schedule"):
                 work_schedule[day] = (
@@ -81,7 +80,7 @@ class AppConfig:
             else {}
         )
 
-        additional_information: Dict[str, Dict[str, str]] = {}
+        additional_information: dict[str, dict[str, str]] = {}
         if parser.has_section("additional_information_rest_period_respected"):
             additional_information["periode_repos_respectee"] = dict(
                 parser.items("additional_information_rest_period_respected")
@@ -110,17 +109,16 @@ class AppConfig:
             else {}
         )
 
-        from typing import List as _List
-        from typing import Type, TypeVar
+        from typing import TypeVar
 
         T = TypeVar("T")
 
         def parse_list_from_section(
             section: str,
             option: str,
-            default: _List[T],
-            cls: Type[T],
-        ) -> _List[T]:
+            default: list[T],
+            cls: type[T],
+        ) -> list[T]:
             if parser.has_section(section):
                 values = parser.get(section, option, fallback="")
                 return [

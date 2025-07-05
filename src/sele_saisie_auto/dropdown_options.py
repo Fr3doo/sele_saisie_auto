@@ -2,7 +2,6 @@
 # dropdown_options.py
 
 from dataclasses import dataclass
-from typing import List
 
 
 @dataclass(frozen=True)
@@ -42,7 +41,7 @@ class WorkScheduleOption:
 
 
 # Options pour l'onglet "Lieu de travail"
-work_location_options: List[WorkLocationOption] = [
+work_location_options: list[WorkLocationOption] = [
     WorkLocationOption(""),
     WorkLocationOption("CGI"),
     WorkLocationOption("Demande CGI TLT"),
@@ -56,7 +55,7 @@ work_location_options: List[WorkLocationOption] = [
 ]
 
 # Options pour l'onglet "Informations CGI"
-cgi_options: List[CGIOption] = [
+cgi_options: list[CGIOption] = [
     CGIOption(""),
     CGIOption("N/A"),
     CGIOption("Oui"),
@@ -64,20 +63,20 @@ cgi_options: List[CGIOption] = [
 ]
 
 # Options pour l'onglet "Informations CGI- ligne pause dejeuner"
-cgi_options_dejeuner: List[CGILunchOption] = [
+cgi_options_dejeuner: list[CGILunchOption] = [
     CGILunchOption(""),
     CGILunchOption("1"),
 ]
 
 # Options pour le menu deroulant "billing"
-cgi_options_billing_action: List[BillingActionOption] = [
+cgi_options_billing_action: list[BillingActionOption] = [
     BillingActionOption("Facturable", "B"),
     BillingActionOption("Facture int.", "I"),
     BillingActionOption("Non facturable", "U"),
 ]
 
 # Options pour l'onglet "Planning de travail"
-work_schedule_options: List[WorkScheduleOption] = [
+work_schedule_options: list[WorkScheduleOption] = [
     WorkScheduleOption(""),
     WorkScheduleOption("En mission"),
     WorkScheduleOption("Formation IA"),

@@ -83,21 +83,18 @@ def setup_init(monkeypatch, cfg):
 def test_connect_to_psatime(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
     actions = []
+    from sele_saisie_auto.automation import login_handler as lh
+
     monkeypatch.setattr(
-        sap.PSATimeAutomation,
-        "wait_for_dom",
-        lambda self, *a, **k: actions.append("dom"),
-    )
-    monkeypatch.setattr(
-        sap,
+        lh,
         "send_keys_to_element",
         lambda driver, by, ident, value: actions.append((ident, value)),
     )
     sap.context.encryption_service = DummyEnc()
-    sap.connect_to_psatime("drv", b"key", b"user", b"pass")
+    creds = types.SimpleNamespace(aes_key=b"key", login=b"user", password=b"pass")
+    sap._AUTOMATION.login_handler.login("drv", creds, sap.context.encryption_service)
     assert (Locators.USERNAME.value, "user") in actions
     assert (Locators.PASSWORD.value, "pass") in actions
-    assert "dom" in actions
 
 
 def test_switch_to_iframe(monkeypatch):
@@ -133,7 +130,7 @@ def test_handle_date_input(monkeypatch):
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
-    sap.handle_date_input("drv", "10/07/2024")
+    sap._AUTOMATION.date_entry_page.handle_date_input("drv", "10/07/2024")
     assert result["v"] == "10/07/2024"
 
 
@@ -157,7 +154,7 @@ def test_handle_date_input_auto(monkeypatch):
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
-    sap.handle_date_input("drv", None)
+    sap._AUTOMATION.date_entry_page.handle_date_input("drv", None)
     assert result["v"] == "06/07/2024"
 
 

@@ -121,7 +121,7 @@ def initialize_html_log_file(log_file):
             f.write(get_html_style())
     else:
         # Vérifie si la balise </table> est présente
-        with open(log_file, "r", encoding="utf-8") as f:
+        with open(log_file, encoding="utf-8") as f:
             content = f.read()
         if "</table>" in content:
             # Supprime les balises fermantes pour continuer l'écriture

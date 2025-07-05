@@ -16,8 +16,6 @@ from selenium.common.exceptions import (
     WebDriverException,
 )
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support import expected_conditions as ec
 
 from sele_saisie_auto import (
     console_ui,
@@ -39,14 +37,11 @@ from sele_saisie_auto.logger_utils import initialize_logger, write_log
 from sele_saisie_auto.remplir_informations_supp_utils import (
     set_log_file as set_log_file_infos,
 )
-from sele_saisie_auto.remplir_informations_supp_utils import traiter_description
 from sele_saisie_auto.selenium_driver_manager import SeleniumDriverManager
-from sele_saisie_auto.selenium_utils import (
-    click_element_without_wait,
-    detecter_doublons_jours,
-    modifier_date_input,
-    send_keys_to_element,
-)
+from sele_saisie_auto.selenium_utils import click_element_without_wait  # noqa: F401
+from sele_saisie_auto.selenium_utils import modifier_date_input  # noqa: F401
+from sele_saisie_auto.selenium_utils import send_keys_to_element  # noqa: F401
+from sele_saisie_auto.selenium_utils import detecter_doublons_jours
 from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.selenium_utils import (
     switch_to_default_content,
@@ -85,6 +80,16 @@ class Credentials:
     mem_login: shared_memory.SharedMemory
     password: bytes
     mem_password: shared_memory.SharedMemory
+
+
+__all__ = [
+    "PSATimeAutomation",
+    "SaisieContext",
+    "Credentials",
+    "modifier_date_input",
+    "send_keys_to_element",
+    "click_element_without_wait",
+]
 
 
 # ----------------------------------------------------------------------------
@@ -307,21 +312,6 @@ class PSATimeAutomation:
         )
 
     @wait_for_dom_after
-    def connect_to_psatime(
-        self, driver, cle_aes, nom_utilisateur_chiffre, mot_de_passe_chiffre
-    ):
-        """Connecte l'utilisateur au portail PSATime."""
-        creds = types.SimpleNamespace(
-            aes_key=cle_aes,
-            login=nom_utilisateur_chiffre,
-            password=mot_de_passe_chiffre,
-        )
-        from sele_saisie_auto.automation import login_handler as lh
-
-        lh.send_keys_to_element = send_keys_to_element
-        self.login_handler.login(driver, creds, self.context.encryption_service)
-
-    @wait_for_dom_after
     def switch_to_iframe_main_target_win0(self, driver):
         switched_to_iframe = None
         element_present = wait_for_element(
@@ -339,10 +329,6 @@ class PSATimeAutomation:
     def navigate_from_home_to_date_entry_page(self, driver):
         """Delegate navigation to :class:`DateEntryPage`."""
         return self.date_entry_page.navigate_from_home_to_date_entry_page(driver)
-
-    def handle_date_input(self, driver, date_cible):
-        """Delegate date input to :class:`DateEntryPage`."""
-        return self.date_entry_page.handle_date_input(driver, date_cible)
 
     def submit_date_cible(self, driver):
         """Delegate submission to :class:`DateEntryPage`."""
@@ -401,7 +387,7 @@ class PSATimeAutomation:
         self.date_entry_page._click_action_button(driver, CHOIX_USER)
 
     def _process_date_entry(self, driver) -> None:
-        self.handle_date_input(driver, self.context.config.date_cible)
+        self.date_entry_page.handle_date_input(driver, self.context.config.date_cible)
         program_break_time(
             1,
             "Veuillez patienter. Court délai pour stabilisation du DOM",
@@ -442,12 +428,12 @@ class PSATimeAutomation:
         with self.browser_session as session:
             driver = self.setup_browser(session)
             try:
-                self.connect_to_psatime(
-                    driver,
-                    credentials.aes_key,
-                    credentials.login,
-                    credentials.password,
+                creds = types.SimpleNamespace(
+                    aes_key=credentials.aes_key,
+                    login=credentials.login,
+                    password=credentials.password,
                 )
+                self.login_handler.login(driver, creds, self.context.encryption_service)
                 if self.navigate_from_home_to_date_entry_page(driver):
                     self._process_date_entry(driver)
                     self._fill_and_save_timesheet(driver)
@@ -619,14 +605,6 @@ def setup_browser(driver_manager: SeleniumDriverManager):
     return _AUTOMATION.setup_browser(driver_manager)
 
 
-def connect_to_psatime(driver, cle_aes, nom_utilisateur_chiffre, mot_de_passe_chiffre):
-    if not _AUTOMATION:
-        raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.connect_to_psatime(
-        driver, cle_aes, nom_utilisateur_chiffre, mot_de_passe_chiffre
-    )
-
-
 def switch_to_iframe_main_target_win0(driver):
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
@@ -637,12 +615,6 @@ def navigate_from_home_to_date_entry_page(driver):
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
     return _AUTOMATION.navigate_from_home_to_date_entry_page(driver)
-
-
-def handle_date_input(driver, date_cible):
-    if not _AUTOMATION:
-        raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.handle_date_input(driver, date_cible)
 
 
 def submit_date_cible(driver):

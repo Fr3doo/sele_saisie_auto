@@ -129,7 +129,7 @@ def read_config_ini(log_file=None):
 
     try:
         # Lire le fichier avec l'encodage UTF-8
-        with open(config_file_ini, "r", encoding="utf-8") as configfile:
+        with open(config_file_ini, encoding="utf-8") as configfile:
             config.read_file(configfile)
             write_log(
                 f"🧐 Le fichier de configuration '{config_file_ini}' a été lu avec succès.",
