@@ -4,13 +4,12 @@ from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.selenium_utils import (
-    DEFAULT_TIMEOUT,
-    LONG_TIMEOUT,
     definir_taille_navigateur,
     ouvrir_navigateur_sur_ecran_principal,
     wait_for_dom_ready,
     wait_until_dom_is_stable,
 )
+from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 
 class SeleniumDriverManager:

@@ -8,7 +8,8 @@ from selenium.webdriver.support import expected_conditions as ec
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.remplir_informations_supp_utils import ExtraInfoHelper
-from sele_saisie_auto.selenium_utils import DEFAULT_TIMEOUT, wait_for_dom_after
+from sele_saisie_auto.selenium_utils import wait_for_dom_after
+from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 
 if TYPE_CHECKING:  # pragma: no cover
     from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation

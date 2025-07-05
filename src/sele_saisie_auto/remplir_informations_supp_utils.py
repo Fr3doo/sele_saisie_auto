@@ -15,6 +15,7 @@ from sele_saisie_auto.selenium_utils import (
     verifier_champ_jour_rempli,
     wait_for_element,
 )
+from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 
 # remplir_informations_supp_france.py
 
@@ -32,9 +33,6 @@ def set_log_file(log_file: str) -> None:
     global LOG_FILE
     LOG_FILE = log_file
 
-
-DEFAULT_TIMEOUT = 10  # Délai d'attente par défaut
-LONG_TIMEOUT = 20
 
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS --------------------------------------------- #
