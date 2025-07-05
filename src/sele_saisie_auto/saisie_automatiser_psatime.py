@@ -33,6 +33,7 @@ from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import initialize_logger, write_log
+from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.selenium_utils import click_element_without_wait  # noqa: F401
 from sele_saisie_auto.selenium_utils import modifier_date_input  # noqa: F401
 from sele_saisie_auto.selenium_utils import send_keys_to_element  # noqa: F401
@@ -569,8 +570,9 @@ def main(log_file: str | None = None) -> None:  # pragma: no cover
 
         log_file = get_log_file()
 
-    cfg = ConfigManager(log_file=log_file).load()
-    PSATimeAutomation(log_file, cfg).run()
+    with Logger(log_file):
+        cfg = ConfigManager(log_file=log_file).load()
+        PSATimeAutomation(log_file, cfg).run()
 
 
 # ----------------------------------------------------------------------------

@@ -30,10 +30,13 @@ DEFAULT_SETTINGS = {"date_cible": "", "debug_mode": "INFO"}
 def run_psatime(log_file: str, menu: tk.Tk, logger: Logger | None = None) -> None:
     """Launch the Selenium automation after closing the menu."""
     menu.destroy()
-    log = logger or Logger(log_file)
-    log.info("Launching PSA time")
-
-    saisie_automatiser_psatime.main(log_file)
+    if logger is None:
+        with Logger(log_file) as log:
+            log.info("Launching PSA time")
+            saisie_automatiser_psatime.main(log_file)
+    else:
+        logger.info("Launching PSA time")
+        saisie_automatiser_psatime.main(log_file)
 
 
 def run_psatime_with_credentials(
@@ -111,19 +114,18 @@ def main(argv: list[str] | None = None) -> None:
     args = cli.parse_args(argv)
 
     log_file = get_log_file()
-    logger = Logger(log_file)
-    logger.info("Initialisation")
+    with Logger(log_file) as logger:
+        logger.info("Initialisation")
 
-    config = read_config_ini(log_file)
-    initialize_logger(config, log_level_override=args.log_level)
+        config = read_config_ini(log_file)
+        initialize_logger(config, log_level_override=args.log_level)
 
-    multiprocessing.freeze_support()
-    with EncryptionService(log_file) as encryption_service:
-        cle_aes = encryption_service.cle_aes
-        from sele_saisie_auto.main_menu import main_menu
+        multiprocessing.freeze_support()
+        with EncryptionService(log_file) as encryption_service:
+            cle_aes = encryption_service.cle_aes
+            from sele_saisie_auto.main_menu import main_menu
 
-        main_menu(cle_aes, log_file, encryption_service)
-    close_logs(log_file)
+            main_menu(cle_aes, log_file, encryption_service)
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation

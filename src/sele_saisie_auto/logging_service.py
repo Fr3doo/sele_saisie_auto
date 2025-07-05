@@ -31,3 +31,27 @@ class Logger:
 
     def critical(self, message: str) -> None:
         self._log("CRITICAL", message)
+
+    # ------------------------------------------------------------------
+    # Context manager protocol
+    # ------------------------------------------------------------------
+
+    def __enter__(self) -> "Logger":
+        """Prepare the log file when used as a context manager."""
+        from sele_saisie_auto.logger_utils import initialize_html_log_file
+
+        if self.log_file:
+            initialize_html_log_file(self.log_file)
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: object | None,
+    ) -> None:
+        """Ensure the log file is closed properly."""
+        from sele_saisie_auto.logger_utils import close_logs
+
+        if self.log_file:
+            close_logs(self.log_file, log_format=self.log_format)

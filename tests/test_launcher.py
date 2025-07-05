@@ -254,11 +254,29 @@ def test_main(monkeypatch):
         "main_menu",
         lambda *a: init.setdefault("menu", a),
     )
-    monkeypatch.setattr(launcher, "close_logs", lambda lf: init.setdefault("close", lf))
+
+    class DummyLoggerCtx:
+        def __init__(self):
+            self.infos = []
+            self.entered = False
+            self.exited = False
+
+        def __enter__(self):
+            self.entered = True
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            self.exited = True
+
+        def info(self, msg):
+            self.infos.append(msg)
+
+    dummy_logger = DummyLoggerCtx()
+    monkeypatch.setattr(launcher, "Logger", lambda lf: dummy_logger)
 
     launcher.main([])
 
     assert init["lvl"] == "ERROR"
     assert init["freeze"]
     assert init["menu"][1] == "log.html"
-    assert init["close"] == "log.html"
+    assert dummy_logger.entered and dummy_logger.exited
