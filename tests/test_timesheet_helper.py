@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
+    TimeSheetContext,
     TimeSheetHelper,
     remplir_jours,
     remplir_mission,
@@ -33,7 +34,8 @@ def test_remplir_jours_collects_filled_days(monkeypatch):
         fake_verifier,
     )
 
-    result = remplir_jours(None, liste_items, jours_semaine, jours_remplis)
+    ctx = TimeSheetContext("log", liste_items, {}, {})
+    result = remplir_jours(None, liste_items, jours_semaine, jours_remplis, ctx)
     assert result == ["lundi"]
 
 
@@ -45,12 +47,12 @@ def test_remplir_mission_calls_helpers(monkeypatch):
     jours_remplis = []
     calls = {"traiter": [], "specifique": []}
 
-    def fake_traiter(driver, jour, desc, val, jours):
+    def fake_traiter(driver, jour, desc, val, jours, ctx):
         calls["traiter"].append((jour, desc, val))
         jours.append(jour)
         return jours
 
-    def fake_specifique(driver, jour, val, jours):
+    def fake_specifique(driver, jour, val, jours, ctx):
         calls["specifique"].append((jour, val))
         jours.append(f"mission_{jour}")
 
@@ -62,7 +64,8 @@ def test_remplir_mission_calls_helpers(monkeypatch):
         fake_specifique,
     )
 
-    result = remplir_mission(None, jours_de_travail, jours_remplis)
+    ctx = TimeSheetContext("log", [], {}, {})
+    result = remplir_mission(None, jours_de_travail, jours_remplis, ctx)
 
     assert result == ["lundi", "mission_mardi"]
     assert calls["traiter"] == [("lundi", "desc1", "8")]

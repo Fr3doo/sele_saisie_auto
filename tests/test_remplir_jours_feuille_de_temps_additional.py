@@ -8,6 +8,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
+    TimeSheetContext,
     afficher_message_insertion,
     main,
     remplir_jours,
@@ -58,7 +59,8 @@ def test_remplir_jours(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.verifier_champ_jour_rempli",
         lambda *a, **k: "lundi",
     )
-    result = remplir_jours(None, ["desc"], {2: "lundi"}, [])
+    ctx = TimeSheetContext("log", ["desc"], {}, {})
+    result = remplir_jours(None, ["desc"], {2: "lundi"}, [], ctx)
     assert result == ["lundi"]
 
 
@@ -85,7 +87,8 @@ def test_traiter_jour_failure(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
         lambda msg, *_: logs.append(msg),
     )
-    result = traiter_jour(None, "lundi", "desc", "8", [])
+    ctx = TimeSheetContext("log", [], {}, {})
+    result = traiter_jour(None, "lundi", "desc", "8", [], ctx)
     assert result == []
     assert any(messages.ECHEC_INSERTION in m for m in logs)
 
@@ -93,7 +96,7 @@ def test_traiter_jour_failure(monkeypatch):
 def test_remplir_mission_dispatch(monkeypatch):
     called = {}
 
-    def fake_traiter(driver, j, d, v, jr):
+    def fake_traiter(driver, j, d, v, jr, ctx):
         called.setdefault("jour", True)
         return jr
 
@@ -105,15 +108,17 @@ def test_remplir_mission_dispatch(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.remplir_mission_specifique",
         lambda *a, **k: called.setdefault("spec", True),
     )
+    ctx = TimeSheetContext("log", [], {}, {})
     remplir_mission(
         None,
         {"lundi": ("desc", "8"), "mardi": ("En mission", "8")},
         [],
+        ctx,
     )
     assert {"jour", "spec"} <= called.keys()
 
     # branch where conditions are false
-    remplir_mission(None, {"mardi": ("desc", "8")}, ["mardi"])
+    remplir_mission(None, {"mardi": ("desc", "8")}, ["mardi"], ctx)
 
 
 def test_remplir_mission_specifique_failure(monkeypatch):
@@ -135,7 +140,8 @@ def test_remplir_mission_specifique_failure(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
         lambda msg, *_: logs.append(msg),
     )
-    remplir_mission_specifique(None, "mardi", "8", [])
+    ctx = TimeSheetContext("log", [], {}, {})
+    remplir_mission_specifique(None, "mardi", "8", [], ctx)
     assert any(messages.ECHEC_INSERTION in m for m in logs)
 
 
@@ -168,7 +174,8 @@ def test_remplir_mission_specifique_insertion_fail(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
         lambda msg, *_: logs.append(msg),
     )
-    remplir_mission_specifique(None, "mercredi", "8", [])
+    ctx = TimeSheetContext("log", [], {}, {})
+    remplir_mission_specifique(None, "mercredi", "8", [], ctx)
     assert any(messages.ECHEC_INSERTION in m for m in logs)
 
 
@@ -209,7 +216,8 @@ def test_remplir_jours_branches(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.trouver_ligne_par_description",
         lambda *a: None,
     )
-    result = remplir_jours(None, ["x"], {1: "dimanche"}, [])
+    ctx = TimeSheetContext("log", ["x"], {}, {})
+    result = remplir_jours(None, ["x"], {1: "dimanche"}, [], ctx)
     assert result == []
 
     # element None branch
@@ -221,7 +229,7 @@ def test_remplir_jours_branches(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element",
         lambda *a, **k: None,
     )
-    assert remplir_jours(None, ["x"], {1: "dimanche"}, []) == []
+    assert remplir_jours(None, ["x"], {1: "dimanche"}, [], ctx) == []
 
 
 def test_traiter_jour_no_element(monkeypatch):
@@ -233,7 +241,8 @@ def test_traiter_jour_no_element(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element",
         lambda *a, **k: None,
     )
-    assert traiter_jour(None, "lundi", "desc", "8", []) == []
+    ctx = TimeSheetContext("log", [], {}, {})
+    assert traiter_jour(None, "lundi", "desc", "8", [], ctx) == []
 
 
 def test_traiter_jour_controle_insertion_fail(monkeypatch):
@@ -269,7 +278,8 @@ def test_traiter_jour_controle_insertion_fail(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
         lambda msg, *_: logs.append(msg),
     )
-    assert traiter_jour(None, "lundi", "desc", "8", []) == []
+    ctx = TimeSheetContext("log", [], {}, {})
+    assert traiter_jour(None, "lundi", "desc", "8", [], ctx) == []
     assert any(messages.ECHEC_INSERTION in m for m in logs)
 
 
@@ -278,7 +288,8 @@ def test_remplir_mission_specifique_element_none(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element",
         lambda *a, **k: None,
     )
-    assert remplir_mission_specifique(None, "lundi", "8", []) is None
+    ctx = TimeSheetContext("log", [], {}, {})
+    assert remplir_mission_specifique(None, "lundi", "8", [], ctx) is None
 
 
 def test_traiter_champs_mission_element_none(monkeypatch):
@@ -297,7 +308,8 @@ def test_traiter_champs_mission_element_none(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
         lambda *a, **k: None,
     )
-    traiter_champs_mission(None, ids, mapping, info)
+    ctx = TimeSheetContext("log", [], {}, {})
+    traiter_champs_mission(None, ids, mapping, info, ctx)
 
 
 def test_traiter_champs_mission_insertion_fail(monkeypatch):
@@ -336,7 +348,8 @@ def test_traiter_champs_mission_insertion_fail(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
         lambda msg, *_: logs.append(msg),
     )
-    traiter_champs_mission(None, ids, mapping, info, max_attempts=1)
+    ctx = TimeSheetContext("log", [], {}, {})
+    traiter_champs_mission(None, ids, mapping, info, ctx, max_attempts=1)
     assert any(messages.ECHEC_INSERTION in m for m in logs)
 
 
