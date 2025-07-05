@@ -201,15 +201,20 @@ def test_main_exceptions(monkeypatch, sample_config):
             mem_password=object(),
         ),
     )
-    monkeypatch.setattr(sap, "SeleniumDriverManager", DummyManager)
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: True)
     monkeypatch.setattr(sap, "modifier_date_input", lambda *a, **k: None)
     monkeypatch.setattr(sap, "switch_to_iframe_by_id_or_name", lambda *a, **k: True)
     monkeypatch.setattr(sap, "click_element_without_wait", lambda *a, **k: None)
     monkeypatch.setattr(sap, "send_keys_to_element", lambda *a, **k: None)
     monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
-    monkeypatch.setattr(sap, "wait_until_dom_is_stable", lambda *a, **k: None)
-    monkeypatch.setattr(sap, "wait_for_dom_ready", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.browser_session.wait_until_dom_is_stable",
+        lambda *a, **k: None,
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.browser_session.wait_for_dom_ready",
+        lambda *a, **k: None,
+    )
     monkeypatch.setattr(sap, "program_break_time", lambda *a, **k: None)
     monkeypatch.setattr(
         sap.remplir_jours_feuille_de_temps, "main", lambda *a, **k: None

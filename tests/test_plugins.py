@@ -36,7 +36,6 @@ def test_run_invokes_hook(monkeypatch, sample_config):
             mem_password=object(),
         ),
     )
-    monkeypatch.setattr(sap, "SeleniumDriverManager", DummyManager)
 
     monkeypatch.setattr(sap.LoginHandler, "login", lambda *a, **k: None)
     monkeypatch.setattr(sap.DateEntryPage, "handle_date_input", lambda *a, **k: None)
@@ -71,8 +70,14 @@ def test_run_invokes_hook(monkeypatch, sample_config):
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
-    monkeypatch.setattr(sap, "wait_until_dom_is_stable", lambda *a, **k: None)
-    monkeypatch.setattr(sap, "wait_for_dom_ready", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.browser_session.wait_until_dom_is_stable",
+        lambda *a, **k: None,
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.browser_session.wait_for_dom_ready",
+        lambda *a, **k: None,
+    )
     monkeypatch.setattr(sap, "program_break_time", lambda *a, **k: None)
     monkeypatch.setattr(
         sap.remplir_jours_feuille_de_temps, "main", lambda *a, **k: None

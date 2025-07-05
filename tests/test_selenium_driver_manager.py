@@ -3,7 +3,9 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))
 
-from sele_saisie_auto.selenium_driver_manager import SeleniumDriverManager  # noqa: E402
+from sele_saisie_auto.automation.browser_session import (  # noqa: E402
+    SeleniumDriverManager,
+)
 
 
 def test_open_calls_utils(monkeypatch):
@@ -19,15 +21,16 @@ def test_open_calls_utils(monkeypatch):
         return Dummy()
 
     monkeypatch.setattr(
-        "sele_saisie_auto.selenium_driver_manager.ouvrir_navigateur_sur_ecran_principal",
+        "sele_saisie_auto.automation.browser_session.ouvrir_navigateur_sur_ecran_principal",
         fake_open,
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.selenium_driver_manager.definir_taille_navigateur",
+        "sele_saisie_auto.automation.browser_session.definir_taille_navigateur",
         lambda driver, w, h: driver,
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.selenium_driver_manager.wait_for_dom_ready", lambda d, t: None
+        "sele_saisie_auto.automation.browser_session.wait_for_dom_ready",
+        lambda d, t: None,
     )
 
     manager = SeleniumDriverManager("log.html")
@@ -54,7 +57,7 @@ def test_close_quits_driver(monkeypatch):
 
 def test_open_returns_none(monkeypatch):
     monkeypatch.setattr(
-        "sele_saisie_auto.selenium_driver_manager.ouvrir_navigateur_sur_ecran_principal",
+        "sele_saisie_auto.automation.browser_session.ouvrir_navigateur_sur_ecran_principal",
         lambda *a, **k: None,
     )
     manager = SeleniumDriverManager("log.html")

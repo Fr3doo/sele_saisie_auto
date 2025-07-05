@@ -32,12 +32,12 @@ class DummyManager:
 def test_wait_for_dom(monkeypatch):
     calls = []
     monkeypatch.setattr(
-        sap,
-        "wait_until_dom_is_stable",
+        "sele_saisie_auto.automation.browser_session.wait_until_dom_is_stable",
         lambda driver, timeout=10: calls.append("stable"),
     )
     monkeypatch.setattr(
-        sap, "wait_for_dom_ready", lambda driver, timeout: calls.append("ready")
+        "sele_saisie_auto.automation.browser_session.wait_for_dom_ready",
+        lambda driver, timeout: calls.append("ready"),
     )
     sap.wait_for_dom("driver")
     assert calls == ["stable", "ready"]
