@@ -5,6 +5,8 @@ mdp = enc_pwd
 [settings]
 url = http://example.com
 date_cible = 01/07/2024
+default_timeout = 10
+long_timeout = 20
 liste_items_planning = "En mission"
 
 [work_schedule]

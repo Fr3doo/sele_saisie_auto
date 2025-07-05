@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
-from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
+from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 from . import LOG_FILE, write_log
 
@@ -17,17 +17,25 @@ from . import LOG_FILE, write_log
 class Waiter:
     """Utility object encapsulating explicit wait helpers."""
 
-    def wait_for_dom_ready(self, driver, timeout: int = 20):
+    def __init__(
+        self, default_timeout: int = DEFAULT_TIMEOUT, long_timeout: int = LONG_TIMEOUT
+    ) -> None:  # pragma: no cover - simple initializer
+        self.default_timeout = default_timeout
+        self.long_timeout = long_timeout
+
+    def wait_for_dom_ready(self, driver, timeout: int | None = None):
         """Wait until the DOM is fully loaded."""
+        timeout = timeout or self.long_timeout
         WebDriverWait(driver, timeout).until(is_document_complete)
         write_log("DOM chargé avec succès.", LOG_FILE, "DEBUG")
 
-    def wait_until_dom_is_stable(self, driver, timeout: int = 10) -> bool:
+    def wait_until_dom_is_stable(self, driver, timeout: int | None = None) -> bool:
         """Return True when the DOM remains unchanged for ``timeout`` seconds."""
         previous_dom_snapshot = ""
         unchanged_count = 0
         required_stability_count = 3
 
+        timeout = timeout or self.default_timeout
         for _ in range(timeout):
             current_dom_snapshot = driver.page_source
 
@@ -56,7 +64,7 @@ class Waiter:
         by=By.ID,
         locator_value=None,
         condition=ec.presence_of_element_located,
-        timeout: int = 10,
+        timeout: int | None = None,
     ):
         """Wait for an element to satisfy ``condition`` or return ``None``."""
         if locator_value is None:
@@ -67,6 +75,7 @@ class Waiter:
             )
             return None
 
+        timeout = timeout or self.default_timeout
         found_elements = driver.find_elements(by, locator_value)
         if found_elements:
             matched_element = WebDriverWait(driver, timeout).until(
@@ -87,19 +96,19 @@ class Waiter:
         return None
 
     # Convenience wrappers -------------------------------------------------
-    def find_clickable(self, driver, by, locator_value, timeout: int = DEFAULT_TIMEOUT):
+    def find_clickable(self, driver, by, locator_value, timeout: int | None = None):
         """Return element when it becomes clickable."""
         return self.wait_for_element(
             driver, by, locator_value, ec.element_to_be_clickable, timeout
         )
 
-    def find_visible(self, driver, by, locator_value, timeout: int = DEFAULT_TIMEOUT):
+    def find_visible(self, driver, by, locator_value, timeout: int | None = None):
         """Return element when it is visible."""
         return self.wait_for_element(
             driver, by, locator_value, ec.visibility_of_element_located, timeout
         )
 
-    def find_present(self, driver, by, locator_value, timeout: int = DEFAULT_TIMEOUT):
+    def find_present(self, driver, by, locator_value, timeout: int | None = None):
         """Return element when it is present in the DOM."""
         return self.wait_for_element(
             driver, by, locator_value, ec.presence_of_element_located, timeout
@@ -114,14 +123,16 @@ def is_document_complete(driver):
     return driver.execute_script("return document.readyState") == "complete"
 
 
-def wait_for_dom_ready(driver, timeout: int = 20, waiter: Waiter | None = None):
+def wait_for_dom_ready(
+    driver, timeout: int | None = None, waiter: Waiter | None = None
+):
     """Wait until the DOM is fully loaded."""
     w = waiter or DEFAULT_WAITER
     w.wait_for_dom_ready(driver, timeout)
 
 
 def wait_until_dom_is_stable(
-    driver, timeout: int = 10, waiter: Waiter | None = None
+    driver, timeout: int | None = None, waiter: Waiter | None = None
 ) -> bool:
     w = waiter or DEFAULT_WAITER
     return w.wait_until_dom_is_stable(driver, timeout)
@@ -132,7 +143,7 @@ def wait_for_element(
     by=By.ID,
     locator_value=None,
     condition=ec.presence_of_element_located,
-    timeout: int = 10,
+    timeout: int | None = None,
     waiter: Waiter | None = None,
 ):
     w = waiter or DEFAULT_WAITER
@@ -143,7 +154,7 @@ def find_clickable(
     driver,
     by,
     locator_value,
-    timeout: int = DEFAULT_TIMEOUT,
+    timeout: int | None = None,
     waiter: Waiter | None = None,
 ):
     w = waiter or DEFAULT_WAITER
@@ -154,7 +165,7 @@ def find_visible(
     driver,
     by,
     locator_value,
-    timeout: int = DEFAULT_TIMEOUT,
+    timeout: int | None = None,
     waiter: Waiter | None = None,
 ):
     w = waiter or DEFAULT_WAITER
@@ -165,7 +176,7 @@ def find_present(
     driver,
     by,
     locator_value,
-    timeout: int = DEFAULT_TIMEOUT,
+    timeout: int | None = None,
     waiter: Waiter | None = None,
 ):
     w = waiter or DEFAULT_WAITER

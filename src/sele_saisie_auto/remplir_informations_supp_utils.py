@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from selenium.webdriver.common.by import By
 
 from sele_saisie_auto import messages
+from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.constants import JOURS_SEMAINE
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.selenium_utils import (
@@ -15,7 +16,7 @@ from sele_saisie_auto.selenium_utils import (
     verifier_champ_jour_rempli,
     wait_for_element,
 )
-from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
+from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 # remplir_informations_supp_france.py
 
@@ -36,7 +37,7 @@ def _build_input_id(id_value_jours: str, idx: int, row_index: int) -> str:
 
 def _get_element(driver, waiter: Waiter | None, input_id: str):
     if waiter:
-        return waiter.wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
+        return waiter.wait_for_element(driver, By.ID, input_id)
     return wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
 
 
@@ -185,8 +186,14 @@ class ExtraInfoHelper:
         log_file: str,
         waiter: Waiter | None = None,
         page: AdditionalInfoPage | None = None,
+        app_config: AppConfig | None = None,
     ) -> None:
-        self.waiter = waiter or Waiter()
+        if waiter is None:
+            timeout = app_config.default_timeout if app_config else DEFAULT_TIMEOUT
+            long_timeout = app_config.long_timeout if app_config else LONG_TIMEOUT
+            self.waiter = Waiter(default_timeout=timeout, long_timeout=long_timeout)
+        else:
+            self.waiter = waiter
         self.page = page
         self.log_file = log_file
 

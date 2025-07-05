@@ -188,7 +188,10 @@ class PSATimeAutomation:
                 },
             ],
         )
-        self.browser_session = BrowserSession(log_file)
+        try:
+            self.browser_session = BrowserSession(log_file, app_config)
+        except TypeError:  # pragma: no cover - for legacy test stubs
+            self.browser_session = BrowserSession(log_file)
         self.login_handler = LoginHandler(
             log_file,
             self.context.encryption_service,
