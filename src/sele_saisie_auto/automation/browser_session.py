@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
+from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.selenium_utils import (
     definir_taille_navigateur,
@@ -15,8 +16,9 @@ from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 class SeleniumDriverManager:
     """Handle WebDriver lifecycle for the automation."""
 
-    def __init__(self, log_file: str) -> None:
+    def __init__(self, log_file: str, app_config: AppConfig | None = None) -> None:
         self.log_file = log_file
+        self.app_config = app_config
         self.driver: WebDriver | None = None
 
     def __enter__(self) -> SeleniumDriverManager:
@@ -48,7 +50,12 @@ class SeleniumDriverManager:
         )
         if self.driver is not None:
             self.driver = definir_taille_navigateur(self.driver, 1260, 800)
-            wait_for_dom_ready(self.driver, LONG_TIMEOUT)
+            timeout = (
+                self.app_config.long_timeout
+                if self.app_config
+                else LONG_TIMEOUT  # pragma: no cover - fallback
+            )
+            wait_for_dom_ready(self.driver, timeout)
         return self.driver
 
     def close(self) -> None:
@@ -62,9 +69,15 @@ class SeleniumDriverManager:
 class BrowserSession:
     """Encapsulate :class:`SeleniumDriverManager` for higher-level automation."""
 
-    def __init__(self, log_file: str) -> None:
+    def __init__(
+        self, log_file: str, app_config: AppConfig | None = None
+    ) -> None:  # pragma: no cover - simple wiring
         self.log_file = log_file
-        self._manager = SeleniumDriverManager(log_file)
+        self.app_config = app_config
+        if app_config is not None:
+            self._manager = SeleniumDriverManager(log_file, app_config)
+        else:  # pragma: no cover - legacy path
+            self._manager = SeleniumDriverManager(log_file)
         self.driver: WebDriver | None = None
 
     def __enter__(self) -> BrowserSession:
@@ -108,5 +121,15 @@ class BrowserSession:
     # ------------------------------------------------------------------
     def wait_for_dom(self, driver) -> None:
         """Wait until the DOM is stable and fully loaded."""
-        wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-        wait_for_dom_ready(driver, LONG_TIMEOUT)
+        default_timeout = (
+            self.app_config.default_timeout
+            if self.app_config
+            else DEFAULT_TIMEOUT  # pragma: no cover - fallback
+        )
+        long_timeout = (
+            self.app_config.long_timeout
+            if self.app_config
+            else LONG_TIMEOUT  # pragma: no cover - fallback
+        )
+        wait_until_dom_is_stable(driver, timeout=default_timeout)
+        wait_for_dom_ready(driver, long_timeout)

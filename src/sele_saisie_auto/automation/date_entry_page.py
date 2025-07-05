@@ -1,17 +1,19 @@
 from __future__ import annotations
 
 import sys
+from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 
+from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.shared_utils import program_break_time
-from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
+from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 if TYPE_CHECKING:  # pragma: no cover
     from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
@@ -26,6 +28,17 @@ class DateEntryPage:
     @property
     def log_file(self) -> str:
         return self._automation.log_file
+
+    @property
+    def config(self) -> AppConfig:  # pragma: no cover - accessor
+        ctx = getattr(self._automation, "context", None)
+        cfg = getattr(ctx, "config", None)
+        if cfg is None or not hasattr(cfg, "default_timeout"):
+            return SimpleNamespace(
+                default_timeout=DEFAULT_TIMEOUT,
+                long_timeout=LONG_TIMEOUT,
+            )  # pragma: no cover - fallback
+        return cfg
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -51,7 +64,7 @@ class DateEntryPage:
             By.ID,
             Locators.NAV_TO_DATE_ENTRY.value,
             ec.element_to_be_clickable,
-            timeout=DEFAULT_TIMEOUT,
+            timeout=self.config.default_timeout,
         )
         if element_present:
             sap.click_element_without_wait(
@@ -64,7 +77,7 @@ class DateEntryPage:
             By.ID,
             Locators.SIDE_MENU_BUTTON.value,
             ec.element_to_be_clickable,
-            timeout=DEFAULT_TIMEOUT,
+            timeout=self.config.default_timeout,
         )
         if element_present:
             sap.click_element_without_wait(
@@ -79,7 +92,10 @@ class DateEntryPage:
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
         date_input = sap.wait_for_element(
-            driver, By.ID, Locators.DATE_INPUT.value, timeout=DEFAULT_TIMEOUT
+            driver,
+            By.ID,
+            Locators.DATE_INPUT.value,
+            timeout=self.config.default_timeout,
         )
         if date_input:
             current_date_value = date_input.get_attribute("value")
@@ -113,7 +129,7 @@ class DateEntryPage:
             By.ID,
             Locators.ADD_BUTTON.value,
             ec.element_to_be_clickable,
-            timeout=DEFAULT_TIMEOUT,
+            timeout=self.config.default_timeout,
         )
         if element_present:
             sap.send_keys_to_element(
@@ -140,7 +156,9 @@ class DateEntryPage:
 
         sap.switch_to_default_content(driver)
         alerte = Locators.ALERT_CONTENT_0.value
-        if sap.wait_for_element(driver, By.ID, alerte, timeout=DEFAULT_TIMEOUT):
+        if sap.wait_for_element(
+            driver, By.ID, alerte, timeout=self.config.default_timeout
+        ):
             sap.click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
             write_log(
                 "\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)",
@@ -168,7 +186,7 @@ class DateEntryPage:
             By.ID,
             elem_id,
             ec.element_to_be_clickable,
-            timeout=DEFAULT_TIMEOUT,
+            timeout=self.config.default_timeout,
         )
         if element_present:
             sap.click_element_without_wait(driver, By.ID, elem_id)

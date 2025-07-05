@@ -49,6 +49,8 @@ class AppConfig:
     cgi_options_dejeuner: list[CGILunchOption]
     cgi_options_billing_action: list[BillingActionOption]
     work_schedule_options: list[WorkScheduleOption]
+    default_timeout: int
+    long_timeout: int
     raw: ConfigParser
 
     @classmethod
@@ -65,6 +67,8 @@ class AppConfig:
         liste_items_planning = [
             item.strip().strip('"') for item in liste_items.split(",") if item.strip()
         ]
+        default_timeout = parser.getint("settings", "default_timeout", fallback=10)
+        long_timeout = parser.getint("settings", "long_timeout", fallback=20)
 
         work_schedule: dict[str, tuple[str, str]] = {}
         if parser.has_section("work_schedule"):
@@ -177,6 +181,8 @@ class AppConfig:
             cgi_options_dejeuner=cgi_options_dejeuner,
             cgi_options_billing_action=cgi_options_billing_action,
             work_schedule_options=work_schedule_options,
+            default_timeout=default_timeout,
+            long_timeout=long_timeout,
             raw=parser,
         )
 
@@ -196,6 +202,8 @@ def load_config(log_file: str | None) -> AppConfig:
         ("settings", "date_cible"): "PSATIME_DATE_CIBLE",
         ("settings", "debug_mode"): "PSATIME_DEBUG_MODE",
         ("settings", "liste_items_planning"): "PSATIME_LISTE_ITEMS_PLANNING",
+        ("settings", "default_timeout"): "PSATIME_DEFAULT_TIMEOUT",
+        ("settings", "long_timeout"): "PSATIME_LONG_TIMEOUT",
     }
     for (section, option), env_var in env_map.items():
         value = os.getenv(env_var)

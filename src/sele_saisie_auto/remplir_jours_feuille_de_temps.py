@@ -419,13 +419,23 @@ class TimeSheetHelper:
     def __init__(self, context: TimeSheetContext, waiter: Waiter | None = None) -> None:
         self.context = context
         self.log_file = context.log_file
-        self.waiter = waiter or Waiter()
+        if waiter is None:
+            cfg = context.config
+            if hasattr(cfg, "default_timeout") and hasattr(cfg, "long_timeout"):
+                timeout = cfg.default_timeout
+                long_timeout = cfg.long_timeout
+            else:
+                timeout = DEFAULT_TIMEOUT
+                long_timeout = LONG_TIMEOUT
+            self.waiter = Waiter(default_timeout=timeout, long_timeout=long_timeout)
+        else:
+            self.waiter = waiter
         global LOG_FILE
         LOG_FILE = self.log_file
 
     def wait_for_dom(self, driver) -> None:
-        self.waiter.wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-        self.waiter.wait_for_dom_ready(driver, LONG_TIMEOUT)
+        self.waiter.wait_until_dom_is_stable(driver)
+        self.waiter.wait_for_dom_ready(driver)
 
     def initialize(self) -> TimeSheetContext:
         """Return the current context without reloading from disk."""
