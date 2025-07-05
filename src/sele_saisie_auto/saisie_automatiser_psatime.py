@@ -36,17 +36,17 @@ from sele_saisie_auto.logger_utils import initialize_logger, write_log
 from sele_saisie_auto.remplir_informations_supp_utils import (
     set_log_file as set_log_file_infos,
 )
+from sele_saisie_auto.selenium_utils import click_element_without_wait  # noqa: F401
+from sele_saisie_auto.selenium_utils import modifier_date_input  # noqa: F401
+from sele_saisie_auto.selenium_utils import send_keys_to_element  # noqa: F401
+from sele_saisie_auto.selenium_utils import detecter_doublons_jours
+from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.selenium_utils import (
-    click_element_without_wait,  # noqa: F401
-    detecter_doublons_jours,
-    modifier_date_input,  # noqa: F401
-    send_keys_to_element,  # noqa: F401
     switch_to_default_content,
     switch_to_iframe_by_id_or_name,
     wait_for_dom_after,
     wait_for_element,
 )
-from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.shared_utils import program_break_time
 
@@ -386,14 +386,7 @@ class PSATimeAutomation:
         self.date_entry_page._click_action_button(driver, CHOIX_USER)
 
     def _process_date_entry(self, driver) -> None:
-        self.date_entry_page.handle_date_input(driver, self.context.config.date_cible)
-        program_break_time(
-            1,
-            "Veuillez patienter. Court délai pour stabilisation du DOM",
-        )
-        print()
-        if self.submit_date_cible(driver):
-            self._handle_date_alert(driver)
+        self.date_entry_page.process_date(driver, self.context.config.date_cible)
 
     def _fill_and_save_timesheet(self, driver) -> None:
         self.wait_for_dom(driver)

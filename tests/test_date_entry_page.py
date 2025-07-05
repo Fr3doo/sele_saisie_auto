@@ -171,6 +171,22 @@ def test_click_action_button(monkeypatch):
     assert clicks
 
 
+def test_click_action_button_copy(monkeypatch):
+    dummy = DummyAutomation()
+    page = DateEntryPage(dummy)
+    monkeypatch.setattr(
+        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
+        lambda *a, **k: True,
+    )
+    clicks = []
+    monkeypatch.setattr(
+        "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
+        lambda *a, **k: clicks.append(True),
+    )
+    page._click_action_button("drv", False)
+    assert clicks
+
+
 def test_handle_date_alert(monkeypatch):
     dummy = DummyAutomation()
     page = DateEntryPage(dummy)
@@ -195,3 +211,53 @@ def test_handle_date_alert(monkeypatch):
     with pytest.raises(SystemExit):
         page._handle_date_alert("drv")
     assert "click" in logs
+
+
+def test_process_date(monkeypatch):
+    dummy = DummyAutomation()
+    page = DateEntryPage(dummy)
+
+    calls = []
+    monkeypatch.setattr(
+        page,
+        "handle_date_input",
+        lambda driver, date: calls.append(("input", date)),
+    )
+    monkeypatch.setattr(
+        page,
+        "submit_date_cible",
+        lambda driver: calls.append("submit") or True,
+    )
+    monkeypatch.setattr(
+        page,
+        "_handle_date_alert",
+        lambda driver: calls.append("alert"),
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.date_entry_page.program_break_time",
+        lambda *a, **k: calls.append("wait"),
+    )
+
+    page.process_date("drv", "01/01/2024")
+
+    assert calls == [("input", "01/01/2024"), "wait", "submit", "alert"]
+
+
+def test_process_date_no_submit(monkeypatch):
+    dummy = DummyAutomation()
+    page = DateEntryPage(dummy)
+
+    calls = []
+    monkeypatch.setattr(page, "handle_date_input", lambda *a: calls.append("input"))
+    monkeypatch.setattr(
+        page, "submit_date_cible", lambda d: calls.append("submit") or False
+    )
+    monkeypatch.setattr(page, "_handle_date_alert", lambda d: calls.append("alert"))
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.date_entry_page.program_break_time",
+        lambda *a, **k: calls.append("wait"),
+    )
+
+    page.process_date("drv", None)
+
+    assert calls == ["input", "wait", "submit"]

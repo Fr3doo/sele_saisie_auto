@@ -152,3 +152,41 @@ def test_cleanup_resources_calls():
     sap.cleanup_resources(manager, "c", "n", None)
     assert shm_service.removed == ["c", "n"]
     assert manager.driver is None
+
+
+def test_fill_and_save_timesheet(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
+    auto = sap._AUTOMATION
+    calls = []
+    monkeypatch.setattr(auto, "wait_for_dom", lambda d: calls.append("wait"))
+    monkeypatch.setattr(auto, "switch_to_iframe_main_target_win0", lambda d: True)
+    monkeypatch.setattr(
+        sap, "program_break_time", lambda *a, **k: calls.append("break")
+    )
+    monkeypatch.setattr(auto, "_click_action_button", lambda d: calls.append("click"))
+    monkeypatch.setattr(
+        sap.remplir_jours_feuille_de_temps, "main", lambda *a, **k: calls.append("fill")
+    )
+    monkeypatch.setattr(
+        auto,
+        "navigate_from_work_schedule_to_additional_information_page",
+        lambda d: calls.append("nav"),
+    )
+    monkeypatch.setattr(
+        auto,
+        "submit_and_validate_additional_information",
+        lambda d: calls.append("sub"),
+    )
+    monkeypatch.setattr(
+        sap, "switch_to_default_content", lambda d: calls.append("default")
+    )
+    monkeypatch.setattr(
+        auto, "save_draft_and_validate", lambda d: calls.append("save") or True
+    )
+    auto.additional_info_page._handle_save_alerts = lambda d: calls.append("alert")
+    monkeypatch.setattr(sap, "detecter_doublons_jours", lambda d: calls.append("dup"))
+    monkeypatch.setattr(sap.plugins, "call", lambda name, d: calls.append(name))
+
+    auto._fill_and_save_timesheet("drv")
+
+    assert "alert" in calls
