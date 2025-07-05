@@ -23,6 +23,10 @@ Ce fichier décrit le rôle des différents agents qui composent le projet. Pour
 | `Logger`                | Gestion et rotation des logs                  | `logger_utils.py`                         | Messages à enregistrer| Fichier HTML/TXT de logs     |
 | `SeleniumDriverManager` | Initialise et ferme le WebDriver             | `selenium_driver_manager.py`             | URL, options          | Instance WebDriver |
 | `SeleniumUtils`         | Fonctions utilitaires pour Selenium           | `selenium_utils/`             | WebDriver, ID, valeurs| Éléments manipulés          |
+| `BrowserSession`        | Gère l'ouverture et la fermeture du navigateur | `automation/browser_session.py`  | URL, options          | Instance WebDriver |
+| `LoginHandler`          | Gère la connexion utilisateur                  | `automation/login_handler.py`    | Driver, identifiants  | Aucune (session ouverte) |
+| `DateEntryPage`         | Gère la sélection de période                   | `automation/date_entry_page.py`  | Driver, date cible    | Période validée |
+| `AdditionalInfoPage`    | Remplit la fenêtre d'informations supplémentaires | `automation/additional_info_page.py` | Driver, config        | Données enregistrées |
 ## 4. Détails par agent
 
 ### `SeleniumFiller`

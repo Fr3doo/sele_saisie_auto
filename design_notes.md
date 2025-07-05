@@ -50,6 +50,17 @@ flowchart TD
     SharedMemoryService --> Logger
 ```
 
+
+## Diagramme des pages
+
+```mermaid
+flowchart LR
+    BrowserSession --> LoginHandler
+    LoginHandler --> DateEntryPage
+    DateEntryPage --> AdditionalInfoPage
+```
+
+
 ## Exemples d'utilisation
 
 ```python
