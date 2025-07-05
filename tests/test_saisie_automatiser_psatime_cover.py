@@ -152,7 +152,7 @@ def test_handle_date_input_no_element(monkeypatch, sample_config):
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: log.append("dom")
     )
-    sap.handle_date_input("drv", "10/07/2024")
+    sap._AUTOMATION.date_entry_page.handle_date_input("drv", "10/07/2024")
     assert "dom" in log
 
 

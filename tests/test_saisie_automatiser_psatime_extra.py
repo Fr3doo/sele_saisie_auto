@@ -121,7 +121,7 @@ def test_handle_date_input_no_change(monkeypatch):
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
-    sap.handle_date_input("drv", None)
+    sap._AUTOMATION.date_entry_page.handle_date_input("drv", None)
     assert "Aucune modification" in logs[0]
 
 

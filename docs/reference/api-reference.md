@@ -28,10 +28,8 @@ class PSATimeAutomation:
   chiffrés depuis la mémoire partagée.
 - ``setup_browser(driver_manager: SeleniumDriverManager)`` – ouvre et configure
   le navigateur.
-- ``connect_to_psatime(driver, cle_aes, login_c, pwd_c)`` – authentifie l’utilisateur.
 - `switch_to_iframe_main_target_win0(driver)` – bascule dans l’iframe principale.
 - `navigate_from_home_to_date_entry_page(driver)` – ouvre la page de saisie de date.
-- `handle_date_input(driver, date_cible)` – prépare le champ date.
 - `submit_date_cible(driver)` – valide la date choisie.
 - `navigate_from_work_schedule_to_additional_information_page(driver)` – accède aux informations supplémentaires.
 - `submit_and_validate_additional_information(driver)` – remplit puis confirme les données complémentaires.
@@ -155,7 +153,9 @@ filler = PSATimeAutomation("log.html", cfg)
 with SeleniumDriverManager("log.html") as dm:
     driver = filler.setup_browser(dm)
     creds = filler.initialize_shared_memory()
-    filler.connect_to_psatime(driver, creds.aes_key, creds.login, creds.password)
+    filler.login_handler.login(
+        driver, creds, filler.context.encryption_service
+    )
     TimeSheetHelper("log.html").run(driver)
 ```
 

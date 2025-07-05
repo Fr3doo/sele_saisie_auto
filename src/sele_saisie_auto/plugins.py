@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 # Map of hook name to registered callables
 _HOOKS: dict[str, list[Callable[..., Any]]] = defaultdict(list)

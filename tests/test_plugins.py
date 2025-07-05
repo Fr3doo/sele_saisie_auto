@@ -38,12 +38,8 @@ def test_run_invokes_hook(monkeypatch, sample_config):
     )
     monkeypatch.setattr(sap, "SeleniumDriverManager", DummyManager)
 
-    monkeypatch.setattr(
-        sap.PSATimeAutomation, "connect_to_psatime", lambda *a, **k: None
-    )
-    monkeypatch.setattr(
-        sap.PSATimeAutomation, "handle_date_input", lambda *a, **k: None
-    )
+    monkeypatch.setattr(sap.LoginHandler, "login", lambda *a, **k: None)
+    monkeypatch.setattr(sap.DateEntryPage, "handle_date_input", lambda *a, **k: None)
     monkeypatch.setattr(
         sap.PSATimeAutomation, "submit_date_cible", lambda *a, **k: False
     )

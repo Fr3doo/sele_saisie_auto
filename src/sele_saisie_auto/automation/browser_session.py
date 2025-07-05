@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto.logger_utils import write_log
@@ -14,9 +12,9 @@ class BrowserSession:
     def __init__(self, log_file: str) -> None:
         self.log_file = log_file
         self._manager = SeleniumDriverManager(log_file)
-        self.driver: Optional[WebDriver] = None
+        self.driver: WebDriver | None = None
 
-    def __enter__(self) -> "BrowserSession":
+    def __enter__(self) -> BrowserSession:
         return self
 
     def __exit__(
@@ -34,7 +32,7 @@ class BrowserSession:
         fullscreen: bool = False,
         headless: bool = False,
         no_sandbox: bool = False,
-    ) -> Optional[WebDriver]:
+    ) -> WebDriver | None:
         """Open the browser and navigate to ``url``."""
         write_log("Ouverture du navigateur", self.log_file, "DEBUG")
         self.driver = self._manager.open(

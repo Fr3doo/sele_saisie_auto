@@ -58,7 +58,7 @@ def setup_module(module):
         setattr(mod, name, DummyWidget)
 
     module._patches.append((gui_builder.ttk, "Separator", gui_builder.ttk.Separator))
-    setattr(gui_builder.ttk, "Separator", new_separator)
+    gui_builder.ttk.Separator = new_separator
 
 
 def teardown_module(module):

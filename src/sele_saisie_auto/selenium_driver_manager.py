@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto.logger_utils import write_log
@@ -18,9 +16,9 @@ class SeleniumDriverManager:
 
     def __init__(self, log_file: str) -> None:
         self.log_file = log_file
-        self.driver: Optional[WebDriver] = None
+        self.driver: WebDriver | None = None
 
-    def __enter__(self) -> "SeleniumDriverManager":
+    def __enter__(self) -> SeleniumDriverManager:
         """Return itself when used as a context manager."""
         return self
 
@@ -40,7 +38,7 @@ class SeleniumDriverManager:
         fullscreen: bool = False,
         headless: bool = False,
         no_sandbox: bool = False,
-    ) -> Optional[WebDriver]:
+    ) -> WebDriver | None:
         """Launch the WebDriver and load the given URL."""
         write_log("Ouverture du navigateur", self.log_file, "DEBUG")
         self.driver = ouvrir_navigateur_sur_ecran_principal(
