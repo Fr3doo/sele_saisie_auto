@@ -190,7 +190,7 @@ EXCEPTIONS = [
 
 def test_main_exceptions(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
-    sap.CHOIX_USER = True
+    sap._AUTOMATION.choix_user = True
     monkeypatch.setattr(sap, "log_initialisation", lambda: None)
     monkeypatch.setattr(
         sap.PSATimeAutomation,

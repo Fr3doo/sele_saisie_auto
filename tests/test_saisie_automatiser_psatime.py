@@ -209,7 +209,7 @@ def test_main_flow(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
     sap.context.config.url = "http://test"
     sap.context.config.date_cible = "06/07/2024"
-    sap.CHOIX_USER = True
+    sap._AUTOMATION.choix_user = True
 
     monkeypatch.setattr(sap, "log_initialisation", lambda: None)
     monkeypatch.setattr(

@@ -110,11 +110,18 @@ __all__ = [
 class PSATimeAutomation:
     """Automatise la saisie de la feuille de temps PSA Time."""
 
-    def __init__(self, log_file: str, app_config: AppConfig) -> None:
+    def __init__(
+        self,
+        log_file: str,
+        app_config: AppConfig,
+        choix_user: bool = True,
+        memory_config: MemoryConfig | None = None,
+    ) -> None:
         """Initialise la configuration et les dépendances."""
 
         self.log_file = log_file
-        self.memory_config = MemoryConfig()
+        self.choix_user = choix_user
+        self.memory_config = memory_config or MemoryConfig()
         set_log_file_selenium(log_file)
         set_log_file_infos(log_file)
         initialize_logger(app_config.raw, log_level_override=app_config.debug_mode)
@@ -396,7 +403,7 @@ class PSATimeAutomation:
         self.date_entry_page._handle_date_alert(driver)
 
     def _click_action_button(self, driver) -> None:
-        self.date_entry_page._click_action_button(driver, CHOIX_USER)
+        self.date_entry_page._click_action_button(driver, self.choix_user)
 
     def _process_date_entry(self, driver) -> None:
         self.date_entry_page.process_date(driver, self.context.config.date_cible)
@@ -478,9 +485,6 @@ class PSATimeAutomation:
                         credentials.mem_login,
                         credentials.mem_password,
                     )
-
-
-CHOIX_USER = True  # true pour créer une nouvelle feuille de temps
 
 
 # ------------------------------------------------------------------------------------------------- #
@@ -576,10 +580,20 @@ context: SaisieContext | None = None
 LOG_FILE: str | None = None
 
 
-def initialize(log_file: str, app_config: AppConfig) -> None:
+def initialize(
+    log_file: str,
+    app_config: AppConfig,
+    choix_user: bool = True,
+    memory_config: MemoryConfig | None = None,
+) -> None:
     """Instancie l'automatisation."""
     global _AUTOMATION, context, LOG_FILE
-    _AUTOMATION = PSATimeAutomation(log_file, app_config)
+    _AUTOMATION = PSATimeAutomation(
+        log_file,
+        app_config,
+        choix_user=choix_user,
+        memory_config=memory_config,
+    )
     context = _AUTOMATION.context
     LOG_FILE = log_file
 
