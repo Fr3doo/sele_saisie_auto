@@ -37,7 +37,6 @@ from sele_saisie_auto.logger_utils import initialize_logger, write_log
 from sele_saisie_auto.remplir_informations_supp_utils import (
     set_log_file as set_log_file_infos,
 )
-from sele_saisie_auto.selenium_driver_manager import SeleniumDriverManager
 from sele_saisie_auto.selenium_utils import click_element_without_wait  # noqa: F401
 from sele_saisie_auto.selenium_utils import modifier_date_input  # noqa: F401
 from sele_saisie_auto.selenium_utils import send_keys_to_element  # noqa: F401
@@ -47,9 +46,7 @@ from sele_saisie_auto.selenium_utils import (
     switch_to_default_content,
     switch_to_iframe_by_id_or_name,
     wait_for_dom_after,
-    wait_for_dom_ready,
     wait_for_element,
-    wait_until_dom_is_stable,
 )
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.shared_utils import program_break_time
@@ -300,12 +297,11 @@ class PSATimeAutomation:
             mem_password=memoire_mdp,
         )
 
-    @staticmethod
-    def wait_for_dom(driver):
-        wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
-        wait_for_dom_ready(driver, LONG_TIMEOUT)
+    def wait_for_dom(self, driver):
+        """Wait until the DOM is stable using :class:`BrowserSession`."""
+        self.browser_session.wait_for_dom(driver)
 
-    def setup_browser(self, driver_manager: SeleniumDriverManager | None = None):
+    def setup_browser(self, session: BrowserSession | None = None):
         """Configure et démarre le navigateur via :class:`BrowserSession`."""
         return self.browser_session.open(
             self.context.config.url, fullscreen=False, headless=False
@@ -355,7 +351,7 @@ class PSATimeAutomation:
 
     def cleanup_resources(
         self,
-        driver_manager,
+        session,
         memoire_cle,
         memoire_nom,
         memoire_mdp,
@@ -372,8 +368,8 @@ class PSATimeAutomation:
             self.context.shared_memory_service.supprimer_memoire_partagee_securisee(
                 memoire_mdp
             )
-        if driver_manager is not None:
-            driver_manager.close()
+        if session is not None:
+            session.close()
         write_log(
             "🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier saisie_automatiser_psatime.",
             self.log_file,
@@ -599,10 +595,10 @@ def initialize_shared_memory():
     return _AUTOMATION.initialize_shared_memory()
 
 
-def setup_browser(driver_manager: SeleniumDriverManager):
+def setup_browser(session: BrowserSession):
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.setup_browser(driver_manager)
+    return _AUTOMATION.setup_browser(session)
 
 
 def switch_to_iframe_main_target_win0(driver):
@@ -643,16 +639,16 @@ def save_draft_and_validate(driver):
     return _AUTOMATION.save_draft_and_validate(driver)
 
 
-def cleanup_resources(driver_manager, memoire_cle, memoire_nom, memoire_mdp):
+def cleanup_resources(session, memoire_cle, memoire_nom, memoire_mdp):
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.cleanup_resources(
-        driver_manager, memoire_cle, memoire_nom, memoire_mdp
-    )
+    return _AUTOMATION.cleanup_resources(session, memoire_cle, memoire_nom, memoire_mdp)
 
 
 def wait_for_dom(driver):
-    PSATimeAutomation.wait_for_dom(driver)
+    if not _AUTOMATION:
+        raise RuntimeError("Automation non initialisée")
+    _AUTOMATION.wait_for_dom(driver)
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation

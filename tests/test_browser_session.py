@@ -110,3 +110,19 @@ def test_open_and_close_log(monkeypatch):
     assert "Ouverture du navigateur" in logs[0]
     assert "Fermeture du navigateur" in logs[1]
     assert "closed" in logs
+
+
+def test_wait_for_dom(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.browser_session.wait_until_dom_is_stable",
+        lambda d, timeout=10: calls.append("stable"),
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.browser_session.wait_for_dom_ready",
+        lambda d, timeout: calls.append("ready"),
+    )
+    session = BrowserSession("log.html")
+    session.wait_for_dom("drv")
+
+    assert calls == ["stable", "ready"]

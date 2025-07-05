@@ -224,7 +224,6 @@ def test_main_flow(monkeypatch, sample_config):
             mem_password=object(),
         ),
     )
-    monkeypatch.setattr(sap, "SeleniumDriverManager", DummyManager)
 
     def fake_wait(driver, by, ident, *a, **k):
         class Elem:
@@ -250,8 +249,14 @@ def test_main_flow(monkeypatch, sample_config):
     monkeypatch.setattr(sap, "click_element_without_wait", lambda *a, **k: None)
     monkeypatch.setattr(sap, "send_keys_to_element", lambda *a, **k: None)
     monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
-    monkeypatch.setattr(sap, "wait_until_dom_is_stable", lambda *a, **k: None)
-    monkeypatch.setattr(sap, "wait_for_dom_ready", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.browser_session.wait_until_dom_is_stable",
+        lambda *a, **k: None,
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.browser_session.wait_for_dom_ready",
+        lambda *a, **k: None,
+    )
     monkeypatch.setattr(sap, "program_break_time", lambda *a, **k: None)
     monkeypatch.setattr(
         sap.remplir_jours_feuille_de_temps, "main", lambda *a, **k: None
