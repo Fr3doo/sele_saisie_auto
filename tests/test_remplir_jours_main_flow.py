@@ -40,6 +40,10 @@ def test_traiter_jour_paths(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element",
         lambda *a, **k: object(),
     )
+    monkeypatch.setattr(
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom",
+        lambda *a, **k: None,
+    )
     calls = {}
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
@@ -79,6 +83,10 @@ def test_remplir_mission_specifique(monkeypatch):
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_element",
         lambda *a, **k: object(),
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom",
+        lambda *a, **k: None,
     )
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
