@@ -10,6 +10,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.selenium_utils import DEFAULT_TIMEOUT, wait_for_dom_after
+from sele_saisie_auto.shared_utils import program_break_time
 
 if TYPE_CHECKING:  # pragma: no cover
     from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
@@ -119,6 +120,18 @@ class DateEntryPage:
             )
         self.wait_for_dom(driver)
         return element_present
+
+    def process_date(self, driver, date_cible) -> None:
+        """Orchestrate date selection and validation."""
+
+        self.handle_date_input(driver, date_cible)
+        program_break_time(
+            1,
+            "Veuillez patienter. Court délai pour stabilisation du DOM",
+        )
+        print()
+        if self.submit_date_cible(driver):
+            self._handle_date_alert(driver)
 
     def _handle_date_alert(self, driver) -> None:
         """Close alert if the date already exists."""
