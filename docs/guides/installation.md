@@ -7,6 +7,8 @@ Ce guide explique comment installer et utiliser localement **sele_saisie_auto**.
 - Python 3.11 installé
 - Poetry disponible dans le `PATH`
 
+> **Sous Windows :** suivez le guide [install_poetry_windows.md](install_poetry_windows.md) pour configurer Poetry.
+
 ## 2. Installation pas-à-pas
 
 1. Clonez le dépôt puis positionnez-vous dans le dossier :
