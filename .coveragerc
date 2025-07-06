@@ -5,3 +5,4 @@ source = sele_saisie_auto
 [report]
 omit =
     tests/*
+    src/sele_saisie_auto/selenium_driver_manager.py

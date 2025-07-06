@@ -162,3 +162,33 @@ def test_close_logs_generic_error(monkeypatch, tmp_path):
     monkeypatch.setattr("builtins.open", raise_value)
     with pytest.raises(RuntimeError):
         logger_utils.close_logs(str(log_file))
+
+
+def test_get_html_style_from_config(tmp_path, monkeypatch):
+    cfg = tmp_path / "config.ini"
+    cfg.write_text(
+        """[log_style]
+column_widths = timestamp:30%, level:20%, message:50%
+row_height = 30px
+font_size = 16px
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    style = logger_utils.get_html_style()
+    assert "30%" in style
+    assert "height: 30px" in style
+    assert "font-size: 16px" in style
+
+
+def test_get_html_style_default(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    style = logger_utils.get_html_style()
+    assert "width: 10%" in style
+
+
+def test_parse_column_widths():
+    widths = logger_utils._parse_column_widths(
+        "timestamp:11%, level:22%, message:33%"
+    )
+    assert widths["level"] == "22%"

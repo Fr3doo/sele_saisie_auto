@@ -1,4 +1,5 @@
 import os
+from configparser import ConfigParser
 from datetime import datetime
 
 # ----------------------------------------------------------------------------- #
@@ -87,6 +88,19 @@ def format_message(code: str, details: dict | None = None) -> str:
     return template.format(**details)
 
 
+def _parse_column_widths(value: str) -> dict[str, str]:
+    """Convert ``value`` into a mapping of column widths."""
+    widths: dict[str, str] = {}
+    for item in value.split(","):
+        if ":" in item:
+            key, _, val = item.partition(":")
+            key = key.strip()
+            val = val.strip()
+            if key and val:
+                widths[key] = val
+    return widths
+
+
 def get_html_style():
     """
     Retourne le style HTML/CSS utilisé pour les fichiers de log.
@@ -94,6 +108,25 @@ def get_html_style():
     Returns:
         str: Chaîne contenant les balises HTML nécessaires pour inclure le style CSS.
     """
+    column_widths = COLUMN_WIDTHS.copy()
+    row_height = ROW_HEIGHT
+    font_size = FONT_SIZE
+
+    config_file = os.path.join(os.getcwd(), "config.ini")
+    if os.path.exists(config_file):
+        parser = ConfigParser(interpolation=None)
+        try:
+            with open(config_file, encoding="utf-8") as cfg:
+                parser.read_file(cfg)
+            if parser.has_section("log_style"):
+                raw_widths = parser.get("log_style", "column_widths", fallback="")
+                if raw_widths:
+                    column_widths.update(_parse_column_widths(raw_widths))
+                row_height = parser.get("log_style", "row_height", fallback=row_height)
+                font_size = parser.get("log_style", "font_size", fallback=font_size)
+        except Exception:
+            pass
+
     return f"""
     <html>
     <head>
@@ -106,8 +139,8 @@ def get_html_style():
                 border: 1px solid black;
                 padding: {PADDING};
                 text-align: left;
-                height: {ROW_HEIGHT};
-                font-size: {FONT_SIZE};
+                height: {row_height};
+                font-size: {font_size};
             }}
             th {{
                 background-color: #f2f2f2;
@@ -120,13 +153,13 @@ def get_html_style():
             }}
             /* Limiter la largeur des colonnes */
             th:nth-child(1), td:nth-child(1) {{
-                width: {COLUMN_WIDTHS['timestamp']};
+                width: {column_widths['timestamp']};
             }}
             th:nth-child(2), td:nth-child(2) {{
-                width: {COLUMN_WIDTHS['level']};
+                width: {column_widths['level']};
             }}
             th:nth-child(3), td:nth-child(3) {{
-                width: {COLUMN_WIDTHS['message']};
+                width: {column_widths['message']};
             }}
         </style>
     </head>
