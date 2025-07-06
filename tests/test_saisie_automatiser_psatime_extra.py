@@ -102,7 +102,9 @@ def test_initialize_shared_memory_error(monkeypatch, sample_config):
 
 def test_switch_to_iframe_main_target_win0_false(monkeypatch):
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: True)
-    monkeypatch.setattr(sap, "switch_to_iframe_by_id_or_name", lambda *a, **k: False)
+    monkeypatch.setattr(sap.BrowserSession, "go_to_iframe", lambda *a, **k: False)
+    if sap._AUTOMATION:
+        sap._AUTOMATION.browser_session.go_to_iframe = lambda *a, **k: False
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )

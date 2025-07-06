@@ -320,8 +320,8 @@ class PSATimeAutomation:
             driver, By.ID, Locators.MAIN_FRAME.value, timeout=DEFAULT_TIMEOUT
         )
         if element_present:
-            switched_to_iframe = switch_to_iframe_by_id_or_name(
-                driver, Locators.MAIN_FRAME.value
+            switched_to_iframe = self.browser_session.go_to_iframe(
+                Locators.MAIN_FRAME.value
             )
         self.wait_for_dom(driver)
         if switched_to_iframe is None:
