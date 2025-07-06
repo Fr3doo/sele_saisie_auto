@@ -63,7 +63,14 @@ def test_navigate_from_work_schedule_positive(monkeypatch):
 def test_submit_and_validate_additional_information_positive(monkeypatch):
     seq = iter([True, True, True])
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: next(seq))
-    monkeypatch.setattr(sap, "switch_to_iframe_by_id_or_name", lambda *a, **k: True)
+    monkeypatch.setattr(sap.BrowserSession, "go_to_iframe", lambda *a, **k: True)
+    if sap._AUTOMATION:
+        sap._AUTOMATION.browser_session.go_to_iframe = lambda *a, **k: True
+    monkeypatch.setattr(
+        sap,
+        "switch_to_iframe_by_id_or_name",
+        lambda *a, **k: True,
+    )
     records = []
     monkeypatch.setattr(
         sap, "traiter_description", lambda *a, **k: records.append("desc")

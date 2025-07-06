@@ -92,6 +92,11 @@ class DummyBrowserSession:
         self.open_calls.append((url, fullscreen, headless, no_sandbox))
         return self.driver
 
+    def go_to_iframe(self, ident):
+        self.go_calls = getattr(self, "go_calls", [])
+        self.go_calls.append(ident)
+        return True
+
     def close(self):
         self.driver = None
 
@@ -260,7 +265,7 @@ def test_main_flow(monkeypatch, sample_config):
 
     monkeypatch.setattr(sap, "wait_for_element", fake_wait)
     monkeypatch.setattr(sap, "modifier_date_input", lambda *a, **k: None)
-    monkeypatch.setattr(sap, "switch_to_iframe_by_id_or_name", lambda *a, **k: True)
+    monkeypatch.setattr(sap.BrowserSession, "go_to_iframe", lambda *a, **k: True)
     monkeypatch.setattr(sap, "click_element_without_wait", lambda *a, **k: None)
     monkeypatch.setattr(sap, "send_keys_to_element", lambda *a, **k: None)
     monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)

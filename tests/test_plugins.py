@@ -63,7 +63,7 @@ def test_run_invokes_hook(monkeypatch, sample_config):
     monkeypatch.setattr(sap, "switch_to_default_content", lambda *a, **k: None)
     monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: object())
     monkeypatch.setattr(sap, "modifier_date_input", lambda *a, **k: None)
-    monkeypatch.setattr(sap, "switch_to_iframe_by_id_or_name", lambda *a, **k: True)
+    monkeypatch.setattr(sap.BrowserSession, "go_to_iframe", lambda *a, **k: True)
     monkeypatch.setattr(sap, "click_element_without_wait", lambda *a, **k: None)
     monkeypatch.setattr(sap, "send_keys_to_element", lambda *a, **k: None)
     monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)

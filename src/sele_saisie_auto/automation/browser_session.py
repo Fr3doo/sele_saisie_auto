@@ -7,6 +7,7 @@ from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.selenium_utils import (
     definir_taille_navigateur,
     ouvrir_navigateur_sur_ecran_principal,
+    switch_to_iframe_by_id_or_name,
     wait_for_dom_ready,
     wait_until_dom_is_stable,
 )
@@ -133,3 +134,13 @@ class BrowserSession:
         )
         wait_until_dom_is_stable(driver, timeout=default_timeout)
         wait_for_dom_ready(driver, long_timeout)
+
+    # ------------------------------------------------------------------
+    # Iframe helpers
+    # ------------------------------------------------------------------
+    def go_to_iframe(self, id_or_name: str) -> bool:
+        """Switch to the iframe identified by ``id_or_name``."""
+
+        if self.driver is None:
+            return False
+        return switch_to_iframe_by_id_or_name(self.driver, id_or_name)
