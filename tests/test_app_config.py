@@ -1,3 +1,4 @@
+import configparser
 import sys
 from pathlib import Path
 
@@ -6,6 +7,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 import pytest  # noqa: E402
 
 from sele_saisie_auto.app_config import AppConfig, load_config  # noqa: E402
+from sele_saisie_auto.dropdown_options import BillingActionOption  # noqa: E402
 
 
 def test_load_config_parses(tmp_path, monkeypatch):
@@ -113,3 +115,89 @@ url=http://t
     )
     with pytest.raises(ValueError):
         load_config(str(tmp_path / "log.html"))
+
+
+def test__charger_settings_basic():
+    parser = configparser.ConfigParser()
+    parser.read_dict(
+        {
+            "settings": {
+                "url": "http://x",
+                "date_cible": "01/01/2024",
+                "debug_mode": "DEBUG",
+                "liste_items_planning": '"a", "b"',
+                "default_timeout": "5",
+                "long_timeout": "9",
+            }
+        }
+    )
+
+    parsed = AppConfig._charger_settings(parser)
+    assert parsed["url"] == "http://x"
+    assert parsed["date_cible"] == "01/01/2024"
+    assert parsed["debug_mode"] == "DEBUG"
+    assert parsed["liste_items_planning"] == ["a", "b"]
+    assert parsed["default_timeout"] == 5
+    assert parsed["long_timeout"] == 9
+
+
+def test__charger_work_schedule_basic():
+    parser = configparser.ConfigParser()
+    parser.read_dict({"work_schedule": {"monday": "A,B", "tuesday": "C,D"}})
+    parsed = AppConfig._charger_work_schedule(parser)
+    assert parsed["work_schedule"]["monday"] == ("A", "B")
+    assert parsed["work_schedule"]["tuesday"] == ("C", "D")
+
+
+def test__charger_project_information_basic():
+    parser = configparser.ConfigParser()
+    parser.read_dict({"project_information": {"project": "X"}})
+    parsed = AppConfig._charger_project_information(parser)
+    assert parsed["project_information"] == {"project": "X"}
+
+
+def test__charger_additional_information_basic():
+    parser = configparser.ConfigParser()
+    parser.read_dict(
+        {
+            "additional_information_rest_period_respected": {"mon": "Oui"},
+            "additional_information_work_time_range": {"mon": "Oui"},
+        }
+    )
+    parsed = AppConfig._charger_additional_information(parser)
+    assert parsed["additional_information"]["periode_repos_respectee"]["mon"] == "Oui"
+    assert parsed["additional_information"]["horaire_travail_effectif"]["mon"] == "Oui"
+
+
+def test__charger_work_locations_basic():
+    parser = configparser.ConfigParser()
+    parser.read_dict(
+        {
+            "work_location_am": {"mon": "Site"},
+            "work_location_pm": {"mon": "Domicile"},
+        }
+    )
+    parsed = AppConfig._charger_work_locations(parser)
+    assert parsed["work_location_am"] == {"mon": "Site"}
+    assert parsed["work_location_pm"] == {"mon": "Domicile"}
+
+
+def test__charger_dropdown_options_basic():
+    parser = configparser.ConfigParser()
+    parser.read_dict(
+        {
+            "work_location_options": {"values": '"X", "Y"'},
+            "cgi_options": {"values": '"O"'},
+            "cgi_options_dejeuner": {"values": '"1"'},
+            "cgi_options_billing_action": {"Alpha": "A"},
+            "work_schedule_options": {"values": '"S1"'},
+        }
+    )
+    parsed = AppConfig._charger_dropdown_options(parser)
+    assert [o.label for o in parsed["work_location_options"]] == ["X", "Y"]
+    assert [o.label for o in parsed["cgi_options"]] == ["O"]
+    assert [o.label for o in parsed["cgi_options_dejeuner"]] == ["1"]
+    assert parsed["cgi_options_billing_action"] == [
+        BillingActionOption(label="alpha", code="A")
+    ]
+    assert [o.label for o in parsed["work_schedule_options"]] == ["S1"]
