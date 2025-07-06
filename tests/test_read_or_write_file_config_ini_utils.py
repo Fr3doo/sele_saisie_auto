@@ -263,3 +263,29 @@ def test_write_config_ini_generic_error(tmp_path, monkeypatch):
     monkeypatch.setattr(builtins, "open", bad_open)
     with pytest.raises(RuntimeError):
         write_config_ini(cp)
+
+
+def test_read_config_ini_uses_cache(tmp_path, monkeypatch):
+    cfg = tmp_path / "config.ini"
+    cfg.write_text("[s]\na=b\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log",
+        noop,
+    )
+    opened: list[str] = []
+    real_open = builtins.open
+
+    def counting_open(*args, **kwargs):
+        opened.append(args[0])
+        return real_open(*args, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", counting_open)
+    # ensure cache cleared
+    from sele_saisie_auto import read_or_write_file_config_ini_utils as mod
+
+    mod.clear_cache()
+    first = read_config_ini()
+    second = read_config_ini()
+    assert first is second
+    assert len(opened) == 1
