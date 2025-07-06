@@ -32,7 +32,7 @@ def setup_logs(log_dir=DEFAULT_LOG_DIR, log_format=HTML_FORMAT):
         )
         return log_file
     except OSError as e:
-        raise RuntimeError(f"Erreur liée au système de fichiers : {e}") from e
+        raise RuntimeError(f"Impossible de créer le dossier '{log_dir}': {e}") from e
     except Exception as e:
         raise RuntimeError(
             f"Erreur inattendue lors de la création des logs : {e}"
