@@ -40,6 +40,7 @@ La documentation est organisée dans les dossiers suivants :
 - [`guides/deployment.md`](guides/deployment.md) – Construire et lancer l'application avec Docker.
 - [`guides/installation.md`](guides/installation.md) – Instructions d’installation locale.
 - [`guides/logging-and-errors.md`](guides/logging-and-errors.md) – Journaliser les actions et afficher des messages d’erreur sûrs.
+- [`guides/commandes-outils-qualite.md`](guides/commandes-outils-qualite.md) – Récapitulatif des commandes des outils de qualité.
 - [`guides/async-class-example.md`](guides/async-class-example.md) – Petit exemple de classe asynchrone.
 - [`guides/usage-example.md`](guides/usage-example.md) – Exemple de workflow
 
