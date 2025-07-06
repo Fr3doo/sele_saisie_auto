@@ -5,11 +5,11 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import (
+    Waiter,
     definir_taille_navigateur,
     ouvrir_navigateur_sur_ecran_principal,
     switch_to_iframe_by_id_or_name,
     wait_for_dom_ready,
-    wait_until_dom_is_stable,
 )
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
@@ -71,10 +71,19 @@ class BrowserSession:
     """Encapsulate :class:`SeleniumDriverManager` for higher-level automation."""
 
     def __init__(
-        self, log_file: str, app_config: AppConfig | None = None
+        self,
+        log_file: str,
+        app_config: AppConfig | None = None,
+        waiter: Waiter | None = None,
     ) -> None:  # pragma: no cover - simple wiring
         self.log_file = log_file
         self.app_config = app_config
+        if waiter is None:
+            timeout = app_config.default_timeout if app_config else DEFAULT_TIMEOUT
+            long_timeout = app_config.long_timeout if app_config else LONG_TIMEOUT
+            self.waiter = Waiter(default_timeout=timeout, long_timeout=long_timeout)
+        else:
+            self.waiter = waiter
         if app_config is not None:
             self._manager = SeleniumDriverManager(log_file, app_config)
         else:  # pragma: no cover - legacy path
@@ -108,6 +117,11 @@ class BrowserSession:
             headless=headless,
             no_sandbox=no_sandbox,
         )
+        if self.driver is not None:
+            self.waiter.wait_for_dom_ready(
+                self.driver,
+                self.app_config.long_timeout if self.app_config else LONG_TIMEOUT,
+            )
         return self.driver
 
     def close(self) -> None:
@@ -132,8 +146,8 @@ class BrowserSession:
             if self.app_config
             else LONG_TIMEOUT  # pragma: no cover - fallback
         )
-        wait_until_dom_is_stable(driver, timeout=default_timeout)
-        wait_for_dom_ready(driver, long_timeout)
+        self.waiter.wait_until_dom_is_stable(driver, timeout=default_timeout)
+        self.waiter.wait_for_dom_ready(driver, long_timeout)
 
     # ------------------------------------------------------------------
     # Iframe helpers

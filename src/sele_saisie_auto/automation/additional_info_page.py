@@ -10,7 +10,7 @@ from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.remplir_informations_supp_utils import ExtraInfoHelper
-from sele_saisie_auto.selenium_utils import wait_for_dom_after
+from sele_saisie_auto.selenium_utils import Waiter, wait_for_dom_after
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -21,13 +21,15 @@ class AdditionalInfoPage:
     """Handle the additional information modal."""
 
     def __init__(
-        self, automation: PSATimeAutomation
+        self, automation: PSATimeAutomation, waiter: Waiter | None = None
     ) -> None:  # pragma: no cover - simple wiring
         self._automation = automation
         ctx = getattr(self._automation, "context", None)
         cfg = getattr(ctx, "config", None)
+        self.waiter = waiter or getattr(automation, "waiter", None) or Waiter()
         self.helper = ExtraInfoHelper(
             log_file=self.log_file,
+            waiter=self.waiter,
             page=self,
             app_config=cfg if hasattr(cfg, "default_timeout") else None,
         )
@@ -65,7 +67,7 @@ class AdditionalInfoPage:
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
         self.wait_for_dom(driver)
-        element_present = sap.wait_for_element(
+        element_present = self.waiter.wait_for_element(
             driver,
             By.ID,
             Locators.ADDITIONAL_INFO_LINK.value,
@@ -84,7 +86,7 @@ class AdditionalInfoPage:
         """Fill all additional info fields and validate the modal."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        element_present = sap.wait_for_element(
+        element_present = self.waiter.wait_for_element(
             driver,
             By.ID,
             Locators.MODAL_FRAME.value,
@@ -104,7 +106,7 @@ class AdditionalInfoPage:
                 "INFO",
             )
 
-        element_present = sap.wait_for_element(
+        element_present = self.waiter.wait_for_element(
             driver,
             By.ID,
             Locators.SAVE_ICON.value,
@@ -119,7 +121,7 @@ class AdditionalInfoPage:
         """Click the save draft button and wait for completion."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        element_present = sap.wait_for_element(
+        element_present = self.waiter.wait_for_element(
             driver,
             By.ID,
             Locators.SAVE_DRAFT_BUTTON.value,
@@ -144,7 +146,7 @@ class AdditionalInfoPage:
 
         sap.switch_to_default_content(driver)
         for alerte in alerts:
-            if sap.wait_for_element(
+            if self.waiter.wait_for_element(
                 driver, By.ID, alerte, timeout=self.config.default_timeout
             ):
                 sap.click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)

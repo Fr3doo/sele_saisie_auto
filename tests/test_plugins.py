@@ -61,7 +61,9 @@ def test_run_invokes_hook(monkeypatch, sample_config):
         sap.PSATimeAutomation, "switch_to_iframe_main_target_win0", lambda *a, **k: True
     )
     monkeypatch.setattr(sap, "switch_to_default_content", lambda *a, **k: None)
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: object())
+    monkeypatch.setattr(
+        sap._AUTOMATION.waiter, "wait_for_element", lambda *a, **k: object()
+    )
     monkeypatch.setattr(sap, "modifier_date_input", lambda *a, **k: None)
     monkeypatch.setattr(sap.BrowserSession, "go_to_iframe", lambda *a, **k: True)
     monkeypatch.setattr(sap, "click_element_without_wait", lambda *a, **k: None)
@@ -71,11 +73,13 @@ def test_run_invokes_hook(monkeypatch, sample_config):
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.automation.browser_session.wait_until_dom_is_stable",
+        sap._AUTOMATION.browser_session.waiter,
+        "wait_until_dom_is_stable",
         lambda *a, **k: None,
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.automation.browser_session.wait_for_dom_ready",
+        sap._AUTOMATION.browser_session.waiter,
+        "wait_for_dom_ready",
         lambda *a, **k: None,
     )
     monkeypatch.setattr(sap, "program_break_time", lambda *a, **k: None)
