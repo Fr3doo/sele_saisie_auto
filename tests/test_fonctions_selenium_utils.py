@@ -220,7 +220,7 @@ def test_field_helpers(monkeypatch):
     error_driver = SimpleNamespace(
         find_element=lambda b, i: (_ for _ in ()).throw(Exception("boom"))
     )
-    with pytest.raises(Exception):
+    with pytest.raises(RuntimeError):
         fsu.detecter_et_verifier_contenu(error_driver, "id1", "8", logger=logger)
 
     fsu.effacer_et_entrer_valeur(field2, "9", logger=logger)
