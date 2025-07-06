@@ -1,5 +1,3 @@
-import pytest
-
 from sele_saisie_auto import plugins
 
 
