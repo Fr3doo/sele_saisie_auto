@@ -87,11 +87,14 @@ class AppConfig:
         encrypted_mdp = parser.get("credentials", "mdp", fallback="")
         return encrypted_login, encrypted_mdp
 
+    # ------------------------------------------------------------------
+    # Private helpers used to load chunks of configuration
+    # ------------------------------------------------------------------
+
     @staticmethod
-    def _charger_autres_parametres(
-        parser: ConfigParser,
-    ) -> dict[str, Any]:  # noqa: C901
-        """Récupère les autres paramètres de configuration."""
+    def _charger_settings(parser: ConfigParser) -> dict[str, Any]:
+        """Charge les valeurs de la section ``settings``."""
+
         url = parser.get("settings", "url", fallback="")
         date_cible = parser.get("settings", "date_cible", fallback=None)
         if date_cible and date_cible.strip().lower() in {"none", ""}:
@@ -107,6 +110,19 @@ class AppConfig:
         default_timeout = parser.getint("settings", "default_timeout", fallback=10)
         long_timeout = parser.getint("settings", "long_timeout", fallback=20)
 
+        return {
+            "url": url,
+            "date_cible": date_cible,
+            "debug_mode": debug_mode,
+            "liste_items_planning": liste_items_planning,
+            "default_timeout": default_timeout,
+            "long_timeout": long_timeout,
+        }
+
+    @staticmethod
+    def _charger_work_schedule(parser: ConfigParser) -> dict[str, Any]:
+        """Extrait la section ``work_schedule``."""
+
         work_schedule: dict[str, tuple[str, str]] = {}
         if parser.has_section("work_schedule"):
             for day, value in parser.items("work_schedule"):
@@ -115,11 +131,23 @@ class AppConfig:
                     value.partition(",")[2].strip(),
                 )
 
+        return {"work_schedule": work_schedule}
+
+    @staticmethod
+    def _charger_project_information(parser: ConfigParser) -> dict[str, Any]:
+        """Extrait la section ``project_information``."""
+
         project_information = (
             dict(parser.items("project_information"))
             if parser.has_section("project_information")
             else {}
         )
+
+        return {"project_information": project_information}
+
+    @staticmethod
+    def _charger_additional_information(parser: ConfigParser) -> dict[str, Any]:
+        """Extrait les sections liées aux informations complémentaires."""
 
         additional_information: dict[str, dict[str, str]] = {}
         if parser.has_section("additional_information_rest_period_respected"):
@@ -139,6 +167,12 @@ class AppConfig:
                 parser.items("additional_information_lunch_break_duration")
             )
 
+        return {"additional_information": additional_information}
+
+    @staticmethod
+    def _charger_work_locations(parser: ConfigParser) -> dict[str, Any]:
+        """Extrait les sections ``work_location_am`` et ``work_location_pm``."""
+
         work_location_am = (
             dict(parser.items("work_location_am"))
             if parser.has_section("work_location_am")
@@ -149,6 +183,15 @@ class AppConfig:
             if parser.has_section("work_location_pm")
             else {}
         )
+
+        return {
+            "work_location_am": work_location_am,
+            "work_location_pm": work_location_pm,
+        }
+
+    @staticmethod
+    def _charger_dropdown_options(parser: ConfigParser) -> dict[str, Any]:
+        """Charge les listes d'options pour les menus déroulants."""
 
         work_location_options = parse_list(
             parser,
@@ -187,23 +230,33 @@ class AppConfig:
         )
 
         return {
-            "url": url,
-            "date_cible": date_cible,
-            "debug_mode": debug_mode,
-            "liste_items_planning": liste_items_planning,
-            "work_schedule": work_schedule,
-            "project_information": project_information,
-            "additional_information": additional_information,
-            "work_location_am": work_location_am,
-            "work_location_pm": work_location_pm,
             "work_location_options": work_location_options,
             "cgi_options": cgi_options,
             "cgi_options_dejeuner": cgi_options_dejeuner,
             "cgi_options_billing_action": cgi_options_billing_action,
             "work_schedule_options": work_schedule_options,
-            "default_timeout": default_timeout,
-            "long_timeout": long_timeout,
         }
+
+    @staticmethod
+    def _charger_autres_parametres(
+        parser: ConfigParser,
+    ) -> dict[str, Any]:
+        """Récupère les autres paramètres de configuration."""
+
+        parts: list[dict[str, Any]] = [
+            AppConfig._charger_settings(parser),
+            AppConfig._charger_work_schedule(parser),
+            AppConfig._charger_project_information(parser),
+            AppConfig._charger_additional_information(parser),
+            AppConfig._charger_work_locations(parser),
+            AppConfig._charger_dropdown_options(parser),
+        ]
+
+        merged: dict[str, Any] = {}
+        for part in parts:
+            merged.update(part)
+
+        return merged
 
     @classmethod
     def from_parser(cls, parser: ConfigParser) -> AppConfig:
