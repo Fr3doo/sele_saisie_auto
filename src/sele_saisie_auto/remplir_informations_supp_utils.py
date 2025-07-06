@@ -48,22 +48,30 @@ def _collect_filled_days(
 ):
     """Retourne la liste des jours déjà remplis."""
     filled_days = []
-    write_log("🔍 Vérification des jours déjà remplis...", log_file, "DEBUG")
+    write_log(messages.CHECK_FILLED_DAYS, log_file, "DEBUG")
     for i in range(1, 8):
         input_id = _build_input_id(id_value_days, i, row_index)
         element = _get_element(driver, waiter, input_id)
         if element:
             jour = week_days[i]
             write_log(
-                f"👉 Vérification du jour : {jour} (ID: {input_id})",
+                messages.DAY_CHECK.format(jour=jour, id=input_id),
                 log_file,
                 "DEBUG",
             )
             if verifier_champ_jour_rempli(element, jour):
                 filled_days.append(jour)
-                write_log(f"✅ Jour '{jour}' déjà rempli.", log_file, "DEBUG")
+                write_log(
+                    messages.DAY_ALREADY_FILLED.format(jour=jour),
+                    log_file,
+                    "DEBUG",
+                )
             else:
-                write_log(f"❌ Jour '{jour}' vide.", log_file, "DEBUG")
+                write_log(
+                    messages.DAY_EMPTY.format(jour=jour),
+                    log_file,
+                    "DEBUG",
+                )
         else:
             write_log(
                 f"❌ Élément non trouvé pour l'ID : {input_id}", log_file, "DEBUG"
@@ -110,7 +118,7 @@ def _fill_missing_days(
                     )
             else:
                 write_log(
-                    f"🔄 Jour '{jour}' déjà rempli, aucun changement.",
+                    messages.DAY_ALREADY_FILLED_NO_CHANGE.format(jour=jour),
                     log_file,
                     "DEBUG",
                 )

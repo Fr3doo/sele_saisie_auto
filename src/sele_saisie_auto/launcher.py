@@ -6,7 +6,7 @@ import multiprocessing
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-from sele_saisie_auto import cli, saisie_automatiser_psatime
+from sele_saisie_auto import cli, messages, saisie_automatiser_psatime
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.gui_builder import (
     create_a_frame,
@@ -51,12 +51,12 @@ def run_psatime_with_credentials(
     login = login_var.get()
     password = mdp_var.get()
     if not login or not password:
-        messagebox.showerror("Erreur", "Veuillez entrer vos identifiants")
+        messagebox.showerror("Erreur", messages.ASK_CREDENTIALS)
         return
 
     cle_aes = encryption_service.cle_aes
     if cle_aes is None:
-        messagebox.showerror("Erreur", "Clé AES manquante")
+        messagebox.showerror("Erreur", messages.MISSING_AES_KEY)
         return
 
     data_login = encryption_service.chiffrer_donnees(login, cle_aes)
@@ -98,7 +98,7 @@ def start_configuration(
         config["settings"]["date_cible"] = date_var.get()
         config["settings"]["debug_mode"] = debug_var.get()
         write_config_ini(config, log_file)
-        messagebox.showinfo("Info", "Configuration enregistrée")
+        messagebox.showinfo("Info", messages.CONFIGURATION_SAVED)
         root.destroy()
         from sele_saisie_auto.main_menu import main_menu
 

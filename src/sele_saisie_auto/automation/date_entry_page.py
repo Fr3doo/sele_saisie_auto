@@ -8,6 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 
+from sele_saisie_auto import messages
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import write_log
@@ -113,7 +114,7 @@ class DateEntryPage:
                     )
                 else:
                     sap.write_log(
-                        "Aucune modification de la date nécessaire.",
+                        messages.NO_DATE_CHANGE,
                         self.log_file,
                         "DEBUG",
                     )
@@ -144,7 +145,7 @@ class DateEntryPage:
         self.handle_date_input(driver, date_cible)
         program_break_time(
             1,
-            "Veuillez patienter. Court délai pour stabilisation du DOM",
+            messages.WAIT_STABILISATION,
         )
         print()
         if self.submit_date_cible(driver):
@@ -161,18 +162,18 @@ class DateEntryPage:
         ):
             sap.click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
             write_log(
-                "\nERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)",
+                messages.TIME_SHEET_EXISTS_ERROR,
                 self.log_file,
                 "INFO",
             )
             write_log(
-                "--> Modifier la date du PSATime dans le fichier ini. Le programme va s'arreter.",
+                messages.MODIFY_DATE_MESSAGE,
                 self.log_file,
                 "INFO",
             )
             sys.exit()
         else:
-            write_log("Date validée avec succès.", self.log_file, "DEBUG")
+            write_log(messages.DATE_VALIDATED, self.log_file, "DEBUG")
 
     def _click_action_button(self, driver, create_new: bool) -> None:
         """Click the appropriate action button on the page."""
