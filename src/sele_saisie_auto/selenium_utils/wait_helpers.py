@@ -7,7 +7,6 @@ from functools import wraps
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait as _WebDriverWait
 
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT

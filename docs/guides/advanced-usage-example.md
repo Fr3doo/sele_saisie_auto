@@ -50,3 +50,27 @@ DEBUG:root:debut
 DEBUG:root:mouvements ['U']
 duree 0.00s, taille 1
 ```
+
+## Récupérer le résultat des hooks
+
+`sele_saisie_auto` expose un petit système de plugins. Toutes les fonctions
+enregistrées pour un hook sont exécutées via `plugins.call` et leurs retours sont
+désormais collectés dans une liste :
+
+```python
+from sele_saisie_auto import plugins
+
+@plugins.hook("after_run")
+def plus_un(val):
+    return val + 1
+
+@plugins.hook("after_run")
+def fois_deux(val):
+    return val * 2
+
+resultats = plugins.call("after_run", 3)
+print(resultats)  # [4, 6]
+```
+
+Cette fonctionnalité permet de récupérer facilement les valeurs produites par
+chaque plugin.
