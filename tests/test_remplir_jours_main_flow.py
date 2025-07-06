@@ -190,9 +190,9 @@ def test_initialize_sets_globals(monkeypatch):
 
     ctx = initialize("logfile")
 
-    assert ["d1", "d2"] == ctx.liste_items_descriptions
-    assert {"lun": ("En mission", "8")} == ctx.jours_de_travail
-    assert {"billing_action": "B"} == ctx.informations_projet_mission
+    assert ["d1", "d2"] == ctx.item_descriptions
+    assert {"lun": ("En mission", "8")} == ctx.work_days
+    assert {"billing_action": "B"} == ctx.project_mission_info
 
 
 def test_traiter_champs_mission_insert(monkeypatch):

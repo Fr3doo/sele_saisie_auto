@@ -169,8 +169,8 @@ def test_helpers(monkeypatch, sample_config):
     assert sap.get_next_saturday_if_not_saturday("01/07/2024") == "06/07/2024"
     assert sap.get_next_saturday_if_not_saturday("06/07/2024") == "06/07/2024"
     assert sap.est_en_mission("En mission") is True
-    jours = []
-    assert sap.ajouter_jour_a_jours_remplis("lundi", jours) == ["lundi"]
+    filled_days = []
+    assert sap.ajouter_jour_a_jours_remplis("lundi", filled_days) == ["lundi"]
     sap.afficher_message_insertion(
         "lundi", "8", 0, messages.TENTATIVE_INSERTION, "log.html"
     )
@@ -193,7 +193,7 @@ def test_initialize_sets_globals(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
     assert sap.context.config.url == "http://test"
     assert sap.context.config.work_schedule["lundi"] == ("En mission", "8")
-    assert sap.context.informations_projet_mission["billing_action"] == "B"
+    assert sap.context.project_mission_info["billing_action"] == "B"
     assert sap._AUTOMATION.choix_user is True
     assert isinstance(sap._AUTOMATION.memory_config, sap.MemoryConfig)
 

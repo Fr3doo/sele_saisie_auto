@@ -29,11 +29,11 @@ if TYPE_CHECKING:  # pragma: no cover
 # ------------------------------------------------------------------------------------------- #
 
 
-def _build_input_id(id_value_jours: str, idx: int, row_index: int) -> str:
+def _build_input_id(id_value_days: str, idx: int, row_index: int) -> str:
     """Construire l'identifiant complet d'un champ jour."""
-    if "UC_TIME_LIN_WRK_UC_DAILYREST" in id_value_jours:
-        return f"{id_value_jours}{10 + idx}$0"
-    return f"{id_value_jours}{idx}${row_index}"
+    if "UC_TIME_LIN_WRK_UC_DAILYREST" in id_value_days:
+        return f"{id_value_days}{10 + idx}$0"
+    return f"{id_value_days}{idx}${row_index}"
 
 
 def _get_element(driver, waiter: Waiter | None, input_id: str):
@@ -44,23 +44,23 @@ def _get_element(driver, waiter: Waiter | None, input_id: str):
 
 
 def _collect_filled_days(
-    driver, waiter, id_value_jours, row_index, jours_semaine, log_file: str
+    driver, waiter, id_value_days, row_index, week_days, log_file: str
 ):
     """Retourne la liste des jours déjà remplis."""
-    jours_remplis = []
+    filled_days = []
     write_log("🔍 Vérification des jours déjà remplis...", log_file, "DEBUG")
     for i in range(1, 8):
-        input_id = _build_input_id(id_value_jours, i, row_index)
+        input_id = _build_input_id(id_value_days, i, row_index)
         element = _get_element(driver, waiter, input_id)
         if element:
-            jour = jours_semaine[i]
+            jour = week_days[i]
             write_log(
                 f"👉 Vérification du jour : {jour} (ID: {input_id})",
                 log_file,
                 "DEBUG",
             )
             if verifier_champ_jour_rempli(element, jour):
-                jours_remplis.append(jour)
+                filled_days.append(jour)
                 write_log(f"✅ Jour '{jour}' déjà rempli.", log_file, "DEBUG")
             else:
                 write_log(f"❌ Jour '{jour}' vide.", log_file, "DEBUG")
@@ -68,40 +68,40 @@ def _collect_filled_days(
             write_log(
                 f"❌ Élément non trouvé pour l'ID : {input_id}", log_file, "DEBUG"
             )
-    return jours_remplis
+    return filled_days
 
 
 def _fill_missing_days(
     driver,
     waiter,
-    id_value_jours,
+    id_value_days,
     row_index,
-    jours_semaine,
-    jours_remplis,
-    valeurs_a_remplir,
+    week_days,
+    filled_days,
+    values_to_fill,
     type_element,
     log_file: str,
 ):
     """Complète les jours encore vides."""
     for i in range(1, 8):
-        input_id = _build_input_id(id_value_jours, i, row_index)
+        input_id = _build_input_id(id_value_days, i, row_index)
         element = _get_element(driver, waiter, input_id)
         if element:
-            jour = jours_semaine[i]
-            if jour not in jours_remplis:
-                valeur_a_remplir = valeurs_a_remplir.get(jour)
-                if valeur_a_remplir:
+            jour = week_days[i]
+            if jour not in filled_days:
+                value_to_fill = values_to_fill.get(jour)
+                if value_to_fill:
                     write_log(
-                        f"✏️ {messages.REMPLISSAGE} de '{jour}' avec la valeur '{valeur_a_remplir}'.",
+                        f"✏️ {messages.REMPLISSAGE} de '{jour}' avec la valeur '{value_to_fill}'.",
                         log_file,
                         "DEBUG",
                     )
                     if type_element == "select":
                         selectionner_option_menu_deroulant_type_select(
-                            element, valeur_a_remplir
+                            element, value_to_fill
                         )
                     elif type_element == "input":
-                        remplir_champ_texte(element, jour, valeur_a_remplir)
+                        remplir_champ_texte(element, jour, value_to_fill)
                 else:
                     write_log(
                         f"⚠️ {messages.AUCUNE_VALEUR} définie pour le jour '{jour}' dans 'valeurs_a_remplir'.",
@@ -135,48 +135,48 @@ def traiter_description(driver, config, log_file: str, waiter: Waiter | None = N
             - "type_element" : Type des éléments à manipuler ("select" ou "input").
             - "valeurs_a_remplir" : Dictionnaire contenant les valeurs à remplir par jour.
     """
-    description_cible = config["description_cible"]
-    id_value_ligne = config["id_value_ligne"]  # Pour trouver la ligne
-    id_value_jours = config["id_value_jours"]  # Pour les jours de la semaine
+    target_description = config["description_cible"]
+    id_value_row = config["id_value_ligne"]  # Pour trouver la ligne
+    id_value_days = config["id_value_jours"]  # Pour les jours de la semaine
     type_element = config["type_element"]
-    valeurs_a_remplir = config["valeurs_a_remplir"]
-    jours_semaine = JOURS_SEMAINE
+    values_to_fill = config["valeurs_a_remplir"]
+    week_days = JOURS_SEMAINE
 
     write_log(
-        f"🔍 Début du traitement pour la description : '{description_cible}'",
+        f"🔍 Début du traitement pour la description : '{target_description}'",
         log_file,
         "DEBUG",
     )
-    row_index = trouver_ligne_par_description(driver, description_cible, id_value_ligne)
+    row_index = trouver_ligne_par_description(driver, target_description, id_value_row)
     if row_index is None:
         write_log(
-            f"❌ Description '{description_cible}' non trouvée avec l'id_value '{id_value_ligne}'.",
+            f"❌ Description '{target_description}' non trouvée avec l'id_value '{id_value_row}'.",
             log_file,
             "DEBUG",
         )
         return
     write_log(
-        f"✅ Description '{description_cible}' trouvée à l'index {row_index}.",
+        f"✅ Description '{target_description}' trouvée à l'index {row_index}.",
         log_file,
         "DEBUG",
     )
 
-    jours_remplis = _collect_filled_days(
-        driver, waiter, id_value_jours, row_index, jours_semaine, log_file
+    filled_days = _collect_filled_days(
+        driver, waiter, id_value_days, row_index, week_days, log_file
     )
     write_log(
-        f"✍️ Remplissage des jours vides pour '{description_cible}'.",
+        f"✍️ Remplissage des jours vides pour '{target_description}'.",
         log_file,
         "DEBUG",
     )
     _fill_missing_days(
         driver,
         waiter,
-        id_value_jours,
+        id_value_days,
         row_index,
-        jours_semaine,
-        jours_remplis,
-        valeurs_a_remplir,
+        week_days,
+        filled_days,
+        values_to_fill,
         type_element,
         log_file,
     )

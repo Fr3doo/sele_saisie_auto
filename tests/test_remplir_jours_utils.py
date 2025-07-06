@@ -21,9 +21,9 @@ def test_utilities(monkeypatch):
     jours = {"lun": ("En mission", "8")}
     assert est_en_mission_presente(jours) is True
 
-    jours_remplis = []
-    assert ajouter_jour_a_jours_remplis("lun", jours_remplis) == ["lun"]
-    assert ajouter_jour_a_jours_remplis("lun", jours_remplis) == ["lun"]
+    filled_days = []
+    assert ajouter_jour_a_jours_remplis("lun", filled_days) == ["lun"]
+    assert ajouter_jour_a_jours_remplis("lun", filled_days) == ["lun"]
 
     logs = []
     monkeypatch.setattr(
