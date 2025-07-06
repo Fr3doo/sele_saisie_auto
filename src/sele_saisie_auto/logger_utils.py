@@ -24,6 +24,21 @@ LOG_LEVELS = {
 DEFAULT_LOG_LEVEL = "INFO"
 LOG_LEVEL_FILTER = DEFAULT_LOG_LEVEL
 
+# Mapping between short codes and user-facing log messages.
+MESSAGE_TEMPLATES = {
+    "BROWSER_OPEN": "Ouverture du navigateur",
+    "BROWSER_CLOSE": "Fermeture du navigateur",
+    "DECRYPT_CREDENTIALS": "Déchiffrement des identifiants",
+    "SEND_CREDENTIALS": "Envoi des identifiants",
+    "ADDITIONAL_INFO_DONE": "Validation des informations supplémentaires terminée.",
+    "SAVE_ALERT_WARNING": "⚠️ Alerte rencontrée lors de la sauvegarde.",
+    "DOM_STABLE": "Le DOM est stable.",
+    "NO_DATE_CHANGE": "Aucune modification de la date nécessaire.",
+    "TIME_SHEET_EXISTS_ERROR": "ERREUR : Vous avez déjà créé une feuille de temps pour cette période. (10502,125)",
+    "MODIFY_DATE_MESSAGE": "--> Modifier la date du PSATime dans le fichier ini. Le programme va s'arrêter.",
+    "DATE_VALIDATED": "Date validée avec succès.",
+}
+
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
@@ -59,6 +74,17 @@ def is_log_level_allowed(current_level, configured_level):
         bool: True si le niveau est autorisé, False sinon.
     """
     return LOG_LEVELS[current_level] >= LOG_LEVELS[configured_level]
+
+
+def format_message(code: str, details: dict | None = None) -> str:
+    """Return the message associated with ``code`` formatted with ``details``."""
+
+    template = MESSAGE_TEMPLATES.get(code)
+    if template is None:
+        raise KeyError(f"Unknown message code: {code}")
+    if details is None:
+        details = {}
+    return template.format(**details)
 
 
 def get_html_style():

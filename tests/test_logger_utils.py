@@ -23,6 +23,15 @@ def test_is_log_level_allowed():
     assert logger_utils.is_log_level_allowed("INFO", "ERROR") is False
 
 
+def test_format_message():
+    assert logger_utils.format_message("BROWSER_OPEN", {}) == "Ouverture du navigateur"
+
+
+def test_format_message_unknown():
+    with pytest.raises(KeyError):
+        logger_utils.format_message("BOGUS", {})
+
+
 def test_write_and_close_html_log(tmp_path):
     log_file = tmp_path / "log.html"
     logger_utils.write_log("msg", str(log_file), level="INFO", log_format="html")

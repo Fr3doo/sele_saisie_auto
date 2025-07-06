@@ -3,7 +3,7 @@ from __future__ import annotations
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto.app_config import AppConfig
-from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import (
     definir_taille_navigateur,
     ouvrir_navigateur_sur_ecran_principal,
@@ -42,7 +42,7 @@ class SeleniumDriverManager:
         no_sandbox: bool = False,
     ) -> WebDriver | None:
         """Launch the WebDriver and load the given URL."""
-        write_log("Ouverture du navigateur", self.log_file, "DEBUG")
+        write_log(format_message("BROWSER_OPEN", {}), self.log_file, "DEBUG")
         self.driver = ouvrir_navigateur_sur_ecran_principal(
             plein_ecran=fullscreen,
             url=url,
@@ -62,7 +62,7 @@ class SeleniumDriverManager:
     def close(self) -> None:
         """Close the WebDriver if started."""
         if self.driver is not None:
-            write_log("Fermeture du navigateur", self.log_file, "DEBUG")
+            write_log(format_message("BROWSER_CLOSE", {}), self.log_file, "DEBUG")
             self.driver.quit()
             self.driver = None
 
@@ -101,7 +101,7 @@ class BrowserSession:
         no_sandbox: bool = False,
     ) -> WebDriver | None:
         """Open the browser and navigate to ``url``."""
-        write_log("Ouverture du navigateur", self.log_file, "DEBUG")
+        write_log(format_message("BROWSER_OPEN", {}), self.log_file, "DEBUG")
         self.driver = self._manager.open(
             url,
             fullscreen=fullscreen,
@@ -113,7 +113,7 @@ class BrowserSession:
     def close(self) -> None:
         """Close the browser if it was opened."""
         if self.driver is not None:
-            write_log("Fermeture du navigateur", self.log_file, "DEBUG")
+            write_log(format_message("BROWSER_CLOSE", {}), self.log_file, "DEBUG")
         self._manager.close()
         self.driver = None
 

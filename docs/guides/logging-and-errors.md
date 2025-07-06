@@ -69,6 +69,25 @@ Les messages sont enregistres dans le dossier `logs/` sous forme de fichier HTML
 | `RuntimeError` | État inattendu de l'application |
 | `NameError` | Objet ou identifiant manquant dans le code |
 
+## Codes de messages
+
+Les fonctions de log acceptent un identifiant court permettant de composer le
+texte final. Voici la liste des codes actuellement utilisés :
+
+| Code | Message |
+| ---- | ------- |
+| `BROWSER_OPEN` | Ouverture du navigateur |
+| `BROWSER_CLOSE` | Fermeture du navigateur |
+| `DECRYPT_CREDENTIALS` | Déchiffrement des identifiants |
+| `SEND_CREDENTIALS` | Envoi des identifiants |
+| `ADDITIONAL_INFO_DONE` | Validation des informations supplémentaires terminée. |
+| `SAVE_ALERT_WARNING` | ⚠️ Alerte rencontrée lors de la sauvegarde. |
+| `DOM_STABLE` | Le DOM est stable. |
+| `NO_DATE_CHANGE` | Aucune modification de la date nécessaire. |
+| `TIME_SHEET_EXISTS_ERROR` | Feuille de temps déjà existante pour la période. |
+| `MODIFY_DATE_MESSAGE` | Changer la date dans `config.ini` puis relancer. |
+| `DATE_VALIDATED` | Date validée avec succès. |
+
 ## Exemple de sortie de log
 
 ```
