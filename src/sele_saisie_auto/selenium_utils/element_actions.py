@@ -116,7 +116,9 @@ def detecter_et_verifier_contenu(
         logger.error(
             f"❌ {messages.ERREUR_INATTENDUE} lors de la détection et de la vérification du contenu : {str(e)}"
         )
-        raise
+        raise RuntimeError(
+            f"{messages.ERREUR_INATTENDUE} lors de la détection et de la vérification du contenu"
+        ) from e
 
 
 def effacer_et_entrer_valeur(

@@ -69,7 +69,9 @@ class AppConfig:
         return encrypted_login, encrypted_mdp
 
     @staticmethod
-    def _charger_autres_parametres(parser: ConfigParser) -> dict[str, Any]:
+    def _charger_autres_parametres(
+        parser: ConfigParser,
+    ) -> dict[str, Any]:  # noqa: C901
         """Récupère les autres paramètres de configuration."""
         url = parser.get("settings", "url", fallback="")
         date_cible = parser.get("settings", "date_cible", fallback=None)
