@@ -92,7 +92,7 @@ def test_traiter_description_select_special(monkeypatch):
     selected = []
     monkeypatch.setattr(
         risu,
-        "selectionner_option_menu_deroulant_type_select",
+        "select_by_text",
         lambda el, val: selected.append(val),
     )
 
@@ -119,7 +119,7 @@ def test_traiter_description_unknown_type(monkeypatch):
     called = []
     monkeypatch.setattr(
         risu,
-        "selectionner_option_menu_deroulant_type_select",
+        "select_by_text",
         lambda *a, **k: called.append("select"),
     )
     monkeypatch.setattr(

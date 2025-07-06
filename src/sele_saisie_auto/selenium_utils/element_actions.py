@@ -132,18 +132,23 @@ def controle_insertion(day_input_field, input_value):
     return day_input_field.get_attribute("value").strip() == input_value
 
 
-def selectionner_option_menu_deroulant_type_select(dropdown_field, visible_text):
-    """Choisit ``visible_text`` dans un ``Select`` Selenium."""
+def select_by_text(element, text):
+    """Select ``text`` from a Selenium ``Select`` element."""
     try:
-        select = Select(dropdown_field)
-        select.select_by_visible_text(visible_text)
-        write_log(f"Valeur '{visible_text}' sélectionnée.", LOG_FILE, "DEBUG")
+        selector = Select(element)
+        selector.select_by_visible_text(text)
+        write_log(f"Valeur '{text}' sélectionnée.", LOG_FILE, "DEBUG")
     except Exception as e:  # noqa: BLE001
         write_log(
-            f"❌ Erreur lors de la sélection de la valeur '{visible_text}' : {str(e)}",
+            f"❌ Erreur lors de la sélection de la valeur '{text}' : {str(e)}",
             LOG_FILE,
             "ERROR",
         )
+
+
+def selectionner_option_menu_deroulant_type_select(dropdown_field, visible_text):
+    """Choisit ``visible_text`` dans un ``Select`` Selenium."""
+    select_by_text(dropdown_field, visible_text)
 
 
 def trouver_ligne_par_description(
