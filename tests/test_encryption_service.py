@@ -150,3 +150,18 @@ def test_context_manager_stores_and_cleans():
         assert enc._memoires
     # after context exit memories list should be cleared
     assert enc._memoires == []
+
+
+def test_retrieve_credentials():
+    service = EncryptionService()
+    with service as enc:
+        enc.store_credentials(b"user", b"pass")
+        creds = enc.retrieve_credentials()
+        try:
+            assert creds.login == b"user"
+            assert creds.password == b"pass"
+            assert creds.aes_key == enc.cle_aes
+        finally:
+            creds.mem_key.close()
+            creds.mem_login.close()
+            creds.mem_password.close()

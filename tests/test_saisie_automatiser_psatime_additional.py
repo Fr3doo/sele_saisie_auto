@@ -24,9 +24,17 @@ from sele_saisie_auto.locators import Locators  # noqa: E402
 class DummyEnc:
     def __init__(self):
         self.removed = []
+        self.cle_aes = b"k" * 32
 
-    def recuperer_de_memoire_partagee(self, name, size):
-        return object(), b"k" * size
+    def retrieve_credentials(self):
+        return sap.Credentials(
+            aes_key=self.cle_aes,
+            mem_key=object(),
+            login=b"user",
+            mem_login=object(),
+            password=b"pass",
+            mem_password=object(),
+        )
 
     def dechiffrer_donnees(self, data, key):
         return data.decode() if isinstance(data, bytes) else data

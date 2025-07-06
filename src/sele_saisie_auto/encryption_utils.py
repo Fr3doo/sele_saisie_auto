@@ -1,6 +1,8 @@
 # encryption_utils.py
 
 import os
+from dataclasses import dataclass
+from multiprocessing import shared_memory
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
@@ -8,6 +10,18 @@ from cryptography.hazmat.primitives.padding import PKCS7
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
+
+
+@dataclass
+class Credentials:
+    """Encrypted credentials and their shared memory handles."""
+
+    aes_key: bytes
+    mem_key: shared_memory.SharedMemory
+    login: bytes
+    mem_login: shared_memory.SharedMemory
+    password: bytes
+    mem_password: shared_memory.SharedMemory
 
 
 class EncryptionService:
@@ -163,3 +177,38 @@ class EncryptionService:
                 pass
         self._memoires.clear()
         self.cle_aes = None
+
+    def retrieve_credentials(self) -> Credentials:
+        """Retrieve encrypted credentials from shared memory."""
+        mem_key, aes_key = self.shared_memory_service.recuperer_de_memoire_partagee(
+            "memoire_partagee_cle",
+            32,
+        )
+        write_log(f"💀 Clé AES récupérée : {aes_key.hex()}", self.log_file, "CRITICAL")
+
+        mem_login = shared_memory.SharedMemory(name="memoire_nom")
+        taille_nom = len(bytes(mem_login.buf).rstrip(b"\x00"))
+        login = bytes(mem_login.buf[:taille_nom])
+        write_log(
+            f"💀 Taille du login chiffré : {len(login)}",
+            self.log_file,
+            "CRITICAL",
+        )
+
+        mem_pwd = shared_memory.SharedMemory(name="memoire_mdp")
+        taille_pwd = len(bytes(mem_pwd.buf).rstrip(b"\x00"))
+        password = bytes(mem_pwd.buf[:taille_pwd])
+        write_log(
+            f"💀 Taille du mot de passe chiffré : {len(password)}",
+            self.log_file,
+            "CRITICAL",
+        )
+
+        return Credentials(
+            aes_key=aes_key,
+            mem_key=mem_key,
+            login=login,
+            mem_login=mem_login,
+            password=password,
+            mem_password=mem_pwd,
+        )
