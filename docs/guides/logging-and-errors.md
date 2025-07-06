@@ -56,6 +56,18 @@ except (DriverError, InvalidConfigError) as exc:
 
 ## Fichier de log
 Les messages sont enregistres dans le dossier `logs/` sous forme de fichier HTML. Chaque execution ajoute de nouvelles entrees au meme fichier afin de conserver l'historique complet.
+
+### Personnaliser l'apparence
+Ajoutez la section `[log_style]` dans `config.ini` :
+
+```ini
+[log_style]
+column_widths = timestamp:10%, level:6%, message:84%
+row_height = 20px
+font_size = 12px
+```
+
+Ces options ajustent la largeur des colonnes, la hauteur des lignes et la taille de police dans le fichier HTML.
 ## Exceptions personnalisées
 | Exception | Raison de l'utilisation |
 | ------------------ | ---------------------------------------------------- |
