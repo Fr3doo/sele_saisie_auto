@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from configparser import ConfigParser
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable, TypeVar
 
 from sele_saisie_auto.dropdown_options import (
     BillingActionOption,
@@ -28,6 +28,25 @@ from sele_saisie_auto.dropdown_options import (
     work_schedule_options as default_work_schedule_options,
 )
 from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini
+
+T = TypeVar("T")
+
+
+def parse_list(
+    parser: ConfigParser,
+    section: str,
+    option: str,
+    default: list[T],
+    ctor: Callable[[str], T],
+) -> list[T]:
+    """Extract a comma separated list and convert each value using ``ctor``."""
+
+    if parser.has_section(section):
+        values = parser.get(section, option, fallback="")
+        return [
+            ctor(item.strip().strip('"')) for item in values.split(",") if item.strip()
+        ]
+    return default
 
 
 @dataclass
@@ -78,10 +97,13 @@ class AppConfig:
         if date_cible and date_cible.strip().lower() in {"none", ""}:
             date_cible = None
         debug_mode = parser.get("settings", "debug_mode", fallback="INFO")
-        liste_items = parser.get("settings", "liste_items_planning", fallback="")
-        liste_items_planning = [
-            item.strip().strip('"') for item in liste_items.split(",") if item.strip()
-        ]
+        liste_items_planning = parse_list(
+            parser,
+            "settings",
+            "liste_items_planning",
+            [],
+            lambda x: x,
+        )
         default_timeout = parser.getint("settings", "default_timeout", fallback=10)
         long_timeout = parser.getint("settings", "long_timeout", fallback=20)
 
@@ -128,39 +150,22 @@ class AppConfig:
             else {}
         )
 
-        from typing import TypeVar
-
-        T = TypeVar("T")
-
-        def parse_list_from_section(
-            section: str,
-            option: str,
-            default: list[T],
-            cls: type[T],
-        ) -> list[T]:
-            """Extrait et convertit une liste depuis ``section``."""
-            if parser.has_section(section):
-                values = parser.get(section, option, fallback="")
-                return [
-                    cls(item.strip().strip('"'))
-                    for item in values.split(",")
-                    if item.strip()
-                ]
-            return default
-
-        work_location_options = parse_list_from_section(
+        work_location_options = parse_list(
+            parser,
             "work_location_options",
             "values",
             default_work_location_options,
             WorkLocationOption,
         )
-        cgi_options = parse_list_from_section(
+        cgi_options = parse_list(
+            parser,
             "cgi_options",
             "values",
             default_cgi_options,
             CGIOption,
         )
-        cgi_options_dejeuner = parse_list_from_section(
+        cgi_options_dejeuner = parse_list(
+            parser,
             "cgi_options_dejeuner",
             "values",
             default_cgi_options_dejeuner,
@@ -173,7 +178,8 @@ class AppConfig:
             ]
         else:
             cgi_options_billing_action = default_cgi_options_billing_action
-        work_schedule_options = parse_list_from_section(
+        work_schedule_options = parse_list(
+            parser,
             "work_schedule_options",
             "values",
             default_work_schedule_options,
