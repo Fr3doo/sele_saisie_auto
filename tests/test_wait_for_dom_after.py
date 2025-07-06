@@ -12,5 +12,5 @@ def test_wait_for_dom_after_decorator(monkeypatch, sample_config):
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: calls.append("dom")
     )
-    sap.submit_date_cible("drv")
+    sap.submit_date_cible(driver="drv")
     assert calls.count("dom") == 2

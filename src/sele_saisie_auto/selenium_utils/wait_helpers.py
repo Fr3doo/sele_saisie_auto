@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import time
 from functools import wraps
 
@@ -184,7 +185,13 @@ def wait_for_dom_after(func):
         result = func(*args, **kwargs)
         if args:
             instance = args[0]
-            driver = args[1] if len(args) > 1 else kwargs.get("driver")
+            driver = kwargs.get("driver")
+            if driver is None:
+                signature = inspect.signature(func)
+                if "driver" in signature.parameters:
+                    index = list(signature.parameters).index("driver")
+                    if len(args) > index:
+                        driver = args[index]
             if driver is not None and hasattr(instance, "wait_for_dom"):
                 instance.wait_for_dom(driver)
         return result
