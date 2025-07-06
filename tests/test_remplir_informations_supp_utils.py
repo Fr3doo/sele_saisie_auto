@@ -94,7 +94,7 @@ def test_traiter_description_select(monkeypatch):
     selected = []
     monkeypatch.setattr(
         risu,
-        "selectionner_option_menu_deroulant_type_select",
+        "select_by_text",
         lambda el, val: selected.append(val),
     )
 

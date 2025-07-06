@@ -11,7 +11,7 @@ from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.selenium_utils import (
     Waiter,
     remplir_champ_texte,
-    selectionner_option_menu_deroulant_type_select,
+    select_by_text,
     trouver_ligne_par_description,
     verifier_champ_jour_rempli,
     wait_for_element,
@@ -105,9 +105,7 @@ def _fill_missing_days(
                         "DEBUG",
                     )
                     if type_element == "select":
-                        selectionner_option_menu_deroulant_type_select(
-                            element, value_to_fill
-                        )
+                        select_by_text(element, value_to_fill)
                     elif type_element == "input":
                         remplir_champ_texte(element, jour, value_to_fill)
                 else:

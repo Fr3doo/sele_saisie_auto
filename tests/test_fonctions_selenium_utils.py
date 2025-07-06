@@ -241,7 +241,7 @@ def test_select_and_find_row(monkeypatch):
             selected["v"] = text
 
     monkeypatch.setattr(fsu.element_actions, "Select", Sel)
-    fsu.selectionner_option_menu_deroulant_type_select(object(), "opt")
+    fsu.select_by_text(object(), "opt")
     assert selected["v"] == "opt"
 
     class Element:
