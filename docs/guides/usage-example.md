@@ -58,3 +58,15 @@ lundi = CGI
 [cgi_options_billing_action]
 Facturable = B
 ```
+
+### PSATIME_AES_KEY
+
+Lors du lancement, l'outil génère une clé AES aléatoire de 32 octets avec
+``os.urandom``. Cette clé sert à chiffrer les identifiants et est placée en
+mémoire partagée (segment ``memoire_partagee_cle``). Aucune information n'est
+écrite sur le disque.
+
+Vous pouvez aussi prédéfinir la variable d'environnement ``PSATIME_AES_KEY``
+pour fournir votre propre clé (format hexadécimal ou Base64). Si cette variable
+est absente, la clé est créée à chaque exécution puis effacée à la fermeture
+du programme.
