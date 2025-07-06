@@ -1,5 +1,5 @@
 from sele_saisie_auto import logger_utils
-from sele_saisie_auto.logging_service import Logger
+from sele_saisie_auto.logging_service import Logger, get_logger
 
 
 def test_logger_calls_writer(monkeypatch):
@@ -24,3 +24,9 @@ def test_logger_calls_writer(monkeypatch):
         ("ERROR", "oops", False),
         ("CRITICAL", "boom", False),
     ]
+
+
+def test_get_logger_singleton():
+    logger1 = get_logger("file.html")
+    logger2 = get_logger("file.html")
+    assert logger1 is logger2

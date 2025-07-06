@@ -33,7 +33,7 @@ from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import initialize_logger, write_log
-from sele_saisie_auto.logging_service import Logger
+from sele_saisie_auto.logging_service import Logger, get_logger
 from sele_saisie_auto.selenium_utils import click_element_without_wait  # noqa: F401
 from sele_saisie_auto.selenium_utils import modifier_date_input  # noqa: F401
 from sele_saisie_auto.selenium_utils import send_keys_to_element  # noqa: F401
@@ -122,7 +122,7 @@ class PSATimeAutomation:
         self.memory_config = memory_config or MemoryConfig()
         set_log_file_selenium(log_file)
         initialize_logger(app_config.raw, log_level_override=app_config.debug_mode)
-        logger = Logger(log_file)
+        logger = get_logger(log_file)
         shm_service = SharedMemoryService(logger)
         self.waiter = Waiter(app_config.default_timeout, app_config.long_timeout)
         self.context = SaisieContext(
@@ -579,7 +579,7 @@ def main(
 
         log_file = get_log_file()
 
-    with Logger(log_file):
+    with get_logger(log_file):
         cfg = ConfigManager(log_file=log_file).load()
         PSATimeAutomation(log_file, cfg).run(
             headless=headless,

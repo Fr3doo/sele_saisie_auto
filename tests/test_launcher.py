@@ -278,7 +278,7 @@ def test_main(monkeypatch):
             self.infos.append(msg)
 
     dummy_logger = DummyLoggerCtx()
-    monkeypatch.setattr(launcher, "Logger", lambda lf: dummy_logger)
+    monkeypatch.setattr(launcher, "get_logger", lambda lf: dummy_logger)
 
     launcher.main([])
 
