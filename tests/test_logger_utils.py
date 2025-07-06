@@ -188,7 +188,5 @@ def test_get_html_style_default(tmp_path, monkeypatch):
 
 
 def test_parse_column_widths():
-    widths = logger_utils._parse_column_widths(
-        "timestamp:11%, level:22%, message:33%"
-    )
+    widths = logger_utils._parse_column_widths("timestamp:11%, level:22%, message:33%")
     assert widths["level"] == "22%"

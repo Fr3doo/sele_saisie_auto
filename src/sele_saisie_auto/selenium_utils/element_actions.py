@@ -201,17 +201,32 @@ def trouver_ligne_par_description(
     return matched_row_index
 
 
+def _determine_row_range(driver, max_rows: int | None):
+    """Return the range of rows to inspect."""
+    if max_rows is None:
+        row_elements = driver.find_elements(By.CSS_SELECTOR, "[id^='POL_DESCR$']")
+        return range(len(row_elements))
+    return range(max_rows)
+
+
+def _update_filled_days_tracker(
+    tracker: dict[str, list[str]], day_counter: int, line_description: str
+):
+    """Add ``line_description`` under the weekday name matching ``day_counter``."""
+    day_name = JOURS_SEMAINE[day_counter]
+    if day_name in tracker:
+        tracker[day_name].append(line_description)
+    else:
+        tracker[day_name] = [line_description]
+
+
 def detecter_doublons_jours(
     driver, logger: Logger | None = None, max_rows: int | None = None
 ):
     """Check if any day appears more than once across lines."""
     logger = logger or get_default_logger()
-    filled_days_tracker = {}
-    if max_rows is None:
-        row_elements = driver.find_elements(By.CSS_SELECTOR, "[id^='POL_DESCR$']")
-        row_range = range(len(row_elements))
-    else:
-        row_range = range(max_rows)
+    filled_days_tracker: dict[str, list[str]] = {}
+    row_range = _determine_row_range(driver, max_rows)
 
     for row_index in row_range:
         try:
@@ -234,11 +249,9 @@ def detecter_doublons_jours(
                 day_content = day_field.get_attribute("value")
 
                 if day_content.strip():
-                    day_name = JOURS_SEMAINE[day_counter]
-                    if day_name in filled_days_tracker:
-                        filled_days_tracker[day_name].append(line_description)
-                    else:
-                        filled_days_tracker[day_name] = [line_description]
+                    _update_filled_days_tracker(
+                        filled_days_tracker, day_counter, line_description
+                    )
             except NoSuchElementException:
                 logger.warning(
                     f"{messages.IMPOSSIBLE_DE_TROUVER} l'élément pour le jour '{JOURS_SEMAINE[day_counter]}' avec l'ID '{day_input_id}'"

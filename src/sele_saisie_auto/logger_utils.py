@@ -124,8 +124,8 @@ def get_html_style():
                     column_widths.update(_parse_column_widths(raw_widths))
                 row_height = parser.get("log_style", "row_height", fallback=row_height)
                 font_size = parser.get("log_style", "font_size", fallback=font_size)
-        except Exception:
-            pass
+        except Exception as e:  # noqa: BLE001
+            print(f"Erreur lors de la lecture du style de log : {e}")
 
     return f"""
     <html>
@@ -230,9 +230,11 @@ def write_log(
                 f.write(log_message)
 
     except OSError as e:
-        raise RuntimeError(f"Erreur liée au système de fichiers : {e}")
+        raise RuntimeError(f"Erreur liée au système de fichiers : {e}") from e
     except Exception as e:
-        raise RuntimeError(f"Erreur inattendue lors de l'écriture des logs : {e}")
+        raise RuntimeError(
+            f"Erreur inattendue lors de l'écriture des logs : {e}"
+        ) from e
 
 
 def close_logs(log_file, log_format=HTML_FORMAT):
@@ -250,6 +252,8 @@ def close_logs(log_file, log_format=HTML_FORMAT):
                 if "</table>" not in content:
                     f.write("</table></body></html>")
     except OSError as e:
-        raise RuntimeError(f"Erreur liée au système de fichiers : {e}")
+        raise RuntimeError(f"Erreur liée au système de fichiers : {e}") from e
     except Exception as e:
-        raise RuntimeError(f"Erreur inattendue lors de la fermeture des logs : {e}")
+        raise RuntimeError(
+            f"Erreur inattendue lors de la fermeture des logs : {e}"
+        ) from e
