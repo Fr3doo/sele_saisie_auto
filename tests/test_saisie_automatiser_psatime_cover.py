@@ -7,6 +7,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 import pytest  # noqa: E402
 
 from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
+from sele_saisie_auto.selenium_utils import Waiter  # noqa: E402
 from tests.test_saisie_automatiser_psatime import (  # noqa: E402
     DummySHMService,
     setup_init,
@@ -31,14 +32,19 @@ class DummyManager:
 
 def test_wait_for_dom(monkeypatch):
     calls = []
+    dummy = Waiter()
     monkeypatch.setattr(
-        "sele_saisie_auto.automation.browser_session.wait_until_dom_is_stable",
+        dummy,
+        "wait_until_dom_is_stable",
         lambda driver, timeout=10: calls.append("stable"),
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.automation.browser_session.wait_for_dom_ready",
+        dummy,
+        "wait_for_dom_ready",
         lambda driver, timeout: calls.append("ready"),
     )
+    if sap._AUTOMATION:
+        sap._AUTOMATION.browser_session.waiter = dummy
     sap.wait_for_dom("driver")
     assert calls == ["stable", "ready"]
 
@@ -47,7 +53,9 @@ def test_navigate_from_work_schedule_positive(monkeypatch):
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: True)
+    monkeypatch.setattr(
+        sap._AUTOMATION.waiter, "wait_for_element", lambda *a, **k: True
+    )
     actions = []
     monkeypatch.setattr(
         sap, "click_element_without_wait", lambda *a, **k: actions.append("click")
@@ -62,7 +70,9 @@ def test_navigate_from_work_schedule_positive(monkeypatch):
 
 def test_submit_and_validate_additional_information_positive(monkeypatch):
     seq = iter([True, True, True])
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: next(seq))
+    monkeypatch.setattr(
+        sap._AUTOMATION.waiter, "wait_for_element", lambda *a, **k: next(seq)
+    )
     monkeypatch.setattr(sap.BrowserSession, "go_to_iframe", lambda *a, **k: True)
     if sap._AUTOMATION:
         sap._AUTOMATION.browser_session.go_to_iframe = lambda *a, **k: True
@@ -125,7 +135,9 @@ def test_initialize_debug_mode_off(monkeypatch, sample_config, tmp_path):
 
 
 def test_switch_to_iframe_main_target_win0_no_element(monkeypatch):
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: False)
+    monkeypatch.setattr(
+        sap._AUTOMATION.waiter, "wait_for_element", lambda *a, **k: False
+    )
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )

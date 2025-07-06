@@ -37,7 +37,7 @@ from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.selenium_utils import click_element_without_wait  # noqa: F401
 from sele_saisie_auto.selenium_utils import modifier_date_input  # noqa: F401
 from sele_saisie_auto.selenium_utils import send_keys_to_element  # noqa: F401
-from sele_saisie_auto.selenium_utils import detecter_doublons_jours
+from sele_saisie_auto.selenium_utils import Waiter, detecter_doublons_jours
 from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.selenium_utils import (
     switch_to_default_content,
@@ -124,6 +124,7 @@ class PSATimeAutomation:
         initialize_logger(app_config.raw, log_level_override=app_config.debug_mode)
         logger = Logger(log_file)
         shm_service = SharedMemoryService(logger)
+        self.waiter = Waiter(app_config.default_timeout, app_config.long_timeout)
         self.context = SaisieContext(
             config=app_config,
             encryption_service=EncryptionService(log_file, shm_service),
@@ -191,16 +192,18 @@ class PSATimeAutomation:
             ],
         )
         try:
-            self.browser_session = BrowserSession(log_file, app_config)
+            self.browser_session = BrowserSession(
+                log_file, app_config, waiter=self.waiter
+            )
         except TypeError:  # pragma: no cover - for legacy test stubs
-            self.browser_session = BrowserSession(log_file)
+            self.browser_session = BrowserSession(log_file, waiter=self.waiter)
         self.login_handler = LoginHandler(
             log_file,
             self.context.encryption_service,
             self.browser_session,
         )
-        self.date_entry_page = DateEntryPage(self)
-        self.additional_info_page = AdditionalInfoPage(self)
+        self.date_entry_page = DateEntryPage(self, waiter=self.waiter)
+        self.additional_info_page = AdditionalInfoPage(self, waiter=self.waiter)
 
         write_log("📌 Chargement des configurations...", self.log_file, "DEBUG")
         write_log(
@@ -316,7 +319,7 @@ class PSATimeAutomation:
     def switch_to_iframe_main_target_win0(self, driver):
         """Bascule vers l'iframe principale ``main_target_win0``."""
         switched_to_iframe = None
-        element_present = wait_for_element(
+        element_present = self.waiter.wait_for_element(
             driver, By.ID, Locators.MAIN_FRAME.value, timeout=DEFAULT_TIMEOUT
         )
         if element_present:
@@ -409,7 +412,9 @@ class PSATimeAutomation:
         ctx = remplir_jours_feuille_de_temps.context_from_app_config(
             self.context.config, self.log_file
         )
-        remplir_jours_feuille_de_temps.TimeSheetHelper(ctx).run(driver)
+        remplir_jours_feuille_de_temps.TimeSheetHelper(ctx, waiter=self.waiter).run(
+            driver
+        )
         self.navigate_from_work_schedule_to_additional_information_page(driver)
         self.submit_and_validate_additional_information(driver)
         switch_to_default_content(driver)

@@ -4,6 +4,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.automation.browser_session import BrowserSession  # noqa: E402
+from sele_saisie_auto.selenium_utils import Waiter  # noqa: E402
 
 
 def test_open_delegates_to_manager(monkeypatch):
@@ -24,7 +25,11 @@ def test_open_delegates_to_manager(monkeypatch):
         "sele_saisie_auto.automation.browser_session.SeleniumDriverManager",
         DummyManager,
     )
-    session = BrowserSession("log.html")
+    dummy_waiter = Waiter()
+    monkeypatch.setattr(
+        dummy_waiter, "wait_for_dom_ready", lambda d, t: calls.setdefault("ready", True)
+    )
+    session = BrowserSession("log.html", waiter=dummy_waiter)
     driver = session.open("http://t", fullscreen=True, headless=True)
 
     assert driver == "driver"  # nosec B101
@@ -103,26 +108,29 @@ def test_open_and_close_log(monkeypatch):
         "sele_saisie_auto.automation.browser_session.write_log",
         lambda msg, lf, level: logs.append(msg),
     )
-    session = BrowserSession("log.html")
+    dummy_waiter = Waiter()
+    monkeypatch.setattr(
+        dummy_waiter, "wait_for_dom_ready", lambda d, t: logs.append("ready")
+    )
+    session = BrowserSession("log.html", waiter=dummy_waiter)
     session.open("http://t")
     session.close()
 
-    assert "Ouverture du navigateur" in logs[0]
-    assert "Fermeture du navigateur" in logs[1]
+    assert any("Ouverture du navigateur" in msg for msg in logs)
+    assert any("Fermeture du navigateur" in msg for msg in logs)
     assert "closed" in logs
 
 
 def test_wait_for_dom(monkeypatch):
     calls = []
+    dummy = Waiter()
     monkeypatch.setattr(
-        "sele_saisie_auto.automation.browser_session.wait_until_dom_is_stable",
-        lambda d, timeout=10: calls.append("stable"),
+        dummy, "wait_until_dom_is_stable", lambda d, timeout=10: calls.append("stable")
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.automation.browser_session.wait_for_dom_ready",
-        lambda d, timeout: calls.append("ready"),
+        dummy, "wait_for_dom_ready", lambda d, timeout: calls.append("ready")
     )
-    session = BrowserSession("log.html")
+    session = BrowserSession("log.html", waiter=dummy)
     session.wait_for_dom("drv")
 
     assert calls == ["stable", "ready"]

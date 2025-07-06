@@ -31,10 +31,7 @@ class DummyAutomation:
 def test_navigate_from_work_schedule(monkeypatch):
     dummy = DummyAutomation()
     page = AdditionalInfoPage(dummy)
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
-        lambda *a, **k: True,
-    )
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     clicks = []
     monkeypatch.setattr(
         "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
@@ -53,10 +50,7 @@ def test_submit_and_validate_additional_information(monkeypatch):
     dummy = DummyAutomation()
     page = AdditionalInfoPage(dummy)
     seq = iter([True, True])
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
-        lambda *a, **k: next(seq),
-    )
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: next(seq))
     monkeypatch.setattr(
         "sele_saisie_auto.saisie_automatiser_psatime.switch_to_iframe_by_id_or_name",
         lambda *a, **k: True,
@@ -83,10 +77,7 @@ def test_submit_and_validate_additional_information(monkeypatch):
 def test_save_draft_and_validate(monkeypatch):
     dummy = DummyAutomation()
     page = AdditionalInfoPage(dummy)
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
-        lambda *a, **k: True,
-    )
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     clicks = []
     monkeypatch.setattr(
         "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
@@ -101,10 +92,7 @@ def test_handle_save_alerts(monkeypatch):
     dummy = DummyAutomation()
     page = AdditionalInfoPage(dummy)
     seq = iter([True, False, False])
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
-        lambda *a, **k: next(seq),
-    )
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: next(seq))
     logs = []
     monkeypatch.setattr(
         "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",

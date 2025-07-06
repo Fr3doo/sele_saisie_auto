@@ -23,10 +23,7 @@ def test_navigate_from_home_to_date_entry_page(monkeypatch):
     dummy = DummyAutomation()
     page = DateEntryPage(dummy)
     seq = iter([True, True])
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
-        lambda *a, **k: next(seq),
-    )
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: next(seq))
     clicks = []
     monkeypatch.setattr(
         "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
@@ -49,10 +46,7 @@ def test_handle_date_input(monkeypatch):
             return self.val
 
     inp = Input()
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
-        lambda *a, **k: inp,
-    )
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: inp)
     result = {}
     monkeypatch.setattr(
         "sele_saisie_auto.saisie_automatiser_psatime.modifier_date_input",
@@ -75,10 +69,7 @@ def test_handle_date_input_auto(monkeypatch):
             return self.val
 
     inp = Input()
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
-        lambda *a, **k: inp,
-    )
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: inp)
     monkeypatch.setattr(
         "sele_saisie_auto.saisie_automatiser_psatime.get_next_saturday_if_not_saturday",
         lambda d: "06/07/2024",
@@ -105,10 +96,7 @@ def test_handle_date_input_no_change(monkeypatch):
             return self.val
 
     inp = Input()
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
-        lambda *a, **k: inp,
-    )
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: inp)
     monkeypatch.setattr(
         "sele_saisie_auto.saisie_automatiser_psatime.get_next_saturday_if_not_saturday",
         lambda d: "06/07/2024",
@@ -130,10 +118,7 @@ def test_handle_date_input_no_change(monkeypatch):
 def test_submit_date_cible(monkeypatch):
     dummy = DummyAutomation()
     page = DateEntryPage(dummy)
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
-        lambda *a, **k: True,
-    )
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     actions = []
     monkeypatch.setattr(
         "sele_saisie_auto.saisie_automatiser_psatime.send_keys_to_element",
@@ -147,10 +132,7 @@ def test_submit_date_cible(monkeypatch):
 def test_submit_date_cible_no_element(monkeypatch):
     dummy = DummyAutomation()
     page = DateEntryPage(dummy)
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
-        lambda *a, **k: False,
-    )
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: False)
     monkeypatch.setattr(DateEntryPage, "wait_for_dom", lambda self, d: None)
     assert page.submit_date_cible("drv") is False
 
@@ -158,10 +140,7 @@ def test_submit_date_cible_no_element(monkeypatch):
 def test_click_action_button(monkeypatch):
     dummy = DummyAutomation()
     page = DateEntryPage(dummy)
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
-        lambda *a, **k: True,
-    )
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     clicks = []
     monkeypatch.setattr(
         "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
@@ -174,10 +153,7 @@ def test_click_action_button(monkeypatch):
 def test_click_action_button_copy(monkeypatch):
     dummy = DummyAutomation()
     page = DateEntryPage(dummy)
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
-        lambda *a, **k: True,
-    )
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     clicks = []
     monkeypatch.setattr(
         "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
@@ -190,10 +166,7 @@ def test_click_action_button_copy(monkeypatch):
 def test_handle_date_alert(monkeypatch):
     dummy = DummyAutomation()
     page = DateEntryPage(dummy)
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.wait_for_element",
-        lambda *a, **k: True,
-    )
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     logs = []
     monkeypatch.setattr(
         "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",

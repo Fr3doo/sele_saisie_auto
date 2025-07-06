@@ -83,10 +83,11 @@ class DummyManager:
 
 
 class DummyBrowserSession:
-    def __init__(self, log_file):
+    def __init__(self, log_file, app_config=None, waiter=None):
         self.log_file = log_file
         self.open_calls = []
         self.driver = types.SimpleNamespace(page_source="")
+        self.waiter = waiter
 
     def open(self, url, fullscreen=False, headless=False, no_sandbox=False):
         self.open_calls.append((url, fullscreen, headless, no_sandbox))
@@ -117,7 +118,7 @@ class DummyLoginHandler:
 
 
 class DummyDateEntryPage:
-    def __init__(self, automation):
+    def __init__(self, automation, waiter=None):
         self.automation = automation
         self.calls = []
 
@@ -134,7 +135,7 @@ class DummyDateEntryPage:
 
 
 class DummyAdditionalInfoPage:
-    def __init__(self, automation):
+    def __init__(self, automation, waiter=None):
         self.automation = automation
         self.calls = []
         sap.traiter_description = lambda *a, **k: None
@@ -263,18 +264,20 @@ def test_main_flow(monkeypatch, sample_config):
             return Elem()
         return object()
 
-    monkeypatch.setattr(sap, "wait_for_element", fake_wait)
+    monkeypatch.setattr(sap._AUTOMATION.waiter, "wait_for_element", fake_wait)
     monkeypatch.setattr(sap, "modifier_date_input", lambda *a, **k: None)
     monkeypatch.setattr(sap.BrowserSession, "go_to_iframe", lambda *a, **k: True)
     monkeypatch.setattr(sap, "click_element_without_wait", lambda *a, **k: None)
     monkeypatch.setattr(sap, "send_keys_to_element", lambda *a, **k: None)
     monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
     monkeypatch.setattr(
-        "sele_saisie_auto.automation.browser_session.wait_until_dom_is_stable",
+        sap._AUTOMATION.browser_session.waiter,
+        "wait_until_dom_is_stable",
         lambda *a, **k: None,
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.automation.browser_session.wait_for_dom_ready",
+        sap._AUTOMATION.browser_session.waiter,
+        "wait_for_dom_ready",
         lambda *a, **k: None,
     )
     monkeypatch.setattr(sap, "program_break_time", lambda *a, **k: None)

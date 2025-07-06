@@ -12,7 +12,7 @@ from sele_saisie_auto import messages
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
-from sele_saisie_auto.selenium_utils import wait_for_dom_after
+from sele_saisie_auto.selenium_utils import Waiter, wait_for_dom_after
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
 
@@ -23,8 +23,11 @@ if TYPE_CHECKING:  # pragma: no cover
 class DateEntryPage:
     """Handle the timesheet date selection page."""
 
-    def __init__(self, automation: PSATimeAutomation) -> None:
+    def __init__(
+        self, automation: PSATimeAutomation, waiter: Waiter | None = None
+    ) -> None:
         self._automation = automation
+        self.waiter = waiter or getattr(automation, "waiter", None) or Waiter()
 
     @property
     def log_file(self) -> str:
@@ -60,7 +63,7 @@ class DateEntryPage:
         """Navigate from the home page to the date entry page."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        element_present = sap.wait_for_element(
+        element_present = self.waiter.wait_for_element(
             driver,
             By.ID,
             Locators.NAV_TO_DATE_ENTRY.value,
@@ -73,7 +76,7 @@ class DateEntryPage:
             )
         self.wait_for_dom(driver)
 
-        element_present = sap.wait_for_element(
+        element_present = self.waiter.wait_for_element(
             driver,
             By.ID,
             Locators.SIDE_MENU_BUTTON.value,
@@ -92,7 +95,7 @@ class DateEntryPage:
         """Fill the date field with ``date_cible`` or next Saturday."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        date_input = sap.wait_for_element(
+        date_input = self.waiter.wait_for_element(
             driver,
             By.ID,
             Locators.DATE_INPUT.value,
@@ -125,7 +128,7 @@ class DateEntryPage:
         """Validate the chosen date."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        element_present = sap.wait_for_element(
+        element_present = self.waiter.wait_for_element(
             driver,
             By.ID,
             Locators.ADD_BUTTON.value,
@@ -157,7 +160,7 @@ class DateEntryPage:
 
         sap.switch_to_default_content(driver)
         alerte = Locators.ALERT_CONTENT_0.value
-        if sap.wait_for_element(
+        if self.waiter.wait_for_element(
             driver, By.ID, alerte, timeout=self.config.default_timeout
         ):
             sap.click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
@@ -182,7 +185,7 @@ class DateEntryPage:
         )
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        element_present = sap.wait_for_element(
+        element_present = self.waiter.wait_for_element(
             driver,
             By.ID,
             elem_id,

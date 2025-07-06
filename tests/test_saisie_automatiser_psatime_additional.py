@@ -114,7 +114,9 @@ def test_connect_to_psatime(monkeypatch, sample_config):
 
 def test_switch_to_iframe(monkeypatch):
     calls = []
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: True)
+    monkeypatch.setattr(
+        sap._AUTOMATION.waiter, "wait_for_element", lambda *a, **k: True
+    )
     monkeypatch.setattr(
         sap.BrowserSession,
         "go_to_iframe",
@@ -216,18 +218,22 @@ def test_main_exceptions(monkeypatch, sample_config):
             mem_password=object(),
         ),
     )
-    monkeypatch.setattr(sap, "wait_for_element", lambda *a, **k: True)
+    monkeypatch.setattr(
+        sap._AUTOMATION.waiter, "wait_for_element", lambda *a, **k: True
+    )
     monkeypatch.setattr(sap, "modifier_date_input", lambda *a, **k: None)
     monkeypatch.setattr(sap.BrowserSession, "go_to_iframe", lambda *a, **k: True)
     monkeypatch.setattr(sap, "click_element_without_wait", lambda *a, **k: None)
     monkeypatch.setattr(sap, "send_keys_to_element", lambda *a, **k: None)
     monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
     monkeypatch.setattr(
-        "sele_saisie_auto.automation.browser_session.wait_until_dom_is_stable",
+        sap._AUTOMATION.browser_session.waiter,
+        "wait_until_dom_is_stable",
         lambda *a, **k: None,
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.automation.browser_session.wait_for_dom_ready",
+        sap._AUTOMATION.browser_session.waiter,
+        "wait_for_dom_ready",
         lambda *a, **k: None,
     )
     monkeypatch.setattr(sap, "program_break_time", lambda *a, **k: None)
