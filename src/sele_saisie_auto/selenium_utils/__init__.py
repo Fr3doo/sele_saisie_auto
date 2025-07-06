@@ -53,12 +53,12 @@ from .wait_helpers import (
     find_clickable,
     find_present,
     find_visible,
-    is_document_complete,
     wait_for_dom_after,
     wait_for_dom_ready,
     wait_for_element,
     wait_until_dom_is_stable,
 )
+from .wrapper import Wrapper, is_document_complete
 
 __all__ = [
     "set_log_file",
@@ -73,6 +73,7 @@ __all__ = [
     "find_clickable",
     "find_visible",
     "find_present",
+    "Wrapper",
     "Waiter",
     "modifier_date_input",
     "switch_to_frame_by_id",
