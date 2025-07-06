@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """High level wrapper around WebDriver wait helpers."""
+
+from __future__ import annotations
 
 import time
 
