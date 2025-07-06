@@ -163,6 +163,8 @@ l'installation des dépendances hors de l'environnement Poetry.
 ## 🛠️ Fichiers de configuration
 - `config.ini` : paramètres de connexion et de planning
 - `examples/config_example.ini` : modèle listant toutes les sections nécessaires
+- `examples/dropdown_defaults.json` : valeurs par défaut des menus déroulants si
+  les sections correspondantes sont absentes de `config.ini`
 - `pytest.ini` : options de tests
 - `.coveragerc` : configuration de couverture
 - `.pre-commit-config.yaml` : hooks de lint et formatage
