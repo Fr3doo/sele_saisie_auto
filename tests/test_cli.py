@@ -14,6 +14,8 @@ def test_help_displays_new_options(capsys):
     out = capsys.readouterr().out
     assert "--version" in out
     assert "Automate PSA Time" in out
+    assert "--headless" in out
+    assert "--no-sandbox" in out
 
 
 def test_version_option(capsys):
@@ -21,3 +23,9 @@ def test_version_option(capsys):
         cli.parse_args(["--version"])
     out = capsys.readouterr().out.strip()
     assert out.endswith(__version__)
+
+
+def test_parse_flags():
+    args = cli.parse_args(["--headless", "--no-sandbox"])
+    assert args.headless is True
+    assert args.no_sandbox is True

@@ -20,6 +20,16 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Override log level",
     )
     parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Run the browser in headless mode",
+    )
+    parser.add_argument(
+        "--no-sandbox",
+        action="store_true",
+        help="Disable the browser sandbox",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",

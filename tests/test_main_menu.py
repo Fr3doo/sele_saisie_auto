@@ -153,7 +153,7 @@ def test_main_menu_builds_and_commands(monkeypatch):
 
     run_calls = {}
 
-    def fake_run_psa(enc_service, login_var, pwd_var, log_file, menu):
+    def fake_run_psa(enc_service, login_var, pwd_var, log_file, menu, **kw):
         run_calls["login"] = login_var.get()
         run_calls["pwd"] = pwd_var.get()
         run_calls["destroyed"] = menu.destroy_called
@@ -162,7 +162,7 @@ def test_main_menu_builds_and_commands(monkeypatch):
 
     config_calls = {}
 
-    def fake_start_config(key, log, enc):
+    def fake_start_config(key, log, enc, **kw):
         config_calls["called"] = True
 
     monkeypatch.setattr(main_menu, "start_configuration", fake_start_config)

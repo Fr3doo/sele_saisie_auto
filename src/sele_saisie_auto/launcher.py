@@ -27,16 +27,31 @@ from sele_saisie_auto.shared_utils import get_log_file
 DEFAULT_SETTINGS = {"date_cible": "", "debug_mode": "INFO"}
 
 
-def run_psatime(log_file: str, menu: tk.Tk, logger: Logger | None = None) -> None:
+def run_psatime(
+    log_file: str,
+    menu: tk.Tk,
+    logger: Logger | None = None,
+    *,
+    headless: bool = False,
+    no_sandbox: bool = False,
+) -> None:
     """Launch the Selenium automation after closing the menu."""
     menu.destroy()
     if logger is None:
         with Logger(log_file) as log:
             log.info("Launching PSA time")
-            saisie_automatiser_psatime.main(log_file)
+            saisie_automatiser_psatime.main(
+                log_file,
+                headless=headless,
+                no_sandbox=no_sandbox,
+            )
     else:
         logger.info("Launching PSA time")
-        saisie_automatiser_psatime.main(log_file)
+        saisie_automatiser_psatime.main(
+            log_file,
+            headless=headless,
+            no_sandbox=no_sandbox,
+        )
 
 
 def run_psatime_with_credentials(
@@ -46,6 +61,9 @@ def run_psatime_with_credentials(
     log_file: str,
     menu: tk.Tk,
     logger: Logger | None = None,
+    *,
+    headless: bool = False,
+    no_sandbox: bool = False,
 ) -> None:
     """Encrypt credentials and start PSA time after closing the menu."""
     login = login_var.get()
@@ -63,11 +81,22 @@ def run_psatime_with_credentials(
     data_pwd = encryption_service.chiffrer_donnees(password, cle_aes)
     encryption_service.store_credentials(data_login, data_pwd)
 
-    run_psatime(log_file, menu, logger=logger)
+    run_psatime(
+        log_file,
+        menu,
+        logger=logger,
+        headless=headless,
+        no_sandbox=no_sandbox,
+    )
 
 
 def start_configuration(
-    cle_aes: bytes, log_file: str, encryption_service: EncryptionService
+    cle_aes: bytes,
+    log_file: str,
+    encryption_service: EncryptionService,
+    *,
+    headless: bool = False,
+    no_sandbox: bool = False,
 ) -> None:
     """Minimal configuration window."""
 
@@ -102,7 +131,13 @@ def start_configuration(
         root.destroy()
         from sele_saisie_auto.main_menu import main_menu
 
-        main_menu(cle_aes, log_file, encryption_service)
+        main_menu(
+            cle_aes,
+            log_file,
+            encryption_service,
+            headless=headless,
+            no_sandbox=no_sandbox,
+        )
 
     btn_row = create_a_frame(frame, padding=(10, 10))
     create_button_with_style(btn_row, "Sauvegarder", command=save)
@@ -126,7 +161,13 @@ def main(argv: list[str] | None = None) -> None:
             cle_aes = encryption_service.cle_aes
             from sele_saisie_auto.main_menu import main_menu
 
-            main_menu(cle_aes, log_file, encryption_service)
+            main_menu(
+                cle_aes,
+                log_file,
+                encryption_service,
+                headless=args.headless,
+                no_sandbox=args.no_sandbox,
+            )
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation
