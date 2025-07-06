@@ -108,9 +108,9 @@ def test_submit_and_validate_additional_information_positive(monkeypatch):
 
 def test_initialize_debug_mode_off(monkeypatch, sample_config, tmp_path):
     cfg = sample_config
-    from sele_saisie_auto.app_config import AppConfig
+    from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
 
-    app_cfg = AppConfig.from_parser(cfg)
+    app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
     monkeypatch.setattr(
         sap,
         "ConfigManager",

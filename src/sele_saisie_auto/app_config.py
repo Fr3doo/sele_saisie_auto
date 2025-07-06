@@ -30,6 +30,13 @@ from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini
 
 
 @dataclass
+class AppConfigRaw:
+    """Raw configuration container."""
+
+    parser: ConfigParser
+
+
+@dataclass
 class AppConfig:
     """Structured configuration loaded from ``config.ini``."""
 
@@ -187,6 +194,12 @@ class AppConfig:
             raw=parser,
         )
 
+    @classmethod
+    def from_raw(cls, raw: AppConfigRaw) -> AppConfig:
+        """Build ``AppConfig`` from a :class:`AppConfigRaw`."""
+
+        return cls.from_parser(raw.parser)
+
 
 def load_config(log_file: str | None) -> AppConfig:
     """Load ``config.ini`` and return an :class:`AppConfig`.
@@ -213,7 +226,8 @@ def load_config(log_file: str | None) -> AppConfig:
                 parser.add_section(section)
             parser.set(section, option, value)
 
-    cfg = AppConfig.from_parser(parser)
+    raw_cfg = AppConfigRaw(parser=parser)
+    cfg = AppConfig.from_raw(raw_cfg)
     if not cfg.url.strip():
         raise ValueError("L'URL de connexion ne peut pas être vide.")
     if not cfg.encrypted_login.strip() or not cfg.encrypted_mdp.strip():

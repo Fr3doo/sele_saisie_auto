@@ -18,9 +18,9 @@ pytestmark = pytest.mark.slow
 def test_initialize_date_none(monkeypatch, sample_config):
     cfg = sample_config
     cfg["settings"]["date_cible"] = "none"
-    from sele_saisie_auto.app_config import AppConfig
+    from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
 
-    app_cfg = AppConfig.from_parser(cfg)
+    app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyEnc())
     sap.initialize(

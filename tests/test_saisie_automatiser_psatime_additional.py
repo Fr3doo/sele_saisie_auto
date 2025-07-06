@@ -73,9 +73,9 @@ class DummyManager:
 
 
 def setup_init(monkeypatch, cfg):
-    from sele_saisie_auto.app_config import AppConfig
+    from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
 
-    app_cfg = AppConfig.from_parser(cfg)
+    app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyEnc())
     monkeypatch.setattr(sap, "SharedMemoryService", lambda logger: DummySHMService())
