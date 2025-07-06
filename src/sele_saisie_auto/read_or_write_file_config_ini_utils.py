@@ -9,6 +9,14 @@ from tkinter import messagebox
 from sele_saisie_auto import messages
 from sele_saisie_auto.logger_utils import DEFAULT_LOG_LEVEL, write_log
 
+# Cache des configurations lues, indexé par chemin du fichier
+_CACHE: dict[str, tuple[float, configparser.ConfigParser]] = {}
+
+
+def clear_cache() -> None:
+    """Vide le cache de configuration."""
+    _CACHE.clear()
+
 
 def get_runtime_config_path(log_file=None):
     """Détermine le chemin du fichier `config.ini` à utiliser.
@@ -103,11 +111,13 @@ def get_runtime_resource_path(relative_path, log_file=None):
 
 
 def read_config_ini(log_file=None):
-    """Lit et charge le fichier de configuration `config.ini` et Retourne un objet ConfigParser."""
-    # Obtenir le chemin du fichier de configuration
+    """Lit ``config.ini`` et retourne un :class:`ConfigParser`.
+
+    Si le fichier n'a pas changé depuis la dernière lecture,
+    la configuration est retournée depuis le cache.
+    """
     config_file_ini = get_runtime_config_path(log_file=log_file)
 
-    # Vérifier si le fichier existe
     if not os.path.exists(config_file_ini):
         write_log(
             f"🔹 Le fichier '{config_file_ini}' est {messages.INTROUVABLE}.",
@@ -124,7 +134,16 @@ def read_config_ini(log_file=None):
             DEFAULT_LOG_LEVEL,
         )
 
-    # Initialiser ConfigParser
+    current_mtime = os.path.getmtime(config_file_ini)
+    cached = _CACHE.get(config_file_ini)
+    if cached and cached[0] == current_mtime:
+        write_log(
+            "🔹 Configuration chargée depuis le cache.",
+            log_file,
+            DEFAULT_LOG_LEVEL,
+        )
+        return cached[1]
+
     config = configparser.ConfigParser()
 
     try:
@@ -156,6 +175,7 @@ def read_config_ini(log_file=None):
             f"Erreur lors de la lecture du fichier '{config_file_ini}': {e}"
         ) from e
 
+    _CACHE[config_file_ini] = (current_mtime, config)
     write_log("🔹 Configuration initialisée avec succès.", log_file, DEFAULT_LOG_LEVEL)
     return config
 
@@ -192,6 +212,7 @@ def write_config_ini(configuration_personnel, log_file=None):
                 DEFAULT_LOG_LEVEL,
             )
             messagebox.showinfo("Enregistré", "Configuration sauvegardée avec succès.")
+        _CACHE.pop(config_file_ini, None)
     except UnicodeDecodeError as e:
         write_log(
             f"🔹 Erreur d'encodage lors de la lecture du fichier '{config_file_ini}'.",
