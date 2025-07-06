@@ -50,9 +50,9 @@ class TimeSheetContext:
     """Context loaded during :func:`initialize`."""
 
     log_file: str
-    liste_items_descriptions: list[str]
-    jours_de_travail: dict[str, tuple[str, str]]
-    informations_projet_mission: dict[str, str]
+    item_descriptions: list[str]
+    work_days: dict[str, tuple[str, str]]
+    project_mission_info: dict[str, str]
     config: ConfigParser | None = None
 
 
@@ -71,9 +71,9 @@ def context_from_app_config(
 
     return TimeSheetContext(
         log_file=log_file,
-        liste_items_descriptions=app_config.liste_items_planning,
-        jours_de_travail=app_config.work_schedule,
-        informations_projet_mission=informations,
+        item_descriptions=app_config.liste_items_planning,
+        work_days=app_config.work_schedule,
+        project_mission_info=informations,
         config=app_config.raw,
     )
 
@@ -92,12 +92,12 @@ def initialize(log_file: str) -> TimeSheetContext:
 
     set_log_file_selenium(log_file)
     config = read_config_ini(log_file)
-    liste_items_descriptions = [
+    item_descriptions = [
         item.strip().strip('"')
         for item in config.get("settings", "liste_items_planning").split(",")
         if item.strip()
     ]
-    jours_de_travail = {
+    work_days = {
         day: (value.partition(",")[0].strip(), value.partition(",")[2].strip())
         for day, value in config.items("work_schedule")
     }
@@ -109,16 +109,16 @@ def initialize(log_file: str) -> TimeSheetContext:
         billing_map = {
             opt.label.lower(): opt.code for opt in default_cgi_options_billing_action
         }
-    informations_projet_mission = {
+    project_mission_info = {
         item_projet: billing_map.get(value.lower(), value)
         for item_projet, value in config.items("project_information")
     }
 
     return TimeSheetContext(
         log_file=log_file,
-        liste_items_descriptions=liste_items_descriptions,
-        jours_de_travail=jours_de_travail,
-        informations_projet_mission=informations_projet_mission,
+        item_descriptions=item_descriptions,
+        work_days=work_days,
+        project_mission_info=project_mission_info,
         config=config,
     )
 
@@ -143,16 +143,16 @@ def est_en_mission(description):
     return description == "En mission"
 
 
-def est_en_mission_presente(jours_de_travail):
+def est_en_mission_presente(work_days):
     """Vérifie si un jour de travail est marqué comme 'En mission'."""
-    return any(value[0] == "En mission" for value in jours_de_travail.values())
+    return any(value[0] == "En mission" for value in work_days.values())
 
 
-def ajouter_jour_a_jours_remplis(jour, jours_remplis):
+def ajouter_jour_a_jours_remplis(jour, filled_days):
     """Ajoute un jour à la liste jours_remplis si ce n'est pas déjà fait."""
-    if jour not in jours_remplis:
-        jours_remplis.append(jour)
-    return jours_remplis
+    if jour not in filled_days:
+        filled_days.append(jour)
+    return filled_days
 
 
 def afficher_message_insertion(jour, valeur, tentative, message):
@@ -178,21 +178,21 @@ def afficher_message_insertion(jour, valeur, tentative, message):
 
 def remplir_jours(
     driver,
-    liste_items_descriptions,
-    jours_semaine,
-    jours_remplis,
+    item_descriptions,
+    week_days,
+    filled_days,
     context: TimeSheetContext,
 ):
     """Remplir les jours dans l'application web."""
-    # Parcourir chaque description dans liste_items_descriptions
-    for description_cible in liste_items_descriptions:
+    # Parcourir chaque description dans item_descriptions
+    for description_cible in item_descriptions:
         # Recherche de la ligne avec la description spécifiée pour le jour
         id_value = "POL_DESCR$"
         row_index = trouver_ligne_par_description(driver, description_cible, id_value)
 
         # Si la ligne est trouvée, remplir les jours de la semaine
         if row_index is not None:
-            for jour_index, jour_name in jours_semaine.items():
+            for jour_index, jour_name in week_days.items():
                 input_id = f"POL_TIME{jour_index}${row_index}"
 
                 # Vérifier la présence de l'élément
@@ -204,25 +204,25 @@ def remplir_jours(
                     # Vérifier s'il y a une valeur dans l'élément pour ce jour
                     jour_rempli = verifier_champ_jour_rempli(element, jour_name)
                     if jour_rempli:
-                        jours_remplis.append(
+                        filled_days.append(
                             jour_rempli
                         )  # Ajouter le jour s'il est déjà rempli
 
-    return jours_remplis
+    return filled_days
 
 
 def traiter_jour(
     driver,
     jour,
     description_cible,
-    valeur_a_remplir,
-    jours_remplis,
+    value_to_fill,
+    filled_days,
     context: TimeSheetContext,
 ):
     """Traiter un jour spécifique pour le remplissage."""
 
-    if jour in jours_remplis or not description_cible:
-        return jours_remplis
+    if jour in filled_days or not description_cible:
+        return filled_days
 
     id_value = "POL_DESCR$"
     row_index = trouver_ligne_par_description(driver, description_cible, id_value)
@@ -235,49 +235,49 @@ def traiter_jour(
 
         element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
 
-        if element and insert_with_retries(driver, input_id, valeur_a_remplir, None):
-            jours_remplis = ajouter_jour_a_jours_remplis(jour, jours_remplis)
-            afficher_message_insertion(jour, valeur_a_remplir, 0, "après insertion")
-    return jours_remplis
+        if element and insert_with_retries(driver, input_id, value_to_fill, None):
+            filled_days = ajouter_jour_a_jours_remplis(jour, filled_days)
+            afficher_message_insertion(jour, value_to_fill, 0, "après insertion")
+    return filled_days
 
 
 def remplir_mission(
     driver,
-    jours_de_travail,
-    jours_remplis,
+    work_days,
+    filled_days,
     context: TimeSheetContext,
 ):
     """Remplir les jours de travail pour les missions."""
-    for jour, (description_cible, valeur_a_remplir) in jours_de_travail.items():
+    for jour, (description_cible, value_to_fill) in work_days.items():
         if (
             description_cible
             and not est_en_mission(description_cible)
-            and jour not in jours_remplis
+            and jour not in filled_days
         ):
             jours_remplis = traiter_jour(
                 driver,
                 jour,
                 description_cible,
-                valeur_a_remplir,
-                jours_remplis,
+                value_to_fill,
+                filled_days,
                 context,
             )
         elif (
             description_cible
             and est_en_mission(description_cible)
-            and jour not in jours_remplis
+            and jour not in filled_days
         ):
             remplir_mission_specifique(
-                driver, jour, valeur_a_remplir, jours_remplis, context
+                driver, jour, value_to_fill, filled_days, context
             )
-    return jours_remplis
+    return filled_days
 
 
 def remplir_mission_specifique(
     driver,
     jour,
-    valeur_a_remplir,
-    jours_remplis,
+    value_to_fill,
+    filled_days,
     context: TimeSheetContext,
 ):
     """Cas spécifique pour les jours en mission.
@@ -288,9 +288,9 @@ def remplir_mission_specifique(
 
     element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
 
-    if element and insert_with_retries(driver, input_id, valeur_a_remplir, None):
-        jours_remplis = ajouter_jour_a_jours_remplis(jour, jours_remplis)
-        afficher_message_insertion(jour, valeur_a_remplir, 0, "après insertion")
+    if element and insert_with_retries(driver, input_id, value_to_fill, None):
+        filled_days = ajouter_jour_a_jours_remplis(jour, filled_days)
+        afficher_message_insertion(jour, value_to_fill, 0, "après insertion")
 
 
 def _insert_value_with_retries(
@@ -378,7 +378,7 @@ def traiter_champs_mission(  # pragma: no cover
     driver,
     listes_id_informations_mission,
     id_to_key_mapping,
-    informations_projet_mission,
+    project_mission_info,
     context: TimeSheetContext,
     max_attempts=5,
     waiter: Waiter | None = None,
@@ -389,8 +389,8 @@ def traiter_champs_mission(  # pragma: no cover
         if key == "sub_category_code":  # Exclure les champs non concernés
             continue
 
-        valeur_a_remplir = informations_projet_mission.get(key)
-        if not valeur_a_remplir:
+        value_to_fill = project_mission_info.get(key)
+        if not value_to_fill:
             write_log(
                 f"Aucune valeur trouvée pour le champ '{key}' (ID: {id}).",
                 context.log_file,
@@ -399,14 +399,14 @@ def traiter_champs_mission(  # pragma: no cover
             continue
 
         write_log(
-            f"Traitement de l'élément : {key} avec ID : {id} et valeur : {valeur_a_remplir}.",
+            f"Traitement de l'élément : {key} avec ID : {id} et valeur : {value_to_fill}.",
             context.log_file,
             "DEBUG",
         )
         _insert_value_with_retries(
             driver,
             id,
-            valeur_a_remplir,
+            value_to_fill,
             max_attempts,
             waiter,
         )
@@ -445,31 +445,31 @@ class TimeSheetHelper:
         """Return the current context without reloading from disk."""
         return self.context
 
-    def fill_standard_days(self, driver, jours_remplis: list[str]) -> list[str]:
+    def fill_standard_days(self, driver, filled_days: list[str]) -> list[str]:
         """Remplit les jours hors mission."""
         write_log(
             "Début du remplissage des jours hors mission...",
             LOG_FILE,
             "DEBUG",
         )
-        liste = [] if self.context is None else self.context.liste_items_descriptions
+        liste = [] if self.context is None else self.context.item_descriptions
         ctx = self.context or TimeSheetContext(self.log_file, [], {}, {})
-        return remplir_jours(driver, liste, JOURS_SEMAINE, jours_remplis, ctx)
+        return remplir_jours(driver, liste, JOURS_SEMAINE, filled_days, ctx)
 
-    def fill_work_missions(self, driver, jours_remplis: list[str]) -> list[str]:
+    def fill_work_missions(self, driver, filled_days: list[str]) -> list[str]:
         """Traite les jours en mission."""
         write_log(
             "Début du traitement des jours de travail et des missions...",
             LOG_FILE,
             "DEBUG",
         )
-        jours_de_travail = {} if self.context is None else self.context.jours_de_travail
+        work_days = {} if self.context is None else self.context.work_days
         ctx = self.context or TimeSheetContext(self.log_file, [], {}, {})
-        return remplir_mission(driver, jours_de_travail, jours_remplis, ctx)
+        return remplir_mission(driver, work_days, filled_days, ctx)
 
     def handle_additional_fields(self, driver) -> None:
         """Insère les champs complémentaires liés aux missions."""
-        if self.context and est_en_mission_presente(self.context.jours_de_travail):
+        if self.context and est_en_mission_presente(self.context.work_days):
             write_log(
                 "Jour 'En mission' détecté. Traitement des champs associés...",
                 LOG_FILE,
@@ -479,7 +479,7 @@ class TimeSheetHelper:
                 driver,
                 LISTES_ID_INFORMATIONS_MISSION,
                 ID_TO_KEY_MAPPING,
-                self.context.informations_projet_mission,
+                self.context.project_mission_info,
                 self.context,
                 waiter=self.waiter,
             )
@@ -491,7 +491,7 @@ class TimeSheetHelper:
         if self.context is None:  # pragma: no cover - guard clause
             raise RuntimeError("TimeSheetContext not provided")
         try:
-            jours_remplis: list[str] = []
+            filled_days: list[str] = []
 
             write_log(
                 "Initialisation du processus de remplissage...",
@@ -499,12 +499,12 @@ class TimeSheetHelper:
                 "DEBUG",
             )
 
-            jours_remplis = self.fill_standard_days(driver, jours_remplis)
-            write_log(f"Jours déjà remplis : {jours_remplis}", LOG_FILE, "DEBUG")
+            filled_days = self.fill_standard_days(driver, filled_days)
+            write_log(f"Jours déjà remplis : {filled_days}", LOG_FILE, "DEBUG")
 
-            jours_remplis = self.fill_work_missions(driver, jours_remplis)
+            filled_days = self.fill_work_missions(driver, filled_days)
             write_log(
-                f"Finalisation des jours remplis : {jours_remplis}",
+                f"Finalisation des jours remplis : {filled_days}",
                 LOG_FILE,
                 "DEBUG",
             )

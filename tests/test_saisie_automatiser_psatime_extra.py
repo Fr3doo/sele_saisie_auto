@@ -55,8 +55,8 @@ def test_clear_screen_windows(monkeypatch):
 
 
 def test_ajouter_jour_a_jours_remplis_existing():
-    jours = ["lundi"]
-    assert sap.ajouter_jour_a_jours_remplis("lundi", jours) == ["lundi"]
+    filled_days = ["lundi"]
+    assert sap.ajouter_jour_a_jours_remplis("lundi", filled_days) == ["lundi"]
 
 
 def test_afficher_message_insertion_other(monkeypatch):

@@ -14,8 +14,8 @@ from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
 
 def test_remplir_jours_collects_filled_days(monkeypatch):
     liste_items = ["desc1"]
-    jours_semaine = {1: "lundi", 2: "mardi"}
-    jours_remplis = []
+    week_days = {1: "lundi", 2: "mardi"}
+    filled_days = []
 
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.trouver_ligne_par_description",
@@ -35,16 +35,16 @@ def test_remplir_jours_collects_filled_days(monkeypatch):
     )
 
     ctx = TimeSheetContext("log", liste_items, {}, {})
-    result = remplir_jours(None, liste_items, jours_semaine, jours_remplis, ctx)
+    result = remplir_jours(None, liste_items, week_days, filled_days, ctx)
     assert result == ["lundi"]
 
 
 def test_remplir_mission_calls_helpers(monkeypatch):
-    jours_de_travail = {
+    work_days = {
         "lundi": ("desc1", "8"),
         "mardi": ("En mission", "8"),
     }
-    jours_remplis = []
+    filled_days = []
     calls = {"traiter": [], "specifique": []}
 
     def fake_traiter(driver, jour, desc, val, jours, ctx):
@@ -65,7 +65,7 @@ def test_remplir_mission_calls_helpers(monkeypatch):
     )
 
     ctx = TimeSheetContext("log", [], {}, {})
-    result = remplir_mission(None, jours_de_travail, jours_remplis, ctx)
+    result = remplir_mission(None, work_days, filled_days, ctx)
 
     assert result == ["lundi", "mission_mardi"]
     assert calls["traiter"] == [("lundi", "desc1", "8")]

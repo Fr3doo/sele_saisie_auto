@@ -61,7 +61,7 @@ class SaisieContext:
     config: "AppConfig"
     encryption_service: EncryptionService
     shared_memory_service: SharedMemoryService
-    informations_projet_mission: dict[str, str]
+    project_mission_info: dict[str, str]
     descriptions: list[dict[str, object]]
 
 
@@ -127,7 +127,7 @@ class PSATimeAutomation:
             config=app_config,
             encryption_service=EncryptionService(log_file, shm_service),
             shared_memory_service=shm_service,
-            informations_projet_mission={
+            project_mission_info={
                 item_projet: {
                     opt.label.lower(): opt.code
                     for opt in app_config.cgi_options_billing_action
@@ -531,11 +531,11 @@ def est_en_mission(description):
     return description == "En mission"
 
 
-def ajouter_jour_a_jours_remplis(jour, jours_remplis):
+def ajouter_jour_a_jours_remplis(jour, filled_days):
     """Ajoute un jour à la liste jours_remplis si ce n'est pas déjà fait."""
-    if jour not in jours_remplis:
-        jours_remplis.append(jour)
-    return jours_remplis
+    if jour not in filled_days:
+        filled_days.append(jour)
+    return filled_days
 
 
 def afficher_message_insertion(jour, valeur, tentative, message, log_file: str) -> None:
