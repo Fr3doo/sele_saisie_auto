@@ -59,6 +59,8 @@ cover/
 .ruff_cache/
 logs/
 reports/
+.vscode/
+
 
 # Translations
 *.mo

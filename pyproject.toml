@@ -39,11 +39,6 @@ pyinstaller = {version = "^6.13.0", markers = "python_version < '3.14'"}
 pyinstaller-hooks-contrib = {version = "^2025.2", markers = "python_version < '3.14'"}
 
 
-[[tool.poetry.source]]
-name = "safety"
-url = "https://pkgs.safetycli.com/repository/cgi-0e4b6/project/sele_saisie_auto/pypi/simple/"
-priority = "primary"
-
 [tool.black]
 line-length = 88
 target-version = ["py311"]
