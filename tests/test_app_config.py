@@ -3,6 +3,8 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+import pytest  # noqa: E402
+
 from sele_saisie_auto.app_config import AppConfig, load_config  # noqa: E402
 
 
@@ -71,3 +73,43 @@ Facturable = B
     assert app_cfg.debug_mode == "DEBUG"
     assert app_cfg.liste_items_planning == ["env1", "env2"]
     assert app_cfg.raw.get("credentials", "login") == "env_login"
+
+
+def test_load_config_fails_on_empty_url(tmp_path, monkeypatch):
+    cfg = tmp_path / "config.ini"
+    cfg.write_text(
+        """[credentials]
+login=enc
+mdp=enc
+[settings]
+url=
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log",
+        lambda *a, **k: None,
+    )
+    with pytest.raises(ValueError):
+        load_config(str(tmp_path / "log.html"))
+
+
+def test_load_config_fails_on_missing_credentials(tmp_path, monkeypatch):
+    cfg = tmp_path / "config.ini"
+    cfg.write_text(
+        """[credentials]
+login=
+mdp=
+[settings]
+url=http://t
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log",
+        lambda *a, **k: None,
+    )
+    with pytest.raises(ValueError):
+        load_config(str(tmp_path / "log.html"))

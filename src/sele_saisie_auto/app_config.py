@@ -213,4 +213,10 @@ def load_config(log_file: str | None) -> AppConfig:
                 parser.add_section(section)
             parser.set(section, option, value)
 
-    return AppConfig.from_parser(parser)
+    cfg = AppConfig.from_parser(parser)
+    if not cfg.url.strip():
+        raise ValueError("L'URL de connexion ne peut pas être vide.")
+    if not cfg.encrypted_login.strip() or not cfg.encrypted_mdp.strip():
+        raise ValueError("Le login et le mot de passe doivent être renseignés.")
+
+    return cfg
