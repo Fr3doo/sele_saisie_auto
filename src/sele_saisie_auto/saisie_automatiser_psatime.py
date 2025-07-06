@@ -34,17 +34,17 @@ from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import initialize_logger, write_log
 from sele_saisie_auto.logging_service import Logger
-from sele_saisie_auto.selenium_utils import click_element_without_wait  # noqa: F401
-from sele_saisie_auto.selenium_utils import modifier_date_input  # noqa: F401
-from sele_saisie_auto.selenium_utils import send_keys_to_element  # noqa: F401
-from sele_saisie_auto.selenium_utils import detecter_doublons_jours
-from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.selenium_utils import (
+    click_element_without_wait,  # noqa: F401
+    detecter_doublons_jours,
+    modifier_date_input,  # noqa: F401
+    send_keys_to_element,  # noqa: F401
     switch_to_default_content,
     switch_to_iframe_by_id_or_name,
     wait_for_dom_after,
     wait_for_element,
 )
+from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
@@ -277,34 +277,13 @@ class PSATimeAutomation:
 
     def initialize_shared_memory(self):
         """Récupère les données de la mémoire partagée pour le login."""
-        memoire_cle = memoire_nom = memoire_mdp = None
+        credentials = self.context.encryption_service.retrieve_credentials()
 
-        memoire_cle, cle_aes = (
-            self.context.shared_memory_service.recuperer_de_memoire_partagee(
-                self.memory_config.cle_name, self.memory_config.key_size
-            )
-        )
-        write_log(f"💀 Clé AES récupérée : {cle_aes.hex()}", self.log_file, "CRITICAL")
-
-        memoire_nom = shared_memory.SharedMemory(name="memoire_nom")
-        taille_nom = len(bytes(memoire_nom.buf).rstrip(b"\x00"))
-        nom_utilisateur_chiffre = bytes(memoire_nom.buf[:taille_nom])
-        write_log(
-            f"💀 Taille du login chiffré : {len(nom_utilisateur_chiffre)}",
-            self.log_file,
-            "CRITICAL",
-        )
-
-        memoire_mdp = shared_memory.SharedMemory(name="memoire_mdp")
-        taille_mdp = len(bytes(memoire_mdp.buf).rstrip(b"\x00"))
-        mot_de_passe_chiffre = bytes(memoire_mdp.buf[:taille_mdp])
-        write_log(
-            f"💀 Taille du mot de passe chiffré : {len(mot_de_passe_chiffre)}",
-            self.log_file,
-            "CRITICAL",
-        )
-
-        if not memoire_nom or not memoire_mdp or not memoire_cle:
+        if (
+            credentials.mem_login is None
+            or credentials.mem_password is None
+            or credentials.mem_key is None
+        ):
             write_log(
                 "🚨 La mémoire partagée n'a pas été initialisée correctement. Assurez-vous que les identifiants ont été chiffrés",
                 self.log_file,
@@ -312,14 +291,7 @@ class PSATimeAutomation:
             )
             sys.exit(1)
 
-        return Credentials(
-            aes_key=cle_aes,
-            mem_key=memoire_cle,
-            login=nom_utilisateur_chiffre,
-            mem_login=memoire_nom,
-            password=mot_de_passe_chiffre,
-            mem_password=memoire_mdp,
-        )
+        return credentials
 
     def wait_for_dom(self, driver):
         """Wait until the DOM is stable using :class:`BrowserSession`."""

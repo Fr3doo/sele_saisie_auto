@@ -80,9 +80,16 @@ def test_initialize_shared_memory_error(monkeypatch, sample_config):
     sap.context.encryption_service = DummyEnc()
     sap.context.shared_memory_service = DummySHMService()
     monkeypatch.setattr(
-        sap.context.shared_memory_service,
-        "recuperer_de_memoire_partagee",
-        lambda *a, **k: (None, b"k" * 32),
+        sap.context.encryption_service,
+        "retrieve_credentials",
+        lambda: sap.Credentials(
+            aes_key=b"k" * 32,
+            mem_key=None,
+            login=b"u",
+            mem_login=None,
+            password=b"p",
+            mem_password=None,
+        ),
     )
     exit_called = {}
     monkeypatch.setattr(
