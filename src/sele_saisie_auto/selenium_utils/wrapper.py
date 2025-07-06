@@ -9,9 +9,10 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
 from sele_saisie_auto import messages
+from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
-from . import LOG_FILE, write_log
+from . import get_default_logger
 
 
 def is_document_complete(driver):
@@ -26,11 +27,11 @@ class Wrapper:
         self,
         default_timeout: int = DEFAULT_TIMEOUT,
         long_timeout: int = LONG_TIMEOUT,
-        writer=write_log,
+        logger: Logger | None = None,
     ) -> None:
         self.default_timeout = default_timeout
         self.long_timeout = long_timeout
-        self.writer = writer
+        self.logger = logger or get_default_logger()
 
     # ------------------------------------------------------------------
     # DOM helpers
@@ -39,7 +40,7 @@ class Wrapper:
         """Wait until the DOM is fully loaded."""
         timeout = timeout or self.long_timeout
         WebDriverWait(driver, timeout).until(is_document_complete)
-        self.writer("DOM chargé avec succès.", LOG_FILE, "DEBUG")
+        self.logger.debug("DOM chargé avec succès.")
 
     def wait_until_dom_is_stable(self, driver, timeout: int | None = None) -> bool:
         """Return ``True`` if the DOM remains unchanged for ``timeout`` seconds."""
@@ -57,13 +58,13 @@ class Wrapper:
                 unchanged_count = 0
 
             if unchanged_count >= required_stability_count:
-                self.writer(messages.DOM_STABLE, LOG_FILE, "DEBUG")
+                self.logger.debug(messages.DOM_STABLE)
                 return True
 
             previous_dom_snapshot = current_dom_snapshot
             time.sleep(1)
 
-        self.writer(messages.DOM_NOT_STABLE, LOG_FILE, "WARNING")
+        self.logger.warning(messages.DOM_NOT_STABLE)
         return False
 
     # ------------------------------------------------------------------
@@ -79,7 +80,7 @@ class Wrapper:
     ):
         """Wait for an element to satisfy ``condition`` or return ``None``."""
         if locator_value is None:
-            self.writer(messages.LOCATOR_VALUE_REQUIRED, LOG_FILE, "ERROR")
+            self.logger.error(messages.LOCATOR_VALUE_REQUIRED)
             return None
 
         timeout = timeout or self.default_timeout
@@ -88,17 +89,13 @@ class Wrapper:
             matched_element = WebDriverWait(driver, timeout).until(
                 condition((by, locator_value))
             )
-            self.writer(
-                f"Élément avec {by}='{locator_value}' trouvé et condition '{condition.__name__}' validée.",
-                LOG_FILE,
-                "DEBUG",
+            self.logger.debug(
+                f"Élément avec {by}='{locator_value}' trouvé et condition '{condition.__name__}' validée."
             )
             return matched_element
 
-        self.writer(
-            f"Élément avec {by}='{locator_value}' non trouvé dans le délai imparti ({timeout}s).",
-            LOG_FILE,
-            "WARNING",
+        self.logger.warning(
+            f"Élément avec {by}='{locator_value}' non trouvé dans le délai imparti ({timeout}s)."
         )
         return None
 
