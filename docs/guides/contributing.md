@@ -95,7 +95,7 @@ Utilisez cette commande avant d’ouvrir une pull request pour vous assurer que 
 
 ---
 
-### 📦 Pull Request (PR) Instructions (Fusion des branches)
+### 📦 Pull Request : instructions de fusion
 - **Titre** : `[<nom_agent>] <Résumé concis>`
 - **Description** :
   1. Contexte et objectif, écrit en français
