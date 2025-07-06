@@ -158,77 +158,91 @@ def trouver_ligne_par_description(
     row_prefix,
     partial_match=False,
     logger: Logger | None = None,
+    max_rows: int | None = None,
 ):
     """Return the row index matching a description or None."""
     logger = logger or get_default_logger()
     matched_row_index = None
-    row_counter = 0
 
-    while True:
+    if max_rows is None:
+        row_elements = driver.find_elements(By.CSS_SELECTOR, f"[id^='{row_prefix}']")
+        row_range = range(len(row_elements))
+    else:
+        row_range = range(max_rows)
+
+    for row_counter in row_range:
         try:
             current_description_element = driver.find_element(
                 By.ID, f"{row_prefix}{row_counter}"
             )
-            raw_text = current_description_element.text.strip()
-            cleaned_text = " ".join(raw_text.split())
-
-            if partial_match:
-                if target_description in cleaned_text:
-                    logger.debug(
-                        f"Ligne trouvée (correspondance partielle) pour '{target_description}' à l'index {row_counter}"
-                    )
-                    matched_row_index = row_counter
-                    break
-            else:
-                if cleaned_text == target_description:
-                    logger.debug(
-                        f"Ligne trouvée pour '{target_description}' à l'index {row_counter}"
-                    )
-                    matched_row_index = row_counter
-                    break
-            row_counter += 1
         except NoSuchElementException:
-            logger.warning(f"Aucune ligne trouvée pour '{target_description}'.")
-            break
+            if max_rows is None:
+                logger.warning(f"Aucune ligne trouvée pour '{target_description}'.")
+                break
+            continue
+
+        raw_text = current_description_element.text.strip()
+        cleaned_text = " ".join(raw_text.split())
+
+        if partial_match:
+            if target_description in cleaned_text:
+                logger.debug(
+                    f"Ligne trouvée (correspondance partielle) pour '{target_description}' à l'index {row_counter}"
+                )
+                matched_row_index = row_counter
+                break
+        else:
+            if cleaned_text == target_description:
+                logger.debug(
+                    f"Ligne trouvée pour '{target_description}' à l'index {row_counter}"
+                )
+                matched_row_index = row_counter
+                break
     return matched_row_index
 
 
-def detecter_doublons_jours(driver, logger: Logger | None = None):
+def detecter_doublons_jours(
+    driver, logger: Logger | None = None, max_rows: int | None = None
+):
     """Check if any day appears more than once across lines."""
     logger = logger or get_default_logger()
     filled_days_tracker = {}
-    row_index = 0
-    while True:
+    if max_rows is None:
+        row_elements = driver.find_elements(By.CSS_SELECTOR, "[id^='POL_DESCR$']")
+        row_range = range(len(row_elements))
+    else:
+        row_range = range(max_rows)
+
+    for row_index in row_range:
         try:
             current_line_description = driver.find_element(
                 By.ID, f"POL_DESCR${row_index}"
             )
-            line_description = current_line_description.text.strip()
-            logger.debug(
-                f"Analyse de la ligne '{line_description}' à l'index {row_index}"
-            )
-
-            for day_counter in range(1, 8):
-                day_input_id = f"POL_TIME{day_counter}${row_index}"
-                try:
-                    day_field = driver.find_element(By.ID, day_input_id)
-                    day_content = day_field.get_attribute("value")
-
-                    if day_content.strip():
-                        day_name = JOURS_SEMAINE[day_counter]
-                        if day_name in filled_days_tracker:
-                            filled_days_tracker[day_name].append(line_description)
-                        else:
-                            filled_days_tracker[day_name] = [line_description]
-                except NoSuchElementException:
-                    logger.warning(
-                        f"{messages.IMPOSSIBLE_DE_TROUVER} l'élément pour le jour '{JOURS_SEMAINE[day_counter]}' avec l'ID '{day_input_id}'"
-                    )
-
-            row_index += 1
         except NoSuchElementException:
-            logger.debug(f"Fin de l'analyse des lignes à l'index {row_index}")
-            break
+            if max_rows is None:
+                logger.debug(f"Fin de l'analyse des lignes à l'index {row_index}")
+                break
+            continue
+
+        line_description = current_line_description.text.strip()
+        logger.debug(f"Analyse de la ligne '{line_description}' à l'index {row_index}")
+
+        for day_counter in range(1, 8):
+            day_input_id = f"POL_TIME{day_counter}${row_index}"
+            try:
+                day_field = driver.find_element(By.ID, day_input_id)
+                day_content = day_field.get_attribute("value")
+
+                if day_content.strip():
+                    day_name = JOURS_SEMAINE[day_counter]
+                    if day_name in filled_days_tracker:
+                        filled_days_tracker[day_name].append(line_description)
+                    else:
+                        filled_days_tracker[day_name] = [line_description]
+            except NoSuchElementException:
+                logger.warning(
+                    f"{messages.IMPOSSIBLE_DE_TROUVER} l'élément pour le jour '{JOURS_SEMAINE[day_counter]}' avec l'ID '{day_input_id}'"
+                )
 
     for day_name, lines in filled_days_tracker.items():
         if len(lines) > 1:
