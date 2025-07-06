@@ -8,6 +8,7 @@ from sele_saisie_auto import remplir_informations_supp_utils as risu  # noqa: E4
 from sele_saisie_auto.additional_info_locators import (  # noqa: E402
     AdditionalInfoLocators,
 )
+from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.remplir_informations_supp_utils import (  # noqa: E402
     ExtraInfoHelper,
 )
@@ -30,7 +31,7 @@ def test_traiter_description_not_found(monkeypatch):
     messages = []
     monkeypatch.setattr(risu, "write_log", lambda msg, f, level: messages.append(msg))
     monkeypatch.setattr(risu, "trouver_ligne_par_description", lambda *a, **k: None)
-    helper = ExtraInfoHelper(log_file="log")
+    helper = ExtraInfoHelper(Logger("log"))
     helper.waiter = None
     helper.traiter_description(None, make_config())
     assert any("non trouv\u00e9e" in m for m in messages)
@@ -66,7 +67,7 @@ def test_traiter_description_input(monkeypatch):
         risu, "remplir_champ_texte", lambda el, jour, val: filled.append((jour, val))
     )
 
-    helper = ExtraInfoHelper(log_file="log")
+    helper = ExtraInfoHelper(Logger("log"))
     helper.waiter = None
     helper.traiter_description(None, make_config())
 
@@ -101,7 +102,7 @@ def test_traiter_description_select_special(monkeypatch):
         id_value_jours=AdditionalInfoLocators.DAY_UC_DAILYREST_SPECIAL.value,
     )
     del cfg["valeurs_a_remplir"]["mardi"]
-    helper = ExtraInfoHelper(log_file="log")
+    helper = ExtraInfoHelper(Logger("log"))
     helper.waiter = None
     helper.traiter_description(None, cfg)
 
@@ -126,7 +127,7 @@ def test_traiter_description_unknown_type(monkeypatch):
         risu, "remplir_champ_texte", lambda *a, **k: called.append("input")
     )
     cfg = make_config(type_element="other")
-    helper = ExtraInfoHelper(log_file="log")
+    helper = ExtraInfoHelper(Logger("log"))
     helper.waiter = None
     helper.traiter_description(None, cfg)
     assert not called

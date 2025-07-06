@@ -28,7 +28,7 @@ class AdditionalInfoPage:
         cfg = getattr(ctx, "config", None)
         self.waiter = waiter or getattr(automation, "waiter", None) or Waiter()
         self.helper = ExtraInfoHelper(
-            log_file=self.log_file,
+            logger=self._automation.logger,
             waiter=self.waiter,
             page=self,
             app_config=cfg if hasattr(cfg, "default_timeout") else None,

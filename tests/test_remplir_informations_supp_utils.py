@@ -8,6 +8,7 @@ from sele_saisie_auto import remplir_informations_supp_utils as risu  # noqa: E4
 from sele_saisie_auto.additional_info_locators import (  # noqa: E402
     AdditionalInfoLocators,
 )
+from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.remplir_informations_supp_utils import (  # noqa: E402
     ExtraInfoHelper,
 )
@@ -32,7 +33,7 @@ def test_traiter_description_row_not_found(monkeypatch):
     logs = []
     monkeypatch.setattr(risu, "write_log", lambda msg, f, level: logs.append(msg))
     monkeypatch.setattr(risu, "trouver_ligne_par_description", lambda *a, **k: None)
-    helper = ExtraInfoHelper(log_file="log")
+    helper = ExtraInfoHelper(Logger("log"))
     helper.waiter = None
     helper.traiter_description(None, make_config())
     assert any("non trouv" in m for m in logs)
@@ -74,7 +75,7 @@ def test_traiter_description_fill_input(monkeypatch):
 
     cfg = make_config()
     del cfg["valeurs_a_remplir"]["mardi"]
-    helper = ExtraInfoHelper(log_file="log")
+    helper = ExtraInfoHelper(Logger("log"))
     helper.waiter = None
     helper.traiter_description(None, cfg)
 
@@ -99,7 +100,7 @@ def test_traiter_description_select(monkeypatch):
     )
 
     cfg = make_config(type_element="select")
-    helper = ExtraInfoHelper(log_file="log")
+    helper = ExtraInfoHelper(Logger("log"))
     helper.waiter = None
     helper.traiter_description(None, cfg)
     assert "val_lundi" in selected
