@@ -35,7 +35,7 @@ def test_setup_logs_oserror(monkeypatch):
         raise OSError("boom")
 
     monkeypatch.setattr("sele_saisie_auto.shared_utils.os.makedirs", raise_oserror)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="Impossible de créer le dossier"):
         setup_logs()
 
 
