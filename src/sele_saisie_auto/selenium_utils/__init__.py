@@ -15,15 +15,24 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import Select, WebDriverWait
 
 from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logging_service import Logger
+from sele_saisie_auto.shared_utils import get_log_file
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 LOG_FILE: str | None = None
+_DEFAULT_LOGGER = Logger(get_log_file())
 
 
 def set_log_file(log_file: str) -> None:
     """Inject log file path for helper modules."""
-    global LOG_FILE
+    global LOG_FILE, _DEFAULT_LOGGER
     LOG_FILE = log_file
+    _DEFAULT_LOGGER = Logger(log_file)
+
+
+def get_default_logger() -> Logger:
+    """Return the default :class:`Logger` used by helpers."""
+    return _DEFAULT_LOGGER
 
 
 from .element_actions import (
@@ -62,6 +71,7 @@ from .wrapper import Wrapper, is_document_complete
 
 __all__ = [
     "set_log_file",
+    "get_default_logger",
     "LOG_FILE",
     "DEFAULT_TIMEOUT",
     "LONG_TIMEOUT",
