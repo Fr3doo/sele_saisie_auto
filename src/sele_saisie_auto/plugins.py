@@ -26,10 +26,12 @@ def hook(name: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     return decorator
 
 
-def call(name: str, *args: Any, **kwargs: Any) -> None:
-    """Invoke all functions registered for *name*."""
+def call(name: str, *args: Any, **kwargs: Any) -> list[Any]:
+    """Invoke all functions registered for *name* and collect their results."""
+    results: list[Any] = []
     for func in list(_HOOKS.get(name, [])):
-        func(*args, **kwargs)
+        results.append(func(*args, **kwargs))
+    return results
 
 
 def clear() -> None:

@@ -130,3 +130,18 @@ def test_hook_decorator_registers():
 
     plugins.call("after_run", 123)
     assert calls == [123]
+
+
+def test_call_returns_list_of_results():
+    plugins.clear()
+
+    @plugins.hook("after_run")
+    def plus_one(x):
+        return x + 1
+
+    @plugins.hook("after_run")
+    def times_two(x):
+        return x * 2
+
+    results = plugins.call("after_run", 3)
+    assert results == [4, 6]

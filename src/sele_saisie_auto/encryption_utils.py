@@ -8,7 +8,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 
 from sele_saisie_auto.logger_utils import write_log
-from sele_saisie_auto.logging_service import Logger, get_logger
+from sele_saisie_auto.logging_service import get_logger
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 
 
