@@ -147,7 +147,7 @@ class DateEntryPage:
             1,
             messages.WAIT_STABILISATION,
         )
-        print()
+        write_log(messages.DOM_STABLE, self.log_file, "DEBUG")
         if self.submit_date_cible(driver):
             self._handle_date_alert(driver)
 

@@ -394,7 +394,7 @@ class PSATimeAutomation:
             1,
             messages.WAIT_STABILISATION,
         )
-        print()
+        write_log(messages.DOM_STABLE, self.log_file, "DEBUG")
         self._click_action_button(driver)
         self.wait_for_dom(driver)
         ctx = remplir_jours_feuille_de_temps.context_from_app_config(

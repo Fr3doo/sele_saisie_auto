@@ -1,4 +1,3 @@
-# pragma: no cover
 # remplir_jours_feuille_de_temps.py
 
 
@@ -32,15 +31,13 @@ from sele_saisie_auto.selenium_utils import (
     controle_insertion,
     detecter_et_verifier_contenu,
     effacer_et_entrer_valeur,
-)
-from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
-from sele_saisie_auto.selenium_utils import (
     trouver_ligne_par_description,
     verifier_champ_jour_rempli,
     wait_for_dom_ready,
     wait_for_element,
     wait_until_dom_is_stable,
 )
+from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
 
@@ -254,7 +251,7 @@ def remplir_mission(
             and not est_en_mission(description_cible)
             and jour not in filled_days
         ):
-            jours_remplis = traiter_jour(
+            traiter_jour(
                 driver,
                 jour,
                 description_cible,
@@ -335,7 +332,7 @@ def _insert_value_with_retries(
             program_break_time(
                 1, "Stabilisation du DOM après insertion."
             )  # pragma: no cover
-            print()  # pragma: no cover
+            write_log(messages.DOM_STABLE, LOG_FILE, "DEBUG")  # pragma: no cover
             # pragma: no cover
             if controle_insertion(input_field, value):  # pragma: no cover
                 write_log(  # pragma: no cover
