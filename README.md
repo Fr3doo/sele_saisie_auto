@@ -3,7 +3,7 @@
 [![Licence](https://img.shields.io/badge/license-Unlicense-lightgrey.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](#)
 [![CI](https://img.shields.io/badge/CI-GitHub_Actions-inactive.svg)](#)
-[![Coverage](https://img.shields.io/badge/coverage-0%25-red.svg)](#)
+[![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen.svg)](#)
 
 ## Sommaire
 - [Objectif du projet](#objectif-du-projet)
