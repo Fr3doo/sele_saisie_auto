@@ -9,7 +9,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.locators import Locators
-from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import send_keys_to_element, wait_for_dom_after
 
 
@@ -32,14 +32,14 @@ class LoginHandler:
 
     def login(self, driver: WebDriver, credentials) -> None:
         """Fill username and password fields using decrypted credentials."""
-        write_log("Déchiffrement des identifiants", self.log_file, "DEBUG")
+        write_log(format_message("DECRYPT_CREDENTIALS", {}), self.log_file, "DEBUG")
         username = self.encryption_service.dechiffrer_donnees(
             credentials.login, credentials.aes_key
         )
         password = self.encryption_service.dechiffrer_donnees(
             credentials.password, credentials.aes_key
         )
-        write_log("Envoi des identifiants", self.log_file, "DEBUG")
+        write_log(format_message("SEND_CREDENTIALS", {}), self.log_file, "DEBUG")
         send_keys_to_element(driver, By.ID, Locators.USERNAME.value, username)
         send_keys_to_element(driver, By.ID, Locators.PASSWORD.value, password)
         send_keys_to_element(driver, By.ID, Locators.PASSWORD.value, Keys.RETURN)

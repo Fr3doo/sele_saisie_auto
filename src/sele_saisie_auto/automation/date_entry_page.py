@@ -11,7 +11,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from sele_saisie_auto import messages
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.locators import Locators
-from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
@@ -114,7 +114,7 @@ class DateEntryPage:
                     )
                 else:
                     sap.write_log(
-                        messages.NO_DATE_CHANGE,
+                        format_message("NO_DATE_CHANGE", {}),
                         self.log_file,
                         "DEBUG",
                     )
@@ -147,7 +147,7 @@ class DateEntryPage:
             1,
             messages.WAIT_STABILISATION,
         )
-        write_log(messages.DOM_STABLE, self.log_file, "DEBUG")
+        write_log(format_message("DOM_STABLE", {}), self.log_file, "DEBUG")
         if self.submit_date_cible(driver):
             self._handle_date_alert(driver)
 
@@ -162,18 +162,18 @@ class DateEntryPage:
         ):
             sap.click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
             write_log(
-                messages.TIME_SHEET_EXISTS_ERROR,
+                format_message("TIME_SHEET_EXISTS_ERROR", {}),
                 self.log_file,
                 "INFO",
             )
             write_log(
-                messages.MODIFY_DATE_MESSAGE,
+                format_message("MODIFY_DATE_MESSAGE", {}),
                 self.log_file,
                 "INFO",
             )
             sys.exit()
         else:
-            write_log(messages.DATE_VALIDATED, self.log_file, "DEBUG")
+            write_log(format_message("DATE_VALIDATED", {}), self.log_file, "DEBUG")
 
     def _click_action_button(self, driver, create_new: bool) -> None:
         """Click the appropriate action button on the page."""

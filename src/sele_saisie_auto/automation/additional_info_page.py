@@ -6,10 +6,9 @@ from typing import TYPE_CHECKING
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 
-from sele_saisie_auto import messages
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.locators import Locators
-from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.remplir_informations_supp_utils import ExtraInfoHelper
 from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
@@ -100,7 +99,7 @@ class AdditionalInfoPage:
             for config in self._automation.context.descriptions:
                 sap.traiter_description(driver, config)
             write_log(
-                messages.ADDITIONAL_INFO_DONE,
+                format_message("ADDITIONAL_INFO_DONE", {}),
                 self.log_file,
                 "INFO",
             )
@@ -150,7 +149,7 @@ class AdditionalInfoPage:
             ):
                 sap.click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
                 write_log(
-                    messages.SAVE_ALERT_WARNING,
+                    format_message("SAVE_ALERT_WARNING", {}),
                     self.log_file,
                     "INFO",
                 )
