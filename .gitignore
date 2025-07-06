@@ -58,6 +58,7 @@ coverage.xml
 cover/
 .ruff_cache/
 logs/
+reports/
 
 # Translations
 *.mo
