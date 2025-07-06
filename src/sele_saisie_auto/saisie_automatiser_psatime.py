@@ -34,17 +34,12 @@ from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import initialize_logger, write_log
 from sele_saisie_auto.logging_service import get_logger
-from sele_saisie_auto.selenium_utils import (
-    Waiter,
-    click_element_without_wait,  # noqa: F401
-    detecter_doublons_jours,
-    modifier_date_input,  # noqa: F401
-    send_keys_to_element,  # noqa: F401
-    switch_to_default_content,
-    switch_to_iframe_by_id_or_name,
-    wait_for_dom_after,
-)
+from sele_saisie_auto.selenium_utils import click_element_without_wait  # noqa: F401
+from sele_saisie_auto.selenium_utils import modifier_date_input  # noqa: F401
+from sele_saisie_auto.selenium_utils import send_keys_to_element  # noqa: F401
+from sele_saisie_auto.selenium_utils import Waiter, detecter_doublons_jours
 from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
+from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
@@ -95,7 +90,6 @@ __all__ = [
     "modifier_date_input",
     "send_keys_to_element",
     "click_element_without_wait",
-    "switch_to_iframe_by_id_or_name",
 ]
 
 
@@ -418,7 +412,7 @@ class PSATimeAutomation:
         )
         self.navigate_from_work_schedule_to_additional_information_page(driver)
         self.submit_and_validate_additional_information(driver)
-        switch_to_default_content(driver)
+        self.browser_session.go_to_default_content()
         self.wait_for_dom(driver)
         if self.switch_to_iframe_main_target_win0(driver):
             detecter_doublons_jours(driver)

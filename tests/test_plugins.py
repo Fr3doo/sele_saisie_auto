@@ -60,7 +60,10 @@ def test_run_invokes_hook(monkeypatch, sample_config):
     monkeypatch.setattr(
         sap.PSATimeAutomation, "switch_to_iframe_main_target_win0", lambda *a, **k: True
     )
-    monkeypatch.setattr(sap, "switch_to_default_content", lambda *a, **k: None)
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_default_content",
+        lambda *a, **k: None,
+    )
     monkeypatch.setattr(
         sap._AUTOMATION.waiter, "wait_for_element", lambda *a, **k: object()
     )

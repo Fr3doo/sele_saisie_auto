@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto.app_config import AppConfig
@@ -8,7 +9,6 @@ from sele_saisie_auto.selenium_utils import (
     Waiter,
     definir_taille_navigateur,
     ouvrir_navigateur_sur_ecran_principal,
-    switch_to_iframe_by_id_or_name,
     wait_for_dom_ready,
 )
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
@@ -157,4 +157,22 @@ class BrowserSession:
 
         if self.driver is None:
             return False
-        return switch_to_iframe_by_id_or_name(self.driver, id_or_name)
+
+        try:
+            self.driver.switch_to.frame(self.driver.find_element(By.ID, id_or_name))
+            return True
+        except Exception:  # noqa: BLE001
+            try:
+                self.driver.switch_to.frame(
+                    self.driver.find_element(By.NAME, id_or_name)
+                )
+                return True
+            except Exception:  # noqa: BLE001
+                return False
+
+    def go_to_default_content(self) -> None:
+        """Return to the default document context."""
+
+        if self.driver is None:
+            return
+        self.driver.switch_to.default_content()

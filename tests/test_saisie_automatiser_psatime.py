@@ -98,6 +98,9 @@ class DummyBrowserSession:
         self.go_calls.append(ident)
         return True
 
+    def go_to_default_content(self):
+        self.default_called = True
+
     def close(self):
         self.driver = None
 

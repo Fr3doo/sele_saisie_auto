@@ -61,7 +61,8 @@ def test_navigate_from_work_schedule_positive(monkeypatch):
         sap, "click_element_without_wait", lambda *a, **k: actions.append("click")
     )
     monkeypatch.setattr(
-        sap, "switch_to_default_content", lambda *a, **k: actions.append("switch")
+        "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_default_content",
+        lambda *a, **k: actions.append("switch"),
     )
     sap.navigate_from_work_schedule_to_additional_information_page("drv")
     assert actions.count("click") == 1
@@ -77,8 +78,7 @@ def test_submit_and_validate_additional_information_positive(monkeypatch):
     if sap._AUTOMATION:
         sap._AUTOMATION.browser_session.go_to_iframe = lambda *a, **k: True
     monkeypatch.setattr(
-        sap,
-        "switch_to_iframe_by_id_or_name",
+        "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_iframe",
         lambda *a, **k: True,
     )
     records = []

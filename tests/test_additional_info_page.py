@@ -23,6 +23,10 @@ class DummyAutomation:
                 }
             ]
         )
+        self.browser_session = types.SimpleNamespace(
+            go_to_iframe=lambda *a, **k: True,
+            go_to_default_content=lambda *a, **k: None,
+        )
 
     def wait_for_dom(self, driver):
         pass
@@ -38,7 +42,7 @@ def test_navigate_from_work_schedule(monkeypatch):
         lambda *a, **k: clicks.append(True),
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.switch_to_default_content",
+        "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_default_content",
         lambda *a, **k: None,
     )
     monkeypatch.setattr(AdditionalInfoPage, "wait_for_dom", lambda self, d: None)
@@ -52,7 +56,7 @@ def test_submit_and_validate_additional_information(monkeypatch):
     seq = iter([True, True])
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: next(seq))
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.switch_to_iframe_by_id_or_name",
+        "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_iframe",
         lambda *a, **k: True,
     )
     records = []
@@ -103,7 +107,7 @@ def test_handle_save_alerts(monkeypatch):
         lambda msg, f, level: logs.append(msg),
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.switch_to_default_content",
+        "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_default_content",
         lambda *a, **k: None,
     )
     page._handle_save_alerts("drv")
