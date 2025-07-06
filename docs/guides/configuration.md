@@ -21,6 +21,19 @@ Les paramètres de sécurité sont définis dans `src/`.
 
 Modifiez ces valeurs dans `config.ini` ou via des variables d’environnement si besoin.
 
+## Variables d'environnement prises en charge
+
+Les paramètres du fichier peuvent être surchargés avec :
+
+- `PSATIME_URL` — URL du portail PSA Time
+- `PSATIME_DATE_CIBLE` — date cible au format `JJ/MM/AAAA`
+- `PSATIME_LOGIN` — identifiant chiffré
+- `PSATIME_MDP` — mot de passe chiffré
+- `PSATIME_DEBUG_MODE` — niveau de log (`INFO`, `DEBUG`, …)
+- `PSATIME_LISTE_ITEMS_PLANNING` — liste d'items séparés par des virgules
+- `PSATIME_DEFAULT_TIMEOUT` — délai d'attente par défaut pour Selenium
+- `PSATIME_LONG_TIMEOUT` — délai prolongé pour certaines opérations
+
 ## 3. Exemple de fichier `.env`
 
 ```dotenv

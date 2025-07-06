@@ -37,6 +37,8 @@ suivantes :
 - `PSATIME_MDP` — mot de passe chiffré
 - `PSATIME_DEBUG_MODE` — niveau de log (`INFO`, `DEBUG`, …)
 - `PSATIME_LISTE_ITEMS_PLANNING` — liste d'items séparés par des virgules
+- `PSATIME_DEFAULT_TIMEOUT` — délai d'attente par défaut pour Selenium
+- `PSATIME_LONG_TIMEOUT` — délai prolongé pour certaines opérations
 
 Les variables d'environnement ont priorité sur le fichier `config.ini`.
 Un fichier `.env` peut également être présent ; ses valeurs sont chargées mais
