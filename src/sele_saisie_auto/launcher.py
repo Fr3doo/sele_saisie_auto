@@ -17,7 +17,7 @@ from sele_saisie_auto.gui_builder import (
     create_tab,
 )
 from sele_saisie_auto.logger_utils import LOG_LEVELS, initialize_logger
-from sele_saisie_auto.logging_service import Logger
+from sele_saisie_auto.logging_service import Logger, get_logger
 from sele_saisie_auto.read_or_write_file_config_ini_utils import (
     read_config_ini,
     write_config_ini,
@@ -38,7 +38,7 @@ def run_psatime(
     """Launch the Selenium automation after closing the menu."""
     menu.destroy()
     if logger is None:
-        with Logger(log_file) as log:
+        with get_logger(log_file) as log:
             log.info("Launching PSA time")
             saisie_automatiser_psatime.main(
                 log_file,
@@ -150,7 +150,7 @@ def main(argv: list[str] | None = None) -> None:
     args = cli.parse_args(argv)
 
     log_file = get_log_file()
-    with Logger(log_file) as logger:
+    with get_logger(log_file) as logger:
         logger.info("Initialisation")
 
         config = read_config_ini(log_file)

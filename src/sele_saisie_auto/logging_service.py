@@ -68,3 +68,18 @@ class Logger:
 
         if self.log_file:
             close_logs(self.log_file, log_format=self.log_format)
+
+
+_LOGGERS: dict[str | None, Logger] = {}
+
+
+def get_logger(log_file: str | None) -> Logger:
+    """Return a :class:`Logger` instance for ``log_file``.
+
+    The same instance is returned for identical ``log_file`` values so
+    that modules share a single logger per file.
+    """
+
+    if log_file not in _LOGGERS:
+        _LOGGERS[log_file] = Logger(log_file)
+    return _LOGGERS[log_file]
