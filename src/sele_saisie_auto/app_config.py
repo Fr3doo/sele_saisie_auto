@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from configparser import ConfigParser
 from dataclasses import dataclass
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from sele_saisie_auto.dropdown_options import (
     BillingActionOption,
@@ -39,7 +40,10 @@ def parse_list(
     default: list[T],
     ctor: Callable[[str], T],
 ) -> list[T]:
-    """Extract a comma separated list and convert each value using ``ctor``."""
+    """Extrait ``option`` de ``section`` et convertit chaque valeur via ``ctor``.
+
+    Retourne la liste obtenue ou ``default`` si la section est absente.
+    """
 
     if parser.has_section(section):
         values = parser.get(section, option, fallback="")
@@ -93,7 +97,7 @@ class AppConfig:
 
     @staticmethod
     def _charger_settings(parser: ConfigParser) -> dict[str, Any]:
-        """Charge les valeurs de la section ``settings``."""
+        """Charge ``settings`` et retourne ``{"url", "date_cible", "debug_mode", "liste_items_planning", "default_timeout", "long_timeout"}``."""
 
         url = parser.get("settings", "url", fallback="")
         date_cible = parser.get("settings", "date_cible", fallback=None)
@@ -121,7 +125,7 @@ class AppConfig:
 
     @staticmethod
     def _charger_work_schedule(parser: ConfigParser) -> dict[str, Any]:
-        """Extrait la section ``work_schedule``."""
+        """Extrait ``work_schedule`` et retourne ``{"work_schedule": {...}}``."""
 
         work_schedule: dict[str, tuple[str, str]] = {}
         if parser.has_section("work_schedule"):
@@ -135,7 +139,7 @@ class AppConfig:
 
     @staticmethod
     def _charger_project_information(parser: ConfigParser) -> dict[str, Any]:
-        """Extrait la section ``project_information``."""
+        """Extrait ``project_information`` et retourne ``{"project_information": {...}}``."""
 
         project_information = (
             dict(parser.items("project_information"))
@@ -147,7 +151,7 @@ class AppConfig:
 
     @staticmethod
     def _charger_additional_information(parser: ConfigParser) -> dict[str, Any]:
-        """Extrait les sections liées aux informations complémentaires."""
+        """Extrait les informations complémentaires et retourne ``{"additional_information": {...}}``."""
 
         additional_information: dict[str, dict[str, str]] = {}
         if parser.has_section("additional_information_rest_period_respected"):
@@ -171,7 +175,7 @@ class AppConfig:
 
     @staticmethod
     def _charger_work_locations(parser: ConfigParser) -> dict[str, Any]:
-        """Extrait les sections ``work_location_am`` et ``work_location_pm``."""
+        """Extrait les localisations et retourne ``{"work_location_am": ..., "work_location_pm": ...}``."""
 
         work_location_am = (
             dict(parser.items("work_location_am"))
@@ -191,7 +195,11 @@ class AppConfig:
 
     @staticmethod
     def _charger_dropdown_options(parser: ConfigParser) -> dict[str, Any]:
-        """Charge les listes d'options pour les menus déroulants."""
+        """Charge les listes d'options et retourne un dictionnaire.
+
+        Contient ``work_location_options``, ``cgi_options``, ``cgi_options_dejeuner``,
+        ``cgi_options_billing_action`` et ``work_schedule_options``.
+        """
 
         work_location_options = parse_list(
             parser,
