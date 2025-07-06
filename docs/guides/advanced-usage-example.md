@@ -74,3 +74,26 @@ print(resultats)  # [4, 6]
 
 Cette fonctionnalité permet de récupérer facilement les valeurs produites par
 chaque plugin.
+
+## Extensions via hooks
+
+Le projet fournit un petit système de hooks pour étendre l'automatisation.
+Créez simplement un fichier Python contenant des fonctions décorées avec
+`@hook` :
+
+```python
+# my_plugin.py
+from sele_saisie_auto.plugins import hook
+
+@hook("before_submit")
+def notifier(driver):
+    print("Avant validation")
+```
+
+Importez ce module avant d'appeler `plugins.call` afin de l'enregistrer :
+
+```python
+import my_plugin
+```
+
+Un exemple complet se trouve dans `examples/example_plugin.py`.
