@@ -11,7 +11,7 @@ from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     est_en_mission_presente,
     insert_with_retries,
 )
-from sele_saisie_auto.shared_utils import clear_screen  # noqa: E402
+from sele_saisie_auto.utils.misc import clear_screen  # noqa: E402
 
 
 def test_utilities(monkeypatch):
@@ -35,7 +35,7 @@ def test_utilities(monkeypatch):
 
     called = {}
     monkeypatch.setattr(
-        "sele_saisie_auto.shared_utils.subprocess.run",
+        "sele_saisie_auto.utils.misc.subprocess.run",
         lambda cmd, *a, **k: called.setdefault("cmd", cmd),
     )
     clear_screen()

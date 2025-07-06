@@ -4,7 +4,7 @@ from pathlib import Path
 # add project root to sys.path
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
-from sele_saisie_auto.shared_utils import program_break_time  # noqa: E402
+from sele_saisie_auto.utils.misc import program_break_time  # noqa: E402
 
 
 def test_program_break_time_executes(monkeypatch, capsys):
@@ -14,7 +14,7 @@ def test_program_break_time_executes(monkeypatch, capsys):
         assert seconds == 1
         calls.append(seconds)
 
-    monkeypatch.setattr("sele_saisie_auto.shared_utils.time.sleep", fake_sleep)
+    monkeypatch.setattr("sele_saisie_auto.utils.misc.time.sleep", fake_sleep)
 
     program_break_time(3, "Attente")
 

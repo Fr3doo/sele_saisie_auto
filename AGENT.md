@@ -155,11 +155,15 @@ Fonctions pour gérer les journaux applicatifs.
 - `close_logs(log_file, log_format="html")` : ferme proprement le fichier de log.
 
 ### `Shared Utils` (`shared_utils.py`)
-Fonctions de support communes.
+Fonctions de support communes pour la gestion des logs.
 
 - `setup_logs(log_dir="logs", log_format="html") -> str` : prépare le répertoire des logs et retourne le chemin du fichier.
 - `get_log_file() -> str` : retourne le fichier de log courant, en l'initialisant si nécessaire.
-- `program_break_time(memorization_time: int, affichage_text: str)` : affiche un compte à rebours dans la console.
+
+### `Utils Misc` (`utils/misc.py`)
+Outils divers pour la console.
+- `program_break_time(memorization_time: int, affichage_text: str)` : affiche un compte à rebours.
+- `clear_screen()` : efface la console.
 
 ## 12. Protocoles de messages
 *(si des APIs ou sockets sont ajoutés)*

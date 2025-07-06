@@ -120,13 +120,16 @@ Fonctions utilitaires pour écrire les journaux (``logger_utils.py``).
 
 ## Shared utils
 
-Quelques fonctions de support communes (``shared_utils.py``).
+Quelques fonctions de support communes. ``shared_utils.py``
+se charge de la gestion des logs tandis que ``utils/misc.py``
+contient des utilitaires pour la console.
 
 - ``setup_logs(log_dir="logs", log_format="html") -> str`` – prépare le
   répertoire de logs.
 - ``get_log_file() -> str`` – retourne le chemin du log courant.
 - ``program_break_time(memorization_time: int, affichage_text: str)`` – affiche
-  un compte à rebours.
+  un compte à rebours (``utils.misc``).
+- ``clear_screen()`` – efface la console (``utils.misc``).
 
 ## GUIBuilder
 

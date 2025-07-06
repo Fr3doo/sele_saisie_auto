@@ -13,8 +13,8 @@ from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.selenium_utils import wait_for_dom_after
-from sele_saisie_auto.shared_utils import program_break_time
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
+from sele_saisie_auto.utils.misc import program_break_time
 
 if TYPE_CHECKING:  # pragma: no cover
     from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
