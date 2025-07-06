@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
 
+from sele_saisie_auto import messages
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 from . import LOG_FILE, write_log
@@ -46,14 +47,14 @@ class Waiter:
                 unchanged_count = 0
 
             if unchanged_count >= required_stability_count:
-                write_log("Le DOM est stable.", LOG_FILE, "DEBUG")
+                write_log(messages.DOM_STABLE, LOG_FILE, "DEBUG")
                 return True
 
             previous_dom_snapshot = current_dom_snapshot
             time.sleep(1)
 
         write_log(
-            "Le DOM n'est pas complètement stable après le délai.",
+            messages.DOM_NOT_STABLE,
             LOG_FILE,
             "WARNING",
         )
@@ -70,7 +71,7 @@ class Waiter:
         """Wait for an element to satisfy ``condition`` or return ``None``."""
         if locator_value is None:
             write_log(
-                "❌ Erreur : Le paramètre 'locator_value' doit être spécifié pour localiser l'élément.",
+                messages.LOCATOR_VALUE_REQUIRED,
                 LOG_FILE,
                 "ERROR",
             )

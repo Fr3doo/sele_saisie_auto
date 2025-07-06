@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 
+from sele_saisie_auto import messages
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import write_log
@@ -99,7 +100,7 @@ class AdditionalInfoPage:
             for config in self._automation.context.descriptions:
                 sap.traiter_description(driver, config)
             write_log(
-                "Validation des informations supplémentaires terminée.",
+                messages.ADDITIONAL_INFO_DONE,
                 self.log_file,
                 "INFO",
             )
@@ -149,7 +150,7 @@ class AdditionalInfoPage:
             ):
                 sap.click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
                 write_log(
-                    "⚠️ Alerte rencontrée lors de la sauvegarde.",
+                    messages.SAVE_ALERT_WARNING,
                     self.log_file,
                     "INFO",
                 )

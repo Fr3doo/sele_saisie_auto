@@ -419,7 +419,7 @@ class PSATimeAutomation:
         self.switch_to_iframe_main_target_win0(driver)
         program_break_time(
             1,
-            "Veuillez patienter. Court délai pour stabilisation du DOM",
+            messages.WAIT_STABILISATION,
         )
         print()
         self._click_action_button(driver)
