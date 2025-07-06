@@ -1,7 +1,5 @@
 # shared_utils.py
 import os
-import subprocess  # nosec B404
-import time
 from datetime import datetime
 
 # Constantes globales pour la configuration
@@ -61,26 +59,3 @@ def get_log_file():
     if _log_file is None:
         _log_file = setup_logs()  # Initialise le fichier de log
     return _log_file
-
-
-def program_break_time(memorization_time, affichage_text):
-    """Affiche un message puis attend pendant ``memorization_time`` secondes."""
-
-    duree_restante_avant_lancement = memorization_time
-    print(f"{affichage_text} {memorization_time} secondes ", end="", flush=True)
-    for _ in range(memorization_time):
-        time.sleep(1)
-        print(".", end="", flush=True)
-        duree_restante_avant_lancement -= 1
-
-
-def clear_screen():
-    """Clear console output."""
-    cmd = "cls" if os.name == "nt" else "clear"
-    subprocess.run(
-        cmd,
-        shell=True,
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )  # nosec B603 B607 B602

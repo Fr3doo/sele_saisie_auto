@@ -46,8 +46,8 @@ from sele_saisie_auto.selenium_utils import (
     wait_for_element,
 )
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
-from sele_saisie_auto.shared_utils import program_break_time
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
+from sele_saisie_auto.utils.misc import program_break_time
 
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
