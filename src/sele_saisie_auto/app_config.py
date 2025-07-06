@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from configparser import ConfigParser
 from dataclasses import dataclass
+from typing import Any
 
 from sele_saisie_auto.dropdown_options import (
     BillingActionOption,
@@ -60,11 +61,16 @@ class AppConfig:
     long_timeout: int
     raw: ConfigParser
 
-    @classmethod
-    def from_parser(cls, parser: ConfigParser) -> AppConfig:
-        """Build an ``AppConfig`` instance from a ``ConfigParser``."""
+    @staticmethod
+    def _charger_credentials(parser: ConfigParser) -> tuple[str, str]:
+        """Extrait les identifiants chiffrés depuis ``parser``."""
         encrypted_login = parser.get("credentials", "login", fallback="")
         encrypted_mdp = parser.get("credentials", "mdp", fallback="")
+        return encrypted_login, encrypted_mdp
+
+    @staticmethod
+    def _charger_autres_parametres(parser: ConfigParser) -> dict[str, Any]:
+        """Récupère les autres paramètres de configuration."""
         url = parser.get("settings", "url", fallback="")
         date_cible = parser.get("settings", "date_cible", fallback=None)
         if date_cible and date_cible.strip().lower() in {"none", ""}:
@@ -172,25 +178,34 @@ class AppConfig:
             WorkScheduleOption,
         )
 
+        return {
+            "url": url,
+            "date_cible": date_cible,
+            "debug_mode": debug_mode,
+            "liste_items_planning": liste_items_planning,
+            "work_schedule": work_schedule,
+            "project_information": project_information,
+            "additional_information": additional_information,
+            "work_location_am": work_location_am,
+            "work_location_pm": work_location_pm,
+            "work_location_options": work_location_options,
+            "cgi_options": cgi_options,
+            "cgi_options_dejeuner": cgi_options_dejeuner,
+            "cgi_options_billing_action": cgi_options_billing_action,
+            "work_schedule_options": work_schedule_options,
+            "default_timeout": default_timeout,
+            "long_timeout": long_timeout,
+        }
+
+    @classmethod
+    def from_parser(cls, parser: ConfigParser) -> AppConfig:
+        """Build an ``AppConfig`` instance from a ``ConfigParser``."""
+        encrypted_login, encrypted_mdp = cls._charger_credentials(parser)
+        autres = cls._charger_autres_parametres(parser)
         return cls(
             encrypted_login=encrypted_login,
             encrypted_mdp=encrypted_mdp,
-            url=url,
-            date_cible=date_cible,
-            debug_mode=debug_mode,
-            liste_items_planning=liste_items_planning,
-            work_schedule=work_schedule,
-            project_information=project_information,
-            additional_information=additional_information,
-            work_location_am=work_location_am,
-            work_location_pm=work_location_pm,
-            work_location_options=work_location_options,
-            cgi_options=cgi_options,
-            cgi_options_dejeuner=cgi_options_dejeuner,
-            cgi_options_billing_action=cgi_options_billing_action,
-            work_schedule_options=work_schedule_options,
-            default_timeout=default_timeout,
-            long_timeout=long_timeout,
+            **autres,
             raw=parser,
         )
 
