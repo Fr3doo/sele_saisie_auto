@@ -8,6 +8,7 @@ import pytest
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.encryption_utils import EncryptionService  # noqa: E402
+from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.shared_memory_service import SharedMemoryService  # noqa: E402
 
 
@@ -31,7 +32,7 @@ def test_chiffrement_et_dechiffrement():
 
 
 def test_gestion_memoire_partagee():
-    service = SharedMemoryService()
+    service = SharedMemoryService(Logger(None))
     data = b"secrets"
     name = f"test_mem_{uuid4().hex}"
 
@@ -86,7 +87,7 @@ def test_chiffrer_donnees_error(monkeypatch):
 
 
 def test_stocker_en_memoire_partagee_error(monkeypatch):
-    service = SharedMemoryService()
+    service = SharedMemoryService(Logger(None))
 
     def fail(*a, **k):
         raise ValueError("fail")
@@ -109,13 +110,13 @@ class DummyMem:
 
 
 def test_supprimer_memoire_partagee_securisee_error():
-    service = SharedMemoryService()
+    service = SharedMemoryService(Logger(None))
     with pytest.raises(OSError):
         service.supprimer_memoire_partagee_securisee(DummyMem())
 
 
 def test_recuperer_de_memoire_partagee_error(monkeypatch):
-    service = SharedMemoryService()
+    service = SharedMemoryService(Logger(None))
 
     def fail(*a, **k):
         raise FileNotFoundError("oops")

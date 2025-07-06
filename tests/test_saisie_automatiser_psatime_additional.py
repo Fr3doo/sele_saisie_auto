@@ -70,7 +70,7 @@ def setup_init(monkeypatch, cfg):
     app_cfg = AppConfig.from_parser(cfg)
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyEnc())
-    monkeypatch.setattr(sap, "SharedMemoryService", lambda lf: DummySHMService())
+    monkeypatch.setattr(sap, "SharedMemoryService", lambda logger: DummySHMService())
     sap.initialize(
         "log.html",
         app_cfg,
@@ -244,7 +244,9 @@ def test_main_exceptions(monkeypatch, sample_config):
     )
     for exc in EXCEPTIONS:
         monkeypatch.setattr(
-            sap, "setup_browser", lambda *a, **k: (_ for _ in ()).throw(exc)
+            sap,
+            "setup_browser",
+            lambda *a, exc=exc, **k: (_ for _ in ()).throw(exc),
         )
         sap.main("log.html")
     assert cleanup["done"] is True
