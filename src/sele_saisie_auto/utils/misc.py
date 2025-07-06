@@ -6,13 +6,20 @@ import os
 import subprocess  # nosec B404
 import time
 
+from sele_saisie_auto import shared_utils
+from sele_saisie_auto.logger_utils import write_log
 
-def program_break_time(memorization_time: int, affichage_text: str) -> None:
-    """Display a short countdown in the console."""
-    print(f"{affichage_text} {memorization_time} secondes ", end="", flush=True)
+
+def program_break_time(
+    memorization_time: int, affichage_text: str, *, log_file: str | None = None
+) -> None:
+    """Display a short countdown using logging instead of ``print``."""
+
+    log_file = log_file or shared_utils.get_log_file()
+    write_log(f"{affichage_text} {memorization_time} secondes ", log_file, "DEBUG")
     for _ in range(memorization_time):
         time.sleep(1)
-        print(".", end="", flush=True)
+        write_log(".", log_file, "DEBUG")
 
 
 def clear_screen() -> None:
