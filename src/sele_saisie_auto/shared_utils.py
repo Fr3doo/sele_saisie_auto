@@ -32,9 +32,11 @@ def setup_logs(log_dir=DEFAULT_LOG_DIR, log_format=HTML_FORMAT):
         )
         return log_file
     except OSError as e:
-        raise RuntimeError(f"Erreur liée au système de fichiers : {e}")
+        raise RuntimeError(f"Erreur liée au système de fichiers : {e}") from e
     except Exception as e:
-        raise RuntimeError(f"Erreur inattendue lors de la création des logs : {e}")
+        raise RuntimeError(
+            f"Erreur inattendue lors de la création des logs : {e}"
+        ) from e
 
 
 def get_log_file():
