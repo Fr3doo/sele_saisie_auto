@@ -122,7 +122,8 @@ class PSATimeAutomation:
         self.memory_config = memory_config or MemoryConfig()
         set_log_file_selenium(log_file)
         initialize_logger(app_config.raw, log_level_override=app_config.debug_mode)
-        shm_service = SharedMemoryService(log_file)
+        logger = Logger(log_file)
+        shm_service = SharedMemoryService(logger)
         self.context = SaisieContext(
             config=app_config,
             encryption_service=EncryptionService(log_file, shm_service),

@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 
 from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 
 
@@ -19,9 +20,11 @@ class EncryptionService:
     ) -> None:
         """Prépare le service de chiffrement."""
         self.log_file = log_file
-        self.shared_memory_service = shared_memory_service or SharedMemoryService(
-            log_file
-        )
+        if shared_memory_service is None:
+            logger = Logger(log_file)
+            self.shared_memory_service = SharedMemoryService(logger)
+        else:
+            self.shared_memory_service = shared_memory_service
         self.cle_aes: bytes | None = None
         self._memoires: list[object] = []
 

@@ -16,7 +16,7 @@ from sele_saisie_auto.gui_builder import (
     create_modern_label_with_pack,
     create_tab,
 )
-from sele_saisie_auto.logger_utils import LOG_LEVELS, close_logs, initialize_logger
+from sele_saisie_auto.logger_utils import LOG_LEVELS, initialize_logger
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.read_or_write_file_config_ini_utils import (
     read_config_ini,

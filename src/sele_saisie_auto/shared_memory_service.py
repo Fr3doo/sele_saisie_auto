@@ -8,9 +8,9 @@ from sele_saisie_auto.logging_service import Logger
 class SharedMemoryService:
     """Service to store and retrieve bytes in shared memory."""
 
-    def __init__(self, log_file: str | None = None) -> None:
-        """Initialise le service avec un ``Logger``."""
-        self.logger = Logger(log_file)
+    def __init__(self, logger: Logger) -> None:
+        """Initialise le service avec un ``Logger`` déjà créé."""
+        self.logger = logger
 
     def stocker_en_memoire_partagee(self, nom: str, donnees: bytes):
         """Create a shared memory segment and write ``donnees`` into it."""
