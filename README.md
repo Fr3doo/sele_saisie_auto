@@ -75,6 +75,8 @@ Une interface graphique Tkinter permet de renseigner vos identifiants chiffrés 
   ```
   Cette commande crée automatiquement un fichier de log dans le répertoire
   `logs/` si aucun chemin n'est spécifié.
+  Les commandes `psatime-auto` et `psatime-launcher` acceptent aussi
+  `--headless` et `--no-sandbox` pour ajuster le lancement du navigateur.
 - Exécution directe des scripts :
   ```bash
   python -m sele_saisie_auto.launcher

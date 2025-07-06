@@ -105,6 +105,8 @@ def test_parse_args_basic(monkeypatch):
     mod = importlib.reload(importlib.import_module("sele_saisie_auto.cli"))
     args = mod.parse_args([])
     assert args.log_level is None
+    assert args.headless is False
+    assert args.no_sandbox is False
 
     args = mod.parse_args(["-l", "DEBUG"])
     assert args.log_level == "DEBUG"
@@ -115,7 +117,7 @@ def test_run_psatime(monkeypatch, dummy_logger):
     menu = DummyMenu()
     calls = {}
 
-    fake_mod = types.SimpleNamespace(main=lambda lf: calls.setdefault("main", lf))
+    fake_mod = types.SimpleNamespace(main=lambda lf, **kw: calls.setdefault("main", lf))
     monkeypatch.setitem(
         sys.modules, "sele_saisie_auto.saisie_automatiser_psatime", fake_mod
     )
@@ -140,7 +142,7 @@ def test_run_psatime_with_credentials(monkeypatch):
     monkeypatch.setattr(
         launcher,
         "run_psatime",
-        lambda lf, m, logger=None: run_called.setdefault("run", lf),
+        lambda lf, m, logger=None, **kw: run_called.setdefault("run", lf),
     )
     launcher.run_psatime_with_credentials(enc, login, pwd, "log", menu, logger=None)
 
@@ -231,7 +233,11 @@ def test_start_configuration_and_save(monkeypatch):
 
 def test_main(monkeypatch):
     launcher = import_launcher(monkeypatch)
-    dummy_args = types.SimpleNamespace(log_level="ERROR")
+    dummy_args = types.SimpleNamespace(
+        log_level="ERROR",
+        headless=False,
+        no_sandbox=False,
+    )
     monkeypatch.setattr(launcher.cli, "parse_args", lambda argv: dummy_args)
     monkeypatch.setattr(launcher, "get_log_file", lambda: "log.html")
     cfg = {"settings": {}}
@@ -252,7 +258,7 @@ def test_main(monkeypatch):
     monkeypatch.setattr(
         sys.modules["sele_saisie_auto.main_menu"],
         "main_menu",
-        lambda *a: init.setdefault("menu", a),
+        lambda *a, **k: init.setdefault("menu", a),
     )
 
     class DummyLoggerCtx:

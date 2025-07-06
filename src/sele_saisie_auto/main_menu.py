@@ -14,7 +14,14 @@ from sele_saisie_auto.gui_builder import (
 from sele_saisie_auto.launcher import run_psatime_with_credentials, start_configuration
 
 
-def main_menu(cle_aes: bytes, log_file: str, encryption_service) -> None:
+def main_menu(
+    cle_aes: bytes,
+    log_file: str,
+    encryption_service,
+    *,
+    headless: bool = False,
+    no_sandbox: bool = False,
+) -> None:
     """Display the main menu allowing credential entry."""
     menu = tk.Tk()
     menu.title("Program PSATime Auto")
@@ -41,7 +48,13 @@ def main_menu(cle_aes: bytes, log_file: str, encryption_service) -> None:
         menu,
         text="Lancer votre PSATime",
         command=lambda: run_psatime_with_credentials(
-            encryption_service, login_var, mdp_var, log_file, menu
+            encryption_service,
+            login_var,
+            mdp_var,
+            log_file,
+            menu,
+            headless=headless,
+            no_sandbox=no_sandbox,
         ),
     )
     launch.bind("<Return>", lambda _: launch.invoke())
@@ -51,7 +64,13 @@ def main_menu(cle_aes: bytes, log_file: str, encryption_service) -> None:
         text="Configurer le lancement",
         command=lambda: [
             menu.destroy(),
-            start_configuration(cle_aes, log_file, encryption_service),
+            start_configuration(
+                cle_aes,
+                log_file,
+                encryption_service,
+                headless=headless,
+                no_sandbox=no_sandbox,
+            ),
         ],
     )
     config_btn.bind("<Return>", lambda _: config_btn.invoke())

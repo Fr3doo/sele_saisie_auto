@@ -297,10 +297,19 @@ class PSATimeAutomation:
         """Wait until the DOM is stable using :class:`BrowserSession`."""
         self.browser_session.wait_for_dom(driver)
 
-    def setup_browser(self, session: BrowserSession | None = None):
+    def setup_browser(
+        self,
+        session: BrowserSession | None = None,
+        *,
+        headless: bool = False,
+        no_sandbox: bool = False,
+    ):
         """Configure et démarre le navigateur via :class:`BrowserSession`."""
         return self.browser_session.open(
-            self.context.config.url, fullscreen=False, headless=False
+            self.context.config.url,
+            fullscreen=False,
+            headless=headless,
+            no_sandbox=no_sandbox,
         )
 
     @wait_for_dom_after
@@ -411,7 +420,12 @@ class PSATimeAutomation:
             if self.save_draft_and_validate(driver):
                 self.additional_info_page._handle_save_alerts(driver)
 
-    def run(self) -> None:  # pragma: no cover
+    def run(
+        self,
+        *,
+        headless: bool = False,
+        no_sandbox: bool = False,
+    ) -> None:  # pragma: no cover
         """Point d'entrée principal de l'automatisation."""
         manager = ConfigManager(log_file=self.log_file)
         app_cfg = manager.load()
@@ -420,7 +434,11 @@ class PSATimeAutomation:
         credentials = self.initialize_shared_memory()
 
         with self.browser_session as session:
-            driver = self.setup_browser(session)
+            driver = self.setup_browser(
+                session,
+                headless=headless,
+                no_sandbox=no_sandbox,
+            )
             try:
                 self.login_handler.connect_to_psatime(
                     driver,
@@ -537,7 +555,12 @@ def afficher_message_insertion(jour, valeur, tentative, message, log_file: str) 
 # ------------------------------------------------------------------------------------------------------------------ #
 
 
-def main(log_file: str | None = None) -> None:  # pragma: no cover
+def main(
+    log_file: str | None = None,
+    *,
+    headless: bool = False,
+    no_sandbox: bool = False,
+) -> None:  # pragma: no cover
     """Point d'entrée principal du script.
 
     Parameters
@@ -553,7 +576,10 @@ def main(log_file: str | None = None) -> None:  # pragma: no cover
 
     with Logger(log_file):
         cfg = ConfigManager(log_file=log_file).load()
-        PSATimeAutomation(log_file, cfg).run()
+        PSATimeAutomation(log_file, cfg).run(
+            headless=headless,
+            no_sandbox=no_sandbox,
+        )
 
 
 # ----------------------------------------------------------------------------
@@ -597,11 +623,20 @@ def initialize_shared_memory():
     return _AUTOMATION.initialize_shared_memory()
 
 
-def setup_browser(session: BrowserSession):
+def setup_browser(
+    session: BrowserSession,
+    *,
+    headless: bool = False,
+    no_sandbox: bool = False,
+):
     """Instancie le navigateur Selenium."""
     if not _AUTOMATION:
         raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.setup_browser(session)
+    return _AUTOMATION.setup_browser(
+        session,
+        headless=headless,
+        no_sandbox=no_sandbox,
+    )
 
 
 def connect_to_psatime(driver, cle_aes, login_c, pwd_c):
