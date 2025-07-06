@@ -33,18 +33,16 @@ from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import initialize_logger, write_log
-from sele_saisie_auto.logging_service import get_logger
+from sele_saisie_auto.logging_service import Logger, get_logger
 from sele_saisie_auto.selenium_utils import (
+    Waiter,
     click_element_without_wait,
     detecter_doublons_jours,
     modifier_date_input,
     send_keys_to_element,
-    set_log_file as set_log_file_selenium,
-    switch_to_default_content,
-    switch_to_iframe_by_id_or_name,
     wait_for_dom_after,
-    Waiter,
 )
+from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
@@ -114,6 +112,12 @@ class PSATimeAutomation:
         app_config: AppConfig,
         choix_user: bool = True,
         memory_config: MemoryConfig | None = None,
+        *,
+        logger: Logger | None = None,
+        waiter: Waiter | None = None,
+        browser_session: BrowserSession | None = None,
+        encryption_service: EncryptionService | None = None,
+        shared_memory_service: SharedMemoryService | None = None,
     ) -> None:
         """Initialise la configuration et les dépendances."""
 
@@ -122,13 +126,21 @@ class PSATimeAutomation:
         self.memory_config = memory_config or MemoryConfig()
         set_log_file_selenium(log_file)
         initialize_logger(app_config.raw, log_level_override=app_config.debug_mode)
-        logger = get_logger(log_file)
-        shm_service = SharedMemoryService(logger)
-        self.waiter = Waiter(app_config.default_timeout, app_config.long_timeout)
+        self.logger = logger or get_logger(log_file)
+        self.waiter = waiter or Waiter(
+            app_config.default_timeout, app_config.long_timeout
+        )
+        self.shared_memory_service = shared_memory_service or SharedMemoryService(
+            self.logger
+        )
+        self.encryption_service = encryption_service or EncryptionService(
+            log_file,
+            self.shared_memory_service,
+        )
         self.context = SaisieContext(
             config=app_config,
-            encryption_service=EncryptionService(log_file, shm_service),
-            shared_memory_service=shm_service,
+            encryption_service=self.encryption_service,
+            shared_memory_service=self.shared_memory_service,
             project_mission_info={
                 item_projet: {
                     opt.label.lower(): opt.code
@@ -191,15 +203,18 @@ class PSATimeAutomation:
                 },
             ],
         )
-        try:
-            self.browser_session = BrowserSession(
-                log_file, app_config, waiter=self.waiter
-            )
-        except TypeError:  # pragma: no cover - for legacy test stubs
-            self.browser_session = BrowserSession(log_file, waiter=self.waiter)
+        if browser_session is None:
+            try:
+                self.browser_session = BrowserSession(
+                    log_file, app_config, waiter=self.waiter
+                )
+            except TypeError:  # pragma: no cover - for legacy test stubs
+                self.browser_session = BrowserSession(log_file, waiter=self.waiter)
+        else:
+            self.browser_session = browser_session
         self.login_handler = LoginHandler(
             log_file,
-            self.context.encryption_service,
+            self.encryption_service,
             self.browser_session,
         )
         self.date_entry_page = DateEntryPage(self, waiter=self.waiter)
@@ -412,9 +427,11 @@ class PSATimeAutomation:
         ctx = remplir_jours_feuille_de_temps.context_from_app_config(
             self.context.config, self.log_file
         )
-        remplir_jours_feuille_de_temps.TimeSheetHelper(ctx, waiter=self.waiter).run(
-            driver
-        )
+        remplir_jours_feuille_de_temps.TimeSheetHelper(
+            ctx,
+            self.logger,
+            waiter=self.waiter,
+        ).run(driver)
         self.navigate_from_work_schedule_to_additional_information_page(driver)
         self.submit_and_validate_additional_information(driver)
         self.browser_session.go_to_default_content()

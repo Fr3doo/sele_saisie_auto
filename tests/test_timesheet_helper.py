@@ -4,6 +4,7 @@ from pathlib import Path
 # add project root to sys.path
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     TimeSheetContext,
     TimeSheetHelper,
@@ -73,7 +74,7 @@ def test_remplir_mission_calls_helpers(monkeypatch):
 
 
 def test_timesheethelper_run_sequence(monkeypatch):
-    helper = TimeSheetHelper(TimeSheetContext("log", [], {}, {}))
+    helper = TimeSheetHelper(TimeSheetContext("log", [], {}, {}), Logger("log"))
     seq = []
     monkeypatch.setattr(
         helper, "fill_standard_days", lambda d, j: seq.append("std") or j

@@ -225,6 +225,15 @@ Consultez [TESTING.md](TESTING.md) pour plus de détails.
 - Analyse de sécurité : `bandit` et `safety`
 - Typage statique : `mypy`
 
+### Analyse de sécurité
+Pour vérifier les failles potentielles du code et des dépendances, exécutez :
+
+```bash
+poetry run bandit -r src/
+poetry run safety check
+```
+
+
 <a id="contribuer"></a>
 ## 🤝 Contribuer
 Les guidelines de contribution se trouvent dans [docs/guides/contributing.md](docs/guides/contributing.md). Ouvrez une issue avant toute grosse modification.

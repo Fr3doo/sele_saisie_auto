@@ -25,21 +25,20 @@ from sele_saisie_auto.dropdown_options import (
 )
 from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini
 from sele_saisie_auto.selenium_utils import (
     Waiter,
     controle_insertion,
     detecter_et_verifier_contenu,
     effacer_et_entrer_valeur,
-)
-from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
-from sele_saisie_auto.selenium_utils import (
     trouver_ligne_par_description,
     verifier_champ_jour_rempli,
     wait_for_dom_ready,
     wait_for_element,
     wait_until_dom_is_stable,
 )
+from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
 
@@ -417,10 +416,16 @@ def traiter_champs_mission(  # pragma: no cover
 class TimeSheetHelper:
     """Helper class orchestrating the time sheet filling steps."""
 
-    def __init__(self, context: TimeSheetContext, waiter: Waiter | None = None) -> None:
-        """Crée l'assistant avec son contexte et un ``Waiter`` optionnel."""
+    def __init__(
+        self,
+        context: TimeSheetContext,
+        logger: Logger,
+        waiter: Waiter | None = None,
+    ) -> None:
+        """Initialise l'assistant avec un ``Logger`` et un ``Waiter``."""
         self.context = context
-        self.log_file = context.log_file
+        self.logger = logger
+        self.log_file = logger.log_file
         if waiter is None:
             cfg = context.config
             if hasattr(cfg, "default_timeout") and hasattr(cfg, "long_timeout"):
@@ -446,22 +451,14 @@ class TimeSheetHelper:
 
     def fill_standard_days(self, driver, filled_days: list[str]) -> list[str]:
         """Remplit les jours hors mission."""
-        write_log(
-            "Début du remplissage des jours hors mission...",
-            LOG_FILE,
-            "DEBUG",
-        )
+        self.logger.debug("Début du remplissage des jours hors mission...")
         liste = [] if self.context is None else self.context.item_descriptions
         ctx = self.context or TimeSheetContext(self.log_file, [], {}, {})
         return remplir_jours(driver, liste, JOURS_SEMAINE, filled_days, ctx)
 
     def fill_work_missions(self, driver, filled_days: list[str]) -> list[str]:
         """Traite les jours en mission."""
-        write_log(
-            "Début du traitement des jours de travail et des missions...",
-            LOG_FILE,
-            "DEBUG",
-        )
+        self.logger.debug("Début du traitement des jours de travail et des missions...")
         work_days = {} if self.context is None else self.context.work_days
         ctx = self.context or TimeSheetContext(self.log_file, [], {}, {})
         return remplir_mission(driver, work_days, filled_days, ctx)
@@ -469,10 +466,8 @@ class TimeSheetHelper:
     def handle_additional_fields(self, driver) -> None:
         """Insère les champs complémentaires liés aux missions."""
         if self.context and est_en_mission_presente(self.context.work_days):
-            write_log(
-                "Jour 'En mission' détecté. Traitement des champs associés...",
-                LOG_FILE,
-                "DEBUG",
+            self.logger.debug(
+                "Jour 'En mission' détecté. Traitement des champs associés..."
             )
             traiter_champs_mission(
                 driver,
@@ -483,7 +478,7 @@ class TimeSheetHelper:
                 waiter=self.waiter,
             )
         else:
-            write_log("Aucun Jour 'En mission' détecté.", LOG_FILE, "DEBUG")
+            self.logger.debug("Aucun Jour 'En mission' détecté.")
 
     def run(self, driver) -> None:
         """Orchestre toutes les étapes de remplissage."""
@@ -492,28 +487,16 @@ class TimeSheetHelper:
         try:
             filled_days: list[str] = []
 
-            write_log(
-                "Initialisation du processus de remplissage...",
-                LOG_FILE,
-                "DEBUG",
-            )
+            self.logger.debug("Initialisation du processus de remplissage...")
 
             filled_days = self.fill_standard_days(driver, filled_days)
-            write_log(f"Jours déjà remplis : {filled_days}", LOG_FILE, "DEBUG")
+            self.logger.debug(f"Jours déjà remplis : {filled_days}")
 
             filled_days = self.fill_work_missions(driver, filled_days)
-            write_log(
-                f"Finalisation des jours remplis : {filled_days}",
-                LOG_FILE,
-                "DEBUG",
-            )
+            self.logger.debug(f"Finalisation des jours remplis : {filled_days}")
 
             self.handle_additional_fields(driver)
-            write_log(
-                "Tous les jours et missions ont été traités avec succès.",
-                LOG_FILE,
-                "DEBUG",
-            )
+            self.logger.debug("Tous les jours et missions ont été traités avec succès.")
 
         except NoSuchElementException as e:
             log_error(f"Élément {messages.INTROUVABLE} : {str(e)}.", LOG_FILE)
@@ -532,7 +515,8 @@ def main(driver, log_file: str) -> None:
     ctx = initialize(log_file)
     if ctx is None:  # pragma: no cover - fallback path
         ctx = TimeSheetContext(log_file, [], {}, {})
-    TimeSheetHelper(ctx).run(driver)
+    logger = Logger(log_file)
+    TimeSheetHelper(ctx, logger).run(driver)
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation
