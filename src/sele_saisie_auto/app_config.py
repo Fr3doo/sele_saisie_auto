@@ -285,6 +285,18 @@ class AppConfig:
         return cls.from_parser(raw.parser)
 
 
+ENV_VAR_MAP: dict[tuple[str, str], str] = {
+    ("credentials", "login"): "PSATIME_LOGIN",
+    ("credentials", "mdp"): "PSATIME_MDP",
+    ("settings", "url"): "PSATIME_URL",
+    ("settings", "date_cible"): "PSATIME_DATE_CIBLE",
+    ("settings", "debug_mode"): "PSATIME_DEBUG_MODE",
+    ("settings", "liste_items_planning"): "PSATIME_LISTE_ITEMS_PLANNING",
+    ("settings", "default_timeout"): "PSATIME_DEFAULT_TIMEOUT",
+    ("settings", "long_timeout"): "PSATIME_LONG_TIMEOUT",
+}
+
+
 def load_config(log_file: str | None) -> AppConfig:
     """Load ``config.ini`` and return an :class:`AppConfig`.
 
@@ -293,17 +305,7 @@ def load_config(log_file: str | None) -> AppConfig:
     """
     parser = read_config_ini(log_file=log_file)
 
-    env_map = {
-        ("credentials", "login"): "PSATIME_LOGIN",
-        ("credentials", "mdp"): "PSATIME_MDP",
-        ("settings", "url"): "PSATIME_URL",
-        ("settings", "date_cible"): "PSATIME_DATE_CIBLE",
-        ("settings", "debug_mode"): "PSATIME_DEBUG_MODE",
-        ("settings", "liste_items_planning"): "PSATIME_LISTE_ITEMS_PLANNING",
-        ("settings", "default_timeout"): "PSATIME_DEFAULT_TIMEOUT",
-        ("settings", "long_timeout"): "PSATIME_LONG_TIMEOUT",
-    }
-    for (section, option), env_var in env_map.items():
+    for (section, option), env_var in ENV_VAR_MAP.items():
         value = os.getenv(env_var)
         if value is not None:
             if not parser.has_section(section):
