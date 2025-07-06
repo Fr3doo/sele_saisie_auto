@@ -7,11 +7,13 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 from sele_saisie_auto.automation.additional_info_page import (  # noqa: E402
     AdditionalInfoPage,
 )
+from sele_saisie_auto.logging_service import Logger  # noqa: E402
 
 
 class DummyAutomation:
     def __init__(self):
         self.log_file = "log.html"
+        self.logger = Logger(self.log_file)
         self.context = types.SimpleNamespace(
             descriptions=[
                 {

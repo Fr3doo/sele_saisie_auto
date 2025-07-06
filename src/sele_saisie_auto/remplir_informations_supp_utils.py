@@ -8,6 +8,7 @@ from sele_saisie_auto import messages
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.constants import JOURS_SEMAINE
 from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.selenium_utils import (
     Waiter,
     remplir_champ_texte,
@@ -193,12 +194,12 @@ class ExtraInfoHelper:
 
     def __init__(
         self,
-        log_file: str,
+        logger: Logger,
         waiter: Waiter | None = None,
         page: AdditionalInfoPage | None = None,
         app_config: AppConfig | None = None,
     ) -> None:
-        """Initialise l'assistant avec ou sans ``Waiter`` personnalisé."""
+        """Initialise l'assistant avec ``Logger`` et ``Waiter``."""
         if waiter is None:
             timeout = app_config.default_timeout if app_config else DEFAULT_TIMEOUT
             long_timeout = app_config.long_timeout if app_config else LONG_TIMEOUT
@@ -206,7 +207,8 @@ class ExtraInfoHelper:
         else:
             self.waiter = waiter
         self.page = page
-        self.log_file = log_file
+        self.logger = logger
+        self.log_file = logger.log_file
 
     def set_page(self, page: AdditionalInfoPage) -> None:
         """Définit la page d'informations supplémentaires."""
