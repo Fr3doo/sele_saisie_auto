@@ -1,4 +1,5 @@
 import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,9 @@ from sele_saisie_auto.automation.date_entry_page import DateEntryPage  # noqa: E
 class DummyAutomation:
     def __init__(self):
         self.log_file = "log.html"
+        self.browser_session = types.SimpleNamespace(
+            go_to_default_content=lambda *a, **k: None,
+        )
 
     def wait_for_dom(self, driver):
         pass
@@ -177,7 +181,7 @@ def test_handle_date_alert(monkeypatch):
         lambda msg, f, level: logs.append(msg),
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.switch_to_default_content",
+        "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_default_content",
         lambda *a, **k: None,
     )
     monkeypatch.setattr(page, "wait_for_dom", lambda d: None)

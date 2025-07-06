@@ -158,7 +158,7 @@ class DateEntryPage:
         """Close alert if the date already exists."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        sap.switch_to_default_content(driver)
+        self._automation.browser_session.go_to_default_content()
         alerte = Locators.ALERT_CONTENT_0.value
         if self.waiter.wait_for_element(
             driver, By.ID, alerte, timeout=self.config.default_timeout

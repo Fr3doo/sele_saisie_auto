@@ -195,7 +195,8 @@ def test_fill_and_save_timesheet(monkeypatch, sample_config):
         lambda d: calls.append("sub"),
     )
     monkeypatch.setattr(
-        sap, "switch_to_default_content", lambda d: calls.append("default")
+        "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_default_content",
+        lambda *a, **k: calls.append("default"),
     )
     monkeypatch.setattr(
         auto, "save_draft_and_validate", lambda d: calls.append("save") or True

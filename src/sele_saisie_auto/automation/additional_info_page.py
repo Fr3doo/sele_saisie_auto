@@ -78,7 +78,7 @@ class AdditionalInfoPage:
             sap.click_element_without_wait(
                 driver, By.ID, Locators.ADDITIONAL_INFO_LINK.value
             )
-        sap.switch_to_default_content(driver)
+        self._automation.browser_session.go_to_default_content()
         self.wait_for_dom(driver)
 
     @wait_for_dom_after
@@ -93,8 +93,8 @@ class AdditionalInfoPage:
             timeout=self.config.default_timeout,
         )
         if element_present:
-            switched_to_iframe = sap.switch_to_iframe_by_id_or_name(
-                driver, Locators.MODAL_FRAME.value
+            switched_to_iframe = self._automation.browser_session.go_to_iframe(
+                Locators.MODAL_FRAME.value
             )
 
         if switched_to_iframe:
@@ -144,7 +144,7 @@ class AdditionalInfoPage:
         ]
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        sap.switch_to_default_content(driver)
+        self._automation.browser_session.go_to_default_content()
         for alerte in alerts:
             if self.waiter.wait_for_element(
                 driver, By.ID, alerte, timeout=self.config.default_timeout
