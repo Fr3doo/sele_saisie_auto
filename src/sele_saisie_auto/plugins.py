@@ -15,6 +15,19 @@ def register(name: str, func: Callable[..., Any]) -> None:
     _HOOKS[name].append(func)
 
 
+def unregister(name: str, func: Callable[..., Any]) -> None:
+    """Remove ``func`` from the list of callbacks for ``name`` if present."""
+    callbacks = _HOOKS.get(name)
+    if not callbacks:
+        return
+    try:
+        callbacks.remove(func)
+        if not callbacks:
+            _HOOKS.pop(name, None)
+    except ValueError:
+        pass
+
+
 def hook(name: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator registering a function for a hook."""
 
@@ -39,4 +52,4 @@ def clear() -> None:
     _HOOKS.clear()
 
 
-__all__ = ["register", "hook", "call", "clear"]
+__all__ = ["register", "unregister", "hook", "call", "clear"]
