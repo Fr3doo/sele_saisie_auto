@@ -78,7 +78,7 @@ def get_runtime_resource_path(relative_path, log_file=None):
                     log_file,
                     DEFAULT_LOG_LEVEL,
                 )
-            except FileNotFoundError:
+            except FileNotFoundError as e:
                 write_log(
                     f"🔴 Fichier embarqué {messages.INTROUVABLE} : {embedded_resource}",
                     log_file,
@@ -86,8 +86,8 @@ def get_runtime_resource_path(relative_path, log_file=None):
                 )
                 raise FileNotFoundError(
                     f"{messages.IMPOSSIBLE_DE_TROUVER} le fichier embarqué : {embedded_resource}"
-                )
-            except PermissionError:
+                ) from e
+            except PermissionError as e:
                 write_log(
                     f"🔴 Permission refusée pour copier {embedded_resource} vers {current_dir_resource}",
                     log_file,
@@ -95,7 +95,7 @@ def get_runtime_resource_path(relative_path, log_file=None):
                 )
                 raise PermissionError(
                     f"Permission refusée pour copier : {embedded_resource}"
-                )
+                ) from e
     else:
         write_log("🔹 Exécution en mode script.", log_file, DEFAULT_LOG_LEVEL)
 
