@@ -258,8 +258,8 @@ def test_main_exceptions(monkeypatch, sample_config):
     )
     for exc in EXCEPTIONS:
         monkeypatch.setattr(
-            sap,
-            "setup_browser",
+            sap.LoginHandler,
+            "connect_to_psatime",
             lambda *a, exc=exc, **k: (_ for _ in ()).throw(exc),
         )
         sap.main("log.html")
