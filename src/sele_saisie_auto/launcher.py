@@ -7,6 +7,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from sele_saisie_auto import cli, messages, saisie_automatiser_psatime
+from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.gui_builder import (
     create_a_frame,
@@ -18,6 +19,7 @@ from sele_saisie_auto.gui_builder import (
 )
 from sele_saisie_auto.logger_utils import LOG_LEVELS, initialize_logger
 from sele_saisie_auto.logging_service import Logger, get_logger
+from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.read_or_write_file_config_ini_utils import (
     read_config_ini,
     write_config_ini,
@@ -40,18 +42,42 @@ def run_psatime(
     if logger is None:
         with get_logger(log_file) as log:
             log.info("Launching PSA time")
-            saisie_automatiser_psatime.main(
+            cfg = ConfigManager(log_file=log_file).load()
+            automation = saisie_automatiser_psatime.PSATimeAutomation(
                 log_file,
-                headless=headless,
-                no_sandbox=no_sandbox,
+                cfg,
+                logger=log,
             )
+            orchestrator = AutomationOrchestrator(
+                cfg,
+                log,
+                automation.browser_session,
+                automation.login_handler,
+                automation.date_entry_page,
+                automation.additional_info_page,
+                automation.context,
+                automation.choix_user,
+            )
+            orchestrator.run(headless=headless, no_sandbox=no_sandbox)
     else:
         logger.info("Launching PSA time")
-        saisie_automatiser_psatime.main(
+        cfg = ConfigManager(log_file=log_file).load()
+        automation = saisie_automatiser_psatime.PSATimeAutomation(
             log_file,
-            headless=headless,
-            no_sandbox=no_sandbox,
+            cfg,
+            logger=logger,
         )
+        orchestrator = AutomationOrchestrator(
+            cfg,
+            logger,
+            automation.browser_session,
+            automation.login_handler,
+            automation.date_entry_page,
+            automation.additional_info_page,
+            automation.context,
+            automation.choix_user,
+        )
+        orchestrator.run(headless=headless, no_sandbox=no_sandbox)
 
 
 def run_psatime_with_credentials(
