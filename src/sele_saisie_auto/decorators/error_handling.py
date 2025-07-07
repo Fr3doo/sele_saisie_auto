@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Decorator helpers for uniform Selenium error logging."""
+
+from __future__ import annotations
 
 from collections.abc import Callable
 from functools import wraps
