@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 
+from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
@@ -27,6 +28,7 @@ class AdditionalInfoPage:
         ctx = getattr(self._automation, "context", None)
         cfg = getattr(ctx, "config", None)
         self.waiter = waiter or getattr(automation, "waiter", None) or Waiter()
+        self.alert_handler = AlertHandler(automation, waiter=self.waiter)
         self.helper = ExtraInfoHelper(
             logger=self._automation.logger,
             waiter=self.waiter,
@@ -137,22 +139,5 @@ class AdditionalInfoPage:
 
     def _handle_save_alerts(self, driver) -> None:
         """Dismiss any alert shown after saving."""
-        alerts = [
-            Locators.ALERT_CONTENT_1.value,
-            Locators.ALERT_CONTENT_2.value,
-            Locators.ALERT_CONTENT_3.value,
-        ]
-        from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        self._automation.browser_session.go_to_default_content()
-        for alerte in alerts:
-            if self.waiter.wait_for_element(
-                driver, By.ID, alerte, timeout=self.config.default_timeout
-            ):
-                sap.click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
-                write_log(
-                    format_message("SAVE_ALERT_WARNING", {}),
-                    self.log_file,
-                    "INFO",
-                )
-                break
+        self.alert_handler.handle_save_alerts(driver)

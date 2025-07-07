@@ -97,20 +97,11 @@ def test_save_draft_and_validate(monkeypatch):
 def test_handle_save_alerts(monkeypatch):
     dummy = DummyAutomation()
     page = AdditionalInfoPage(dummy)
-    seq = iter([True, False, False])
-    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: next(seq))
-    logs = []
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
-        lambda *a, **k: logs.append("click"),
-    )
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.write_log",
-        lambda msg, f, level: logs.append(msg),
-    )
-    monkeypatch.setattr(
-        "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_default_content",
-        lambda *a, **k: None,
-    )
+    calls = []
+
+    def fake_handle(driver):
+        calls.append("handled")
+
+    monkeypatch.setattr(page.alert_handler, "handle_save_alerts", fake_handle)
     page._handle_save_alerts("drv")
-    assert "click" in logs
+    assert "handled" in calls
