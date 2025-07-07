@@ -4,9 +4,14 @@ from __future__ import annotations
 import sys
 from typing import TYPE_CHECKING
 
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    TimeoutException,
+    WebDriverException,
+)
 from selenium.webdriver.common.by import By
 
-from sele_saisie_auto import messages, plugins
+from sele_saisie_auto import console_ui, messages, plugins
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation import (
     AdditionalInfoPage,
@@ -14,6 +19,8 @@ from sele_saisie_auto.automation import (
     DateEntryPage,
     LoginHandler,
 )
+from sele_saisie_auto.config_manager import ConfigManager
+from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (
@@ -146,49 +153,101 @@ class AutomationOrchestrator:
 
         return self.additional_info_page.save_draft_and_validate(driver)
 
+    def _fill_and_save_timesheet(self, driver) -> None:
+        """Fill timesheet then save draft with additional info."""
+
+        self.wait_for_dom(driver)
+        self.switch_to_iframe_main_target_win0(driver)
+        program_break_time(1, messages.WAIT_STABILISATION)
+        self.logger.debug(messages.DOM_STABLE)
+        self.date_entry_page._click_action_button(driver, self.choix_user)
+        self.wait_for_dom(driver)
+        helper = self.timesheet_helper_cls(
+            context_from_app_config(self.config, self.logger.log_file),
+            self.logger,
+            waiter=self.browser_session.waiter,
+        )
+        helper.run(driver)
+        self.navigate_from_work_schedule_to_additional_information_page(driver)
+        self.submit_and_validate_additional_information(driver)
+        self.browser_session.go_to_default_content()
+        self.wait_for_dom(driver)
+        if self.switch_to_iframe_main_target_win0(driver):
+            detecter_doublons_jours(driver)
+            plugins.call("before_submit", driver)
+            if self.save_draft_and_validate(driver):
+                self.additional_info_page._handle_save_alerts(driver)
+
     def run(  # pragma: no cover - integration tested via main automation
         self,
-        aes_key: bytes,
-        encrypted_login: bytes,
-        encrypted_password: bytes,
         *,
         headless: bool = False,
         no_sandbox: bool = False,
     ) -> None:
         """Execute the full PSA Time automation flow."""
+
+        if self.config is None:
+            self.config = ConfigManager().load()
+
+        credentials = self.initialize_shared_memory()
+
         with self.browser_session as session:
             driver = session.open(
                 self.config.url,
                 headless=headless,
                 no_sandbox=no_sandbox,
             )
-            self.login_handler.connect_to_psatime(
-                driver, aes_key, encrypted_login, encrypted_password
-            )
-            if self.navigate_from_home_to_date_entry_page(
-                driver
-            ):  # pragma: no cover - wrapper tested separately
-                self._process_date_entry(driver)
+            try:
+                self.login_handler.connect_to_psatime(
+                    driver,
+                    credentials.aes_key,
+                    credentials.login,
+                    credentials.password,
+                )
+                if self.navigate_from_home_to_date_entry_page(driver):
+                    self._process_date_entry(driver)
+                    self._fill_and_save_timesheet(driver)
                 self.wait_for_dom(driver)
                 self.switch_to_iframe_main_target_win0(driver)
-                program_break_time(1, messages.WAIT_STABILISATION)
-                self.date_entry_page._click_action_button(driver, self.choix_user)
                 self.wait_for_dom(driver)
-                helper = self.timesheet_helper_cls(
-                    context_from_app_config(self.config, self.logger.log_file),
-                    self.logger,
-                    waiter=session.waiter,
+            except NoSuchElementException as e:  # pragma: no cover - UI issue
+                log_error(
+                    f"❌ L'élément n'a pas été trouvé : {str(e)}", self.logger.log_file
                 )
-                helper.run(driver)
-                self.navigate_from_work_schedule_to_additional_information_page(driver)
-                self.submit_and_validate_additional_information(driver)
-                self.browser_session.go_to_default_content()
-                self.wait_for_dom(driver)
-                if self.switch_to_iframe_main_target_win0(driver):
-                    detecter_doublons_jours(driver)
-                    plugins.call("before_submit", driver)
-                    if self.save_draft_and_validate(driver):
-                        self.additional_info_page._handle_save_alerts(driver)
+            except TimeoutException as e:  # pragma: no cover - UI slow
+                log_error(
+                    f"❌ Temps d'attente dépassé pour un élément : {str(e)}",
+                    self.logger.log_file,
+                )
+            except WebDriverException as e:  # pragma: no cover - driver error
+                log_error(
+                    f"❌ Erreur liée au {messages.WEBDRIVER} : {str(e)}",
+                    self.logger.log_file,
+                )
+            except Exception as e:  # pragma: no cover - unexpected
+                log_error(
+                    f"❌ {messages.ERREUR_INATTENDUE} : {str(e)}",
+                    self.logger.log_file,
+                )
+            finally:
+                try:
+                    if session.driver is not None:
+                        console_ui.ask_continue(  # pragma: no cover - manual step
+                            "INFO : Controler et soumettez votre PSATime, Puis appuyer sur ENTRER "
+                        )
+                    else:
+                        console_ui.ask_continue(  # pragma: no cover - manual step
+                            "ERROR : Controler les Log, Puis appuyer sur ENTRER ET relancer l'outil "
+                        )
+                    console_ui.show_separator()  # pragma: no cover - manual step
+                except ValueError:
+                    pass
+                finally:
+                    self.cleanup_resources(
+                        credentials.mem_key,
+                        credentials.mem_login,
+                        credentials.mem_password,
+                    )
 
     def cleanup_resources(
         self,

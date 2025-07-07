@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw  # noqa: E402
+from sele_saisie_auto.encryption_utils import Credentials  # noqa: E402
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.orchestration import AutomationOrchestrator  # noqa: E402
 from sele_saisie_auto.saisie_automatiser_psatime import SaisieContext  # noqa: E402
@@ -129,7 +130,14 @@ def test_run_calls_services(monkeypatch, sample_config):
     monkeypatch.setattr(orch_mod, "detecter_doublons_jours", lambda *a, **k: None)
     monkeypatch.setattr(plugins, "call", lambda *a, **k: None)
 
-    orch.run(b"k" * 32, b"user", b"pwd")
+    creds = Credentials(b"k" * 32, None, b"user", None, b"pwd", None)
+    monkeypatch.setattr(orch, "initialize_shared_memory", lambda: creds)
+    monkeypatch.setattr(orch, "cleanup_resources", lambda *a, **k: None)
+    from sele_saisie_auto import console_ui
+
+    monkeypatch.setattr(console_ui, "ask_continue", lambda *a, **k: None)
+
+    orch.run()
 
     assert session.open_calls[0][0] == app_cfg.url
     assert login.calls
