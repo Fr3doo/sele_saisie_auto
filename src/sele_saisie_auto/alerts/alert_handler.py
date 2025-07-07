@@ -19,6 +19,16 @@ if TYPE_CHECKING:  # pragma: no cover
 class AlertHandler:
     """Central handler for confirmation alerts."""
 
+    #: Mapping of alert groups to the element identifiers composing them
+    alert_configs = {
+        "save_alerts": [
+            Locators.ALERT_CONTENT_1.value,
+            Locators.ALERT_CONTENT_2.value,
+            Locators.ALERT_CONTENT_3.value,
+        ],
+        "date_alerts": [Locators.ALERT_CONTENT_0.value],
+    }
+
     def __init__(
         self, automation: PSATimeAutomation, waiter: Waiter | None = None
     ) -> None:
@@ -51,34 +61,30 @@ class AlertHandler:
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
         self._automation.browser_session.go_to_default_content()
-        alerte = Locators.ALERT_CONTENT_0.value
-        if self.waiter.wait_for_element(
-            driver, By.ID, alerte, timeout=self.config.default_timeout
-        ):
-            sap.click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
-            write_log(
-                format_message("TIME_SHEET_EXISTS_ERROR", {}),
-                self.log_file,
-                "INFO",
-            )
-            write_log(
-                format_message("MODIFY_DATE_MESSAGE", {}),
-                self.log_file,
-                "INFO",
-            )
-            sys.exit()
-        else:
-            write_log(format_message("DATE_VALIDATED", {}), self.log_file, "DEBUG")
+        for alerte in self.alert_configs.get("date_alerts", []):
+            if self.waiter.wait_for_element(
+                driver, By.ID, alerte, timeout=self.config.default_timeout
+            ):
+                sap.click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
+                write_log(
+                    format_message("TIME_SHEET_EXISTS_ERROR", {}),
+                    self.log_file,
+                    "INFO",
+                )
+                write_log(
+                    format_message("MODIFY_DATE_MESSAGE", {}),
+                    self.log_file,
+                    "INFO",
+                )
+                sys.exit()
+
+        write_log(format_message("DATE_VALIDATED", {}), self.log_file, "DEBUG")
 
     def handle_save_alerts(self, driver) -> None:
         """Dismiss any alert shown after saving."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        alerts = [
-            Locators.ALERT_CONTENT_1.value,
-            Locators.ALERT_CONTENT_2.value,
-            Locators.ALERT_CONTENT_3.value,
-        ]
+        alerts = self.alert_configs.get("save_alerts", [])
         self._automation.browser_session.go_to_default_content()
         for alerte in alerts:
             if self.waiter.wait_for_element(
