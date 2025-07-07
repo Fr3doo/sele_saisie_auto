@@ -172,14 +172,14 @@ def test_handle_date_alert(monkeypatch):
     page = DateEntryPage(dummy)
     calls = []
 
-    def fake_handle(driver, alert_type="date_alerts"):
-        calls.append((driver, alert_type))
+    def fake_handle(driver):
+        calls.append("handled")
         raise SystemExit()
 
-    monkeypatch.setattr(page.alert_handler, "handle_alerts", fake_handle)
+    monkeypatch.setattr(page.alert_handler, "handle_date_alert", fake_handle)
     with pytest.raises(SystemExit):
         page._handle_date_alert("drv")
-    assert ("drv", "date_alerts") in calls
+    assert "handled" in calls
 
 
 def test_process_date(monkeypatch):
@@ -199,8 +199,8 @@ def test_process_date(monkeypatch):
     )
     monkeypatch.setattr(
         page.alert_handler,
-        "handle_alerts",
-        lambda driver, alert_type="date_alerts": calls.append(alert_type),
+        "handle_date_alert",
+        lambda driver: calls.append("alert"),
     )
     monkeypatch.setattr(
         "sele_saisie_auto.automation.date_entry_page.program_break_time",
@@ -209,7 +209,7 @@ def test_process_date(monkeypatch):
 
     page.process_date("drv", "01/01/2024")
 
-    assert calls == [("input", "01/01/2024"), "wait", "submit", "date_alerts"]
+    assert calls == [("input", "01/01/2024"), "wait", "submit", "alert"]
 
 
 def test_process_date_no_submit(monkeypatch):
@@ -222,9 +222,7 @@ def test_process_date_no_submit(monkeypatch):
         page, "submit_date_cible", lambda d: calls.append("submit") or False
     )
     monkeypatch.setattr(
-        page.alert_handler,
-        "handle_alerts",
-        lambda d, alert_type="date_alerts": calls.append(alert_type),
+        page.alert_handler, "handle_date_alert", lambda d: calls.append("alert")
     )
     monkeypatch.setattr(
         "sele_saisie_auto.automation.date_entry_page.program_break_time",

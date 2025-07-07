@@ -158,7 +158,7 @@ class DateEntryPage:
     def _handle_date_alert(self, driver) -> None:
         """Delegate alert handling to :class:`AlertHandler`."""
 
-        self.alert_handler.handle_alerts(driver, "date_alerts")
+        self.alert_handler.handle_date_alert(driver)
 
     def _click_action_button(self, driver, create_new: bool) -> None:
         """Click the appropriate action button on the page."""
