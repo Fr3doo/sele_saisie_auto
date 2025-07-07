@@ -41,7 +41,16 @@ class PSATimeAutomation:
 - `submit_and_validate_additional_information(driver)` – remplit puis confirme les données complémentaires.
 - `save_draft_and_validate(driver)` – sauvegarde la feuille et déclenche la validation.
 - `cleanup_resources(driver_manager, mem_key, mem_login, mem_password)` – ferme le navigateur et libère la mémoire.
-- ``run() -> None`` – lance toute la séquence d’automatisation.
+- ``run() -> None`` – lance toute la séquence d’automatisation. Désormais, cette méthode délègue à ``AutomationOrchestrator.run()`` pour la logique principale.
+
+## AutomationOrchestrator
+
+```python
+class AutomationOrchestrator:
+    def run(self, *, headless=False, no_sandbox=False) -> None:
+        """Exécute l'automatisation complète."""
+```
+Classe centrale d'orchestration de l'automatisation. Sa méthode ``run()`` exécute désormais l'ensemble de la logique.
 
 ## TimeSheetHelper
 
