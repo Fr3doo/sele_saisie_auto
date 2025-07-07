@@ -63,3 +63,17 @@ poetry run pytest --cov=sele_saisie_auto --cov-report=term-missing
 ```
 
 Atteindre les branches difficiles demande de forcer les chemins rares : options invalides, exceptions volontairement déclenchées et scénarios de timeout. Les assertions de couverture indiquent quelles lignes restent à tester.
+
+## Centraliser la construction des ID
+
+Les pages PSA Time utilisent des identifiants de champs dont le patron varie en fonction du contexte. Pour éviter la duplication de chaînes dans les tests, le module `ElementIdBuilder` expose la méthode
+`build_day_input_id(base_id, day_index, row_index)`.
+
+```python
+from sele_saisie_auto.elements import ElementIdBuilder
+
+input_id = ElementIdBuilder.build_day_input_id("POL_TIME", 3, 0)
+```
+
+Cette fonction applique automatiquement les règles particulières comme l’offset
+des entrées "UC_TIME_LIN_WRK_UC_DAILYREST". Centraliser la construction des ID permet de maintenir un code de test plus lisible et plus robuste.
