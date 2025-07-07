@@ -135,6 +135,7 @@ class AdditionalInfoPage:
                 driver, By.ID, Locators.SAVE_DRAFT_BUTTON.value
             )
             self.wait_for_dom(driver)
+            self._handle_save_alerts(driver)
         return element_present
 
     def _handle_save_alerts(self, driver) -> None:
