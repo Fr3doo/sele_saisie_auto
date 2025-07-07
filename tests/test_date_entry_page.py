@@ -170,24 +170,16 @@ def test_click_action_button_copy(monkeypatch):
 def test_handle_date_alert(monkeypatch):
     dummy = DummyAutomation()
     page = DateEntryPage(dummy)
-    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
-    logs = []
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
-        lambda *a, **k: logs.append("click"),
-    )
-    monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.write_log",
-        lambda msg, f, level: logs.append(msg),
-    )
-    monkeypatch.setattr(
-        "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_default_content",
-        lambda *a, **k: None,
-    )
-    monkeypatch.setattr(page, "wait_for_dom", lambda d: None)
+    calls = []
+
+    def fake_handle(driver):
+        calls.append("handled")
+        raise SystemExit()
+
+    monkeypatch.setattr(page.alert_handler, "handle_date_alert", fake_handle)
     with pytest.raises(SystemExit):
         page._handle_date_alert("drv")
-    assert "click" in logs
+    assert "handled" in calls
 
 
 def test_process_date(monkeypatch):
@@ -206,8 +198,8 @@ def test_process_date(monkeypatch):
         lambda driver: calls.append("submit") or True,
     )
     monkeypatch.setattr(
-        page,
-        "_handle_date_alert",
+        page.alert_handler,
+        "handle_date_alert",
         lambda driver: calls.append("alert"),
     )
     monkeypatch.setattr(
@@ -229,7 +221,9 @@ def test_process_date_no_submit(monkeypatch):
     monkeypatch.setattr(
         page, "submit_date_cible", lambda d: calls.append("submit") or False
     )
-    monkeypatch.setattr(page, "_handle_date_alert", lambda d: calls.append("alert"))
+    monkeypatch.setattr(
+        page.alert_handler, "handle_date_alert", lambda d: calls.append("alert")
+    )
     monkeypatch.setattr(
         "sele_saisie_auto.automation.date_entry_page.program_break_time",
         lambda *a, **k: calls.append("wait"),

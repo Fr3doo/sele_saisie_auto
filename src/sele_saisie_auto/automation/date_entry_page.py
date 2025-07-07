@@ -9,6 +9,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 
 from sele_saisie_auto import messages
+from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
@@ -28,6 +29,7 @@ class DateEntryPage:
     ) -> None:
         self._automation = automation
         self.waiter = waiter or getattr(automation, "waiter", None) or Waiter()
+        self.alert_handler = AlertHandler(automation, waiter=self.waiter)
 
     @property
     def log_file(self) -> str:
@@ -155,28 +157,9 @@ class DateEntryPage:
             self._handle_date_alert(driver)
 
     def _handle_date_alert(self, driver) -> None:
-        """Close alert if the date already exists."""
-        from sele_saisie_auto import saisie_automatiser_psatime as sap
+        """Delegate alert handling to :class:`AlertHandler`."""
 
-        self._automation.browser_session.go_to_default_content()
-        alerte = Locators.ALERT_CONTENT_0.value
-        if self.waiter.wait_for_element(
-            driver, By.ID, alerte, timeout=self.config.default_timeout
-        ):
-            sap.click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
-            write_log(
-                format_message("TIME_SHEET_EXISTS_ERROR", {}),
-                self.log_file,
-                "INFO",
-            )
-            write_log(
-                format_message("MODIFY_DATE_MESSAGE", {}),
-                self.log_file,
-                "INFO",
-            )
-            sys.exit()
-        else:
-            write_log(format_message("DATE_VALIDATED", {}), self.log_file, "DEBUG")
+        self.alert_handler.handle_date_alert(driver)
 
     def _click_action_button(self, driver, create_new: bool) -> None:
         """Click the appropriate action button on the page."""

@@ -201,7 +201,9 @@ def test_fill_and_save_timesheet(monkeypatch, sample_config):
     monkeypatch.setattr(
         auto, "save_draft_and_validate", lambda d: calls.append("save") or True
     )
-    auto.additional_info_page._handle_save_alerts = lambda d: calls.append("alert")
+    auto.additional_info_page.alert_handler.handle_save_alerts = lambda d: calls.append(
+        "alert"
+    )
     monkeypatch.setattr(sap, "detecter_doublons_jours", lambda d: calls.append("dup"))
     monkeypatch.setattr(sap.plugins, "call", lambda name, d: calls.append(name))
 
