@@ -143,7 +143,9 @@ class DummyAdditionalInfoPage:
         self.calls = []
         sap.traiter_description = lambda *a, **k: None
         self.alert_handler = types.SimpleNamespace(
-            handle_save_alerts=lambda d: self.calls.append("alert")
+            handle_alerts=lambda d, alert_type="save_alerts": self.calls.append(
+                (d, alert_type)
+            )
         )
 
     def navigate_from_work_schedule_to_additional_information_page(self, driver):
@@ -159,7 +161,7 @@ class DummyAdditionalInfoPage:
         return True
 
     def _handle_save_alerts(self, driver):
-        self.alert_handler.handle_save_alerts(driver)
+        self.alert_handler.handle_alerts(driver, "save_alerts")
 
 
 def setup_init(monkeypatch, cfg):
