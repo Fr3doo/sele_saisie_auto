@@ -4,6 +4,9 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from configparser import ConfigParser  # noqa: E402
+from multiprocessing import shared_memory  # noqa: E402
+
+import pytest  # noqa: E402
 
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw  # noqa: E402
 from sele_saisie_auto.encryption_utils import Credentials  # noqa: E402
@@ -62,3 +65,71 @@ def test_resource_manager_basic(monkeypatch):
 
     assert driver == "driver"
     assert creds.login == b"u"
+
+
+def test_resource_manager_cleanup(monkeypatch):
+    sessions = []
+
+    class CleanBrowserSession(DummyBrowserSession):
+        def __init__(self, log_file, app_config):
+            super().__init__(log_file, app_config)
+            sessions.append(self)
+
+    class CleanEncryption:
+        def __init__(self, log_file):
+            self.log_file = log_file
+
+        def __enter__(self):
+            self.mem_key = shared_memory.SharedMemory(create=True, size=1)
+            self.mem_login = shared_memory.SharedMemory(create=True, size=1)
+            self.mem_pwd = shared_memory.SharedMemory(create=True, size=1)
+            self.mem_key.buf[:1] = b"k"
+            self.mem_login.buf[:1] = b"u"
+            self.mem_pwd.buf[:1] = b"p"
+            self._mems = [self.mem_key, self.mem_login, self.mem_pwd]
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            for mem in self._mems:
+                try:
+                    mem.close()
+                    mem.unlink()
+                except FileNotFoundError:
+                    pass
+
+        def retrieve_credentials(self):
+            return Credentials(
+                b"k",
+                self.mem_key,
+                b"u",
+                self.mem_login,
+                b"p",
+                self.mem_pwd,
+            )
+
+    monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
+    monkeypatch.setattr(resource_manager, "BrowserSession", CleanBrowserSession)
+    monkeypatch.setattr(resource_manager, "EncryptionService", CleanEncryption)
+
+    with resource_manager.ResourceManager("log.html") as rm:
+        creds = rm.get_credentials()
+        driver = rm.get_driver()
+        names = [
+            creds.mem_key.name,
+            creds.mem_login.name,
+            creds.mem_password.name,
+        ]
+
+    assert driver == "driver"
+    assert creds.login == b"u"
+    assert sessions[0].closed is True
+    assert rm._session is None
+    assert rm._driver is None
+    for name in names:
+        with pytest.raises(FileNotFoundError):
+            shared_memory.SharedMemory(name=name)
+
+    # avoid ResourceWarning
+    creds.mem_key.close()
+    creds.mem_login.close()
+    creds.mem_password.close()
