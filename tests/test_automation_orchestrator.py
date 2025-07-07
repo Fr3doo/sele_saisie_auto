@@ -1,13 +1,11 @@
-import types
+import sys
 from pathlib import Path
 
-import sys
+sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
-sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))
-
-from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
-from sele_saisie_auto.logging_service import Logger
-from sele_saisie_auto.orchestration import AutomationOrchestrator
+from sele_saisie_auto.app_config import AppConfig, AppConfigRaw  # noqa: E402
+from sele_saisie_auto.logging_service import Logger  # noqa: E402
+from sele_saisie_auto.orchestration import AutomationOrchestrator  # noqa: E402
 
 
 class DummyBrowserSession:
