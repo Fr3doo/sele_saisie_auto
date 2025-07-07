@@ -9,11 +9,6 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from multiprocessing import shared_memory
 
-from selenium.common.exceptions import (
-    NoSuchElementException,
-    TimeoutException,
-    WebDriverException,
-)
 from selenium.webdriver.common.by import By
 
 from sele_saisie_auto import (
@@ -31,7 +26,6 @@ from sele_saisie_auto.automation.login_handler import LoginHandler
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import build_services
 from sele_saisie_auto.encryption_utils import EncryptionService
-from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import initialize_logger, write_log
 from sele_saisie_auto.logging_service import Logger, get_logger
@@ -512,64 +506,12 @@ class PSATimeAutomation:
         no_sandbox: bool = False,
     ) -> None:  # pragma: no cover
         """Point d'entrée principal de l'automatisation."""
-        manager = ConfigManager(log_file=self.log_file)
-        app_cfg = manager.load()
-        self.__init__(self.log_file, app_cfg)
-        self.log_initialisation()
-        credentials = self.initialize_shared_memory()
-
-        with self.browser_session as session:
-            driver = self.setup_browser(
-                session,
-                headless=headless,
-                no_sandbox=no_sandbox,
+        self.orchestrator.cleanup_resources = (
+            lambda mkey, mlogin, mpwd: self.cleanup_resources(
+                self.orchestrator.browser_session, mkey, mlogin, mpwd
             )
-            try:
-                self.login_handler.connect_to_psatime(
-                    driver,
-                    credentials.aes_key,
-                    credentials.login,
-                    credentials.password,
-                )
-                if self.navigate_from_home_to_date_entry_page(driver):
-                    self._process_date_entry(driver)
-                    self._fill_and_save_timesheet(driver)
-                self.wait_for_dom(driver)
-                self.switch_to_iframe_main_target_win0(driver)
-                self.wait_for_dom(driver)
-            except NoSuchElementException as e:
-                log_error(f"❌ L'élément n'a pas été trouvé : {str(e)}", self.log_file)
-            except TimeoutException as e:
-                log_error(
-                    f"❌ Temps d'attente dépassé pour un élément : {str(e)}",
-                    self.log_file,
-                )
-            except WebDriverException as e:
-                log_error(
-                    f"❌ Erreur liée au {messages.WEBDRIVER} : {str(e)}", self.log_file
-                )
-            except Exception as e:
-                log_error(f"❌ {messages.ERREUR_INATTENDUE} : {str(e)}", self.log_file)
-            finally:
-                try:
-                    if session.driver is not None:
-                        console_ui.ask_continue(
-                            "INFO : Controler et soumettez votre PSATime, Puis appuyer sur ENTRER "
-                        )
-                    else:
-                        console_ui.ask_continue(
-                            "ERROR : Controler les Log, Puis appuyer sur ENTRER ET relancer l'outil "
-                        )
-                    seprateur_menu_affichage_console()
-                except ValueError:
-                    pass
-                finally:
-                    self.cleanup_resources(
-                        session,
-                        credentials.mem_key,
-                        credentials.mem_login,
-                        credentials.mem_password,
-                    )
+        )
+        self.orchestrator.run(headless=headless, no_sandbox=no_sandbox)
 
 
 # ------------------------------------------------------------------------------------------------- #
