@@ -36,7 +36,10 @@ def handle_selenium_errors(
     def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            log = logger or get_default_logger()
+            inst_logger = logger
+            if inst_logger is None and args:
+                inst_logger = getattr(args[0], "logger", None)
+            log = inst_logger or get_default_logger()
             try:
                 return func(*args, **kwargs)
             except NoSuchElementException as exc:
