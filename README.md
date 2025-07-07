@@ -92,6 +92,16 @@ Certaines fonctions acceptent les modules Selenium ou Logger en paramètres pour
 ## ❗ Gestion des erreurs
 Les exceptions sont journalisées via `logger_utils.py`. Reportez-vous à la documentation interne pour enrichir le mécanisme.
 
+Voici comment décorer une fonction Selenium avec `handle_selenium_errors` :
+
+```python
+from sele_saisie_auto.decorators import handle_selenium_errors
+
+@handle_selenium_errors(default_return=False)
+def cliquer_bouton(driver):
+    driver.find_element(...).click()
+```
+
 ## 📝 Formats d'entrée
 Les paramètres sont lus depuis `config.ini` (login, mot de passe chiffré, planning, etc.).
 
