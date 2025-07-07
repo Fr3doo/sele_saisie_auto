@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as ec
 
 from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.remplir_informations_supp_utils import ExtraInfoHelper
@@ -64,6 +65,7 @@ class AdditionalInfoPage:
     # Public API
     # ------------------------------------------------------------------
     @wait_for_dom_after
+    @handle_selenium_errors(default_return=None)
     def navigate_from_work_schedule_to_additional_information_page(self, driver):
         """Open the modal to fill additional informations."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
@@ -84,6 +86,7 @@ class AdditionalInfoPage:
         self.wait_for_dom(driver)
 
     @wait_for_dom_after
+    @handle_selenium_errors(default_return=None)
     def submit_and_validate_additional_information(self, driver):
         """Fill all additional info fields and validate the modal."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
@@ -119,6 +122,7 @@ class AdditionalInfoPage:
             sap.click_element_without_wait(driver, By.ID, Locators.SAVE_ICON.value)
 
     @wait_for_dom_after
+    @handle_selenium_errors(default_return=False)
     def save_draft_and_validate(self, driver):
         """Click the save draft button and wait for completion."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
@@ -138,6 +142,7 @@ class AdditionalInfoPage:
             self._handle_save_alerts(driver)
         return element_present
 
+    @handle_selenium_errors(default_return=None)
     def _handle_save_alerts(self, driver) -> None:
         """Dismiss any alert shown after saving."""
 

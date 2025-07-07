@@ -25,6 +25,7 @@ from sele_saisie_auto.automation.date_entry_page import DateEntryPage
 from sele_saisie_auto.automation.login_handler import LoginHandler
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import build_services
+from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import initialize_logger, write_log
@@ -38,9 +39,9 @@ from sele_saisie_auto.selenium_utils import (
     detecter_doublons_jours,
     modifier_date_input,
     send_keys_to_element,
-    wait_for_dom_after,
 )
 from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
+from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
@@ -372,6 +373,7 @@ class PSATimeAutomation:
         """Wait until the DOM is stable using :class:`BrowserSession`."""
         self.browser_session.wait_for_dom(driver)
 
+    @handle_selenium_errors(default_return=None)
     def setup_browser(
         self,
         session: BrowserSession | None = None,
@@ -403,10 +405,12 @@ class PSATimeAutomation:
             raise NameError("main_target_win0 not found")
         return switched_to_iframe
 
+    @handle_selenium_errors(default_return=False)
     def navigate_from_home_to_date_entry_page(self, driver):
         """Delegate navigation to :class:`DateEntryPage`."""
         return self.date_entry_page.navigate_from_home_to_date_entry_page(driver)
 
+    @handle_selenium_errors(default_return=False)
     def submit_date_cible(self, driver):
         """Delegate submission to :class:`DateEntryPage`."""
         return self.date_entry_page.submit_date_cible(driver)
@@ -426,6 +430,7 @@ class PSATimeAutomation:
         )
 
     @wait_for_dom_after
+    @handle_selenium_errors(default_return=False)
     def save_draft_and_validate(self, driver):
         """Delegate to :class:`AdditionalInfoPage`."""
         return self.additional_info_page.save_draft_and_validate(driver)

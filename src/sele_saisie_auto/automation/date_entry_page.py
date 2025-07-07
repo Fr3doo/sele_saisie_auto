@@ -10,6 +10,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from sele_saisie_auto import messages
 from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import Waiter, wait_for_dom_after
@@ -60,6 +61,7 @@ class DateEntryPage:
     # Public API
     # ------------------------------------------------------------------
     @wait_for_dom_after
+    @handle_selenium_errors(default_return=False)
     def navigate_from_home_to_date_entry_page(self, driver):
         """Navigate from the home page to the date entry page."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
@@ -92,6 +94,7 @@ class DateEntryPage:
 
         return self.switch_to_main_frame(driver)
 
+    @handle_selenium_errors(default_return=None)
     def handle_date_input(self, driver, date_cible):
         """Fill the date field with ``date_cible`` or next Saturday."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
@@ -125,6 +128,7 @@ class DateEntryPage:
         self.wait_for_dom(driver)
 
     @wait_for_dom_after
+    @handle_selenium_errors(default_return=False)
     def submit_date_cible(self, driver):
         """Validate the chosen date."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
@@ -143,6 +147,7 @@ class DateEntryPage:
         self.wait_for_dom(driver)
         return element_present
 
+    @handle_selenium_errors(default_return=None)
     def process_date(self, driver, date_cible) -> None:
         """Orchestrate date selection and validation."""
 
@@ -155,11 +160,13 @@ class DateEntryPage:
         if self.submit_date_cible(driver):
             self._handle_date_alert(driver)
 
+    @handle_selenium_errors(default_return=None)
     def _handle_date_alert(self, driver) -> None:
         """Delegate alert handling to :class:`AlertHandler`."""
 
         self.alert_handler.handle_date_alert(driver)
 
+    @handle_selenium_errors(default_return=None)
     def _click_action_button(self, driver, create_new: bool) -> None:
         """Click the appropriate action button on the page."""
         elem_id = (

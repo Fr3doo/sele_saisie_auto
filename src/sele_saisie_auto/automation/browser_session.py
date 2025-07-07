@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import (
     Waiter,
@@ -33,6 +34,7 @@ class SeleniumDriverManager:
     ) -> None:
         self.close()
 
+    @handle_selenium_errors(default_return=None)
     def open(
         self,
         url: str,
@@ -59,6 +61,7 @@ class SeleniumDriverManager:
             wait_for_dom_ready(self.driver, timeout)
         return self.driver
 
+    @handle_selenium_errors(default_return=None)
     def close(self) -> None:
         """Close the WebDriver if started."""
         if self.driver is not None:
@@ -101,6 +104,7 @@ class BrowserSession:
     ) -> None:
         self.close()
 
+    @handle_selenium_errors(default_return=None)
     def open(
         self,
         url: str,
@@ -124,6 +128,7 @@ class BrowserSession:
             )
         return self.driver
 
+    @handle_selenium_errors(default_return=None)
     def close(self) -> None:
         """Close the browser if it was opened."""
         if self.driver is not None:
@@ -134,6 +139,7 @@ class BrowserSession:
     # ------------------------------------------------------------------
     # DOM helpers
     # ------------------------------------------------------------------
+    @handle_selenium_errors(default_return=None)
     def wait_for_dom(self, driver) -> None:
         """Wait until the DOM is stable and fully loaded."""
         default_timeout = (
@@ -152,6 +158,7 @@ class BrowserSession:
     # ------------------------------------------------------------------
     # Iframe helpers
     # ------------------------------------------------------------------
+    @handle_selenium_errors(default_return=False)
     def go_to_iframe(self, id_or_name: str) -> bool:
         """Switch to the iframe identified by ``id_or_name``."""
 
@@ -170,6 +177,7 @@ class BrowserSession:
             except Exception:  # noqa: BLE001
                 return False
 
+    @handle_selenium_errors(default_return=None)
     def go_to_default_content(self) -> None:
         """Return to the default document context."""
 
