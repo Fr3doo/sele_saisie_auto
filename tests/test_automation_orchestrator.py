@@ -196,3 +196,61 @@ def test_wrappers(monkeypatch, sample_config):
     orch.navigate_from_work_schedule_to_additional_information_page("drv")
     orch.submit_and_validate_additional_information("drv")
     orch.save_draft_and_validate("drv")
+
+
+def test_run_order(monkeypatch, sample_config):
+    app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
+    logger = Logger("log.html")
+    session = DummyBrowserSession()
+    login = DummyLoginHandler()
+    date_page = DummyDateEntryPage()
+    add_page = DummyAddPage()
+    creds = Credentials(b"k" * 32, object(), b"user", object(), b"pwd", object())
+
+    class DummyEncService:
+        def retrieve_credentials(self):
+            return creds
+
+    class DummySHMService:
+        def supprimer_memoire_partagee_securisee(self, mem):
+            pass
+
+    ctx = SaisieContext(app_cfg, DummyEncService(), DummySHMService(), {}, [])
+    orch = AutomationOrchestrator(
+        app_cfg,
+        logger,
+        session,
+        login,
+        date_page,
+        add_page,
+        ctx,
+        True,
+        timesheet_helper_cls=DummyHelper,
+    )
+
+    calls = []
+    monkeypatch.setattr(
+        orch.login_handler, "connect_to_psatime", lambda *a, **k: calls.append("login")
+    )
+    monkeypatch.setattr(
+        orch,
+        "navigate_from_home_to_date_entry_page",
+        lambda *a, **k: calls.append("navigate") or True,
+    )
+    monkeypatch.setattr(orch, "_process_date_entry", lambda *a, **k: None)
+    monkeypatch.setattr(
+        orch,
+        "_fill_and_save_timesheet",
+        lambda *a, **k: (calls.append("fill"), calls.append("submit")),
+    )
+    monkeypatch.setattr(orch, "initialize_shared_memory", lambda: creds)
+    monkeypatch.setattr(orch, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(orch, "switch_to_iframe_main_target_win0", lambda *a, **k: None)
+    monkeypatch.setattr(orch, "cleanup_resources", lambda *a, **k: None)
+    from sele_saisie_auto import console_ui
+
+    monkeypatch.setattr(console_ui, "ask_continue", lambda *a, **k: None)
+    orch.browser_session.go_to_default_content = lambda: None
+    orch.run()
+
+    assert calls == ["login", "navigate", "fill", "submit"]
