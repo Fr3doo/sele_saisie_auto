@@ -1,4 +1,5 @@
 import sys
+import types
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
@@ -13,7 +14,14 @@ class DummyBrowserSession:
     def __init__(self):
         self.open_calls = []
         self.driver = "drv"
-        self.waiter = None
+        self.waiter = types.SimpleNamespace(wait_for_element=lambda *a, **k: True)
+
+    def wait_for_dom(self, driver):
+        self.wait_called = True
+
+    def go_to_iframe(self, frame_id):
+        self.iframe_called = frame_id
+        return True
 
     def open(self, url, headless=False, no_sandbox=False):
         self.open_calls.append((url, headless, no_sandbox))
@@ -51,6 +59,12 @@ class DummyDateEntryPage:
     def process_date(self, driver, date):
         self.calls.append(("date", date))
 
+    def _click_action_button(self, driver, create_new):
+        self.calls.append("click")
+
+    def submit_date_cible(self, driver):
+        self.calls.append("submit")
+
 
 class DummyAddPage:
     def __init__(self):
@@ -78,7 +92,7 @@ class DummyHelper:
         DummyHelper.ran = driver
 
 
-def test_run_calls_services(sample_config):
+def test_run_calls_services(monkeypatch, sample_config):
     app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
     logger = Logger("log.html")
     session = DummyBrowserSession()
@@ -99,6 +113,22 @@ def test_run_calls_services(sample_config):
         timesheet_helper_cls=DummyHelper,
     )
 
+    # Stub out heavy selenium helpers
+    orch.wait_for_dom = lambda d: None
+    orch.switch_to_iframe_main_target_win0 = lambda d: True
+    orch.save_draft_and_validate = lambda d: True
+    orch.browser_session.go_to_default_content = lambda: None
+    orch.browser_session.waiter = types.SimpleNamespace(
+        wait_for_element=lambda *a, **k: True
+    )
+    orch.date_entry_page._click_action_button = lambda d, c: None
+    orch.additional_info_page._handle_save_alerts = lambda d: None
+    from sele_saisie_auto import plugins
+    from sele_saisie_auto.orchestration import automation_orchestrator as orch_mod
+
+    monkeypatch.setattr(orch_mod, "detecter_doublons_jours", lambda *a, **k: None)
+    monkeypatch.setattr(plugins, "call", lambda *a, **k: None)
+
     orch.run(b"k" * 32, b"user", b"pwd")
 
     assert session.open_calls[0][0] == app_cfg.url
@@ -106,3 +136,26 @@ def test_run_calls_services(sample_config):
     assert DummyHelper.ran == session.driver
     assert "nav" in date_page.calls
     assert "nav_add" in add_page.calls
+
+
+def test_wrappers(monkeypatch, sample_config):
+    app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
+    orch = AutomationOrchestrator(
+        app_cfg,
+        Logger("log.html"),
+        DummyBrowserSession(),
+        DummyLoginHandler(),
+        DummyDateEntryPage(),
+        DummyAddPage(),
+        SaisieContext(app_cfg, None, None, {}, []),
+        True,
+        timesheet_helper_cls=DummyHelper,
+    )
+
+    monkeypatch.setattr(orch.browser_session, "wait_for_dom", lambda d: None)
+    monkeypatch.setattr(orch, "switch_to_iframe_main_target_win0", lambda d: True)
+    orch.navigate_from_home_to_date_entry_page("drv")
+    orch.submit_date_cible("drv")
+    orch.navigate_from_work_schedule_to_additional_information_page("drv")
+    orch.submit_and_validate_additional_information("drv")
+    orch.save_draft_and_validate("drv")
