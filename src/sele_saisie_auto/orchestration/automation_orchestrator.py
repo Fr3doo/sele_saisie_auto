@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation import (
     AdditionalInfoPage,
@@ -13,6 +15,9 @@ from sele_saisie_auto.remplir_jours_feuille_de_temps import (
     context_from_app_config,
 )
 
+if TYPE_CHECKING:
+    from sele_saisie_auto.saisie_automatiser_psatime import SaisieContext
+
 
 class AutomationOrchestrator:
     """High level orchestrator composed of smaller automation services."""
@@ -25,6 +30,8 @@ class AutomationOrchestrator:
         login_handler: LoginHandler,
         date_entry_page: DateEntryPage,
         additional_info_page: AdditionalInfoPage,
+        context: "SaisieContext",
+        choix_user: bool = True,
         *,
         timesheet_helper_cls: type[TimeSheetHelper] = TimeSheetHelper,
     ) -> None:
@@ -34,6 +41,8 @@ class AutomationOrchestrator:
         self.login_handler = login_handler
         self.date_entry_page = date_entry_page
         self.additional_info_page = additional_info_page
+        self.context = context
+        self.choix_user = choix_user
         self.timesheet_helper_cls = timesheet_helper_cls
 
     def run(

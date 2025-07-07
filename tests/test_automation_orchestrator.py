@@ -6,6 +6,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw  # noqa: E402
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.orchestration import AutomationOrchestrator  # noqa: E402
+from sele_saisie_auto.saisie_automatiser_psatime import SaisieContext  # noqa: E402
 
 
 class DummyBrowserSession:
@@ -84,6 +85,7 @@ def test_run_calls_services(sample_config):
     login = DummyLoginHandler()
     date_page = DummyDateEntryPage()
     add_page = DummyAddPage()
+    ctx = SaisieContext(app_cfg, None, None, {}, [])
 
     orch = AutomationOrchestrator(
         app_cfg,
@@ -92,6 +94,8 @@ def test_run_calls_services(sample_config):
         login,
         date_page,
         add_page,
+        ctx,
+        True,
         timesheet_helper_cls=DummyHelper,
     )
 
