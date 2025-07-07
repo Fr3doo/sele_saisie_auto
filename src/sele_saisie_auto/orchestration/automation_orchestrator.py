@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from selenium.webdriver.common.by import By
+
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation import (
     AdditionalInfoPage,
@@ -9,11 +11,14 @@ from sele_saisie_auto.automation import (
     DateEntryPage,
     LoginHandler,
 )
+from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (
     TimeSheetHelper,
     context_from_app_config,
 )
+from sele_saisie_auto.selenium_utils import wait_for_dom_after
+from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 
 if TYPE_CHECKING:
     from sele_saisie_auto.saisie_automatiser_psatime import SaisieContext
@@ -30,7 +35,7 @@ class AutomationOrchestrator:
         login_handler: LoginHandler,
         date_entry_page: DateEntryPage,
         additional_info_page: AdditionalInfoPage,
-        context: "SaisieContext",
+        context: SaisieContext,
         choix_user: bool = True,
         *,
         timesheet_helper_cls: type[TimeSheetHelper] = TimeSheetHelper,
@@ -44,6 +49,35 @@ class AutomationOrchestrator:
         self.context = context
         self.choix_user = choix_user
         self.timesheet_helper_cls = timesheet_helper_cls
+
+    # ------------------------------------------------------------------
+    # DOM & iframe helpers
+    # ------------------------------------------------------------------
+    def wait_for_dom(self, driver) -> None:
+        """Delegate DOM wait to :class:`BrowserSession`."""
+
+        self.browser_session.wait_for_dom(driver)
+
+    @wait_for_dom_after
+    def switch_to_iframe_main_target_win0(self, driver):
+        """Switch to the ``main_target_win0`` iframe."""
+
+        waiter = self.browser_session.waiter
+        switched_to_iframe = None
+        element_present = waiter.wait_for_element(
+            driver,
+            By.ID,
+            Locators.MAIN_FRAME.value,
+            timeout=DEFAULT_TIMEOUT,
+        )
+        if element_present:
+            switched_to_iframe = self.browser_session.go_to_iframe(
+                Locators.MAIN_FRAME.value
+            )
+        self.wait_for_dom(driver)
+        if switched_to_iframe is None:
+            raise NameError("main_target_win0 not found")
+        return switched_to_iframe
 
     def run(
         self,
