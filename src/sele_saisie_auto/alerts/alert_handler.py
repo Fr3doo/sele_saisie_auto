@@ -91,3 +91,26 @@ class AlertHandler:
                     "INFO",
                 )
                 break
+
+    def handle_alerts(self, driver, alert_type: str = "save_alerts") -> None:
+        """General wrapper to dispatch alert handling.
+
+        Parameters
+        ----------
+        driver:
+            Selenium driver instance used for the interaction.
+        alert_type:
+            Type of alert to process. ``"save_alerts"`` (default) will
+            look for confirmation alerts after saving. ``"date_alert"``
+            will check for a conflict when submitting a date.
+        """
+
+        handlers = {
+            "save_alerts": self.handle_save_alerts,
+            "date_alert": self.handle_date_alert,
+        }
+
+        handler = handlers.get(alert_type)
+        if handler is None:
+            raise ValueError(f"Unknown alert_type: {alert_type}")
+        handler(driver)
