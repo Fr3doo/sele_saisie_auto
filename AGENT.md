@@ -27,6 +27,7 @@ Ce fichier décrit le rôle des différents agents qui composent le projet. Pour
 | `LoginHandler`          | Gère la connexion utilisateur                  | `automation/login_handler.py`    | Driver, identifiants  | Aucune (session ouverte) |
 | `DateEntryPage`         | Gère la sélection de période                   | `automation/date_entry_page.py`  | Driver, date cible    | Période validée |
 | `AdditionalInfoPage`    | Remplit la fenêtre d'informations supplémentaires | `automation/additional_info_page.py` | Driver, config        | Données enregistrées |
+| `PageNavigator`         | Orchestration simple des pages                 | `navigation/page_navigator.py`       | Drivers, pages        | Actions séquencées |
 ## 4. Détails par agent
 
 ### `SeleniumFiller`
