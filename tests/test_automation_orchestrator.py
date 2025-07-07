@@ -100,7 +100,27 @@ def test_run_calls_services(monkeypatch, sample_config):
     login = DummyLoginHandler()
     date_page = DummyDateEntryPage()
     add_page = DummyAddPage()
-    ctx = SaisieContext(app_cfg, None, None, {}, [])
+    creds = Credentials(b"k" * 32, object(), b"user", object(), b"pwd", object())
+
+    class DummyEncService:
+        def __init__(self):
+            self.calls = 0
+
+        def retrieve_credentials(self):
+            self.calls += 1
+            return creds
+
+    class DummySHMService:
+        def __init__(self):
+            self.removed = []
+
+        def supprimer_memoire_partagee_securisee(self, mem):
+            self.removed.append(mem)
+
+    enc_service = DummyEncService()
+    shm_service = DummySHMService()
+
+    ctx = SaisieContext(app_cfg, enc_service, shm_service, {}, [])
 
     orch = AutomationOrchestrator(
         app_cfg,
@@ -130,15 +150,24 @@ def test_run_calls_services(monkeypatch, sample_config):
     monkeypatch.setattr(orch_mod, "detecter_doublons_jours", lambda *a, **k: None)
     monkeypatch.setattr(plugins, "call", lambda *a, **k: None)
 
-    creds = Credentials(b"k" * 32, None, b"user", None, b"pwd", None)
-    monkeypatch.setattr(orch, "initialize_shared_memory", lambda: creds)
-    monkeypatch.setattr(orch, "cleanup_resources", lambda *a, **k: None)
+    cleanup_args = {}
+
+    def cleanup_spy(mkey, mlogin, mpwd):
+        cleanup_args["vals"] = (mkey, mlogin, mpwd)
+
+    monkeypatch.setattr(orch, "cleanup_resources", cleanup_spy)
     from sele_saisie_auto import console_ui
 
     monkeypatch.setattr(console_ui, "ask_continue", lambda *a, **k: None)
 
     orch.run()
 
+    assert enc_service.calls == 1
+    assert cleanup_args["vals"] == (
+        creds.mem_key,
+        creds.mem_login,
+        creds.mem_password,
+    )
     assert session.open_calls[0][0] == app_cfg.url
     assert login.calls
     assert DummyHelper.ran == session.driver

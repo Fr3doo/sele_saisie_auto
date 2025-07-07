@@ -311,3 +311,29 @@ def test_main_flow(monkeypatch, sample_config):
     sap.main("log.html")
 
     assert cleanup_called["done"] is True
+
+
+def test_run_delegates_to_orchestrator(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
+    app_cfg = sap.context.config
+
+    class DummyOrchestrator:
+        def __init__(self, *args, **kwargs):
+            self.browser_session = DummyBrowserSession("log.html")
+            self.run_called = 0
+            self.run_args = None
+
+        def run(self, headless=False, no_sandbox=False):
+            self.run_called += 1
+            self.run_args = (headless, no_sandbox)
+
+    monkeypatch.setattr(sap, "AutomationOrchestrator", DummyOrchestrator)
+
+    auto = sap.PSATimeAutomation("log.html", app_cfg)
+    monkeypatch.setattr(auto, "cleanup_resources", lambda *a, **k: None)
+
+    auto.run(headless=True, no_sandbox=True)
+
+    assert isinstance(auto.orchestrator, DummyOrchestrator)
+    assert auto.orchestrator.run_called == 1
+    assert auto.orchestrator.run_args == (True, True)
