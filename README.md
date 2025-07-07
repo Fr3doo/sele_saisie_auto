@@ -82,6 +82,7 @@ Une interface graphique Tkinter permet de renseigner vos identifiants chiffrés 
   python -m sele_saisie_auto.launcher
   python -m sele_saisie_auto.saisie_automatiser_psatime
   python -m sele_saisie_auto.remplir_jours_feuille_de_temps
+> **Note :** la logique principale réside désormais dans ``AutomationOrchestrator.run()``. ``PSATimeAutomation.run()`` se contente de l'appeler.
   ```
 
 ## 🔌 Injection de dépendances
