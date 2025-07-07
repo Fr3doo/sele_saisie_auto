@@ -19,7 +19,7 @@ class DummyAutomation:
         pass
 
 
-def test_handle_save_alerts(monkeypatch):
+def test_handle_alerts_save(monkeypatch):
     dummy = DummyAutomation()
     handler = AlertHandler(dummy)
     seq = iter([True, False, False])
@@ -33,11 +33,11 @@ def test_handle_save_alerts(monkeypatch):
         "sele_saisie_auto.saisie_automatiser_psatime.write_log",
         lambda msg, f, level: logs.append(msg),
     )
-    handler.handle_save_alerts("drv")
+    handler.handle_alerts("drv")
     assert "click" in logs
 
 
-def test_handle_date_alert(monkeypatch):
+def test_handle_alerts_date(monkeypatch):
     dummy = DummyAutomation()
     handler = AlertHandler(dummy)
     monkeypatch.setattr(handler.waiter, "wait_for_element", lambda *a, **k: True)
@@ -50,4 +50,10 @@ def test_handle_date_alert(monkeypatch):
         lambda *a, **k: None,
     )
     with pytest.raises(SystemExit):
-        handler.handle_date_alert("drv")
+        handler.handle_alerts("drv", alert_type="date_alert")
+
+
+def test_handle_alerts_unknown(monkeypatch):
+    handler = AlertHandler(DummyAutomation())
+    with pytest.raises(ValueError):
+        handler.handle_alerts("drv", alert_type="unknown")
