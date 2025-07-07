@@ -115,19 +115,53 @@ def test_parse_args_basic(monkeypatch):
 def test_run_psatime(monkeypatch, dummy_logger):
     launcher = import_launcher(monkeypatch)
     menu = DummyMenu()
-    calls = {}
+    cfg = object()
 
-    fake_mod = types.SimpleNamespace(main=lambda lf, **kw: calls.setdefault("main", lf))
-    monkeypatch.setitem(
-        sys.modules, "sele_saisie_auto.saisie_automatiser_psatime", fake_mod
+    class DummyAutomation:
+        def __init__(self, log_file, cfg_loaded, logger=None):
+            self.called = (log_file, cfg_loaded, logger)
+            self.browser_session = object()
+            self.login_handler = object()
+            self.date_entry_page = object()
+            self.additional_info_page = object()
+            self.context = object()
+            self.choix_user = True
+
+    class DummyOrchestrator:
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+            self.run_called = False
+            self.run_args = None
+
+        def run(self, headless=False, no_sandbox=False):
+            self.run_called = True
+            self.run_args = (headless, no_sandbox)
+
+    monkeypatch.setattr(
+        launcher,
+        "ConfigManager",
+        lambda log_file=None: types.SimpleNamespace(load=lambda: cfg),
     )
-    monkeypatch.setattr(launcher, "saisie_automatiser_psatime", fake_mod)
+    monkeypatch.setattr(
+        launcher.saisie_automatiser_psatime,
+        "PSATimeAutomation",
+        DummyAutomation,
+    )
+    orchestrator_instance = {}
+
+    def dummy_orchestrator_factory(*args, **kwargs):
+        inst = DummyOrchestrator(*args, **kwargs)
+        orchestrator_instance["inst"] = inst
+        return inst
+
+    monkeypatch.setattr(launcher, "AutomationOrchestrator", dummy_orchestrator_factory)
 
     launcher.run_psatime("file.html", menu, logger=dummy_logger)
 
     assert menu.destroy_called
     assert dummy_logger.records["info"][0].startswith("Launching")
-    assert calls["main"] == "file.html"
+    assert orchestrator_instance["inst"].run_called
 
 
 def test_run_psatime_with_credentials(monkeypatch):
