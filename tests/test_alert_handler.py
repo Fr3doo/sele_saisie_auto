@@ -1,8 +1,10 @@
 import types
 
 import pytest
+from selenium.webdriver.common.by import By
 
 from sele_saisie_auto.alerts.alert_handler import AlertHandler
+from sele_saisie_auto.locators import Locators
 
 
 class DummyAutomation:
@@ -19,22 +21,32 @@ class DummyAutomation:
         pass
 
 
-def test_handle_alerts_save(monkeypatch):
+def test_handle_alerts_clicks_confirm_ok_and_logs(monkeypatch):
     dummy = DummyAutomation()
     handler = AlertHandler(dummy)
     seq = iter([True, False, False])
     monkeypatch.setattr(handler.waiter, "wait_for_element", lambda *a, **k: next(seq))
-    logs = []
+
+    clicks = []
+
+    def fake_click(driver, by, locator):
+        clicks.append((by, locator))
+
     monkeypatch.setattr(
         "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
-        lambda *a, **k: logs.append("click"),
+        fake_click,
     )
+
+    logs = []
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.write_log",
-        lambda msg, f, level: logs.append(msg),
+        "sele_saisie_auto.alerts.alert_handler.write_log",
+        lambda msg, f, level: logs.append((msg, level)),
     )
+
     handler.handle_alerts("drv")
-    assert "click" in logs
+
+    assert (By.ID, Locators.CONFIRM_OK.value) in clicks
+    assert logs
 
 
 def test_handle_alerts_date(monkeypatch):
