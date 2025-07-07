@@ -20,7 +20,35 @@ def seperator_ttk(
 def create_tab(
     notebook: ttk.Notebook, title: str, style: str = "Modern.TFrame", padding: int = 20
 ) -> ttk.Frame:
-    """Créer un onglet dans ``notebook``."""
+    """Créer un onglet dans ``notebook``.
+
+    Parameters
+    ----------
+    notebook : ttk.Notebook
+        Le ``Notebook`` cible. Doit exposer une méthode ``add``.
+    title : str
+        Titre de l'onglet.
+    style : str, optional
+        Style appliqué au ``Frame`` créé.
+    padding : int, optional
+        Marge interne du ``Frame``.
+
+    Returns
+    -------
+    ttk.Frame
+        Le ``Frame`` nouvellement ajouté.
+
+    Raises
+    ------
+    AttributeError
+        Si ``notebook`` ne dispose pas d'une méthode ``add``.
+    """
+
+    if not hasattr(notebook, "add"):
+        raise AttributeError(
+            "Notebook object must implement an 'add' method"
+        )  # pragma: no cover - defensive programming
+
     tab_frame = ttk.Frame(notebook, style=style, padding=padding)
     notebook.add(tab_frame, text=title)
     return tab_frame
