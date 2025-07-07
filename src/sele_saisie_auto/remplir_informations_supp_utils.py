@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from sele_saisie_auto import messages
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.constants import JOURS_SEMAINE
-from sele_saisie_auto.elements.element_id_builder import build_day_input_id
+from sele_saisie_auto.elements.element_id_builder import ElementIdBuilder
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.selenium_utils import (
@@ -45,7 +45,7 @@ def _collect_filled_days(
     filled_days = []
     write_log(messages.CHECK_FILLED_DAYS, log_file, "DEBUG")
     for i in range(1, 8):
-        input_id = build_day_input_id(id_value_days, i, row_index)
+        input_id = ElementIdBuilder.build_day_input_id(id_value_days, i, row_index)
         element = _get_element(driver, waiter, input_id)
         if element:
             jour = week_days[i]
@@ -87,7 +87,7 @@ def _fill_missing_days(
 ):
     """Complète les jours encore vides."""
     for i in range(1, 8):
-        input_id = build_day_input_id(id_value_days, i, row_index)
+        input_id = ElementIdBuilder.build_day_input_id(id_value_days, i, row_index)
         element = _get_element(driver, waiter, input_id)
         if element:
             jour = week_days[i]
