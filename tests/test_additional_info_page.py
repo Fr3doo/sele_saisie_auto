@@ -99,9 +99,9 @@ def test_handle_save_alerts(monkeypatch):
     page = AdditionalInfoPage(dummy)
     calls = []
 
-    def fake_handle(driver):
-        calls.append("handled")
+    def fake_handle(driver, alert_type="save_alerts"):
+        calls.append((driver, alert_type))
 
-    monkeypatch.setattr(page.alert_handler, "handle_save_alerts", fake_handle)
+    monkeypatch.setattr(page.alert_handler, "handle_alerts", fake_handle)
     page._handle_save_alerts("drv")
-    assert "handled" in calls
+    assert ("drv", "save_alerts") in calls

@@ -140,4 +140,4 @@ class AdditionalInfoPage:
     def _handle_save_alerts(self, driver) -> None:
         """Dismiss any alert shown after saving."""
 
-        self.alert_handler.handle_save_alerts(driver)
+        self.alert_handler.handle_alerts(driver, "save_alerts")
