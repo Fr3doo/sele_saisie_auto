@@ -90,8 +90,15 @@ def test_save_draft_and_validate(monkeypatch):
         lambda *a, **k: clicks.append(True),
     )
     monkeypatch.setattr(AdditionalInfoPage, "wait_for_dom", lambda self, d: None)
+    calls = []
+    monkeypatch.setattr(
+        page.alert_handler,
+        "handle_alerts",
+        lambda d, alert_type="save_alerts": calls.append((d, alert_type)),
+    )
     assert page.save_draft_and_validate("drv") is True
     assert clicks
+    assert ("drv", "save_alerts") in calls
 
 
 def test_handle_save_alerts(monkeypatch):
