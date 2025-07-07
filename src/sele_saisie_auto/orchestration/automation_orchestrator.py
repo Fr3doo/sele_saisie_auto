@@ -96,6 +96,11 @@ class AutomationOrchestrator:
             raise NameError("main_target_win0 not found")
         return switched_to_iframe
 
+    def _process_date_entry(self, driver) -> None:
+        """Renseigne la date cible dans l'interface."""
+
+        self.date_entry_page.process_date(driver, self.config.date_cible)
+
     def run(
         self,
         aes_key: bytes,
@@ -116,7 +121,7 @@ class AutomationOrchestrator:
                 driver, aes_key, encrypted_login, encrypted_password
             )
             if self.date_entry_page.navigate_from_home_to_date_entry_page(driver):
-                self.date_entry_page.process_date(driver, self.config.date_cible)
+                self._process_date_entry(driver)
                 helper = self.timesheet_helper_cls(
                     context_from_app_config(self.config, self.logger.log_file),
                     self.logger,
