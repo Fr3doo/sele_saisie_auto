@@ -131,3 +131,27 @@ class AutomationOrchestrator:
                 )
                 session.go_to_default_content()
                 self.additional_info_page.save_draft_and_validate(driver)
+
+    def cleanup_resources(
+        self,
+        memoire_cle,
+        memoire_nom,
+        memoire_mdp,
+    ) -> None:
+        """Ferme le navigateur et libère les mémoires partagées."""
+        if memoire_cle:
+            self.context.shared_memory_service.supprimer_memoire_partagee_securisee(
+                memoire_cle
+            )
+        if memoire_nom:
+            self.context.shared_memory_service.supprimer_memoire_partagee_securisee(
+                memoire_nom
+            )
+        if memoire_mdp:
+            self.context.shared_memory_service.supprimer_memoire_partagee_securisee(
+                memoire_mdp
+            )
+        self.browser_session.close()
+        self.logger.info(
+            "🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier automation_orchestrator."
+        )
