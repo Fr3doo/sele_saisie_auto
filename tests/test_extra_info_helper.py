@@ -8,6 +8,7 @@ from sele_saisie_auto import remplir_informations_supp_utils as risu  # noqa: E4
 from sele_saisie_auto.additional_info_locators import (  # noqa: E402
     AdditionalInfoLocators,
 )
+from sele_saisie_auto.elements.element_id_builder import ElementIdBuilder  # noqa: E402
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.remplir_informations_supp_utils import (  # noqa: E402
     ExtraInfoHelper,
@@ -55,7 +56,10 @@ def test_traiter_description_input(monkeypatch):
         def send_keys(self, val):
             self.value = val
 
+    ids = []
+
     def fake_wait(driver, by, ident, timeout):
+        ids.append(ident)
         return DummyElement()
 
     monkeypatch.setattr(risu, "wait_for_element", fake_wait)
@@ -70,6 +74,11 @@ def test_traiter_description_input(monkeypatch):
     helper = ExtraInfoHelper(Logger("log"))
     helper.waiter = None
     helper.traiter_description(None, make_config())
+
+    base = AdditionalInfoLocators.DAY_UC_DAILYREST.value
+    expected = [ElementIdBuilder.build_day_input_id(base, i, 2) for i in range(1, 8)]
+    for eid in expected:
+        assert ids.count(eid) == 2
 
     assert ("lundi", "val_lundi") in filled
     assert ("dimanche", "val_dimanche") not in filled
@@ -106,7 +115,11 @@ def test_traiter_description_select_special(monkeypatch):
     helper.waiter = None
     helper.traiter_description(None, cfg)
 
-    assert f"{cfg['id_value_jours']}11$0" in ids
+    base = AdditionalInfoLocators.DAY_UC_DAILYREST_SPECIAL.value
+    expected = [ElementIdBuilder.build_day_input_id(base, i, 0) for i in range(1, 8)]
+    for eid in expected:
+        assert ids.count(eid) == 2
+
     assert selected
     assert any(messages.AUCUNE_VALEUR in m for m in logs)
     assert any(messages.IMPOSSIBLE_DE_TROUVER in m for m in logs)
