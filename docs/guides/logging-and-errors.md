@@ -54,6 +54,19 @@ except (DriverError, InvalidConfigError) as exc:
     logger.error("operation failed: %s", exc)
 ```
 
+## Décorateur `handle_selenium_errors`
+
+Ce décorateur capture les exceptions Selenium courantes et écrit un message
+dans le journal. Il renvoie la valeur indiquée par `default_return` lorsqu'une
+erreur est interceptée. Le logger passé en argument est utilisé ; à défaut, le
+logger de l'instance ou celui par défaut est choisi.
+
+```python
+@handle_selenium_errors(default_return=False)
+def cliquer_bouton(driver):
+    driver.find_element(...).click()
+```
+
 ## Fichier de log
 Les messages sont enregistres dans le dossier `logs/` sous forme de fichier HTML. Chaque execution ajoute de nouvelles entrees au meme fichier afin de conserver l'historique complet.
 
