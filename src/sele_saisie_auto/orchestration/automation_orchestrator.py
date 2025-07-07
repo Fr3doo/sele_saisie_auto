@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 
 from selenium.webdriver.common.by import By
@@ -49,6 +50,22 @@ class AutomationOrchestrator:
         self.context = context
         self.choix_user = choix_user
         self.timesheet_helper_cls = timesheet_helper_cls
+
+    def initialize_shared_memory(self):
+        """Retrieve credentials from shared memory."""
+        credentials = self.context.encryption_service.retrieve_credentials()
+
+        if (
+            credentials.mem_login is None
+            or credentials.mem_password is None
+            or credentials.mem_key is None
+        ):
+            self.logger.error(
+                "🚨 La mémoire partagée n'a pas été initialisée correctement. Assurez-vous que les identifiants ont été chiffrés"
+            )
+            sys.exit(1)
+
+        return credentials
 
     # ------------------------------------------------------------------
     # DOM & iframe helpers
