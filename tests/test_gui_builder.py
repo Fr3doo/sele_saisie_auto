@@ -129,3 +129,9 @@ def test_build_widgets():
     gui_builder.seperator_ttk(frame)
     assert isinstance(sep_instance, DummyWidget)
     assert sep_instance.pack_kwargs["fill"] == "x"
+
+
+def test_create_tab_invalid_object():
+    """Ensure ``create_tab`` fails clearly with an invalid notebook."""
+    with pytest.raises(AttributeError):
+        gui_builder.create_tab(DummyWidget(), "Bad")

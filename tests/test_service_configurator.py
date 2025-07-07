@@ -15,4 +15,3 @@ def test_build_services(sample_config):
     assert isinstance(services.waiter, Waiter)
     assert services.browser_session.app_config is app_cfg
     assert services.browser_session.waiter is services.waiter
-
