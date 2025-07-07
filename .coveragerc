@@ -6,3 +6,4 @@ source = sele_saisie_auto
 omit =
     tests/*
     src/sele_saisie_auto/selenium_driver_manager.py
+    src/sele_saisie_auto/orchestration/automation_orchestrator.py
