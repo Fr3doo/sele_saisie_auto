@@ -20,3 +20,17 @@ poetry run psatime-launcher
 ```
 
 Pour aller plus loin, référez-vous à [../guides/installation.md](../guides/installation.md) et [../index.md](../index.md).
+
+## Chaîne ExtraInfoHelper -> DescriptionProcessor -> ElementFillingStrategy
+
+Lorsque les informations supplémentaires sont saisies, `ExtraInfoHelper`
+appelle `process_description` du module `DescriptionProcessor`.
+Chaque champ est alors rempli via un `ElementFillingStrategy` adapté
+(`InputFillingStrategy` ou `SelectFillingStrategy`).
+
+```mermaid
+flowchart LR
+    ExtraInfoHelper --> DescriptionProcessor
+    DescriptionProcessor --> ElementFillingStrategy
+```
+
