@@ -2,12 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from selenium.webdriver.common.by import By
-
-from sele_saisie_auto import messages
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.form_processing.description_processor import process_description
-from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.selenium_utils import Waiter
 from sele_saisie_auto.strategies import (

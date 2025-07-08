@@ -5,6 +5,7 @@ from pathlib import Path  # noqa: E402
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 import sele_saisie_auto.remplir_informations_supp_utils as risu  # noqa: E402
+from sele_saisie_auto.form_processing import description_processor as dp  # noqa: E402
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.remplir_informations_supp_utils import (  # noqa: E402
     ExtraInfoHelper,
@@ -38,6 +39,7 @@ def test_delegate_strategy_input(monkeypatch):
         )
         captured["logger"] = logger
 
+    monkeypatch.setattr(dp, "process_description", fake_process)
     monkeypatch.setattr(risu, "process_description", fake_process)
     helper = ExtraInfoHelper(Logger("log"))
     helper.traiter_description(None, make_config(type_element="input"))
@@ -55,6 +57,7 @@ def test_delegate_strategy_select(monkeypatch):
             filling_context.strategy.__class__ if filling_context else None
         )
 
+    monkeypatch.setattr(dp, "process_description", fake_process)
     monkeypatch.setattr(risu, "process_description", fake_process)
     helper = ExtraInfoHelper(Logger("log"))
     helper.traiter_description(None, make_config(type_element="select"))
@@ -69,6 +72,7 @@ def test_delegate_strategy_unknown(monkeypatch):
     ):
         captured["context"] = filling_context
 
+    monkeypatch.setattr(dp, "process_description", fake_process)
     monkeypatch.setattr(risu, "process_description", fake_process)
     helper = ExtraInfoHelper(Logger("log"))
     helper.traiter_description(None, make_config(type_element="other"))
