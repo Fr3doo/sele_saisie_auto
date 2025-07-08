@@ -40,9 +40,9 @@ from sele_saisie_auto.selenium_utils import (
     detecter_doublons_jours,
     modifier_date_input,
     send_keys_to_element,
-    wait_for_dom_after,
 )
 from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
+from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
