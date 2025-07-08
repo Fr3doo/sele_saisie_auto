@@ -21,8 +21,7 @@ Pour plus de détails, consultez le [guide de déploiement](../guides/deployment
 ## Formats d'entrée
 
 Les paramètres sont lus depuis un fichier `config.ini` situé à la racine du
-projet. Ce fichier contient notamment les sections `[credentials]` et
-`[settings]`.
+projet. Ce fichier contient principalement la section `[settings]`.
 
 Le chemin du fichier peut être passé en argument lors de l'exécution. Si aucun
 chemin n'est fourni, une copie du `config.ini` embarqué est générée dans le
@@ -33,8 +32,6 @@ suivantes :
 
 - `PSATIME_URL` — URL du portail PSA Time
 - `PSATIME_DATE_CIBLE` — date cible au format `JJ/MM/AAAA`
-- `PSATIME_LOGIN` — identifiant chiffré
-- `PSATIME_MDP` — mot de passe chiffré
 - `PSATIME_DEBUG_MODE` — niveau de log (`INFO`, `DEBUG`, …)
 - `PSATIME_LISTE_ITEMS_PLANNING` — liste d'items séparés par des virgules
 - `PSATIME_DEFAULT_TIMEOUT` — délai d'attente par défaut pour Selenium

@@ -13,10 +13,7 @@ from sele_saisie_auto.dropdown_options import BillingActionOption  # noqa: E402
 def test_load_config_parses(tmp_path, monkeypatch):
     cfg = tmp_path / "config.ini"
     cfg.write_text(
-        """[credentials]
-login=enc
-mdp=enc
-[settings]
+        """[settings]
 url=http://t
 date_cible=01/07/2024
 liste_items_planning="a", "b"
@@ -36,7 +33,7 @@ Facturable = B
     assert app_cfg.url == "http://t"
     assert app_cfg.date_cible == "01/07/2024"
     assert app_cfg.liste_items_planning == ["a", "b"]
-    assert app_cfg.raw.get("credentials", "login") == "enc"
+    assert not app_cfg.raw.has_section("credentials")
     billing = {o.label.lower(): o.code for o in app_cfg.cgi_options_billing_action}
     assert billing["facturable"] == "B"
 
@@ -44,10 +41,7 @@ Facturable = B
 def test_env_vars_override(tmp_path, monkeypatch):
     cfg = tmp_path / "config.ini"
     cfg.write_text(
-        """[credentials]
-login=file_login
-mdp=file_mdp
-[settings]
+        """[settings]
 url=http://file
 date_cible=01/07/2024
 debug_mode=INFO
@@ -80,10 +74,7 @@ Facturable = B
 def test_load_config_fails_on_empty_url(tmp_path, monkeypatch):
     cfg = tmp_path / "config.ini"
     cfg.write_text(
-        """[credentials]
-login=enc
-mdp=enc
-[settings]
+        """[settings]
 url=
 """,
         encoding="utf-8",
@@ -97,13 +88,10 @@ url=
         load_config(str(tmp_path / "log.html"))
 
 
-def test_load_config_fails_on_missing_credentials(tmp_path, monkeypatch):
+def test_load_config_allows_missing_credentials(tmp_path, monkeypatch):
     cfg = tmp_path / "config.ini"
     cfg.write_text(
-        """[credentials]
-login=
-mdp=
-[settings]
+        """[settings]
 url=http://t
 """,
         encoding="utf-8",
@@ -113,8 +101,7 @@ url=http://t
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log",
         lambda *a, **k: None,
     )
-    with pytest.raises(ValueError):
-        load_config(str(tmp_path / "log.html"))
+    load_config(str(tmp_path / "log.html"))
 
 
 def test__charger_settings_basic():

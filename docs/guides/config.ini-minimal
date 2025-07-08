@@ -1,7 +1,3 @@
-[credentials]
-login = enc_login
-mdp = enc_pwd
-
 [settings]
 url = http://example.com
 date_cible = 01/07/2024
