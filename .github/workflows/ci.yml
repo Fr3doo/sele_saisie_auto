@@ -87,7 +87,7 @@ jobs:
         run: poetry install --no-root --no-interaction --no-ansi
 
       - name: Check complexity (Cyclomatic CC)
-        run: poetry run radon cc src/ -s
+        run: poetry run radon cc . -s -a
 
   # 5) Analyse de sécurité statique (Bandit)
   security:
