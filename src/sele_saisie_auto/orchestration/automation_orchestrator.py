@@ -38,7 +38,23 @@ if TYPE_CHECKING:
 
 
 class AutomationOrchestrator:
-    """High level orchestrator composed of smaller automation services."""
+    """Coordinate all sub-services to fill and submit a PSA Time sheet.
+
+    The orchestrator binds together the different automation helpers and
+    exposes a single :meth:`run` entry point.  The global sequence executed is
+    roughly as follows:
+
+    1. Récupération des identifiants chiffrés depuis la mémoire partagée.
+    2. Ouverture du navigateur Selenium et connexion au portail PSA Time.
+    3. Sélection de la date cible, puis affichage de la grille de saisie.
+    4. Remplissage des journées via :class:`TimeSheetHelper`.
+    5. Saisie des informations supplémentaires et sauvegarde du brouillon.
+    6. Vérification d’éventuels doublons puis exécution des hooks ``plugins``.
+    7. Libération des ressources (mémoires partagées, navigateur, logs).
+
+    All low level Selenium operations remain delegated to their respective
+    services, keeping this class focused on the overall workflow.
+    """
 
     def __init__(
         self,
@@ -154,7 +170,18 @@ class AutomationOrchestrator:
         return self.additional_info_page.save_draft_and_validate(driver)
 
     def _fill_and_save_timesheet(self, driver) -> None:
-        """Fill timesheet then save draft with additional info."""
+        """Fill the timesheet grid and persist a draft.
+
+        This helper method chains the different steps executed once the date
+        selection page is displayed:
+
+        1. Appel du bouton d'action pour ouvrir la grille de travail.
+        2. Utilisation de :class:`TimeSheetHelper` pour renseigner chaque jour.
+        3. Ouverture de la fenêtre d'informations supplémentaires puis
+           validation des champs requis.
+        4. Retour sur la page principale, détection des doublons de jours et,
+           si tout est valide, sauvegarde du brouillon.
+        """
 
         self.wait_for_dom(driver)
         self.switch_to_iframe_main_target_win0(driver)
@@ -184,7 +211,19 @@ class AutomationOrchestrator:
         headless: bool = False,
         no_sandbox: bool = False,
     ) -> None:
-        """Execute the full PSA Time automation flow."""
+        """Execute the full automation workflow.
+
+        The method orchestrates the entire PSA Time procedure:
+
+        1. Chargement de la configuration et récupération des identifiants.
+        2. Ouverture d'une session navigateur via :class:`BrowserSession`.
+        3. Connexion à PSA Time à l'aide de :class:`LoginHandler`.
+        4. Navigation vers la page de sélection de date et remplissage de la
+           feuille de temps.
+        5. Appel des vérifications finales puis sauvegarde du brouillon.
+        6. En toute circonstance, fermeture du navigateur et nettoyage de la
+           mémoire partagée.
+        """
 
         if self.config is None:
             self.config = ConfigManager().load()
