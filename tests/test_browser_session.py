@@ -35,6 +35,7 @@ def test_open_delegates_to_manager(monkeypatch):
     assert driver == "driver"  # nosec B101
     assert session.driver == "driver"  # nosec B101
     assert calls["args"] == ("http://t", True, True, False)  # nosec B101
+    assert calls["init"] == "log.html"  # nosec B101
 
 
 def test_close_calls_manager(monkeypatch):
