@@ -23,6 +23,7 @@ Ce fichier décrit le rôle des différents agents qui composent le projet. Pour
 | `Logger`                | Gestion et rotation des logs                  | `logger_utils.py`                         | Messages à enregistrer| Fichier HTML/TXT de logs     |
 | `SeleniumDriverManager` | Initialise et ferme le WebDriver             | `selenium_driver_manager.py`             | URL, options          | Instance WebDriver |
 | `SeleniumUtils`         | Fonctions utilitaires pour Selenium           | `selenium_utils/`             | WebDriver, ID, valeurs| Éléments manipulés          |
+| `DuplicateDayDetector`  | Détecte les doublons de jours remplis        | `selenium_utils/duplicate_day_detector.py` | Driver, max_rows      | Logs de doublons |
 | `BrowserSession`        | Gère l'ouverture et la fermeture du navigateur | `automation/browser_session.py`  | URL, options          | Instance WebDriver |
 | `LoginHandler`          | Gère la connexion utilisateur                  | `automation/login_handler.py`    | Driver, identifiants  | Aucune (session ouverte) |
 | `DateEntryPage`         | Gère la sélection de période                   | `automation/date_entry_page.py`  | Driver, date cible    | Période validée |
@@ -165,6 +166,10 @@ Fonctions de support communes pour la gestion des logs.
 Outils divers pour la console.
 - `program_break_time(memorization_time: int, affichage_text: str)` : affiche un compte à rebours.
 - `clear_screen()` : efface la console.
+
+### `DuplicateDayDetector` (`selenium_utils/duplicate_day_detector.py`)
+Service chargé de détecter les doublons de jours renseignés.
+- `detect(driver, max_rows=None)` : parcourt les lignes et log les jours apparaissant plusieurs fois.
 
 ## 12. Protocoles de messages
 *(si des APIs ou sockets sont ajoutés)*

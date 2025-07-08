@@ -10,8 +10,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
 from sele_saisie_auto import messages
-from sele_saisie_auto.constants import JOURS_SEMAINE
 from sele_saisie_auto.logging_service import Logger
+from sele_saisie_auto.selenium_utils.duplicate_day_detector import DuplicateDayDetector
 
 from . import get_default_logger
 from .navigation import switch_to_frame_by_id
@@ -203,66 +203,9 @@ def trouver_ligne_par_description(
     return matched_row_index
 
 
-def _determine_row_range(driver, max_rows: int | None):
-    """Return the range of rows to inspect."""
-    if max_rows is None:
-        row_elements = driver.find_elements(By.CSS_SELECTOR, "[id^='POL_DESCR$']")
-        return range(len(row_elements))
-    return range(max_rows)
-
-
-def _update_filled_days_tracker(
-    tracker: dict[str, list[str]], day_counter: int, line_description: str
-):
-    """Add ``line_description`` under the weekday name matching ``day_counter``."""
-    day_name = JOURS_SEMAINE[day_counter]
-    if day_name in tracker:
-        tracker[day_name].append(line_description)
-    else:
-        tracker[day_name] = [line_description]
-
-
 def detecter_doublons_jours(
     driver, logger: Logger | None = None, max_rows: int | None = None
 ):
     """Check if any day appears more than once across lines."""
-    logger = logger or get_default_logger()
-    filled_days_tracker: dict[str, list[str]] = {}
-    row_range = _determine_row_range(driver, max_rows)
-
-    for row_index in row_range:
-        try:
-            current_line_description = driver.find_element(
-                By.ID, f"POL_DESCR${row_index}"
-            )
-        except NoSuchElementException:
-            if max_rows is None:
-                logger.debug(f"Fin de l'analyse des lignes à l'index {row_index}")
-                break
-            continue
-
-        line_description = current_line_description.text.strip()
-        logger.debug(f"Analyse de la ligne '{line_description}' à l'index {row_index}")
-
-        for day_counter in range(1, 8):
-            day_input_id = f"POL_TIME{day_counter}${row_index}"
-            try:
-                day_field = driver.find_element(By.ID, day_input_id)
-                day_content = day_field.get_attribute("value")
-
-                if day_content.strip():
-                    _update_filled_days_tracker(
-                        filled_days_tracker, day_counter, line_description
-                    )
-            except NoSuchElementException:
-                logger.warning(
-                    f"{messages.IMPOSSIBLE_DE_TROUVER} l'élément pour le jour '{JOURS_SEMAINE[day_counter]}' avec l'ID '{day_input_id}'"
-                )
-
-    for day_name, lines in filled_days_tracker.items():
-        if len(lines) > 1:
-            logger.warning(
-                f"Doublon détecté pour le jour '{day_name}' dans les lignes : {', '.join(lines)}"
-            )
-        else:
-            logger.debug(f"Aucun doublon détecté pour le jour '{day_name}'")
+    detector = DuplicateDayDetector(logger=logger)
+    detector.detect(driver, max_rows=max_rows)
