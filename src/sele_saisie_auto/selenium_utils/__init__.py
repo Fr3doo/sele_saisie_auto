@@ -35,6 +35,7 @@ def get_default_logger() -> Logger:
     return _DEFAULT_LOGGER
 
 
+from .duplicate_day_detector import DuplicateDayDetector
 from .element_actions import (
     click_element_without_wait,
     controle_insertion,
@@ -100,6 +101,7 @@ __all__ = [
     "selectionner_option_menu_deroulant_type_select",
     "trouver_ligne_par_description",
     "detecter_doublons_jours",
+    "DuplicateDayDetector",
     "verifier_accessibilite_url",
     "ouvrir_navigateur_sur_ecran_principal",
     "definir_taille_navigateur",
