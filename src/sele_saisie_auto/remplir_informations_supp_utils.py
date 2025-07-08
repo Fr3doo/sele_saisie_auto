@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory
+import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: N812
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.form_processing.description_processor import process_description
 from sele_saisie_auto.logging_service import Logger
