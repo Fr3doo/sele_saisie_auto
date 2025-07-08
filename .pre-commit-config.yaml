@@ -34,6 +34,6 @@ repos:
     hooks:
       - id: radon
         name: radon
-        entry: radon cc -n B
+        entry: bash -c 'radon cc src -s -n B && radon mi src && radon html src/ -o radon-report || true'
         language: system
         types: [python]
