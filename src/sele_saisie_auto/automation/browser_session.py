@@ -3,7 +3,7 @@ from __future__ import annotations
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
-import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory
+import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: N812
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.logger_utils import format_message, write_log

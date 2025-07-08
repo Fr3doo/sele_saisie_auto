@@ -11,7 +11,7 @@ from multiprocessing import shared_memory
 
 from selenium.webdriver.common.by import By
 
-import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory
+import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: N812
 from sele_saisie_auto import (
     console_ui,
     messages,
@@ -40,9 +40,9 @@ from sele_saisie_auto.selenium_utils import (
     detecter_doublons_jours,
     modifier_date_input,
     send_keys_to_element,
+    wait_for_dom_after,
 )
 from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
-from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time

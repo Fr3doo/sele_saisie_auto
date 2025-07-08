@@ -165,3 +165,32 @@ def test_retrieve_credentials():
             creds.mem_key.close()
             creds.mem_login.close()
             creds.mem_password.close()
+
+
+def test_full_encryption_shared_memory_flow():
+    service = EncryptionService()
+    login = "john"
+    password = "s3cr3t"
+
+    with service as enc:
+        key = enc.cle_aes
+        enc_login = enc.chiffrer_donnees(login, key)
+        enc_pwd = enc.chiffrer_donnees(password, key)
+        enc.store_credentials(enc_login, enc_pwd)
+        creds = enc.retrieve_credentials()
+        try:
+            assert enc.dechiffrer_donnees(creds.login, key) == login
+            assert enc.dechiffrer_donnees(creds.password, key) == password
+        finally:
+            creds.mem_key.close()
+            creds.mem_login.close()
+            creds.mem_password.close()
+
+
+def test_retrieve_after_exit_fails():
+    service = EncryptionService()
+    with service as enc:
+        enc.store_credentials(b"u", b"p")
+
+    with pytest.raises(FileNotFoundError):
+        service.retrieve_credentials()
