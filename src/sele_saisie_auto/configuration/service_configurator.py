@@ -46,3 +46,6 @@ def build_services(app_config: AppConfig, log_file: str) -> Services:
     browser_session = BrowserSession(log_file, app_config, waiter=waiter)
     encryption_service = EncryptionService(log_file)
     return Services(encryption_service, browser_session, waiter)
+
+
+__all__ = ["Services", "build_services"]
