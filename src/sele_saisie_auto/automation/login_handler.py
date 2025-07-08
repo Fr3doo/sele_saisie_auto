@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from typing import TYPE_CHECKING
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -12,9 +13,21 @@ from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import send_keys_to_element, wait_for_dom_after
 
+if TYPE_CHECKING:  # pragma: no cover - for type checkers only
+    from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
+
 
 class LoginHandler:
     """Handle login steps for PSA Time."""
+
+    @classmethod
+    def from_automation(cls, automation: PSATimeAutomation) -> LoginHandler:
+        """Create a new instance using an automation context."""
+        return cls(
+            automation.log_file,
+            automation.encryption_service,
+            automation.browser_session,
+        )
 
     def __init__(
         self,

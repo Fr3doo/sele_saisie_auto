@@ -23,6 +23,13 @@ if TYPE_CHECKING:
 class AdditionalInfoPage:
     """Handle the additional information modal."""
 
+    @classmethod
+    def from_automation(
+        cls, automation: PSATimeAutomation, waiter: Waiter | None = None
+    ) -> AdditionalInfoPage:
+        """Create a page instance from a :class:`PSATimeAutomation`."""
+        return cls(automation, waiter=waiter)
+
     def __init__(
         self, automation: PSATimeAutomation, waiter: Waiter | None = None
     ) -> None:

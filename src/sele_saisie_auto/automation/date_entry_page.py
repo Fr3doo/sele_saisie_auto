@@ -25,6 +25,13 @@ if TYPE_CHECKING:  # pragma: no cover
 class DateEntryPage:
     """Handle the timesheet date selection page."""
 
+    @classmethod
+    def from_automation(
+        cls, automation: PSATimeAutomation, waiter: Waiter | None = None
+    ) -> DateEntryPage:
+        """Create a page instance from a :class:`PSATimeAutomation`."""
+        return cls(automation, waiter=waiter)
+
     def __init__(
         self, automation: PSATimeAutomation, waiter: Waiter | None = None
     ) -> None:
