@@ -7,6 +7,8 @@ from sele_saisie_auto.automation import BrowserSession
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import Credentials, EncryptionService
 
+__all__ = ["ResourceManager"]
+
 
 class ResourceManager:
     """Centralise les ressources lourdes nécessaires à l'automatisation."""
