@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from sele_saisie_auto import console_ui
+from tests.test_saisie_automatiser_psatime import DummyBrowserSession
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
@@ -25,6 +26,12 @@ class DummyEnc:
     def __init__(self):
         self.removed = []
         self.cle_aes = b"k" * 32
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        pass
 
     def retrieve_credentials(self):
         return sap.Credentials(
@@ -79,6 +86,7 @@ def setup_init(monkeypatch, cfg):
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "SharedMemoryService", lambda logger: DummySHMService())
     from sele_saisie_auto.configuration import Services
+    from sele_saisie_auto.resources import resource_manager as rm
     from sele_saisie_auto.selenium_utils.waiter_factory import get_waiter
 
     def fake_build(cfg_b, lf_b):
@@ -88,6 +96,18 @@ def setup_init(monkeypatch, cfg):
         )
 
     monkeypatch.setattr(sap, "build_services", fake_build)
+    waiter = get_waiter(app_cfg)
+    monkeypatch.setattr(
+        rm,
+        "ConfigManager",
+        lambda log_file: types.SimpleNamespace(load=lambda: app_cfg),
+    )
+    monkeypatch.setattr(
+        rm,
+        "BrowserSession",
+        lambda log_file, cfg=app_cfg: DummyBrowserSession(log_file, cfg, waiter=waiter),
+    )
+    monkeypatch.setattr(rm, "EncryptionService", lambda log_file: DummyEnc())
     sap.initialize(
         "log.html",
         app_cfg,
