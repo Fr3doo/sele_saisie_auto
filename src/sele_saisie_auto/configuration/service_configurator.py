@@ -36,15 +36,17 @@ def build_services(app_config: AppConfig, log_file: str) -> Services:
     Returns
     -------
     Services
-        Objet regroupant ``encryption_service``, ``browser_session`` et
-        ``waiter`` prêt à être utilisé.
+        Instance de :class:`Services` regroupant ``encryption_service``,
+        ``browser_session`` et ``waiter`` prêts à être utilisés.
     """
-    waiter = Waiter(
+    waiter: Waiter = Waiter(
         default_timeout=app_config.default_timeout,
         long_timeout=app_config.long_timeout,
     )
-    browser_session = BrowserSession(log_file, app_config, waiter=waiter)
-    encryption_service = EncryptionService(log_file)
+    browser_session: BrowserSession = BrowserSession(
+        log_file, app_config, waiter=waiter
+    )
+    encryption_service: EncryptionService = EncryptionService(log_file)
     return Services(encryption_service, browser_session, waiter)
 
 
