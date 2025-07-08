@@ -4,10 +4,9 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 import sele_saisie_auto.form_processing.description_processor as dp  # noqa: E402
-from sele_saisie_auto.strategies.element_filling_strategy import (
+from sele_saisie_auto.strategies.element_filling_strategy import (  # noqa: E402
     ElementFillingContext,
     InputFillingStrategy,
-    SelectFillingStrategy,
 )
 
 CFG = {
