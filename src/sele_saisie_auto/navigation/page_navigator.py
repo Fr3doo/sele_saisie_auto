@@ -8,6 +8,8 @@ from sele_saisie_auto.automation import (
 )
 from sele_saisie_auto.remplir_jours_feuille_de_temps import TimeSheetHelper
 
+__all__ = ["PageNavigator"]
+
 
 class PageNavigator:
     """Orchestre la navigation de haut niveau entre les pages PSA Time."""
