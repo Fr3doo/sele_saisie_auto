@@ -133,3 +133,25 @@ def test_resource_manager_cleanup(monkeypatch):
     creds.mem_key.close()
     creds.mem_login.close()
     creds.mem_password.close()
+
+
+def test_resource_manager_close_method(monkeypatch):
+    sessions = []
+
+    class SpyBrowserSession(DummyBrowserSession):
+        def __init__(self, log_file, app_config):
+            super().__init__(log_file, app_config)
+            sessions.append(self)
+
+    monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
+    monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
+    monkeypatch.setattr(resource_manager, "EncryptionService", DummyEncryption)
+
+    rm = resource_manager.ResourceManager("log.html")
+    rm.__enter__()
+    rm.get_driver()
+    rm.close()
+
+    assert sessions[0].closed is True
+    assert rm._session is None
+    assert rm._driver is None

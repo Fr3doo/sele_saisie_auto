@@ -52,6 +52,11 @@ class ResourceManager:
         self._driver = None
         self._session = None
 
+    def close(self) -> None:
+        """Ferme explicitement les ressources en appelant ``__exit__``."""
+
+        self.__exit__(None, None, None)
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
