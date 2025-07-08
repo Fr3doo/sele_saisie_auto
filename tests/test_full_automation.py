@@ -2,14 +2,11 @@ import sys
 import types
 from pathlib import Path
 
-import pytest
-
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw  # noqa: E402
 from sele_saisie_auto.automation import (  # noqa: E402
     AdditionalInfoPage,
-    BrowserSession,
     DateEntryPage,
     LoginHandler,
 )
@@ -142,7 +139,6 @@ def test_full_automation(monkeypatch, sample_config):
     )
 
     with resource_manager.ResourceManager(log_file) as rm:
-        session = rm.get_driver()
         ctx = SaisieContext(APP_CFG, rm._encryption_service, DummySHMService(), {}, [])
         automation = DummyAutomation(log_file, ctx, rm._session, logger)
         login = LoginHandler(log_file, rm._encryption_service, rm._session)
