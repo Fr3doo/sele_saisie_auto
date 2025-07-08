@@ -6,17 +6,14 @@ from selenium.webdriver.common.by import By
 
 from sele_saisie_auto import messages
 from sele_saisie_auto.app_config import AppConfig
-from sele_saisie_auto.constants import JOURS_SEMAINE
-from sele_saisie_auto.elements.element_id_builder import ElementIdBuilder
+from sele_saisie_auto.form_processing.description_processor import process_description
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.logging_service import Logger
-from sele_saisie_auto.selenium_utils import (
-    Waiter,
-    remplir_champ_texte,
-    select_by_text,
-    trouver_ligne_par_description,
-    verifier_champ_jour_rempli,
-    wait_for_element,
+from sele_saisie_auto.selenium_utils import Waiter
+from sele_saisie_auto.strategies import (
+    ElementFillingContext,
+    InputFillingStrategy,
+    SelectFillingStrategy,
 )
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
@@ -27,159 +24,36 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 # ------------------------------------------------------------------------------------------- #
-# ----------------------------------- FONCTIONS --------------------------------------------- #
-# ------------------------------------------------------------------------------------------- #
+# ----------------------------------- HELPERS ---------------------------------
+# ------------------------------------------------------------------------------
 
 
-def _get_element(driver, waiter: Waiter | None, input_id: str):
-    """Récupérer l'élément correspondant à ``input_id``."""
-    if waiter:
-        return waiter.wait_for_element(driver, By.ID, input_id)
-    return wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
+def _context_from_type(type_element: str) -> ElementFillingContext | None:
+    """Return an :class:`ElementFillingContext` for ``type_element``."""
+    if type_element == "select":
+        return ElementFillingContext(SelectFillingStrategy())
+    if type_element == "input":
+        return ElementFillingContext(InputFillingStrategy())
+    return None
 
 
-def _collect_filled_days(
-    driver, waiter, id_value_days, row_index, week_days, log_file: str
-):
-    """Retourne la liste des jours déjà remplis."""
-    filled_days = []
-    write_log(messages.CHECK_FILLED_DAYS, log_file, "DEBUG")
-    for i in range(1, 8):
-        input_id = ElementIdBuilder.build_day_input_id(id_value_days, i, row_index)
-        element = _get_element(driver, waiter, input_id)
-        if element:
-            jour = week_days[i]
-            write_log(
-                messages.DAY_CHECK.format(jour=jour, id=input_id),
-                log_file,
-                "DEBUG",
-            )
-            if verifier_champ_jour_rempli(element, jour):
-                filled_days.append(jour)
-                write_log(
-                    messages.DAY_ALREADY_FILLED.format(jour=jour),
-                    log_file,
-                    "DEBUG",
-                )
-            else:
-                write_log(
-                    messages.DAY_EMPTY.format(jour=jour),
-                    log_file,
-                    "DEBUG",
-                )
-        else:
-            write_log(
-                f"❌ Élément non trouvé pour l'ID : {input_id}", log_file, "DEBUG"
-            )
-    return filled_days
-
-
-def _fill_missing_days(
+def traiter_description(
     driver,
-    waiter,
-    id_value_days,
-    row_index,
-    week_days,
-    filled_days,
-    values_to_fill,
-    type_element,
+    config,
     log_file: str,
-):
-    """Complète les jours encore vides."""
-    for i in range(1, 8):
-        input_id = ElementIdBuilder.build_day_input_id(id_value_days, i, row_index)
-        element = _get_element(driver, waiter, input_id)
-        if element:
-            jour = week_days[i]
-            if jour not in filled_days:
-                value_to_fill = values_to_fill.get(jour)
-                if value_to_fill:
-                    write_log(
-                        f"✏️ {messages.REMPLISSAGE} de '{jour}' avec la valeur '{value_to_fill}'.",
-                        log_file,
-                        "DEBUG",
-                    )
-                    if type_element == "select":
-                        select_by_text(element, value_to_fill)
-                    elif type_element == "input":
-                        remplir_champ_texte(element, jour, value_to_fill)
-                else:
-                    write_log(
-                        f"⚠️ {messages.AUCUNE_VALEUR} définie pour le jour '{jour}' dans 'valeurs_a_remplir'.",
-                        log_file,
-                        "DEBUG",
-                    )
-            else:
-                write_log(
-                    messages.DAY_ALREADY_FILLED_NO_CHANGE.format(jour=jour),
-                    log_file,
-                    "DEBUG",
-                )
-        else:
-            write_log(
-                f"❌ {messages.IMPOSSIBLE_DE_TROUVER} l'élément pour l'ID : {input_id}",
-                log_file,
-                "DEBUG",
-            )
-
-
-def traiter_description(driver, config, log_file: str, waiter: Waiter | None = None):
-    """
-    Traite une description en fonction d'une configuration donnée.
-
-    Args:
-        driver (webdriver): Instance du navigateur Selenium.
-        config (dict): Configuration contenant toutes les informations nécessaires.
-            - "description_cible" : Description à rechercher.
-            - "id_value_ligne" : Préfixe des IDs pour identifier les lignes.
-            - "id_value_jours" : Préfixe des IDs pour manipuler les jours.
-            - "type_element" : Type des éléments à manipuler ("select" ou "input").
-            - "valeurs_a_remplir" : Dictionnaire contenant les valeurs à remplir par jour.
-    """
-    target_description = config["description_cible"]
-    id_value_row = config["id_value_ligne"]  # Pour trouver la ligne
-    id_value_days = config["id_value_jours"]  # Pour les jours de la semaine
-    type_element = config["type_element"]
-    values_to_fill = config["valeurs_a_remplir"]
-    week_days = JOURS_SEMAINE
-
-    write_log(
-        f"🔍 Début du traitement pour la description : '{target_description}'",
-        log_file,
-        "DEBUG",
-    )
-    row_index = trouver_ligne_par_description(driver, target_description, id_value_row)
-    if row_index is None:
-        write_log(
-            f"❌ Description '{target_description}' non trouvée avec l'id_value '{id_value_row}'.",
-            log_file,
-            "DEBUG",
-        )
-        return
-    write_log(
-        f"✅ Description '{target_description}' trouvée à l'index {row_index}.",
-        log_file,
-        "DEBUG",
-    )
-
-    filled_days = _collect_filled_days(
-        driver, waiter, id_value_days, row_index, week_days, log_file
-    )
-    write_log(
-        f"✍️ Remplissage des jours vides pour '{target_description}'.",
-        log_file,
-        "DEBUG",
-    )
-    _fill_missing_days(
+    waiter: Waiter | None = None,
+    *,
+    logger: Logger | None = None,
+) -> None:
+    """Wrapper around :func:`process_description`."""
+    context = _context_from_type(config.get("type_element", ""))
+    process_description(
         driver,
-        waiter,
-        id_value_days,
-        row_index,
-        week_days,
-        filled_days,
-        values_to_fill,
-        type_element,
+        config,
         log_file,
+        waiter=waiter,
+        filling_context=context,
+        logger=logger,
     )
 
 
@@ -210,7 +84,13 @@ class ExtraInfoHelper:
 
     def traiter_description(self, driver, config):
         """Applique :func:`traiter_description` en utilisant l'instance courante."""
-        traiter_description(driver, config, self.log_file, waiter=self.waiter)
+        traiter_description(
+            driver,
+            config,
+            self.log_file,
+            waiter=self.waiter,
+            logger=self.logger,
+        )
 
     # ------------------------------------------------------------------
     # Delegation to :class:`AdditionalInfoPage`
