@@ -31,6 +31,8 @@ from sele_saisie_auto.selenium_utils import detecter_doublons_jours, wait_for_do
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
 
+__all__ = ["AutomationOrchestrator"]
+
 # pragma: no cover
 
 if TYPE_CHECKING:
