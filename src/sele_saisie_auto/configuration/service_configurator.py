@@ -18,7 +18,27 @@ class Services:
 
 
 def build_services(app_config: AppConfig, log_file: str) -> Services:
-    """Create configured service instances from ``app_config``."""
+    """Instancier et retourner les services principaux de l'application.
+
+    Ce constructeur configure un :class:`Waiter` selon les valeurs fournies
+    par ``app_config`` puis initialise ``BrowserSession`` et
+    ``EncryptionService`` avec le même fichier de log. Les instances sont
+    renvoyées regroupées dans la dataclass :class:`Services` afin de partager
+    facilement ces outils entre les différentes étapes de l'automatisation.
+
+    Parameters
+    ----------
+    app_config : AppConfig
+        Configuration de l'application utilisée pour paramétrer les services.
+    log_file : str
+        Chemin vers le fichier de log commun aux services.
+
+    Returns
+    -------
+    Services
+        Objet regroupant ``encryption_service``, ``browser_session`` et
+        ``waiter`` prêt à être utilisé.
+    """
     waiter = Waiter(
         default_timeout=app_config.default_timeout,
         long_timeout=app_config.long_timeout,
