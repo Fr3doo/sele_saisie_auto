@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.form_processing.description_processor import process_description
 from sele_saisie_auto.logging_service import Logger
@@ -11,7 +12,6 @@ from sele_saisie_auto.strategies import (
     InputFillingStrategy,
     SelectFillingStrategy,
 )
-from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 # remplir_informations_supp_france.py
 
@@ -65,9 +65,7 @@ class ExtraInfoHelper:
     ) -> None:
         """Initialise l'assistant avec ``Logger`` et ``Waiter``."""
         if waiter is None:
-            timeout = app_config.default_timeout if app_config else DEFAULT_TIMEOUT
-            long_timeout = app_config.long_timeout if app_config else LONG_TIMEOUT
-            self.waiter = Waiter(default_timeout=timeout, long_timeout=long_timeout)
+            self.waiter = WaiterFactory.get_waiter(app_config)
         else:
             self.waiter = waiter
         self.page = page

@@ -11,6 +11,7 @@ from multiprocessing import shared_memory
 
 from selenium.webdriver.common.by import By
 
+import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory
 from sele_saisie_auto import (
     console_ui,
     messages,
@@ -126,9 +127,7 @@ class PSATimeAutomation:
         set_log_file_selenium(log_file)
         initialize_logger(app_config.raw, log_level_override=app_config.debug_mode)
         self.logger = logger or get_logger(log_file)
-        self.waiter = waiter or Waiter(
-            app_config.default_timeout, app_config.long_timeout
-        )
+        self.waiter = waiter or WaiterFactory.get_waiter(app_config)
         self.shared_memory_service = shared_memory_service or SharedMemoryService(
             self.logger
         )

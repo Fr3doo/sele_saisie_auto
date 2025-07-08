@@ -3,6 +3,7 @@ from __future__ import annotations
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
+import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.logger_utils import format_message, write_log
@@ -82,9 +83,7 @@ class BrowserSession:
         self.log_file = log_file
         self.app_config = app_config
         if waiter is None:
-            timeout = app_config.default_timeout if app_config else DEFAULT_TIMEOUT
-            long_timeout = app_config.long_timeout if app_config else LONG_TIMEOUT
-            self.waiter = Waiter(default_timeout=timeout, long_timeout=long_timeout)
+            self.waiter = WaiterFactory.get_waiter(app_config)
         else:
             self.waiter = waiter
         if app_config is not None:
