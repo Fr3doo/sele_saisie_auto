@@ -354,6 +354,10 @@ def test_run_delegates_to_orchestrator(monkeypatch, sample_config):
             self.run_called = 0
             self.run_args = None
 
+        @classmethod
+        def from_components(cls, *a, **k):
+            return cls(*a, **k)
+
         def run(self, headless=False, no_sandbox=False):
             self.run_called += 1
             self.run_args = (headless, no_sandbox)

@@ -24,7 +24,7 @@ from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.automation.date_entry_page import DateEntryPage
 from sele_saisie_auto.automation.login_handler import LoginHandler
 from sele_saisie_auto.config_manager import ConfigManager
-from sele_saisie_auto.configuration import Services, build_services
+from sele_saisie_auto.configuration import ServiceConfigurator, Services, build_services
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.locators import Locators
@@ -38,9 +38,9 @@ from sele_saisie_auto.selenium_utils import (
     detecter_doublons_jours,
     modifier_date_input,
     send_keys_to_element,
+    wait_for_dom_after,
 )
 from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
-from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
@@ -217,16 +217,7 @@ class PSATimeAutomation:
             timesheet_helper,
         )
         self.resource_manager = ResourceManager(log_file)  # pragma: no cover
-        self.orchestrator = AutomationOrchestrator(  # pragma: no cover
-            app_config,
-            self.logger,
-            self.browser_session,
-            self.login_handler,
-            self.date_entry_page,
-            self.additional_info_page,
-            self.context,
-            self.choix_user,
-        )
+        self.orchestrator: AutomationOrchestrator | None = None
 
         write_log(
             "📌 Chargement des configurations...", self.log_file, "DEBUG"
@@ -534,6 +525,16 @@ class PSATimeAutomation:
         no_sandbox: bool = False,
     ) -> None:  # pragma: no cover
         """Point d'entrée principal de l'automatisation."""
+
+        service_configurator = ServiceConfigurator(self.context.config)
+        self.orchestrator = AutomationOrchestrator.from_components(
+            self.resource_manager,
+            self.page_navigator,
+            service_configurator,
+            self.context,
+            self.logger,
+            choix_user=self.choix_user,
+        )
         self.orchestrator.cleanup_resources = (
             lambda mkey, mlogin, mpwd: self.cleanup_resources(
                 self.orchestrator.browser_session, mkey, mlogin, mpwd
