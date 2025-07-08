@@ -254,3 +254,77 @@ def test_run_order(monkeypatch, sample_config):
     orch.run()
 
     assert calls == ["login", "navigate", "fill", "submit"]
+
+
+def test_run_uses_passed_cleanup_function(monkeypatch, sample_config):
+    app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
+    logger = Logger("log.html")
+    session = DummyBrowserSession()
+    login = DummyLoginHandler()
+    date_page = DummyDateEntryPage()
+    add_page = DummyAddPage()
+    creds = Credentials(b"k" * 32, object(), b"user", object(), b"pwd", object())
+
+    class DummyEncService:
+        def __init__(self):
+            self.calls = 0
+
+        def retrieve_credentials(self):
+            self.calls += 1
+            return creds
+
+    class DummySHMService:
+        def __init__(self):
+            self.removed = []
+
+        def supprimer_memoire_partagee_securisee(self, mem):
+            self.removed.append(mem)
+
+    enc_service = DummyEncService()
+    shm_service = DummySHMService()
+
+    ctx = SaisieContext(app_cfg, enc_service, shm_service, {}, [])
+
+    cleanup_args = {}
+
+    def cleanup_func(mkey, mlogin, mpwd):
+        cleanup_args["vals"] = (mkey, mlogin, mpwd)
+
+    orch = AutomationOrchestrator(
+        app_cfg,
+        logger,
+        session,
+        login,
+        date_page,
+        add_page,
+        ctx,
+        True,
+        timesheet_helper_cls=DummyHelper,
+        cleanup_resources=cleanup_func,
+    )
+
+    orch.wait_for_dom = lambda d: None
+    orch.switch_to_iframe_main_target_win0 = lambda d: True
+    orch.save_draft_and_validate = lambda d: True
+    orch.browser_session.go_to_default_content = lambda: None
+    orch.browser_session.waiter = types.SimpleNamespace(
+        wait_for_element=lambda *a, **k: True
+    )
+    orch.date_entry_page._click_action_button = lambda d, c: None
+    orch.additional_info_page._handle_save_alerts = lambda d: None
+    from sele_saisie_auto import plugins
+    from sele_saisie_auto.orchestration import automation_orchestrator as orch_mod
+
+    monkeypatch.setattr(orch_mod, "detecter_doublons_jours", lambda *a, **k: None)
+    monkeypatch.setattr(plugins, "call", lambda *a, **k: None)
+    from sele_saisie_auto import console_ui
+
+    monkeypatch.setattr(console_ui, "ask_continue", lambda *a, **k: None)
+
+    orch.run()
+
+    assert cleanup_args["vals"] == (
+        creds.mem_key,
+        creds.mem_login,
+        creds.mem_password,
+    )
