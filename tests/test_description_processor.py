@@ -58,3 +58,33 @@ def test_fill_days_integration(monkeypatch):
     cfg = CFG | {"valeurs_a_remplir": {"lundi": "1"}}
     dp.process_description(None, cfg, "log", filling_context=ctx)
     assert "1" in sequence
+
+
+def test_collect_filled_days_no_elements(monkeypatch):
+    monkeypatch.setattr(dp, "_get_element", lambda *a, **k: None)
+    result = dp._collect_filled_days(None, None, "days", 0, "log")
+    assert result == []
+
+
+def test_fill_days_skips(monkeypatch):
+    called = []
+
+    class DummyElement:
+        pass
+
+    monkeypatch.setattr(dp, "_get_element", lambda *a, **k: DummyElement())
+    ctx = ElementFillingContext(InputFillingStrategy())
+    monkeypatch.setattr(ctx, "fill", lambda *a, **k: called.append("filled"))
+
+    dp._fill_days(
+        None,
+        None,
+        "days",
+        0,
+        {"mardi": "1"},
+        ["lundi"],
+        "input",
+        "log",
+        filling_context=ctx,
+    )
+    assert called == ["filled"]

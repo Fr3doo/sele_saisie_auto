@@ -71,29 +71,30 @@ def _collect_filled_days(
             id_value_days, day_index, row_index
         )
         element = _get_element(driver, waiter, input_id)
-        if element:
-            day_name = week_days[day_index]
+        if not element:
             write_log(
-                messages.DAY_CHECK.format(jour=day_name, id=input_id),
+                messages.ELEMENT_NOT_FOUND_ID.format(id=input_id), log_file, "DEBUG"
+            )
+            continue
+
+        day_name = week_days[day_index]
+        write_log(
+            messages.DAY_CHECK.format(jour=day_name, id=input_id),
+            log_file,
+            "DEBUG",
+        )
+        if verifier_champ_jour_rempli(element, day_name):
+            filled_days.append(day_name)
+            write_log(
+                messages.DAY_ALREADY_FILLED.format(jour=day_name),
                 log_file,
                 "DEBUG",
             )
-            if verifier_champ_jour_rempli(element, day_name):
-                filled_days.append(day_name)
-                write_log(
-                    messages.DAY_ALREADY_FILLED.format(jour=day_name),
-                    log_file,
-                    "DEBUG",
-                )
-            else:
-                write_log(
-                    messages.DAY_EMPTY.format(jour=day_name),
-                    log_file,
-                    "DEBUG",
-                )
         else:
             write_log(
-                messages.ELEMENT_NOT_FOUND_ID.format(id=input_id), log_file, "DEBUG"
+                messages.DAY_EMPTY.format(jour=day_name),
+                log_file,
+                "DEBUG",
             )
     return filled_days
 
@@ -118,39 +119,42 @@ def _fill_days(
             id_value_days, day_index, row_index
         )
         element = _get_element(driver, waiter, input_id)
-        if element:
-            day_name = week_days[day_index]
-            if day_name not in filled_days:
-                value = values_to_fill.get(day_name)
-                if value:
-                    write_log(
-                        f"✏️ {messages.REMPLISSAGE} de '{day_name}' avec la valeur '{value}'.",
-                        log_file,
-                        "DEBUG",
-                    )
-                    if filling_context is not None:
-                        filling_context.fill(element, value, logger)
-                    else:
-                        if type_element == "select":
-                            select_by_text(element, value)
-                        elif type_element == "input":
-                            remplir_champ_texte(element, day_name, value)
-                else:
-                    write_log(
-                        f"⚠️ {messages.AUCUNE_VALEUR} définie pour le jour '{day_name}' dans 'valeurs_a_remplir'.",
-                        log_file,
-                        "DEBUG",
-                    )
-            else:
-                write_log(
-                    messages.DAY_ALREADY_FILLED_NO_CHANGE.format(jour=day_name),
-                    log_file,
-                    "DEBUG",
-                )
-        else:
+        if not element:
             write_log(
                 messages.ELEMENT_NOT_FOUND_ID.format(id=input_id), log_file, "DEBUG"
             )
+            continue
+
+        day_name = week_days[day_index]
+        if day_name in filled_days:
+            write_log(
+                messages.DAY_ALREADY_FILLED_NO_CHANGE.format(jour=day_name),
+                log_file,
+                "DEBUG",
+            )
+            continue
+
+        value = values_to_fill.get(day_name)
+        if not value:
+            write_log(
+                f"⚠️ {messages.AUCUNE_VALEUR} définie pour le jour '{day_name}' dans 'valeurs_a_remplir'.",
+                log_file,
+                "DEBUG",
+            )
+            continue
+
+        write_log(
+            f"✏️ {messages.REMPLISSAGE} de '{day_name}' avec la valeur '{value}'.",
+            log_file,
+            "DEBUG",
+        )
+        if filling_context is not None:
+            filling_context.fill(element, value, logger)
+        else:
+            if type_element == "select":
+                select_by_text(element, value)
+            elif type_element == "input":
+                remplir_champ_texte(element, day_name, value)
 
 
 def process_description(
