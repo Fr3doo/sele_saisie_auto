@@ -25,7 +25,7 @@ from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.automation.date_entry_page import DateEntryPage
 from sele_saisie_auto.automation.login_handler import LoginHandler
 from sele_saisie_auto.config_manager import ConfigManager
-from sele_saisie_auto.configuration import build_services
+from sele_saisie_auto.configuration import Services, build_services
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.locators import Locators
@@ -201,6 +201,7 @@ class PSATimeAutomation:
                 },
             ],
         )
+        self._init_services()
         if browser_session is None:
             try:
                 self.browser_session = BrowserSession(
@@ -219,7 +220,6 @@ class PSATimeAutomation:
         self.additional_info_page = AdditionalInfoPage(self, waiter=self.waiter)
 
         # Initialise orchestrator helpers
-        build_services(app_config, log_file)  # pragma: no cover
         timesheet_ctx = remplir_jours_feuille_de_temps.context_from_app_config(
             app_config, log_file
         )  # pragma: no cover
@@ -334,6 +334,12 @@ class PSATimeAutomation:
             write_log(
                 f"🔹 '{day}': '{location}'", self.log_file, "DEBUG"
             )  # pragma: no cover
+
+    def _init_services(self) -> Services:
+        """Initialise les services principaux via :func:`build_services`."""
+
+        self.services = build_services(self.context.config, self.log_file)
+        return self.services
 
     def log_initialisation(self) -> None:
         """Initialise les logs et vérifie les configurations essentielles."""
