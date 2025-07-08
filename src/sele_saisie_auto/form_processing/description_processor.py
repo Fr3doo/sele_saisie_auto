@@ -8,6 +8,7 @@ from sele_saisie_auto import messages
 from sele_saisie_auto.constants import JOURS_SEMAINE
 from sele_saisie_auto.elements.element_id_builder import ElementIdBuilder
 from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.selenium_utils import (
     Waiter,
     remplir_champ_texte,
@@ -16,6 +17,7 @@ from sele_saisie_auto.selenium_utils import (
     verifier_champ_jour_rempli,
     wait_for_element,
 )
+from sele_saisie_auto.strategies import ElementFillingContext
 
 
 def _get_element(driver, waiter: Waiter | None, element_id: str):
@@ -106,6 +108,8 @@ def _fill_days(
     type_element: str,
     log_file: str,
     week_days: dict[int, str] | None = None,
+    filling_context: ElementFillingContext | None = None,
+    logger: Logger | None = None,
 ) -> None:
     """Fill remaining empty days for the row."""
     week_days = week_days or JOURS_SEMAINE
@@ -124,10 +128,13 @@ def _fill_days(
                         log_file,
                         "DEBUG",
                     )
-                    if type_element == "select":
-                        select_by_text(element, value)
-                    elif type_element == "input":
-                        remplir_champ_texte(element, day_name, value)
+                    if filling_context is not None:
+                        filling_context.fill(element, value, logger)
+                    else:
+                        if type_element == "select":
+                            select_by_text(element, value)
+                        elif type_element == "input":
+                            remplir_champ_texte(element, day_name, value)
                 else:
                     write_log(
                         f"⚠️ {messages.AUCUNE_VALEUR} définie pour le jour '{day_name}' dans 'valeurs_a_remplir'.",
@@ -147,7 +154,13 @@ def _fill_days(
 
 
 def process_description(
-    driver, config: dict, log_file: str, waiter: Waiter | None = None
+    driver,
+    config: dict,
+    log_file: str,
+    waiter: Waiter | None = None,
+    *,
+    filling_context: ElementFillingContext | None = None,
+    logger: Logger | None = None,
 ) -> None:
     """High level helper orchestrating description processing."""
     description = config["description_cible"]
@@ -177,4 +190,6 @@ def process_description(
         filled_days,
         type_element,
         log_file,
+        filling_context=filling_context,
+        logger=logger,
     )

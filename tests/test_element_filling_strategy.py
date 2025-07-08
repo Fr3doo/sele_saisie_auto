@@ -1,5 +1,6 @@
-import sys
-from pathlib import Path
+# flake8: noqa
+import sys  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
