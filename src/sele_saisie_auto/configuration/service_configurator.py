@@ -17,6 +17,39 @@ class Services:
     waiter: Waiter
 
 
+class ServiceConfigurator:
+    """Configure core services based on :class:`AppConfig`."""
+
+    def __init__(self, app_config: AppConfig) -> None:
+        self.app_config = app_config
+
+    def create_encryption_service(self, log_file: str) -> EncryptionService:
+        """Return a new :class:`EncryptionService`."""
+
+        return EncryptionService(log_file)
+
+    def create_waiter(self) -> Waiter:
+        """Return a configured :class:`Waiter`."""
+
+        return Waiter(
+            default_timeout=self.app_config.default_timeout,
+            long_timeout=self.app_config.long_timeout,
+        )
+
+    def create_browser_session(self, log_file: str) -> BrowserSession:
+        """Return a new :class:`BrowserSession`."""
+
+        return BrowserSession(log_file, self.app_config, waiter=self.create_waiter())
+
+    def build_services(self, log_file: str) -> Services:
+        """Convenient helper returning all core services."""
+
+        waiter = self.create_waiter()
+        browser_session = BrowserSession(log_file, self.app_config, waiter=waiter)
+        encryption_service = EncryptionService(log_file)
+        return Services(encryption_service, browser_session, waiter)
+
+
 def build_services(app_config: AppConfig, log_file: str) -> Services:
     """Instancier et retourner les services principaux de l'application.
 
@@ -50,4 +83,4 @@ def build_services(app_config: AppConfig, log_file: str) -> Services:
     return Services(encryption_service, browser_session, waiter)
 
 
-__all__ = ["Services", "build_services"]
+__all__ = ["Services", "build_services", "ServiceConfigurator"]

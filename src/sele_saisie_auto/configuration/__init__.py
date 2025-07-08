@@ -1,3 +1,3 @@
-from .service_configurator import Services, build_services
+from .service_configurator import ServiceConfigurator, Services, build_services
 
-__all__ = ["Services", "build_services"]
+__all__ = ["Services", "build_services", "ServiceConfigurator"]

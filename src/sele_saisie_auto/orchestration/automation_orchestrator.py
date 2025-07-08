@@ -20,13 +20,16 @@ from sele_saisie_auto.automation import (
     LoginHandler,
 )
 from sele_saisie_auto.config_manager import ConfigManager
+from sele_saisie_auto.configuration import ServiceConfigurator
 from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logging_service import Logger
+from sele_saisie_auto.navigation import PageNavigator
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (
     TimeSheetHelper,
     context_from_app_config,
 )
+from sele_saisie_auto.resources.resource_manager import ResourceManager
 from sele_saisie_auto.selenium_utils import detecter_doublons_jours, wait_for_dom_after
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
@@ -86,6 +89,41 @@ class AutomationOrchestrator:
             if cleanup_resources is not None
             else self._default_cleanup_resources
         )
+
+    # ------------------------------------------------------------------
+    # Alternate constructor
+    # ------------------------------------------------------------------
+    @classmethod
+    def from_components(
+        cls,
+        resource_manager: ResourceManager,
+        page_navigator: PageNavigator,
+        service_configurator: ServiceConfigurator,
+        context: SaisieContext,
+        logger: Logger,
+        choix_user: bool = True,
+        *,
+        timesheet_helper_cls: type[TimeSheetHelper] = TimeSheetHelper,
+        cleanup_resources=None,
+    ) -> AutomationOrchestrator:
+        """Create an orchestrator from high level components."""
+
+        inst = cls(
+            service_configurator.app_config,
+            logger,
+            page_navigator.browser_session,
+            page_navigator.login_handler,
+            page_navigator.date_entry_page,
+            page_navigator.additional_info_page,
+            context,
+            choix_user,
+            timesheet_helper_cls=timesheet_helper_cls,
+            cleanup_resources=cleanup_resources,
+        )
+        inst.resource_manager = resource_manager
+        inst.page_navigator = page_navigator
+        inst.service_configurator = service_configurator
+        return inst
 
     def initialize_shared_memory(self):  # pragma: no cover - tested elsewhere
         """Retrieve credentials from shared memory."""
