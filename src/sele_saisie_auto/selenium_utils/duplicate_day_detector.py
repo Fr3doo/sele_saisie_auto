@@ -13,9 +13,6 @@ from . import get_default_logger
 # pragma: no cover
 
 
-
-
-
 class DuplicateDayDetector:
     """Detect if a weekday is filled on multiple lines of the time sheet."""
 
