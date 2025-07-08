@@ -15,7 +15,7 @@ from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 # remplir_informations_supp_france.py
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from sele_saisie_auto.automation.additional_info_page import AdditionalInfoPage
 
 
