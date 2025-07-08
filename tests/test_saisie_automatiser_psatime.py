@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from sele_saisie_auto import console_ui
+from sele_saisie_auto.configuration import ServiceConfigurator
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.utils import misc as utils_misc
 
@@ -348,17 +349,22 @@ def test_run_delegates_to_orchestrator(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
     app_cfg = sap.context.config
 
+    called = {}
+
     class DummyOrchestrator:
         def __init__(self, *args, **kwargs):
+            called["init"] = (args, kwargs)
             self.browser_session = DummyBrowserSession("log.html")
             self.run_called = 0
             self.run_args = None
 
         @classmethod
         def from_components(cls, *a, **k):
+            called["from_components"] = (a, k)
             return cls(*a, **k)
 
         def run(self, headless=False, no_sandbox=False):
+            called["run"] = (headless, no_sandbox)
             self.run_called += 1
             self.run_args = (headless, no_sandbox)
 
@@ -372,3 +378,11 @@ def test_run_delegates_to_orchestrator(monkeypatch, sample_config):
     assert isinstance(auto.orchestrator, DummyOrchestrator)
     assert auto.orchestrator.run_called == 1
     assert auto.orchestrator.run_args == (True, True)
+    assert called["from_components"][0][0] is auto.resource_manager
+    assert called["from_components"][0][1] is auto.page_navigator
+    assert isinstance(called["from_components"][0][2], ServiceConfigurator)
+    assert called["from_components"][0][2].app_config is app_cfg
+    assert called["from_components"][0][3] is auto.context
+    assert called["from_components"][0][4] is auto.logger
+    assert called["from_components"][1]["choix_user"] is True
+    assert called["run"] == (True, True)
