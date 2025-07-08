@@ -1,5 +1,7 @@
 # 🤖 Agent Guide – Projet sele_saisie_auto
 
+
+
 ## 1. À propos de ce guide
 Ce fichier décrit le rôle des différents agents qui composent le projet. Pour la configuration de l'environnement, l'exécution des tests et toutes les étapes nécessaires avant de soumettre une Pull Request, consultez [docs/guides/contributing.md](docs/guides/contributing.md).
 
@@ -29,6 +31,12 @@ Ce fichier décrit le rôle des différents agents qui composent le projet. Pour
 | `DateEntryPage`         | Gère la sélection de période                   | `automation/date_entry_page.py`  | Driver, date cible    | Période validée |
 | `AdditionalInfoPage`    | Remplit la fenêtre d'informations supplémentaires | `automation/additional_info_page.py` | Driver, config        | Données enregistrées |
 | `PageNavigator`         | Orchestration simple des pages                 | `navigation/page_navigator.py`       | Drivers, pages        | Actions séquencées |
+| `ResourceManager`       | Regroupe configuration, chiffrement et session | `resources/resource_manager.py`      | Fichier log           | Contexte partagé   |
+| `AutomationOrchestrator`| Orchestration haut niveau de l'automatisation   | `orchestration/automation_orchestrator.py` | Services, contexte   | Process complet    |
+| `AlertHandler`          | Gestion centralisée des alertes Selenium       | `alerts/alert_handler.py`            | Automation, waiter    | Pop-ups fermées    |
+| `DescriptionProcessor`  | Traite les descriptions et remplit les jours   | `form_processing/description_processor.py` | Driver, config       | Jours renseignés   |
+| `ElementIdBuilder`      | Génère les identifiants des champs jour        | `elements/element_id_builder.py`     | Base id, indices      | Identifiant        |
+
 ## 4. Détails par agent
 
 ### `SeleniumFiller`
@@ -43,7 +51,7 @@ Ce fichier décrit le rôle des différents agents qui composent le projet. Pour
 - **Entrées** : driver Selenium, configuration des jours.
 - **Sorties** : liste des jours remplis.
 - **Dépendances** : `SeleniumUtils`, `Logger`, `ConfigManager`.
-- **Tests** : TODO ajouter `tests/test_timesheet_helper.py`.
+- **Tests** : `tests/test_timesheet_helper.py`.
 
 ### `ExtraInfoHelper`
 - **Rôle** : Insérer les informations supplémentaires demandées par CGI.
@@ -57,14 +65,14 @@ Ce fichier décrit le rôle des différents agents qui composent le projet. Pour
 - **Entrées** : chemin du fichier, options du système.
 - **Sorties** : objet `ConfigParser` utilisé par les autres agents.
 - **Dépendances** : `Logger`.
-- **Tests** : TODO ajouter `tests/test_config_manager.py`.
+- **Tests** : `tests/test_config_manager.py`.
 
 ### `EncryptionService`
 - **Rôle** : Gérer la clé AES et la mémoire partagée.
 - **Entrées** : données à chiffrer/déchiffrer.
 - **Sorties** : données chiffrées ou déchiffrées.
 - **Dépendances** : `Logger`.
-- **Tests** : TODO ajouter `tests/test_encryption_service.py`.
+- **Tests** : `tests/test_encryption_service.py`.
 
 ### `SeleniumDriverManager`
 - **Rôle** : Centraliser l'ouverture et la fermeture du WebDriver.
@@ -72,21 +80,56 @@ Ce fichier décrit le rôle des différents agents qui composent le projet. Pour
 - **Sorties** : instance Selenium prête à l'emploi.
 - **Dépendances** : `SeleniumUtils`, `Logger`.
 
+### `ResourceManager`
+- **Rôle** : Fournir configuration, service de chiffrement et session navigateur via un gestionnaire de contexte.
+- **Entrées** : fichier de log.
+- **Sorties** : objets `AppConfig`, `BrowserSession` et `Credentials` prêts à l'emploi.
+- **Tests** : `tests/test_resource_manager.py`.
+
+### `AutomationOrchestrator`
+- **Rôle** : Orchestrer l'automatisation PSA Time en utilisant les services principaux.
+- **Entrées** : configuration, services, contexte.
+- **Sorties** : feuille de temps complétée.
+- **Tests** : `tests/test_automation_orchestrator.py`.
+
+### `PageNavigator`
+- **Rôle** : Séquencer les étapes de navigation entre les pages.
+- **Entrées** : sessions et pages.
+- **Sorties** : aucune, délègue aux pages.
+- **Tests** : `tests/test_page_navigator.py`.
+
+### `AlertHandler`
+- **Rôle** : Fermer ou valider les pop-ups d'alerte.
+- **Entrées** : instance d'automatisation, waiter Selenium.
+- **Sorties** : alertes traitées.
+- **Tests** : `tests/test_alert_handler.py`.
+
+### `DescriptionProcessor`
+- **Rôle** : Identifier la ligne par description et remplir uniquement les jours vides.
+- **Entrées** : driver Selenium, configuration de la description.
+- **Sorties** : jours renseignés.
+- **Tests** : `tests/test_description_processor.py`.
+
+### `ElementIdBuilder`
+- **Rôle** : Générer les identifiants des champs jour selon les règles PSA Time.
+- **Entrées** : identifiant de base, indices de jour et de ligne.
+- **Sorties** : identifiant complet.
+- **Tests** : `tests/test_element_id_builder.py`.
+
 ## 5. Schéma d’interaction
 
 ```mermaid
 graph TD
   subgraph UI
-    A[Utilisateur] --> B(SeleniumFiller)
+    A[Utilisateur] --> AO(AutomationOrchestrator)
   end
-  B --> C(TimeSheetHelper)
-  B --> D(ExtraInfoHelper)
-  B --> E(ConfigManager)
-  B --> F(EncryptionService)
-  C --> G(SeleniumUtils)
-  D --> G
-  E --> H(Logger)
-  F --> H
+  AO --> RM(ResourceManager)
+  AO --> PN(PageNavigator)
+  AO --> SC(ServiceConfigurator)
+  PN --> DE(DateEntryPage)
+  PN --> AI(AdditionalInfoPage)
+  AI --> AH(AlertHandler)
+  AI --> DP(DescriptionProcessor)
 ```
 
 ## 6. Ajouter un nouvel agent
