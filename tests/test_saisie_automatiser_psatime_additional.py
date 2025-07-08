@@ -132,7 +132,9 @@ def test_switch_to_iframe(monkeypatch):
         lambda *a, **k: calls.append("sw") or True,
     )
     monkeypatch.setattr(
-        sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: calls.append("dom")
+        sap._ORCHESTRATOR,
+        "wait_for_dom",
+        lambda *a, **k: calls.append("dom"),
     )
     assert sap.switch_to_iframe_main_target_win0("drv") is True
     assert "sw" in calls
@@ -198,6 +200,7 @@ def test_cleanup_resources(monkeypatch):
     sap.context.encryption_service = enc
     shm_service = DummySHMService()
     sap.context.shared_memory_service = shm_service
+    sap._ORCHESTRATOR.browser_session = manager
     sap.cleanup_resources(manager, "c", "n", "p")
     assert shm_service.removed == ["c", "n", "p"]
     assert "close" in called

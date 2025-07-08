@@ -164,6 +164,7 @@ def test_cleanup_resources_calls():
     sap.context.encryption_service = enc
     shm_service = DummySHMService()
     sap.context.shared_memory_service = shm_service
+    sap._ORCHESTRATOR.browser_session = manager
     sap.cleanup_resources(manager, "c", "n", None)
     assert shm_service.removed == ["c", "n"]
     assert manager.driver is None

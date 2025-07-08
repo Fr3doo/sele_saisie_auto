@@ -182,5 +182,6 @@ def test_cleanup_resources_none(monkeypatch):
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
     sap.context.encryption_service = DummyManager()
     sap.context.shared_memory_service = DummySHMService()
+    sap._ORCHESTRATOR.browser_session = mgr
     sap.cleanup_resources(mgr, None, None, None)
     assert mgr.closed is True

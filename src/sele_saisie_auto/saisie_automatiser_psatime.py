@@ -638,6 +638,7 @@ def main(
 # ----------------------------------------------------------------------------
 
 _AUTOMATION: PSATimeAutomation | None = None
+_ORCHESTRATOR: AutomationOrchestrator | None = None
 context: SaisieContext | None = None
 LOG_FILE: str | None = None
 
@@ -649,7 +650,7 @@ def initialize(
     memory_config: MemoryConfig | None = None,
 ) -> None:
     """Instancie l'automatisation."""
-    global _AUTOMATION, context, LOG_FILE
+    global _AUTOMATION, _ORCHESTRATOR, context, LOG_FILE
     _AUTOMATION = PSATimeAutomation(
         log_file,
         app_config,
@@ -658,6 +659,16 @@ def initialize(
     )
     context = _AUTOMATION.context
     LOG_FILE = log_file
+    service_configurator = ServiceConfigurator(_AUTOMATION.context.config)
+    _ORCHESTRATOR = AutomationOrchestrator.from_components(
+        _AUTOMATION.resource_manager,
+        _AUTOMATION.page_navigator,
+        service_configurator,
+        _AUTOMATION.context,
+        _AUTOMATION.logger,
+        choix_user=_AUTOMATION.choix_user,
+    )
+    _AUTOMATION.orchestrator = _ORCHESTRATOR
 
 
 def log_initialisation() -> None:
@@ -669,9 +680,9 @@ def log_initialisation() -> None:
 
 def initialize_shared_memory():
     """Récupère les identifiants chiffrés depuis la mémoire partagée."""
-    if not _AUTOMATION:
+    if not _ORCHESTRATOR:
         raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.initialize_shared_memory()
+    return _ORCHESTRATOR.initialize_shared_memory()
 
 
 def setup_browser(
@@ -681,10 +692,12 @@ def setup_browser(
     no_sandbox: bool = False,
 ):
     """Instancie le navigateur Selenium."""
-    if not _AUTOMATION:
+    if not _ORCHESTRATOR:
         raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.setup_browser(
-        session,
+    _ORCHESTRATOR.browser_session = session
+    return _ORCHESTRATOR.browser_session.open(
+        _ORCHESTRATOR.config.url,
+        fullscreen=False,
         headless=headless,
         no_sandbox=no_sandbox,
     )
@@ -692,67 +705,69 @@ def setup_browser(
 
 def connect_to_psatime(driver, cle_aes, login_c, pwd_c):
     """Ouvre la session PSA Time avec les identifiants fournis."""
-    if not _AUTOMATION:
+    if not _ORCHESTRATOR:
         raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.login_handler.connect_to_psatime(driver, cle_aes, login_c, pwd_c)
+    return _ORCHESTRATOR.login_handler.connect_to_psatime(
+        driver, cle_aes, login_c, pwd_c
+    )
 
 
 def switch_to_iframe_main_target_win0(driver):
     """Bascule vers l'iframe principale."""
-    if not _AUTOMATION:
+    if not _ORCHESTRATOR:
         raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.switch_to_iframe_main_target_win0(driver)
+    return _ORCHESTRATOR.switch_to_iframe_main_target_win0(driver)
 
 
 def navigate_from_home_to_date_entry_page(driver):
     """Atteint la page de saisie des dates."""
-    if not _AUTOMATION:
+    if not _ORCHESTRATOR:
         raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.navigate_from_home_to_date_entry_page(driver)
+    return _ORCHESTRATOR.navigate_from_home_to_date_entry_page(driver)
 
 
 def submit_date_cible(driver):
     """Valide la date cible sélectionnée."""
-    if not _AUTOMATION:
+    if not _ORCHESTRATOR:
         raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.submit_date_cible(driver)
+    return _ORCHESTRATOR.submit_date_cible(driver)
 
 
 def navigate_from_work_schedule_to_additional_information_page(driver):
     """Ouvre la fenêtre d'informations supplémentaires."""
-    if not _AUTOMATION:
+    if not _ORCHESTRATOR:
         raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.navigate_from_work_schedule_to_additional_information_page(
+    return _ORCHESTRATOR.navigate_from_work_schedule_to_additional_information_page(
         driver
     )
 
 
 def submit_and_validate_additional_information(driver):
     """Soumet les informations complémentaires."""
-    if not _AUTOMATION:
+    if not _ORCHESTRATOR:
         raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.submit_and_validate_additional_information(driver)
+    return _ORCHESTRATOR.submit_and_validate_additional_information(driver)
 
 
 def save_draft_and_validate(driver):
     """Enregistre le brouillon et valide la feuille de temps."""
-    if not _AUTOMATION:
+    if not _ORCHESTRATOR:
         raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.save_draft_and_validate(driver)
+    return _ORCHESTRATOR.save_draft_and_validate(driver)
 
 
 def cleanup_resources(session, memoire_cle, memoire_nom, memoire_mdp):
     """Nettoie les ressources utilisées par l'automatisation."""
-    if not _AUTOMATION:
+    if not _ORCHESTRATOR:
         raise RuntimeError("Automation non initialisée")
-    return _AUTOMATION.cleanup_resources(session, memoire_cle, memoire_nom, memoire_mdp)
+    return _ORCHESTRATOR.cleanup_resources(memoire_cle, memoire_nom, memoire_mdp)
 
 
 def wait_for_dom(driver):
     """Attend la stabilisation du DOM via l'automate."""
-    if not _AUTOMATION:
+    if not _ORCHESTRATOR:
         raise RuntimeError("Automation non initialisée")
-    _AUTOMATION.wait_for_dom(driver)
+    _ORCHESTRATOR.wait_for_dom(driver)
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation
