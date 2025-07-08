@@ -98,3 +98,95 @@ def test_submit_timesheet():
     _, _, _, info_page, _, nav = make_navigator()
     nav.submit_timesheet("drv")
     assert "save" in info_page.calls
+
+
+class LoggedDummyLoginHandler(DummyLoginHandler):
+    def __init__(self, log):
+        super().__init__()
+        self.log = log
+
+    def connect_to_psatime(self, driver, key, login, pwd):
+        super().connect_to_psatime(driver, key, login, pwd)
+        self.log.append("login")
+
+
+class LoggedDummyDatePage(DummyDatePage):
+    def __init__(self, log):
+        super().__init__()
+        self.log = log
+
+    def navigate_from_home_to_date_entry_page(self, driver):
+        result = super().navigate_from_home_to_date_entry_page(driver)
+        self.log.append("navigate")
+        return result
+
+    def process_date(self, driver, date):
+        super().process_date(driver, date)
+        self.log.append("process")
+
+
+class LoggedDummyInfoPage(DummyInfoPage):
+    def __init__(self, log):
+        super().__init__()
+        self.log = log
+
+    def navigate_from_work_schedule_to_additional_information_page(self, driver):
+        super().navigate_from_work_schedule_to_additional_information_page(driver)
+        self.log.append("nav_add")
+
+    def submit_and_validate_additional_information(self, driver):
+        super().submit_and_validate_additional_information(driver)
+        self.log.append("submit_add")
+
+    def save_draft_and_validate(self, driver):
+        super().save_draft_and_validate(driver)
+        self.log.append("save")
+
+
+class LoggedDummyHelper(DummyHelper):
+    def __init__(self, log):
+        super().__init__()
+        self.log = log
+
+    def run(self, driver):
+        super().run(driver)
+        self.log.append("fill")
+
+
+class LoggedDummySession(DummySession):
+    def __init__(self, log):
+        super().__init__()
+        self.log = log
+
+    def go_to_default_content(self):
+        super().go_to_default_content()
+        self.log.append("default")
+
+
+def make_logged_navigator():
+    log = []
+    session = LoggedDummySession(log)
+    login = LoggedDummyLoginHandler(log)
+    date_page = LoggedDummyDatePage(log)
+    info_page = LoggedDummyInfoPage(log)
+    helper = LoggedDummyHelper(log)
+    navigator = PageNavigator(session, login, date_page, info_page, helper)
+    return log, navigator
+
+
+def test_full_sequence_order():
+    log, nav = make_logged_navigator()
+    nav.login("drv", b"k", b"u", b"p")
+    nav.navigate_to_date_entry("drv", "2024")
+    nav.fill_timesheet("drv")
+    nav.submit_timesheet("drv")
+    assert log == [
+        "login",
+        "navigate",
+        "process",
+        "fill",
+        "nav_add",
+        "submit_add",
+        "default",
+        "save",
+    ]
