@@ -34,7 +34,6 @@ from sele_saisie_auto.navigation import PageNavigator
 from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.resources.resource_manager import ResourceManager
 from sele_saisie_auto.selenium_utils import (
-    Waiter,
     click_element_without_wait,
     detecter_doublons_jours,
     modifier_date_input,
@@ -197,13 +196,9 @@ class PSATimeAutomation:
                 },
             ],
         )
-        self.login_handler = LoginHandler(
-            log_file,
-            self.encryption_service,
-            self.browser_session,
-        )
-        self.date_entry_page = DateEntryPage(self, waiter=self.waiter)
-        self.additional_info_page = AdditionalInfoPage(self, waiter=self.waiter)
+        self._login_handler: LoginHandler | None = None
+        self._date_entry_page: DateEntryPage | None = None
+        self._additional_info_page: AdditionalInfoPage | None = None
 
         # Initialise orchestrator helpers
         timesheet_ctx = remplir_jours_feuille_de_temps.context_from_app_config(
@@ -326,6 +321,45 @@ class PSATimeAutomation:
 
         self.services = build_services(app_config, self.log_file)
         return self.services
+
+    # ------------------------------------------------------------------
+    # Lazy page/service instantiation
+    # ------------------------------------------------------------------
+    @property
+    def login_handler(self) -> LoginHandler:
+        if self._login_handler is None:
+            cls = LoginHandler
+            if hasattr(cls, "from_automation"):
+                self._login_handler = cls.from_automation(self)
+            else:  # pragma: no cover - fallback for patched classes
+                self._login_handler = cls(
+                    self.log_file,
+                    self.encryption_service,
+                    self.browser_session,
+                )
+        return self._login_handler
+
+    @property
+    def date_entry_page(self) -> DateEntryPage:
+        if self._date_entry_page is None:
+            cls = DateEntryPage
+            if hasattr(cls, "from_automation"):
+                self._date_entry_page = cls.from_automation(self, waiter=self.waiter)
+            else:  # pragma: no cover - fallback for patched classes
+                self._date_entry_page = cls(self, waiter=self.waiter)
+        return self._date_entry_page
+
+    @property
+    def additional_info_page(self) -> AdditionalInfoPage:
+        if self._additional_info_page is None:
+            cls = AdditionalInfoPage
+            if hasattr(cls, "from_automation"):
+                self._additional_info_page = cls.from_automation(
+                    self, waiter=self.waiter
+                )
+            else:  # pragma: no cover - fallback for patched classes
+                self._additional_info_page = cls(self, waiter=self.waiter)
+        return self._additional_info_page
 
     def log_initialisation(self) -> None:
         """Initialise les logs et vérifie les configurations essentielles."""
