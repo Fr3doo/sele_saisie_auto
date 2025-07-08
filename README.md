@@ -23,7 +23,7 @@ Automatiser la saisie de la feuille de temps PSA Time via Selenium et une interf
 - Python 3.11
 - Selenium 4.25
 - Cryptography 43.0
-- Dev: pytest, flake8, mypy, black, isort, ruff, radon, **radon-html**, bandit, safety
+- Dev: pytest, flake8, mypy, black, isort, ruff, radon, bandit, safety
 
 ## ⚡ Démarrage rapide
 ```bash
@@ -247,7 +247,6 @@ Les guidelines de contribution se trouvent dans [docs/guides/contributing.md](do
 
 ## 📚 Documentation liée
 - [AGENT.md](AGENT.md) — rôles des différents agents
-- [design_notes.md](design_notes.md) — diagrammes et exemples d'utilisation
 - [TESTING.md](TESTING.md) — stratégie de tests et conseils
 
 <a id="publication-dune-release"></a>
