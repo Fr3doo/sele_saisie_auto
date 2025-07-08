@@ -7,17 +7,19 @@ import pytest
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw  # noqa: E402
-from sele_saisie_auto.logging_service import Logger  # noqa: E402
-from sele_saisie_auto.orchestration import AutomationOrchestrator  # noqa: E402
-from sele_saisie_auto.navigation import PageNavigator  # noqa: E402
-from sele_saisie_auto.resources import resource_manager  # noqa: E402
 from sele_saisie_auto.automation import (  # noqa: E402
-    BrowserSession,
-    LoginHandler,
-    DateEntryPage,
     AdditionalInfoPage,
+    BrowserSession,
+    DateEntryPage,
+    LoginHandler,
 )
-from sele_saisie_auto.remplir_jours_feuille_de_temps import context_from_app_config  # noqa: E402
+from sele_saisie_auto.logging_service import Logger  # noqa: E402
+from sele_saisie_auto.navigation import PageNavigator  # noqa: E402
+from sele_saisie_auto.orchestration import AutomationOrchestrator  # noqa: E402
+from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
+    context_from_app_config,
+)
+from sele_saisie_auto.resources import resource_manager  # noqa: E402
 from sele_saisie_auto.saisie_automatiser_psatime import SaisieContext  # noqa: E402
 
 
@@ -146,7 +148,9 @@ def test_full_automation(monkeypatch, sample_config):
         login = LoginHandler(log_file, rm._encryption_service, rm._session)
         date_page = DateEntryPage(automation)
         add_page = AdditionalInfoPage(automation)
-        helper = DummyHelper(context_from_app_config(APP_CFG, log_file), logger, waiter=dummy_waiter)
+        helper = DummyHelper(
+            context_from_app_config(APP_CFG, log_file), logger, waiter=dummy_waiter
+        )
         navigator = PageNavigator(rm._session, login, date_page, add_page, helper)
         orch = AutomationOrchestrator.from_components(
             rm,
@@ -159,15 +163,35 @@ def test_full_automation(monkeypatch, sample_config):
         )
 
         calls = []
-        monkeypatch.setattr(orch.login_handler, "connect_to_psatime", lambda *a, **k: calls.append("login"))
-        monkeypatch.setattr(orch, "navigate_from_home_to_date_entry_page", lambda *a, **k: calls.append("navigate") or True)
-        monkeypatch.setattr(orch, "_process_date_entry", lambda *a, **k: calls.append("process"))
-        monkeypatch.setattr(orch, "_fill_and_save_timesheet", lambda *a, **k: calls.extend(["fill", "submit"]))
+        monkeypatch.setattr(
+            orch.login_handler,
+            "connect_to_psatime",
+            lambda *a, **k: calls.append("login"),
+        )
+        monkeypatch.setattr(
+            orch,
+            "navigate_from_home_to_date_entry_page",
+            lambda *a, **k: calls.append("navigate") or True,
+        )
+        monkeypatch.setattr(
+            orch, "_process_date_entry", lambda *a, **k: calls.append("process")
+        )
+        monkeypatch.setattr(
+            orch,
+            "_fill_and_save_timesheet",
+            lambda *a, **k: calls.extend(["fill", "submit"]),
+        )
         monkeypatch.setattr(orch, "initialize_shared_memory", lambda: CREDS)
         monkeypatch.setattr(orch, "wait_for_dom", lambda *a, **k: None)
-        monkeypatch.setattr(orch, "switch_to_iframe_main_target_win0", lambda *a, **k: None)
-        monkeypatch.setattr(orch, "cleanup_resources", lambda *a, **k: calls.append("cleanup"))
-        monkeypatch.setattr("sele_saisie_auto.console_ui.ask_continue", lambda *a, **k: None)
+        monkeypatch.setattr(
+            orch, "switch_to_iframe_main_target_win0", lambda *a, **k: None
+        )
+        monkeypatch.setattr(
+            orch, "cleanup_resources", lambda *a, **k: calls.append("cleanup")
+        )
+        monkeypatch.setattr(
+            "sele_saisie_auto.console_ui.ask_continue", lambda *a, **k: None
+        )
 
         orch.run(headless=True, no_sandbox=True)
 
