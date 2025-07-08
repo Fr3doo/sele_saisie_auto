@@ -155,3 +155,53 @@ def test_resource_manager_close_method(monkeypatch):
     assert sessions[0].closed is True
     assert rm._session is None
     assert rm._driver is None
+
+
+def test_resource_manager_context_calls(monkeypatch):
+    calls = {}
+
+    class SpyConfigManager(DummyConfigManager):
+        def load(self):
+            calls["config_loaded"] = True
+            return super().load()
+
+    class SpyBrowserSession(DummyBrowserSession):
+        def __init__(self, log_file, app_config):
+            super().__init__(log_file, app_config)
+            calls["session_created"] = True
+
+        def open(self, url, headless=False, no_sandbox=False):
+            calls["open_called"] = (url, headless, no_sandbox)
+            return super().open(url, headless=headless, no_sandbox=no_sandbox)
+
+        def close(self):
+            calls["closed"] = True
+            super().close()
+
+    class SpyEncryption(DummyEncryption):
+        def __enter__(self):
+            calls["enc_enter"] = True
+            return super().__enter__()
+
+        def __exit__(self, exc_type, exc, tb):
+            calls["enc_exit"] = True
+            return super().__exit__(exc_type, exc, tb)
+
+    monkeypatch.setattr(resource_manager, "ConfigManager", SpyConfigManager)
+    monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
+    monkeypatch.setattr(resource_manager, "EncryptionService", SpyEncryption)
+
+    with resource_manager.ResourceManager("log.html") as rm:
+        driver = rm.get_driver()
+        creds = rm.get_credentials()
+
+    assert driver == "driver"
+    assert creds.login == b"u"
+    assert calls.get("config_loaded") is True
+    assert calls.get("enc_enter") is True
+    assert calls.get("enc_exit") is True
+    assert calls.get("session_created") is True
+    assert calls.get("open_called") == ("http://example", False, False)
+    assert calls.get("closed") is True
+    assert rm._session is None
+    assert rm._driver is None
