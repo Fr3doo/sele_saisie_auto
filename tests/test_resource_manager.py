@@ -205,3 +205,32 @@ def test_resource_manager_context_calls(monkeypatch):
     assert calls.get("closed") is True
     assert rm._session is None
     assert rm._driver is None
+
+
+def test_resource_manager_same_instances(monkeypatch):
+    calls = {"open": 0, "creds": 0}
+
+    class SpyBrowserSession(DummyBrowserSession):
+        def open(self, url, headless=False, no_sandbox=False):
+            calls["open"] += 1
+            return object()
+
+    class SpyEncryption(DummyEncryption):
+        def retrieve_credentials(self):
+            calls["creds"] += 1
+            return Credentials(b"k", None, b"u", None, b"p", None)
+
+    monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
+    monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
+    monkeypatch.setattr(resource_manager, "EncryptionService", SpyEncryption)
+
+    with resource_manager.ResourceManager("log.html") as rm:
+        driver1 = rm.get_driver()
+        driver2 = rm.get_driver()
+        creds1 = rm.get_credentials()
+        creds2 = rm.get_credentials()
+
+    assert driver1 is driver2
+    assert creds1 is creds2
+    assert calls["open"] == 1
+    assert calls["creds"] == 1
