@@ -88,3 +88,35 @@ def test_fill_days_skips(monkeypatch):
         filling_context=ctx,
     )
     assert called == ["filled"]
+
+
+def test_collect_filled_days_detects(monkeypatch):
+    monkeypatch.setattr(dp, "_get_element", lambda *a, **k: object())
+
+    def fake_verifier(element, day_name):
+        return day_name if day_name in {"lundi", "mercredi"} else None
+
+    monkeypatch.setattr(dp, "verifier_champ_jour_rempli", fake_verifier)
+    result = dp._collect_filled_days(None, None, "days", 0, "log")
+    assert result == ["lundi", "mercredi"]
+
+
+def test_fill_days_uses_strategy(monkeypatch):
+    recorded = []
+    dummy = object()
+    monkeypatch.setattr(dp, "_get_element", lambda *a, **k: dummy)
+    ctx = ElementFillingContext(InputFillingStrategy())
+    monkeypatch.setattr(ctx, "fill", lambda e, v, logger=None: recorded.append((e, v)))
+
+    dp._fill_days(
+        None,
+        None,
+        "days",
+        0,
+        {"lundi": "1", "mardi": "2"},
+        [],
+        "input",
+        "log",
+        filling_context=ctx,
+    )
+    assert recorded == [(dummy, "1"), (dummy, "2")]
