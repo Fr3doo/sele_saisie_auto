@@ -432,33 +432,31 @@ class PSATimeAutomation:
 
     @handle_selenium_errors(default_return=False)
     def navigate_from_home_to_date_entry_page(self, driver):
-        """Delegate navigation to :class:`DateEntryPage`."""
-        return self.date_entry_page.navigate_from_home_to_date_entry_page(driver)
+        """Delegate navigation to :class:`PageNavigator`."""
+        return self.page_navigator.navigate_from_home_to_date_entry_page(driver)
 
     @handle_selenium_errors(default_return=False)
     def submit_date_cible(self, driver):
-        """Delegate submission to :class:`DateEntryPage`."""
-        return self.date_entry_page.submit_date_cible(driver)
+        """Delegate submission to :class:`PageNavigator`."""
+        return self.page_navigator.submit_date_cible(driver)
 
     @wait_for_dom_after
     def navigate_from_work_schedule_to_additional_information_page(self, driver):
-        """Delegate to :class:`AdditionalInfoPage`."""
-        return self.additional_info_page.navigate_from_work_schedule_to_additional_information_page(
+        """Delegate to :class:`PageNavigator`."""
+        return self.page_navigator.navigate_from_work_schedule_to_additional_information_page(
             driver
         )
 
     @wait_for_dom_after
     def submit_and_validate_additional_information(self, driver):
-        """Delegate to :class:`AdditionalInfoPage`."""
-        return self.additional_info_page.submit_and_validate_additional_information(
-            driver
-        )
+        """Delegate to :class:`PageNavigator`."""
+        return self.page_navigator.submit_and_validate_additional_information(driver)
 
     @wait_for_dom_after
     @handle_selenium_errors(default_return=False)
     def save_draft_and_validate(self, driver):
-        """Delegate to :class:`AdditionalInfoPage`."""
-        return self.additional_info_page.save_draft_and_validate(driver)
+        """Delegate to :class:`PageNavigator`."""
+        return self.page_navigator.save_draft_and_validate(driver)
 
     def cleanup_resources(
         self,
