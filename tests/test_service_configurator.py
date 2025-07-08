@@ -15,3 +15,63 @@ def test_build_services(sample_config):
     assert isinstance(services.waiter, Waiter)
     assert services.browser_session.app_config is app_cfg
     assert services.browser_session.waiter is services.waiter
+
+
+def test_build_services_operational(monkeypatch, sample_config, tmp_path):
+    app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
+
+    # avoid file system writes
+    monkeypatch.setattr(
+        "sele_saisie_auto.logger_utils.write_log",
+        lambda *a, **k: None,
+    )
+
+    calls = {}
+
+    class DummyManager:
+        def __init__(self, log_file: str, app_config: AppConfig):
+            calls["init"] = (log_file, app_config)
+
+        def open(self, url, fullscreen=False, headless=False, no_sandbox=False):
+            calls["open"] = (url, fullscreen, headless, no_sandbox)
+            return "driver"
+
+        def close(self):
+            calls["close"] = True
+
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.browser_session.SeleniumDriverManager",
+        DummyManager,
+    )
+
+    services = build_services(app_cfg, str(tmp_path / "log.html"))
+
+    assert services.waiter.wrapper.default_timeout == app_cfg.default_timeout
+    assert services.waiter.wrapper.long_timeout == app_cfg.long_timeout
+
+    wait_calls = {}
+    monkeypatch.setattr(
+        services.waiter,
+        "wait_for_dom_ready",
+        lambda driver, timeout: wait_calls.setdefault("ready", (driver, timeout)),
+    )
+    monkeypatch.setattr(
+        services.waiter,
+        "wait_until_dom_is_stable",
+        lambda driver, timeout=None: wait_calls.setdefault("stable", (driver, timeout)),
+    )
+
+    driver = services.browser_session.open(app_cfg.url, headless=True)
+    services.browser_session.wait_for_dom(driver)
+    services.browser_session.close()
+
+    assert driver == "driver"
+    assert calls.get("open")[0] == app_cfg.url
+    assert wait_calls["stable"] == ("driver", app_cfg.default_timeout)
+    assert wait_calls["ready"] == ("driver", app_cfg.long_timeout)
+    assert calls.get("close") is True
+
+    key = services.encryption_service.generer_cle_aes()
+    enc = services.encryption_service.chiffrer_donnees("msg", key)
+    assert services.encryption_service.dechiffrer_donnees(enc, key) == "msg"
+    assert len(key) == 32
