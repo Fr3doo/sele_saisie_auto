@@ -118,6 +118,62 @@ class SeleniumDriverManager:
         """Ferme le navigateur si nécessaire."""
 ```
 
+## ServiceConfigurator
+
+Configure la création des services principaux (``service_configurator.py``).
+
+```python
+class ServiceConfigurator:
+    def create_encryption_service(self, log_file: str) -> EncryptionService:
+        """Retourne un service de chiffrement."""
+    def create_waiter(self) -> Waiter:
+        """Prépare un ``Waiter`` standard."""
+    def create_browser_session(self, log_file: str) -> BrowserSession:
+        """Instancie la session navigateur."""
+    def build_services(self, log_file: str) -> Services:
+        """Renvoie tous les services prêts à l'emploi."""
+```
+
+Fonction utilitaire :
+
+- ``build_services(app_config, log_file) -> Services`` – crée directement l'ensemble.
+
+## ResourceManager
+
+Gestionnaire de contexte centralisant configuration, chiffrement et navigateur
+(``resource_manager.py``).
+
+```python
+class ResourceManager:
+    def __enter__(self) -> ResourceManager:
+        """Charge la configuration et prépare les services."""
+    def __exit__(self, exc_type, exc, tb) -> None:
+        """Ferme proprement les ressources."""
+    def close(self) -> None:
+        """Alias explicite de ``__exit__``."""
+    def get_credentials(self) -> Credentials:
+        """Retourne les identifiants chiffrés."""
+    def get_driver(self, *, headless=False, no_sandbox=False):
+        """Ouvre le navigateur si nécessaire."""
+```
+
+## PageNavigator
+
+Orchestre la navigation entre les différentes pages PSA Time
+(``page_navigator.py``).
+
+```python
+class PageNavigator:
+    def login(self, driver, aes_key: bytes, encrypted_login: bytes, encrypted_password: bytes) -> None:
+        """Connecte l'utilisateur via ``LoginHandler``."""
+    def navigate_to_date_entry(self, driver, date_cible: str | None) -> None:
+        """Atteint la page de sélection de période."""
+    def fill_timesheet(self, driver) -> None:
+        """Remplit la feuille de temps et les infos additionnelles."""
+    def submit_timesheet(self, driver) -> None:
+        """Sauvegarde puis valide la feuille de temps."""
+```
+
 ## Logger utils
 
 Fonctions utilitaires pour écrire les journaux (``logger_utils.py``).
