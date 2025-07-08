@@ -137,8 +137,21 @@ graph TD
   AI --> AH(AlertHandler)
   AI --> DP(DescriptionProcessor)
 ```
-Cette séparation facilite les tests et l'évolution du code. Consultez
-[AGENT.md](AGENT.md) pour la description complète des agents.
+Cette séparation facilite les tests et l'évolution du code.
+
+**Nouvelles classes principales** :
+
+- **AutomationOrchestrator** : supervise l'ensemble du processus.
+- **ResourceManager** : centralise configuration, identifiants et session Selenium.
+- **ServiceConfigurator** : prépare chiffrement et navigateur.
+- **PageNavigator** : enchaîne connexion et navigation.
+- **DateEntryPage** : sélection de la période à remplir.
+- **AdditionalInfoPage** : saisie des informations complémentaires.
+- **AlertHandler** : ferme les éventuelles pop‑ups.
+- **DescriptionProcessor** : prépare les descriptions de lignes.
+
+Consultez [AGENT.md](AGENT.md) et la
+[documentation détaillée](docs/reference/architecture.md) pour plus d'informations.
 
 ## 📁 Structure du projet
 ```
