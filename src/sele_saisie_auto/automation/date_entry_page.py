@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 
+import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory
 from sele_saisie_auto import messages
 from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
@@ -28,7 +29,11 @@ class DateEntryPage:
         self, automation: PSATimeAutomation, waiter: Waiter | None = None
     ) -> None:
         self._automation = automation
-        self.waiter = waiter or getattr(automation, "waiter", None) or Waiter()
+        self.waiter = (
+            waiter
+            or getattr(automation, "waiter", None)
+            or WaiterFactory.get_waiter(self.config)
+        )
         self.alert_handler = AlertHandler(automation, waiter=self.waiter)
 
     @property

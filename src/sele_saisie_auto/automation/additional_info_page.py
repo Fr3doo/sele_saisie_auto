@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 
+import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory
 from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.decorators import handle_selenium_errors
@@ -28,7 +29,13 @@ class AdditionalInfoPage:
         self._automation = automation
         ctx = getattr(self._automation, "context", None)
         cfg = getattr(ctx, "config", None)
-        self.waiter = waiter or getattr(automation, "waiter", None) or Waiter()
+        self.waiter = (
+            waiter
+            or getattr(automation, "waiter", None)
+            or WaiterFactory.get_waiter(
+                cfg if hasattr(cfg, "default_timeout") else None
+            )
+        )
         self.alert_handler = AlertHandler(automation, waiter=self.waiter)
         self.helper = ExtraInfoHelper(
             logger=self._automation.logger,
