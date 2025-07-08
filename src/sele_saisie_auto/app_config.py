@@ -119,8 +119,8 @@ class AppConfigRaw:
 class AppConfig:
     """Structured configuration loaded from ``config.ini``."""
 
-    encrypted_login: str
-    encrypted_mdp: str
+    encrypted_login: str | None
+    encrypted_mdp: str | None
     url: str
     date_cible: str | None
     debug_mode: str
@@ -140,11 +140,14 @@ class AppConfig:
     raw: ConfigParser
 
     @staticmethod
-    def _charger_credentials(parser: ConfigParser) -> tuple[str, str]:
+    def _charger_credentials(parser: ConfigParser) -> tuple[str | None, str | None]:
         """Extrait les identifiants chiffrés depuis ``parser``."""
-        encrypted_login = parser.get("credentials", "login", fallback="")
-        encrypted_mdp = parser.get("credentials", "mdp", fallback="")
-        return encrypted_login, encrypted_mdp
+        encrypted_login = parser.get("credentials", "login", fallback="").strip()
+        encrypted_mdp = parser.get("credentials", "mdp", fallback="").strip()
+        return (
+            encrypted_login if encrypted_login else None,
+            encrypted_mdp if encrypted_mdp else None,
+        )
 
     # ------------------------------------------------------------------
     # Private helpers used to load chunks of configuration
@@ -375,7 +378,5 @@ def load_config(log_file: str | None) -> AppConfig:
     cfg = AppConfig.from_raw(raw_cfg)
     if not cfg.url.strip():
         raise ValueError("L'URL de connexion ne peut pas être vide.")
-    if not cfg.encrypted_login.strip() or not cfg.encrypted_mdp.strip():
-        raise ValueError("Le login et le mot de passe doivent être renseignés.")
 
     return cfg

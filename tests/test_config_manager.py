@@ -12,10 +12,7 @@ from sele_saisie_auto.config_manager import ConfigManager  # noqa: E402
 def test_load_and_save(tmp_path, monkeypatch):
     config_file = tmp_path / "config.ini"
     config_file.write_text(
-        """[credentials]
-login=enc
-mdp=enc
-[settings]
+        """[settings]
 url=http://t
 [section]
 key=value
@@ -57,10 +54,7 @@ def test_save_without_load(tmp_path):
 def test_config_property_after_load(tmp_path, monkeypatch):
     config_file = tmp_path / "config.ini"
     config_file.write_text(
-        """[credentials]
-login=enc
-mdp=enc
-[settings]
+        """[settings]
 url=http://t
 [section]
 key=value
@@ -96,10 +90,7 @@ def test_load_missing_config(tmp_path, monkeypatch):
 def test_is_loaded_property(tmp_path, monkeypatch):
     cfg_file = tmp_path / "config.ini"
     cfg_file.write_text(
-        """[credentials]
-login=enc
-mdp=enc
-[settings]
+        """[settings]
 url=http://t
 [section]
 key=value

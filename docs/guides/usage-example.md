@@ -22,10 +22,6 @@ Cette commande lit `config.ini` dans le répertoire courant et lance directement
 ### Exemple de configuration minimale
 
 ```ini
-[credentials]
-login = enc_login
-mdp = enc_pwd
-
 [settings]
 url = http://example.com
 date_cible = 01/07/2024

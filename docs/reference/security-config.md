@@ -22,7 +22,5 @@ Exemple de fichier `.env` chargé automatiquement par `ConfigManager` :
 
 ```dotenv
 PSATIME_URL=https://psa.example.com
-PSATIME_LOGIN=encrypted_login
-PSATIME_MDP=encrypted_password
 PSATIME_DEBUG_MODE=DEBUG
 ```

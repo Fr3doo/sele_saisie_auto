@@ -64,7 +64,8 @@ poetry run psatime-launcher
 
 <a id="utilisation"></a>
 ## 📦 Utilisation
-Une interface graphique Tkinter permet de renseigner vos identifiants chiffrés et déclenche l'automatisation Selenium.
+Une interface graphique Tkinter demande vos identifiants, les chiffre en mémoire et déclenche ensuite l'automatisation Selenium.
+Lors du démarrage, une clé AES temporaire est générée pour chiffrer ces informations dans la mémoire partagée. Aucun identifiant n'est sauvegardé sur disque.
 
 ## ⚙️ Utilisation avancée
 - Configuration dans `config.ini`
@@ -103,7 +104,7 @@ def cliquer_bouton(driver):
 ```
 
 ## 📝 Formats d'entrée
-Les paramètres sont lus depuis `config.ini` (login, mot de passe chiffré, planning, etc.).
+Les paramètres sont lus depuis `config.ini` (URL, planning, etc.). Les identifiants sont saisis au lancement et ne sont pas stockés sur le disque.
 
 ## Exemple d'algorithme factice
 Vous pouvez fournir votre propre logique via le paramètre `algorithm` :
@@ -185,8 +186,6 @@ Les valeurs de `config.ini` peuvent être surchargées via ces variables :
 
 - `PSATIME_URL` — URL du portail PSA Time
 - `PSATIME_DATE_CIBLE` — date cible au format `JJ/MM/AAAA`
-- `PSATIME_LOGIN` — identifiant chiffré
-- `PSATIME_MDP` — mot de passe chiffré
 - `PSATIME_DEBUG_MODE` — niveau de log (`INFO`, `DEBUG`, …)
 - `PSATIME_LISTE_ITEMS_PLANNING` — liste d'items de planning séparés par des virgules
 - `PSATIME_DEFAULT_TIMEOUT` — délai d'attente par défaut pour Selenium
@@ -208,8 +207,6 @@ tests lisent les variables d'environnement suivantes :
 
 - `PSATIME_URL`
 - `PSATIME_DATE_CIBLE`
-- `PSATIME_LOGIN`
-- `PSATIME_MDP`
 - `PSATIME_DEBUG_MODE`
 - `PSATIME_LISTE_ITEMS_PLANNING`
 
@@ -220,8 +217,6 @@ Exemple :
 
 ```bash
 PSATIME_URL=http://localhost \
-PSATIME_LOGIN=enc_user \
-PSATIME_MDP=enc_pass \
 poetry run pytest
 ```
 
