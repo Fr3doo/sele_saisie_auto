@@ -50,7 +50,7 @@ Ce fichier décrit le rôle des différents agents qui composent le projet. Pour
 - **Entrées** : driver Selenium, configuration spécifique.
 - **Sorties** : confirmation du remplissage.
 - **Dépendances** : `SeleniumUtils`, `Logger`.
-- **Tests** : TODO ajouter `tests/test_extra_info_helper.py`.
+- **Tests** : `tests/test_extra_info_helper.py`.
 
 ### `ConfigManager`
 - **Rôle** : Charger `config.ini` à l’exécution, fournir les chemins pour PyInstaller.
