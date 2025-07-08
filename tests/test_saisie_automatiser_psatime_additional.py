@@ -77,8 +77,17 @@ def setup_init(monkeypatch, cfg):
 
     app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
-    monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyEnc())
     monkeypatch.setattr(sap, "SharedMemoryService", lambda logger: DummySHMService())
+    from sele_saisie_auto.configuration import Services
+    from sele_saisie_auto.selenium_utils.waiter_factory import get_waiter
+
+    def fake_build(cfg_b, lf_b):
+        waiter = get_waiter(cfg_b)
+        return Services(
+            DummyEnc(), sap.BrowserSession(lf_b, cfg_b, waiter=waiter), waiter
+        )
+
+    monkeypatch.setattr(sap, "build_services", fake_build)
     sap.initialize(
         "log.html",
         app_cfg,
