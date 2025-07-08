@@ -164,17 +164,28 @@ class DummyAdditionalInfoPage:
         self.alert_handler.handle_alerts(driver, "save_alerts")
 
 
-def setup_init(monkeypatch, cfg):
+def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
     from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
 
     app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
-    monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyEnc())
     monkeypatch.setattr(sap, "SharedMemoryService", lambda logger: DummySHMService())
-    monkeypatch.setattr(sap, "BrowserSession", DummyBrowserSession)
     monkeypatch.setattr(sap, "LoginHandler", DummyLoginHandler)
     monkeypatch.setattr(sap, "DateEntryPage", DummyDateEntryPage)
     monkeypatch.setattr(sap, "AdditionalInfoPage", DummyAdditionalInfoPage)
+    if patch_services:
+        from sele_saisie_auto.configuration import Services
+        from sele_saisie_auto.selenium_utils.waiter_factory import get_waiter
+
+        def fake_build(cfg_b, lf_b):
+            waiter = get_waiter(cfg_b)
+            return Services(
+                DummyEnc(),
+                sap.BrowserSession(lf_b, cfg_b, waiter=waiter),
+                waiter,
+            )
+
+        monkeypatch.setattr(sap, "build_services", fake_build)
     sap.initialize(
         "log.html",
         app_cfg,
@@ -236,7 +247,7 @@ def test_init_services(monkeypatch, sample_config):
 
     monkeypatch.setattr(sap, "build_services", fake_build)
 
-    setup_init(monkeypatch, sample_config)
+    setup_init(monkeypatch, sample_config, patch_services=False)
 
     assert sap._AUTOMATION.services is dummy
     assert called["args"][1] == "log.html"

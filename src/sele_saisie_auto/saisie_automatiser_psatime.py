@@ -11,7 +11,6 @@ from multiprocessing import shared_memory
 
 from selenium.webdriver.common.by import By
 
-import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: N812
 from sele_saisie_auto import (
     console_ui,
     messages,
@@ -114,9 +113,7 @@ class PSATimeAutomation:
         memory_config: MemoryConfig | None = None,
         *,
         logger: Logger | None = None,
-        waiter: Waiter | None = None,
-        browser_session: BrowserSession | None = None,
-        encryption_service: EncryptionService | None = None,
+        services: Services | None = None,
         shared_memory_service: SharedMemoryService | None = None,
     ) -> None:
         """Initialise la configuration et les dépendances."""
@@ -127,14 +124,13 @@ class PSATimeAutomation:
         set_log_file_selenium(log_file)
         initialize_logger(app_config.raw, log_level_override=app_config.debug_mode)
         self.logger = logger or get_logger(log_file)
-        self.waiter = waiter or WaiterFactory.get_waiter(app_config)
         self.shared_memory_service = shared_memory_service or SharedMemoryService(
             self.logger
         )
-        self.encryption_service = encryption_service or EncryptionService(
-            log_file,
-            self.shared_memory_service,
-        )
+        self.services = services or self._init_services(app_config)
+        self.waiter = self.services.waiter
+        self.browser_session = self.services.browser_session
+        self.encryption_service = self.services.encryption_service
         self.context = SaisieContext(
             config=app_config,
             encryption_service=self.encryption_service,
@@ -201,16 +197,6 @@ class PSATimeAutomation:
                 },
             ],
         )
-        self._init_services()
-        if browser_session is None:
-            try:
-                self.browser_session = BrowserSession(
-                    log_file, app_config, waiter=self.waiter
-                )
-            except TypeError:  # pragma: no cover - for legacy test stubs
-                self.browser_session = BrowserSession(log_file, waiter=self.waiter)
-        else:
-            self.browser_session = browser_session
         self.login_handler = LoginHandler(
             log_file,
             self.encryption_service,
@@ -335,10 +321,10 @@ class PSATimeAutomation:
                 f"🔹 '{day}': '{location}'", self.log_file, "DEBUG"
             )  # pragma: no cover
 
-    def _init_services(self) -> Services:
+    def _init_services(self, app_config: AppConfig) -> Services:
         """Initialise les services principaux via :func:`build_services`."""
 
-        self.services = build_services(self.context.config, self.log_file)
+        self.services = build_services(app_config, self.log_file)
         return self.services
 
     def log_initialisation(self) -> None:
