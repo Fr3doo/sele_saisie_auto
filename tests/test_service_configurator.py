@@ -1,3 +1,5 @@
+import pytest
+
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
 from sele_saisie_auto.automation import BrowserSession
 from sele_saisie_auto.configuration import Services, build_services
@@ -75,3 +77,13 @@ def test_build_services_operational(monkeypatch, sample_config, tmp_path):
     enc = services.encryption_service.chiffrer_donnees("msg", key)
     assert services.encryption_service.dechiffrer_donnees(enc, key) == "msg"
     assert len(key) == 32
+
+
+def test_build_services_invalid_config(tmp_path):
+    """Ensure ``build_services`` fails with an invalid ``AppConfig`` instance."""
+
+    class Dummy:
+        pass
+
+    with pytest.raises(AttributeError):
+        build_services(Dummy(), str(tmp_path / "log.html"))
