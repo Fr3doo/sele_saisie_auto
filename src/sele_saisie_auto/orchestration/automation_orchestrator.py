@@ -70,6 +70,7 @@ class AutomationOrchestrator:
         choix_user: bool = True,
         *,
         timesheet_helper_cls: type[TimeSheetHelper] = TimeSheetHelper,
+        cleanup_resources=None,
     ) -> None:
         self.config = config
         self.logger = logger
@@ -80,6 +81,11 @@ class AutomationOrchestrator:
         self.context = context
         self.choix_user = choix_user
         self.timesheet_helper_cls = timesheet_helper_cls
+        self.cleanup_resources = (
+            cleanup_resources
+            if cleanup_resources is not None
+            else self._default_cleanup_resources
+        )
 
     def initialize_shared_memory(self):  # pragma: no cover - tested elsewhere
         """Retrieve credentials from shared memory."""
@@ -290,7 +296,7 @@ class AutomationOrchestrator:
                         credentials.mem_password,
                     )
 
-    def cleanup_resources(
+    def _default_cleanup_resources(
         self,
         memoire_cle,
         memoire_nom,

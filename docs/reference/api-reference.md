@@ -40,7 +40,8 @@ class PSATimeAutomation:
 - `navigate_from_work_schedule_to_additional_information_page(driver)` – accède aux informations supplémentaires.
 - `submit_and_validate_additional_information(driver)` – remplit puis confirme les données complémentaires.
 - `save_draft_and_validate(driver)` – sauvegarde la feuille et déclenche la validation.
-- `cleanup_resources(driver_manager, mem_key, mem_login, mem_password)` – ferme le navigateur et libère la mémoire.
+- `cleanup_resources(mem_key, mem_login, mem_password)` – fonction injectable pour fermer le navigateur et libérer la mémoire.
+- *Cette propriété peut être redéfinie pour personnaliser la stratégie de nettoyage.*
 - ``run() -> None`` – lance toute la séquence d’automatisation. Désormais, cette méthode délègue à ``AutomationOrchestrator.run()`` pour la logique principale.
 
 ## AutomationOrchestrator
