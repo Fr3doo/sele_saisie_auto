@@ -224,6 +224,24 @@ def test_initialize_sets_globals(monkeypatch, sample_config):
     assert isinstance(sap._AUTOMATION.memory_config, sap.MemoryConfig)
 
 
+def test_init_services(monkeypatch, sample_config):
+    from sele_saisie_auto.configuration import Services
+
+    dummy = Services(None, None, None)
+    called = {}
+
+    def fake_build(cfg, lf):
+        called["args"] = (cfg, lf)
+        return dummy
+
+    monkeypatch.setattr(sap, "build_services", fake_build)
+
+    setup_init(monkeypatch, sample_config)
+
+    assert sap._AUTOMATION.services is dummy
+    assert called["args"][1] == "log.html"
+
+
 def test_initialize_shared_memory(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
     monkeypatch.setattr(
