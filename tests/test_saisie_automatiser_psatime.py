@@ -329,11 +329,11 @@ def test_main_flow(monkeypatch, sample_config):
     monkeypatch.setattr(sap, "traiter_description", lambda *a, **k: None)
     monkeypatch.setattr(sap, "detecter_doublons_jours", lambda *a, **k: None)
     monkeypatch.setattr(sap, "sys", types.SimpleNamespace(exit=lambda: None))
-    cleanup_called = {}
+    close_called = {}
     monkeypatch.setattr(
-        sap.PSATimeAutomation,
-        "cleanup_resources",
-        lambda self, *a, **k: cleanup_called.setdefault("done", True),
+        sap.BrowserSession,
+        "close",
+        lambda self: close_called.setdefault("done", True),
     )
     monkeypatch.setattr(sap, "seprateur_menu_affichage_console", lambda: None)
     monkeypatch.setattr(console_ui, "ask_continue", lambda *a, **k: None)
@@ -341,7 +341,7 @@ def test_main_flow(monkeypatch, sample_config):
 
     sap.main("log.html")
 
-    assert cleanup_called["done"] is True
+    assert close_called["done"] is True
 
 
 def test_run_delegates_to_orchestrator(monkeypatch, sample_config):

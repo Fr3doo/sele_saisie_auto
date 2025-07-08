@@ -113,14 +113,14 @@ def test_run_invokes_hook(monkeypatch, sample_config):
 
     monkeypatch.setattr(sap.PSATimeAutomation, "save_draft_and_validate", fake_save)
     monkeypatch.setattr(
-        sap.PSATimeAutomation,
-        "cleanup_resources",
-        lambda self, *a, **k: calls.append("cleanup"),
+        sap.BrowserSession,
+        "close",
+        lambda self: calls.append("close"),
     )
 
     sap.main("log.html")
 
-    assert "cleanup" in calls
+    assert "close" in calls
 
 
 def test_hook_decorator_registers():
