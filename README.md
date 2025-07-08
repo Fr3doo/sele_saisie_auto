@@ -83,7 +83,12 @@ Lors du démarrage, une clé AES temporaire est générée pour chiffrer ces inf
   python -m sele_saisie_auto.launcher
   python -m sele_saisie_auto.saisie_automatiser_psatime
   python -m sele_saisie_auto.remplir_jours_feuille_de_temps
-> **Note :** la logique principale réside désormais dans ``AutomationOrchestrator.run()``. ``PSATimeAutomation.run()`` se contente de l'appeler.
+> **Note :** la logique principale réside désormais dans ``AutomationOrchestrator.run()``.
+> Cet orchestrateur utilise un ``ResourceManager`` pour centraliser navigateur et identifiants,
+> un ``PageNavigator`` pour enchaîner les étapes et un ``ServiceConfigurator`` pour
+> initialiser ``EncryptionService`` et ``BrowserSession``.
+> Les pages emploient ``AlertHandler`` pour gérer les pop-ups et ``DescriptionProcessor``
+> s'occupe du remplissage détaillé des lignes.
   ```
 
 ## 🔌 Injection de dépendances
@@ -122,22 +127,18 @@ class CustomAlgorithm:
 ```mermaid
 graph TD
   subgraph UI
-    A[Utilisateur] --> B(SeleniumFiller)
+    A[Utilisateur] --> AO(AutomationOrchestrator)
   end
-  B --> C(TimeSheetHelper)
-  B --> D(ExtraInfoHelper)
-  B --> X(BrowserSession)
-  B --> Y(LoginHandler)
-  B --> Z(DateEntryPage)
-  B --> AA(AdditionalInfoPage)
-  B --> E(ConfigManager)
-  B --> F(EncryptionService)
-  C --> G(SeleniumUtils)
-  D --> G
-  E --> H(Logger)
-  F --> H
+  AO --> RM(ResourceManager)
+  AO --> PN(PageNavigator)
+  AO --> SC(ServiceConfigurator)
+  PN --> DE(DateEntryPage)
+  PN --> AI(AdditionalInfoPage)
+  AI --> AH(AlertHandler)
+  AI --> DP(DescriptionProcessor)
 ```
-Voir [AGENT.md](AGENT.md) pour la description complète des agents.
+Cette séparation facilite les tests et l'évolution du code. Consultez
+[AGENT.md](AGENT.md) pour la description complète des agents.
 
 ## 📁 Structure du projet
 ```
