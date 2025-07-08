@@ -261,9 +261,9 @@ def test_main_exceptions(monkeypatch, sample_config):
     )
     cleanup = {}
     monkeypatch.setattr(
-        sap.PSATimeAutomation,
-        "cleanup_resources",
-        lambda self, *a, **k: cleanup.setdefault("done", True),
+        sap.BrowserSession,
+        "close",
+        lambda self: cleanup.setdefault("done", True),
     )
     for exc in EXCEPTIONS:
         monkeypatch.setattr(
