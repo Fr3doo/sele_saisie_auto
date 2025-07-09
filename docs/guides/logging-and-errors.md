@@ -91,6 +91,7 @@ Ces options ajustent la largeur des colonnes, la hauteur des lignes et la taille
 | `FileNotFoundError` | Fichier de configuration ou de log introuvable |
 | `PermissionError` | Droits insuffisants pour accéder au fichier |
 | `UnicodeDecodeError` | Caractères invalides lors de la lecture d'un fichier |
+| `AutomationNotInitializedError` | Automate non initialisé avant appel |
 | `RuntimeError` | État inattendu de l'application |
 | `NameError` | Objet ou identifiant manquant dans le code |
 

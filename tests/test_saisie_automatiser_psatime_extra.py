@@ -68,7 +68,7 @@ def test_afficher_message_insertion_other(monkeypatch):
 
 def test_log_initialisation_no_log():
     sap._AUTOMATION = None
-    with pytest.raises(RuntimeError):
+    with pytest.raises(sap.AutomationNotInitializedError):
         sap.log_initialisation()
 
 
