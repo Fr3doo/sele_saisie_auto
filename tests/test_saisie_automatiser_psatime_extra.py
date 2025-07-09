@@ -181,26 +181,22 @@ def test_fill_and_save_timesheet(monkeypatch, sample_config):
     )
     monkeypatch.setattr(auto, "_click_action_button", lambda d: calls.append("click"))
     monkeypatch.setattr(
-        sap.remplir_jours_feuille_de_temps.TimeSheetHelper,
-        "run",
-        lambda self, drv: calls.append("fill"),
+        auto.page_navigator,
+        "fill_timesheet",
+        lambda d: calls.append("fill"),
     )
     monkeypatch.setattr(
-        auto,
-        "navigate_from_work_schedule_to_additional_information_page",
-        lambda d: calls.append("nav"),
+        auto.additional_info_page,
+        "save_draft_and_validate",
+        lambda d: (
+            calls.append("save"),
+            auto.additional_info_page._handle_save_alerts(d),
+        ),
     )
     monkeypatch.setattr(
-        auto,
-        "submit_and_validate_additional_information",
-        lambda d: calls.append("sub"),
-    )
-    monkeypatch.setattr(
-        "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_default_content",
-        lambda *a, **k: calls.append("default"),
-    )
-    monkeypatch.setattr(
-        auto, "save_draft_and_validate", lambda d: calls.append("save") or True
+        auto.page_navigator,
+        "submit_timesheet",
+        lambda d: auto.additional_info_page.save_draft_and_validate(d),
     )
     auto.additional_info_page.alert_handler.handle_alerts = (
         lambda d, alert_type="save_alerts": calls.append((d, alert_type))

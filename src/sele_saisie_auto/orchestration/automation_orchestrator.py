@@ -240,16 +240,13 @@ class AutomationOrchestrator:
             self.logger,
             waiter=self.browser_session.waiter,
         )
-        helper.run(driver)
-        self.navigate_from_work_schedule_to_additional_information_page(driver)
-        self.submit_and_validate_additional_information(driver)
-        self.browser_session.go_to_default_content()
+        self.page_navigator.timesheet_helper = helper
+        self.page_navigator.fill_timesheet(driver)
         self.wait_for_dom(driver)
         if self.switch_to_iframe_main_target_win0(driver):
             detecter_doublons_jours(driver)
             plugins.call("before_submit", driver)
-            if self.save_draft_and_validate(driver):
-                self.additional_info_page._handle_save_alerts(driver)
+            self.page_navigator.submit_timesheet(driver)
 
     def run(  # pragma: no cover - integration tested via main automation
         self,

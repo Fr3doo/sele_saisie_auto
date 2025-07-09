@@ -7,6 +7,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw  # noqa: E402
 from sele_saisie_auto.encryption_utils import Credentials  # noqa: E402
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
+from sele_saisie_auto.navigation import PageNavigator  # noqa: E402
 from sele_saisie_auto.orchestration import AutomationOrchestrator  # noqa: E402
 from sele_saisie_auto.saisie_automatiser_psatime import SaisieContext  # noqa: E402
 
@@ -134,10 +135,17 @@ def test_run_calls_services(monkeypatch, sample_config):
         timesheet_helper_cls=DummyHelper,
     )
 
+    orch.page_navigator = PageNavigator(
+        session,
+        login,
+        date_page,
+        add_page,
+        DummyHelper(None, logger),
+    )
+
     # Stub out heavy selenium helpers
     orch.wait_for_dom = lambda d: None
     orch.switch_to_iframe_main_target_win0 = lambda d: True
-    orch.save_draft_and_validate = lambda d: True
     orch.browser_session.go_to_default_content = lambda: None
     orch.browser_session.waiter = types.SimpleNamespace(
         wait_for_element=lambda *a, **k: True
@@ -303,9 +311,16 @@ def test_run_uses_passed_cleanup_function(monkeypatch, sample_config):
         cleanup_resources=cleanup_func,
     )
 
+    orch.page_navigator = PageNavigator(
+        session,
+        login,
+        date_page,
+        add_page,
+        DummyHelper(None, logger),
+    )
+
     orch.wait_for_dom = lambda d: None
     orch.switch_to_iframe_main_target_win0 = lambda d: True
-    orch.save_draft_and_validate = lambda d: True
     orch.browser_session.go_to_default_content = lambda: None
     orch.browser_session.waiter = types.SimpleNamespace(
         wait_for_element=lambda *a, **k: True
