@@ -10,7 +10,9 @@ import pytest  # noqa: E402
 
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw  # noqa: E402
 from sele_saisie_auto.encryption_utils import Credentials  # noqa: E402
+from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.resources import resource_manager  # noqa: E402
+from sele_saisie_auto.shared_memory_service import SharedMemoryService  # noqa: E402
 
 
 class DummyConfigManager:
@@ -273,3 +275,51 @@ def test_exit_uses_shared_memory_service(monkeypatch):
         rm.get_credentials()
 
     assert shm_service.removed == [enc.mem_key, enc.mem_login, enc.mem_password]
+
+
+def test_close_removes_shared_memory_segments(monkeypatch):
+    class CleanEncryption(DummyEncryption):
+        def __init__(self, log_file):
+            super().__init__(log_file)
+            self.shared_memory_service = SharedMemoryService(Logger(None))
+
+        def __enter__(self):
+            self.mem_key = shared_memory.SharedMemory(create=True, size=1)
+            self.mem_login = shared_memory.SharedMemory(create=True, size=1)
+            self.mem_password = shared_memory.SharedMemory(create=True, size=1)
+            self.mem_key.buf[:1] = b"k"
+            self.mem_login.buf[:1] = b"u"
+            self.mem_password.buf[:1] = b"p"
+            return self
+
+        def retrieve_credentials(self):
+            return Credentials(
+                b"k",
+                self.mem_key,
+                b"u",
+                self.mem_login,
+                b"p",
+                self.mem_password,
+            )
+
+    monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
+    monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
+    monkeypatch.setattr(resource_manager, "EncryptionService", CleanEncryption)
+
+    rm = resource_manager.ResourceManager("log.html")
+    rm.__enter__()
+    creds = rm.get_credentials()
+    names = [
+        creds.mem_key.name,
+        creds.mem_login.name,
+        creds.mem_password.name,
+    ]
+    rm.close()
+
+    for name in names:
+        with pytest.raises(FileNotFoundError):
+            shared_memory.SharedMemory(name=name)
+
+    creds.mem_key.close()
+    creds.mem_login.close()
+    creds.mem_password.close()
