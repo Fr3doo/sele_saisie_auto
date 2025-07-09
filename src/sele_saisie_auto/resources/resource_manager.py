@@ -47,7 +47,22 @@ class ResourceManager:
 
         if self._driver is not None and self._session is not None:
             self._session.close()
+
         self._encryption_service.__exit__(exc_type, exc, tb)
+
+        if self._credentials is not None:
+            for mem in (
+                self._credentials.mem_key,
+                self._credentials.mem_login,
+                self._credentials.mem_password,
+            ):
+                if mem is not None:
+                    try:
+                        self._encryption_service.shared_memory_service.supprimer_memoire_partagee_securisee(
+                            mem
+                        )
+                    except Exception:  # nosec B110 - cleanup best effort
+                        pass
         self._credentials = None
         self._driver = None
         self._session = None
