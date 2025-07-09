@@ -234,3 +234,42 @@ def test_resource_manager_same_instances(monkeypatch):
     assert creds1 is creds2
     assert calls["open"] == 1
     assert calls["creds"] == 1
+
+
+def test_exit_uses_shared_memory_service(monkeypatch):
+    class SpySHMService:
+        def __init__(self):
+            self.removed = []
+
+        def supprimer_memoire_partagee_securisee(self, mem):
+            self.removed.append(mem)
+
+    class SpyEnc(DummyEncryption):
+        def __init__(self, log_file):
+            super().__init__(log_file)
+            self.shared_memory_service = shm_service
+            self.mem_key = object()
+            self.mem_login = object()
+            self.mem_password = object()
+
+        def retrieve_credentials(self):
+            return Credentials(
+                b"k",
+                self.mem_key,
+                b"u",
+                self.mem_login,
+                b"p",
+                self.mem_password,
+            )
+
+    shm_service = SpySHMService()
+
+    monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
+    monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
+    enc = SpyEnc("log.html")
+    monkeypatch.setattr(resource_manager, "EncryptionService", lambda log_file: enc)
+
+    with resource_manager.ResourceManager("log.html") as rm:
+        rm.get_credentials()
+
+    assert shm_service.removed == [enc.mem_key, enc.mem_login, enc.mem_password]
