@@ -3,9 +3,12 @@
 
 from __future__ import annotations
 
+import sys
+
 from sele_saisie_auto.automation import BrowserSession
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import Credentials, EncryptionService
+from sele_saisie_auto.logging_service import Logger
 
 __all__ = ["ResourceManager"]
 
@@ -26,6 +29,7 @@ class ResourceManager:
         self._session: BrowserSession | None = None
         self._credentials: Credentials | None = None
         self._driver = None
+        self._app_config = None
 
     # ------------------------------------------------------------------
     # Context manager protocol
@@ -75,12 +79,40 @@ class ResourceManager:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
+    @property
+    def app_config(self):  # pragma: no cover - simple accessor
+        return self._app_config
+
+    @property
+    def browser_session(self):  # pragma: no cover - simple accessor
+        if self._session is None:
+            raise RuntimeError("Resource manager not initialized")
+        return self._session
+
+    @property
+    def encryption_service(self):  # pragma: no cover - simple accessor
+        return self._encryption_service
+
     def get_credentials(self) -> Credentials:
         """Retourne les identifiants chiffrés stockés en mémoire partagée."""
 
         if self._credentials is None:
             self._credentials = self._encryption_service.retrieve_credentials()
         return self._credentials
+
+    def initialize_shared_memory(self, logger: Logger | None = None) -> Credentials:
+        """Retrieve credentials and ensure shared memory is initialized."""
+
+        creds = self.get_credentials()
+        if not all(
+            [creds.mem_key, creds.mem_login, creds.mem_password]
+        ):  # pragma: no cover - sanity check
+            if logger:
+                logger.error(
+                    "🚨 La mémoire partagée n'a pas été initialisée correctement. Assurez-vous que les identifiants ont été chiffrés"
+                )
+            sys.exit(1)
+        return creds
 
     def get_driver(self, *, headless: bool = False, no_sandbox: bool = False):
         """Ouvre le navigateur si besoin et retourne le ``WebDriver``."""
