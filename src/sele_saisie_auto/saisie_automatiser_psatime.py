@@ -38,9 +38,9 @@ from sele_saisie_auto.selenium_utils import (
     detecter_doublons_jours,
     modifier_date_input,
     send_keys_to_element,
-    wait_for_dom_after,
 )
 from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
+from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
@@ -508,20 +508,18 @@ class PSATimeAutomation:
         ctx = remplir_jours_feuille_de_temps.context_from_app_config(
             self.context.config, self.log_file
         )
-        remplir_jours_feuille_de_temps.TimeSheetHelper(
+        helper = remplir_jours_feuille_de_temps.TimeSheetHelper(
             ctx,
             self.logger,
             waiter=self.waiter,
-        ).run(driver)
-        self.navigate_from_work_schedule_to_additional_information_page(driver)
-        self.submit_and_validate_additional_information(driver)
-        self.browser_session.go_to_default_content()
+        )
+        self.page_navigator.timesheet_helper = helper
+        self.page_navigator.fill_timesheet(driver)
         self.wait_for_dom(driver)
         if self.switch_to_iframe_main_target_win0(driver):
             detecter_doublons_jours(driver)
             plugins.call("before_submit", driver)
-            if self.save_draft_and_validate(driver):
-                self.additional_info_page._handle_save_alerts(driver)
+            self.page_navigator.submit_timesheet(driver)
 
     def run(
         self,
