@@ -19,7 +19,6 @@ from sele_saisie_auto.gui_builder import (
 )
 from sele_saisie_auto.logger_utils import LOG_LEVELS, initialize_logger
 from sele_saisie_auto.logging_service import Logger, get_logger
-from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.read_or_write_file_config_ini_utils import (
     read_config_ini,
     write_config_ini,
@@ -48,17 +47,7 @@ def run_psatime(
                 cfg,
                 logger=log,
             )
-            orchestrator = AutomationOrchestrator(
-                cfg,
-                log,
-                automation.browser_session,
-                automation.login_handler,
-                automation.date_entry_page,
-                automation.additional_info_page,
-                automation.context,
-                automation.choix_user,
-            )
-            orchestrator.run(headless=headless, no_sandbox=no_sandbox)
+            automation.run(headless=headless, no_sandbox=no_sandbox)
     else:
         logger.info("Launching PSA time")
         cfg = ConfigManager(log_file=log_file).load()
@@ -67,17 +56,7 @@ def run_psatime(
             cfg,
             logger=logger,
         )
-        orchestrator = AutomationOrchestrator(
-            cfg,
-            logger,
-            automation.browser_session,
-            automation.login_handler,
-            automation.date_entry_page,
-            automation.additional_info_page,
-            automation.context,
-            automation.choix_user,
-        )
-        orchestrator.run(headless=headless, no_sandbox=no_sandbox)
+        automation.run(headless=headless, no_sandbox=no_sandbox)
 
 
 def run_psatime_with_credentials(

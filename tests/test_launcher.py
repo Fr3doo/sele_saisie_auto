@@ -120,17 +120,6 @@ def test_run_psatime(monkeypatch, dummy_logger):
     class DummyAutomation:
         def __init__(self, log_file, cfg_loaded, logger=None):
             self.called = (log_file, cfg_loaded, logger)
-            self.browser_session = object()
-            self.login_handler = object()
-            self.date_entry_page = object()
-            self.additional_info_page = object()
-            self.context = object()
-            self.choix_user = True
-
-    class DummyOrchestrator:
-        def __init__(self, *args, **kwargs):
-            self.args = args
-            self.kwargs = kwargs
             self.run_called = False
             self.run_args = None
 
@@ -143,25 +132,24 @@ def test_run_psatime(monkeypatch, dummy_logger):
         "ConfigManager",
         lambda log_file=None: types.SimpleNamespace(load=lambda: cfg),
     )
+    automation_instance = {}
+
+    def dummy_automation_factory(*args, **kwargs):
+        inst = DummyAutomation(*args, **kwargs)
+        automation_instance["inst"] = inst
+        return inst
+
     monkeypatch.setattr(
         launcher.saisie_automatiser_psatime,
         "PSATimeAutomation",
-        DummyAutomation,
+        dummy_automation_factory,
     )
-    orchestrator_instance = {}
-
-    def dummy_orchestrator_factory(*args, **kwargs):
-        inst = DummyOrchestrator(*args, **kwargs)
-        orchestrator_instance["inst"] = inst
-        return inst
-
-    monkeypatch.setattr(launcher, "AutomationOrchestrator", dummy_orchestrator_factory)
 
     launcher.run_psatime("file.html", menu, logger=dummy_logger)
 
     assert menu.destroy_called
     assert dummy_logger.records["info"][0].startswith("Launching")
-    assert orchestrator_instance["inst"].run_called
+    assert automation_instance["inst"].run_called
 
 
 def test_run_psatime_with_credentials(monkeypatch):
