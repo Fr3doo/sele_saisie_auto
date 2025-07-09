@@ -97,3 +97,30 @@ import my_plugin
 ```
 
 Un exemple complet se trouve dans `examples/example_plugin.py`.
+
+## Orchestration avec `ResourceManager`
+
+L'architecture expose un orchestrateur de haut niveau. On peut l'appeler
+manuellement à partir d'un `ResourceManager` déjà initialisé :
+
+```python
+from sele_saisie_auto.config_manager import ConfigManager
+from sele_saisie_auto.configuration import ServiceConfigurator
+from sele_saisie_auto.orchestration import AutomationOrchestrator
+from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
+
+log_file = "log.html"
+config = ConfigManager(log_file).load()
+
+automation = PSATimeAutomation(log_file, config)
+
+with automation.resource_manager as manager:
+    orchestrator = AutomationOrchestrator.from_components(
+        manager,
+        automation.page_navigator,
+        ServiceConfigurator(config),
+        automation.context,
+        automation.logger,
+    )
+    orchestrator.run(headless=True)
+```
