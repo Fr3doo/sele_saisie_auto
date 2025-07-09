@@ -32,6 +32,7 @@ Ce fichier décrit le rôle des différents agents qui composent le projet. Pour
 | `AdditionalInfoPage`    | Remplit la fenêtre d'informations supplémentaires | `automation/additional_info_page.py` | Driver, config        | Données enregistrées |
 | `PageNavigator`         | Orchestration simple des pages                 | `navigation/page_navigator.py`       | Drivers, pages        | Actions séquencées |
 | `ResourceManager`       | Regroupe configuration, chiffrement et session | `resources/resource_manager.py`      | Fichier log           | Contexte partagé   |
+| `ServiceConfigurator`   | Instancie les services principaux              | `configuration/service_configurator.py` | Config appli          | Services prêts   |
 | `AutomationOrchestrator`| Orchestration haut niveau de l'automatisation   | `orchestration/automation_orchestrator.py` | Services, contexte   | Process complet    |
 | `AlertHandler`          | Gestion centralisée des alertes Selenium       | `alerts/alert_handler.py`            | Automation, waiter    | Pop-ups fermées    |
 | `DescriptionProcessor`  | Traite les descriptions et remplit les jours   | `form_processing/description_processor.py` | Driver, config       | Jours renseignés   |
@@ -85,6 +86,12 @@ Ce fichier décrit le rôle des différents agents qui composent le projet. Pour
 - **Entrées** : fichier de log.
 - **Sorties** : objets `AppConfig`, `BrowserSession` et `Credentials` prêts à l'emploi.
 - **Tests** : `tests/test_resource_manager.py`.
+
+### `ServiceConfigurator`
+- **Rôle** : Préparer les services clés comme `BrowserSession`, `EncryptionService` et `Waiter`.
+- **Entrées** : configuration de l'application.
+- **Sorties** : dataclass `Services` contenant les instances prêtes à l'emploi.
+- **Tests** : `tests/test_service_configurator.py`.
 
 ### `AutomationOrchestrator`
 - **Rôle** : Orchestrer l'automatisation PSA Time en utilisant les services principaux.
