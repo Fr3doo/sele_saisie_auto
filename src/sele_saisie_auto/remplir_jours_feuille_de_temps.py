@@ -494,6 +494,10 @@ class TimeSheetHelper:
             filled_days = self.fill_standard_days(driver, filled_days)
             self.logger.debug(f"Jours déjà remplis : {filled_days}")
 
+            if len(set(filled_days)) == len(JOURS_SEMAINE):
+                self.logger.info(messages.TIMESHEET_ALREADY_COMPLETE)
+                return
+
             filled_days = self.fill_work_missions(driver, filled_days)
             self.logger.debug(f"Finalisation des jours remplis : {filled_days}")
 

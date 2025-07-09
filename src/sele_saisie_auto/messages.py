@@ -49,4 +49,5 @@ LOCATOR_VALUE_REQUIRED = (
     "Erreur : Le paramètre 'locator_value' doit être spécifié pour localiser l'élément."
 )
 WAIT_STABILISATION = "Veuillez patienter. Court délai pour stabilisation du DOM"
+TIMESHEET_ALREADY_COMPLETE = "✅ Feuille déjà complétée, aucun traitement nécessaire."
 NO_DATE_CHANGE = "Aucune modification de la date nécessaire."

@@ -93,6 +93,30 @@ def test_timesheethelper_run_sequence(monkeypatch):
     assert seq == ["std", "work", "extra"]
 
 
+def test_timesheethelper_run_early_exit(monkeypatch):
+    helper = TimeSheetHelper(TimeSheetContext("log", [], {}, {}), Logger("log"))
+    seq = []
+    from sele_saisie_auto.constants import JOURS_SEMAINE
+
+    all_days = list(JOURS_SEMAINE.values())
+
+    monkeypatch.setattr(helper, "fill_standard_days", lambda d, j: all_days)
+    monkeypatch.setattr(
+        helper, "fill_work_missions", lambda d, j: seq.append("work") or j
+    )
+    monkeypatch.setattr(
+        helper, "handle_additional_fields", lambda d: seq.append("extra")
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
+        lambda *a, **k: None,
+    )
+
+    helper.run(None)
+
+    assert seq == []
+
+
 def test_fill_standard_days_delegates(monkeypatch):
     ctx = TimeSheetContext("log", ["desc"], {}, {})
     logger = Logger("log", writer=lambda *a, **k: None)
