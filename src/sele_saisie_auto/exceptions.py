@@ -7,3 +7,7 @@ class DriverError(Exception):
 
 class InvalidConfigError(Exception):
     """Raised when configuration values are missing or inconsistent."""
+
+
+class AutomationNotInitializedError(Exception):
+    """Raised when a global automation wrapper is used before initialization."""
