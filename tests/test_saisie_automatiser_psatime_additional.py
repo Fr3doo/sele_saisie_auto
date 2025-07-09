@@ -4,6 +4,8 @@ from pathlib import Path
 import pytest
 
 from sele_saisie_auto import console_ui
+from sele_saisie_auto.configuration import ServiceConfigurator
+from sele_saisie_auto.orchestration import AutomationOrchestrator
 from tests.test_saisie_automatiser_psatime import DummyBrowserSession
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
@@ -108,12 +110,20 @@ def setup_init(monkeypatch, cfg):
         lambda log_file, cfg=app_cfg: DummyBrowserSession(log_file, cfg, waiter=waiter),
     )
     monkeypatch.setattr(rm, "EncryptionService", lambda log_file: DummyEnc())
-    sap.initialize(
-        "log.html",
-        app_cfg,
+    auto = sap.PSATimeAutomation("log.html", app_cfg)
+    service_configurator = ServiceConfigurator(app_cfg)
+    orch = AutomationOrchestrator.from_components(
+        auto.resource_manager,
+        auto.page_navigator,
+        service_configurator,
+        auto.context,
+        auto.logger,
         choix_user=True,
-        memory_config=sap.MemoryConfig(),
     )
+    auto.orchestrator = orch
+    monkeypatch.setattr(sap, "_AUTOMATION", auto, raising=False)
+    monkeypatch.setattr(sap, "_ORCHESTRATOR", orch, raising=False)
+    monkeypatch.setattr(sap, "context", auto.context, raising=False)
     monkeypatch.setattr(
         sap,
         "ConfigManager",

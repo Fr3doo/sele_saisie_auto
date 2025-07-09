@@ -73,7 +73,6 @@ class AutomationOrchestrator:
         choix_user: bool = True,
         *,
         timesheet_helper_cls: type[TimeSheetHelper] = TimeSheetHelper,
-        cleanup_resources=None,
     ) -> None:
         self.config = config
         self.logger = logger
@@ -84,11 +83,6 @@ class AutomationOrchestrator:
         self.context = context
         self.choix_user = choix_user
         self.timesheet_helper_cls = timesheet_helper_cls
-        self.cleanup_resources = (
-            cleanup_resources
-            if cleanup_resources is not None
-            else self._default_cleanup_resources
-        )
 
     # ------------------------------------------------------------------
     # Alternate constructor
@@ -104,7 +98,6 @@ class AutomationOrchestrator:
         choix_user: bool = True,
         *,
         timesheet_helper_cls: type[TimeSheetHelper] = TimeSheetHelper,
-        cleanup_resources=None,
     ) -> AutomationOrchestrator:
         """Create an orchestrator from high level components."""
 
@@ -118,7 +111,6 @@ class AutomationOrchestrator:
             context,
             choix_user,
             timesheet_helper_cls=timesheet_helper_cls,
-            cleanup_resources=cleanup_resources,
         )
         inst.resource_manager = resource_manager
         inst.page_navigator = page_navigator
@@ -126,20 +118,9 @@ class AutomationOrchestrator:
         return inst
 
     def initialize_shared_memory(self):  # pragma: no cover - tested elsewhere
-        """Retrieve credentials from shared memory."""
-        credentials = self.context.encryption_service.retrieve_credentials()
+        """Delegate credential retrieval to :class:`ResourceManager`."""
 
-        if (
-            credentials.mem_login is None
-            or credentials.mem_password is None
-            or credentials.mem_key is None
-        ):
-            self.logger.error(
-                "🚨 La mémoire partagée n'a pas été initialisée correctement. Assurez-vous que les identifiants ont été chiffrés"
-            )
-            sys.exit(1)
-
-        return credentials
+        return self.resource_manager.initialize_shared_memory(self.logger)
 
     # ------------------------------------------------------------------
     # DOM & iframe helpers
@@ -271,14 +252,9 @@ class AutomationOrchestrator:
         if self.config is None:
             self.config = ConfigManager().load()
 
-        credentials = self.initialize_shared_memory()
-
-        with self.browser_session as session:
-            driver = session.open(
-                self.config.url,
-                headless=headless,
-                no_sandbox=no_sandbox,
-            )
+        with self.resource_manager as rm:
+            credentials = rm.initialize_shared_memory(self.logger)
+            driver = rm.get_driver(headless=headless, no_sandbox=no_sandbox)
             try:
                 self.login_handler.connect_to_psatime(
                     driver,
@@ -313,7 +289,7 @@ class AutomationOrchestrator:
                 )
             finally:
                 try:
-                    if session.driver is not None:
+                    if rm.browser_session.driver is not None:
                         console_ui.ask_continue(  # pragma: no cover - manual step
                             "INFO : Controler et soumettez votre PSATime, Puis appuyer sur ENTRER "
                         )
@@ -324,33 +300,3 @@ class AutomationOrchestrator:
                     console_ui.show_separator()  # pragma: no cover - manual step
                 except ValueError:
                     pass
-                finally:
-                    self.cleanup_resources(
-                        credentials.mem_key,
-                        credentials.mem_login,
-                        credentials.mem_password,
-                    )
-
-    def _default_cleanup_resources(
-        self,
-        memoire_cle,
-        memoire_nom,
-        memoire_mdp,
-    ) -> None:
-        """Ferme le navigateur et libère les mémoires partagées."""
-        if memoire_cle:
-            self.context.shared_memory_service.supprimer_memoire_partagee_securisee(
-                memoire_cle
-            )
-        if memoire_nom:
-            self.context.shared_memory_service.supprimer_memoire_partagee_securisee(
-                memoire_nom
-            )
-        if memoire_mdp:
-            self.context.shared_memory_service.supprimer_memoire_partagee_securisee(
-                memoire_mdp
-            )
-        self.browser_session.close()
-        self.logger.info(
-            "🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier automation_orchestrator."
-        )

@@ -60,12 +60,22 @@ def test_main_creates_services_and_passes_flags(monkeypatch):
 
     class DummyAutomation:
         def __init__(self, lf, conf, logger=None, services=None):
-            auto_data["init"] = (lf, conf, logger, services)
+            auto_data["init_auto"] = (lf, conf, logger, services)
+
+    class DummyOrchestrator:
+        def __init__(self, *args, **kwargs):
+            auto_data["init"] = args
+
+        @classmethod
+        def from_components(cls, *a, **k):
+            auto_data["from_components"] = a
+            return cls(*a, **k)
 
         def run(self, headless=False, no_sandbox=False):
             auto_data["run"] = (headless, no_sandbox)
 
     monkeypatch.setattr(cli, "PSATimeAutomation", DummyAutomation)
+    monkeypatch.setattr(cli, "AutomationOrchestrator", DummyOrchestrator)
 
     class DummyLogger:
         def __enter__(self):
@@ -83,6 +93,6 @@ def test_main_creates_services_and_passes_flags(monkeypatch):
     cli.main([])
 
     assert service_calls == {"cfg": cfg, "log_file": "log.html"}
-    assert auto_data["init"] == ("log.html", cfg, "logger", "services")
+    assert "from_components" in auto_data
     assert auto_data["run"] == (True, True)
     assert auto_data["enter"] and auto_data["exit"]

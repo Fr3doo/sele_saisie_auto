@@ -9,6 +9,7 @@ from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import ServiceConfigurator
 from sele_saisie_auto.logger_utils import LOG_LEVELS, initialize_logger
 from sele_saisie_auto.logging_service import get_logger
+from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
 from sele_saisie_auto.shared_utils import get_log_file
 
@@ -61,7 +62,15 @@ def main(argv: list[str] | None = None) -> None:
             logger=logger,
             services=services,
         )
-        automation.run(headless=args.headless, no_sandbox=args.no_sandbox)
+        orchestrator = AutomationOrchestrator.from_components(
+            automation.resource_manager,
+            automation.page_navigator,
+            service_configurator,
+            automation.context,
+            automation.logger,
+            choix_user=automation.choix_user,
+        )
+        orchestrator.run(headless=args.headless, no_sandbox=args.no_sandbox)
 
 
 __all__ = ["parse_args", "main"]
