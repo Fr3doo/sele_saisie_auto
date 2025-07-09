@@ -150,6 +150,43 @@ def test_run_psatime(monkeypatch, dummy_logger):
     assert menu.destroy_called
     assert dummy_logger.records["info"][0].startswith("Launching")
     assert automation_instance["inst"].run_called
+    assert automation_instance["inst"].run_args == (False, False)
+
+
+def test_run_psatime_flags(monkeypatch, dummy_logger):
+    launcher = import_launcher(monkeypatch)
+    menu = DummyMenu()
+    cfg = object()
+
+    class DummyAutomation:
+        def __init__(self, log_file, cfg_loaded, logger=None):
+            self.run_args = None
+
+        def run(self, headless=False, no_sandbox=False):
+            self.run_args = (headless, no_sandbox)
+
+    monkeypatch.setattr(
+        launcher,
+        "ConfigManager",
+        lambda log_file=None: types.SimpleNamespace(load=lambda: cfg),
+    )
+
+    inst = DummyAutomation("file.html", cfg, logger=dummy_logger)
+    monkeypatch.setattr(
+        launcher.saisie_automatiser_psatime,
+        "PSATimeAutomation",
+        lambda *a, **k: inst,
+    )
+
+    launcher.run_psatime(
+        "file.html",
+        menu,
+        logger=dummy_logger,
+        headless=True,
+        no_sandbox=True,
+    )
+
+    assert inst.run_args == (True, True)
 
 
 def test_run_psatime_with_credentials(monkeypatch):
@@ -164,13 +201,39 @@ def test_run_psatime_with_credentials(monkeypatch):
     monkeypatch.setattr(
         launcher,
         "run_psatime",
-        lambda lf, m, logger=None, **kw: run_called.setdefault("run", lf),
+        lambda lf, m, logger=None, **kw: run_called.setdefault("run", (lf, kw)),
     )
     launcher.run_psatime_with_credentials(enc, login, pwd, "log", menu, logger=None)
 
     assert ("memoire_nom", b"user") in enc.stored
     assert ("memoire_mdp", b"pass") in enc.stored
-    assert run_called["run"] == "log"
+    assert run_called["run"] == ("log", {"headless": False, "no_sandbox": False})
+
+
+def test_run_psatime_with_credentials_flags(monkeypatch):
+    launcher = import_launcher(monkeypatch)
+    enc = DummyEncryption()
+    enc.cle_aes = b"k" * 32
+    login = DummyVar("user")
+    pwd = DummyVar("pass")
+    menu = DummyMenu()
+    run_called = {}
+
+    def fake_run(lf, m, logger=None, **kw):
+        run_called["call"] = (lf, kw)
+
+    monkeypatch.setattr(launcher, "run_psatime", fake_run)
+    launcher.run_psatime_with_credentials(
+        enc,
+        login,
+        pwd,
+        "log",
+        menu,
+        headless=True,
+        no_sandbox=True,
+    )
+
+    assert run_called["call"] == ("log", {"headless": True, "no_sandbox": True})
 
 
 def test_run_psatime_with_credentials_missing(monkeypatch):
@@ -237,10 +300,19 @@ def test_start_configuration_and_save(monkeypatch):
     monkeypatch.setattr(
         sys.modules["sele_saisie_auto.main_menu"],
         "main_menu",
-        lambda *a, **k: saved.setdefault("menu", True),
+        lambda *a, **k: (
+            saved.setdefault("menu", True),
+            saved.setdefault("kwargs", k),
+        ),
     )
 
-    launcher.start_configuration(b"k", "log", DummyEncryption())
+    launcher.start_configuration(
+        b"k",
+        "log",
+        DummyEncryption(),
+        headless=True,
+        no_sandbox=True,
+    )
 
     assert root.mainloop_called
     created_vars[0].set("2024-07-01")
@@ -251,14 +323,15 @@ def test_start_configuration_and_save(monkeypatch):
     assert cfg["settings"]["debug_mode"] == "WARNING"
     assert root.destroy_called
     assert saved["menu"] is True
+    assert saved["kwargs"] == {"headless": True, "no_sandbox": True}
 
 
 def test_main(monkeypatch):
     launcher = import_launcher(monkeypatch)
     dummy_args = types.SimpleNamespace(
         log_level="ERROR",
-        headless=False,
-        no_sandbox=False,
+        headless=True,
+        no_sandbox=True,
     )
     monkeypatch.setattr(launcher.cli, "parse_args", lambda argv: dummy_args)
     monkeypatch.setattr(launcher, "get_log_file", lambda: "log.html")
@@ -280,7 +353,10 @@ def test_main(monkeypatch):
     monkeypatch.setattr(
         sys.modules["sele_saisie_auto.main_menu"],
         "main_menu",
-        lambda *a, **k: init.setdefault("menu", a),
+        lambda *a, **k: (
+            init.setdefault("menu", a),
+            init.setdefault("kwargs", k),
+        ),
     )
 
     class DummyLoggerCtx:
@@ -307,4 +383,5 @@ def test_main(monkeypatch):
     assert init["lvl"] == "ERROR"
     assert init["freeze"]
     assert init["menu"][1] == "log.html"
+    assert init["kwargs"] == {"headless": True, "no_sandbox": True}
     assert dummy_logger.entered and dummy_logger.exited
