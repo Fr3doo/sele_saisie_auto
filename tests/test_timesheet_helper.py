@@ -4,6 +4,7 @@ from pathlib import Path
 # add project root to sys.path
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     TimeSheetContext,
@@ -223,3 +224,36 @@ def test_handle_additional_fields_no_mission(monkeypatch):
     helper.handle_additional_fields("drv")
 
     assert "called" not in called
+
+
+def test_run_logs_early_return(monkeypatch):
+    ctx = TimeSheetContext("log", [], {}, {})
+    logs: list[tuple[str, str]] = []
+    logger = Logger(
+        "log",
+        writer=lambda msg, _lf, level="INFO", **_k: logs.append((level, msg)),
+    )
+    helper = TimeSheetHelper(ctx, logger)
+
+    from sele_saisie_auto.constants import JOURS_SEMAINE
+
+    all_days = list(JOURS_SEMAINE.values())
+    monkeypatch.setattr(helper, "fill_standard_days", lambda d, j: all_days)
+    work_called = {"called": False}
+    monkeypatch.setattr(
+        helper,
+        "fill_work_missions",
+        lambda *_a, **_k: work_called.__setitem__("called", True),
+    )
+    extra_called = {"called": False}
+    monkeypatch.setattr(
+        helper,
+        "handle_additional_fields",
+        lambda *_a, **_k: extra_called.__setitem__("called", True),
+    )
+
+    helper.run(None)
+
+    assert ("INFO", messages.TIMESHEET_ALREADY_COMPLETE) in logs
+    assert not work_called["called"]
+    assert not extra_called["called"]
