@@ -14,6 +14,9 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
 
+# Les tests de ce module s'appuient sur l'orchestrateur refactorisé
+# `AutomationOrchestrator` afin de valider le nouveau fonctionnement.
+
 pytestmark = pytest.mark.slow
 
 
