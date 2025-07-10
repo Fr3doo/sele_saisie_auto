@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING
+import types
+from typing import TYPE_CHECKING, Callable
 
 from selenium.common.exceptions import (
     NoSuchElementException,
@@ -73,6 +74,8 @@ class AutomationOrchestrator:
         choix_user: bool = True,
         *,
         timesheet_helper_cls: type[TimeSheetHelper] = TimeSheetHelper,
+        cleanup_resources: Callable[[object, object, object], None] | None = None,
+        resource_manager: ResourceManager | None = None,
     ) -> None:
         self.config = config
         self.logger = logger
@@ -83,6 +86,17 @@ class AutomationOrchestrator:
         self.context = context
         self.choix_user = choix_user
         self.timesheet_helper_cls = timesheet_helper_cls
+        self._cleanup_callback = cleanup_resources
+        self.resource_manager = resource_manager or ResourceManager(logger.log_file)
+        try:
+            self.resource_manager._encryption_service = context.encryption_service
+            self.resource_manager._config_manager = types.SimpleNamespace(
+                load=lambda: config
+            )
+            self.resource_manager._session = browser_session
+            self.resource_manager._app_config = config
+        except Exception:  # nosec B110 - best effort configuration
+            pass
 
     # ------------------------------------------------------------------
     # Alternate constructor
@@ -98,6 +112,7 @@ class AutomationOrchestrator:
         choix_user: bool = True,
         *,
         timesheet_helper_cls: type[TimeSheetHelper] = TimeSheetHelper,
+        cleanup_resources: Callable[[object, object, object], None] | None = None,
     ) -> AutomationOrchestrator:
         """Create an orchestrator from high level components."""
 
@@ -111,6 +126,8 @@ class AutomationOrchestrator:
             context,
             choix_user,
             timesheet_helper_cls=timesheet_helper_cls,
+            cleanup_resources=cleanup_resources,
+            resource_manager=resource_manager,
         )
         inst.resource_manager = resource_manager
         inst.page_navigator = page_navigator
@@ -121,6 +138,14 @@ class AutomationOrchestrator:
         """Delegate credential retrieval to :class:`ResourceManager`."""
 
         return self.resource_manager.initialize_shared_memory(self.logger)
+
+    def cleanup_resources(self, mem_key, mem_login, mem_pwd) -> None:
+        """Release all held resources."""
+
+        if self._cleanup_callback:
+            self._cleanup_callback(mem_key, mem_login, mem_pwd)
+        else:
+            self.resource_manager.close()
 
     # ------------------------------------------------------------------
     # DOM & iframe helpers
@@ -300,3 +325,8 @@ class AutomationOrchestrator:
                     console_ui.show_separator()  # pragma: no cover - manual step
                 except ValueError:
                     pass
+        self.cleanup_resources(
+            credentials.mem_key,
+            credentials.mem_login,
+            credentials.mem_password,
+        )

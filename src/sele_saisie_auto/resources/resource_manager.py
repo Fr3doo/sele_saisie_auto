@@ -42,8 +42,12 @@ class ResourceManager:
         """
 
         self._app_config = self._config_manager.load()
-        self._session = BrowserSession(self.log_file, self._app_config)
-        self._enc_ctx = self._encryption_service.__enter__()
+        if self._session is None:
+            self._session = BrowserSession(self.log_file, self._app_config)
+        if hasattr(self._encryption_service, "__enter__"):
+            self._enc_ctx = self._encryption_service.__enter__()
+        else:
+            self._enc_ctx = None
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
@@ -52,7 +56,8 @@ class ResourceManager:
         if self._driver is not None and self._session is not None:
             self._session.close()
 
-        self._encryption_service.__exit__(exc_type, exc, tb)
+        if hasattr(self._encryption_service, "__exit__"):
+            self._encryption_service.__exit__(exc_type, exc, tb)
 
         if self._credentials is not None:
             for mem in (
