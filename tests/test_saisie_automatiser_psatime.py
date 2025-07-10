@@ -143,6 +143,9 @@ class DummyDateEntryPage:
     def handle_date_input(self, driver, date):
         self.calls.append(("handle", date))
 
+    def process_date(self, driver, date):
+        self.calls.append(("process", date))
+
     def submit_date_cible(self, driver):
         self.calls.append("submit")
         return True
