@@ -3,6 +3,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+from sele_saisie_auto.encryption_utils import Credentials  # noqa: E402
 from sele_saisie_auto.navigation.page_navigator import PageNavigator  # noqa: E402
 
 
@@ -190,3 +191,11 @@ def test_full_sequence_order():
         "default",
         "save",
     ]
+
+
+def test_prepare_sets_attributes():
+    _, _, _, _, _, nav = make_navigator()
+    creds = Credentials(b"k", None, b"u", None, b"p", None)
+    nav.prepare(creds, "2024")
+    assert nav.credentials is creds
+    assert nav.date_cible == "2024"
