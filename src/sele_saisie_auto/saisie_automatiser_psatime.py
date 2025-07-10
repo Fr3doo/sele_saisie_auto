@@ -408,6 +408,8 @@ class PSATimeAutomation:
                 "ERROR",
             )
             sys.exit(1)
+        if hasattr(self.page_navigator, "prepare"):
+            self.page_navigator.prepare(credentials, self.context.config.date_cible)
 
         return credentials
 
