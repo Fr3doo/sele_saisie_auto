@@ -4,6 +4,8 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+from unittest.mock import MagicMock, Mock  # noqa: E402
+
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw  # noqa: E402
 from sele_saisie_auto.encryption_utils import Credentials  # noqa: E402
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
@@ -343,3 +345,55 @@ def test_run_uses_passed_cleanup_function(monkeypatch, sample_config):
         creds.mem_login,
         creds.mem_password,
     )
+
+
+def test_run_sequence_with_mocks(sample_config):
+    app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
+    logger = Logger("log.html")
+    creds = Credentials(b"k" * 32, object(), b"u", object(), b"p", object())
+
+    order = []
+
+    rm = MagicMock()
+    rm.__enter__.side_effect = lambda: (order.append("enter"), rm)[1]
+    rm.__exit__.side_effect = lambda exc_type, exc, tb: order.append("exit")
+    rm.initialize_shared_memory.side_effect = lambda *a, **k: (
+        order.append("init"),
+        creds,
+    )[1]
+    rm.get_driver.side_effect = lambda *a, **k: (order.append("driver"), "drv")[1]
+
+    pn = MagicMock()
+    pn.browser_session = Mock(waiter=None)
+    pn.login.side_effect = lambda *a, **k: order.append("login")
+    pn.navigate_to_date_entry.side_effect = lambda *a, **k: order.append("navigate")
+    pn.fill_timesheet.side_effect = lambda *a, **k: order.append("fill")
+    pn.finalize_timesheet.side_effect = lambda *a, **k: order.append("finalize")
+
+    ctx = SaisieContext(app_cfg, None, None, {}, [])
+    svc = types.SimpleNamespace(app_config=app_cfg)
+    orch = AutomationOrchestrator.from_components(
+        rm,
+        pn,
+        svc,
+        ctx,
+        logger,
+        choix_user=True,
+        timesheet_helper_cls=lambda *a, **k: object(),
+    )
+
+    orch.cleanup_resources = lambda *a, **k: order.append("cleanup")
+
+    orch.run()
+
+    assert order == [
+        "enter",
+        "init",
+        "driver",
+        "login",
+        "navigate",
+        "fill",
+        "finalize",
+        "cleanup",
+        "exit",
+    ]
