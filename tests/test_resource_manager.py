@@ -323,3 +323,38 @@ def test_close_removes_shared_memory_segments(monkeypatch):
     creds.mem_key.close()
     creds.mem_login.close()
     creds.mem_password.close()
+
+
+def test_context_manager_returns_self(monkeypatch):
+    monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
+    monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
+    monkeypatch.setattr(resource_manager, "EncryptionService", DummyEncryption)
+
+    rm = resource_manager.ResourceManager("log.html")
+    with rm as ctx_rm:
+        assert ctx_rm is rm
+
+
+def test_context_manager_without_driver(monkeypatch):
+    calls = {"close": 0, "open": 0}
+
+    class SpyBrowserSession(DummyBrowserSession):
+        def open(self, url, headless=False, no_sandbox=False):
+            calls["open"] += 1
+            return super().open(url, headless=headless, no_sandbox=no_sandbox)
+
+        def close(self):
+            calls["close"] += 1
+            super().close()
+
+    monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
+    monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
+    monkeypatch.setattr(resource_manager, "EncryptionService", DummyEncryption)
+
+    with resource_manager.ResourceManager("log.html") as rm:
+        rm.get_credentials()  # do not open driver
+
+    assert calls["open"] == 0
+    assert calls["close"] == 0
+    assert rm._session is None
+    assert rm._driver is None
