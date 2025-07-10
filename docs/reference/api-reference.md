@@ -157,6 +157,18 @@ class ResourceManager:
         """Ouvre le navigateur si nécessaire."""
 ```
 
+## Resource access helpers
+
+Fonctions utilitaires pour récupérer les identifiants ou ouvrir le navigateur en
+s'appuyant directement sur ``EncryptionService`` et ``BrowserSession``.
+
+```python
+from sele_saisie_auto.resources.accessors import get_credentials, get_driver
+
+creds = get_credentials(encryption_service)
+driver = get_driver(browser_session, "https://example.com", headless=True)
+```
+
 ## PageNavigator
 
 Orchestre la navigation entre les différentes pages PSA Time
