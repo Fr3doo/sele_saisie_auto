@@ -3,6 +3,8 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+import pytest  # noqa: E402
+
 from sele_saisie_auto.encryption_utils import Credentials  # noqa: E402
 from sele_saisie_auto.navigation.page_navigator import PageNavigator  # noqa: E402
 
@@ -199,3 +201,26 @@ def test_prepare_sets_attributes():
     nav.prepare(creds, "2024")
     assert nav.credentials is creds
     assert nav.date_cible == "2024"
+
+
+def test_run_requires_prepare():
+    _, _, _, _, _, nav = make_navigator()
+    with pytest.raises(RuntimeError):
+        nav.run("drv")
+
+
+def test_run_calls_sequence():
+    log, nav = make_logged_navigator()
+    creds = Credentials(b"k", None, b"u", None, b"p", None)
+    nav.prepare(creds, "2024")
+    nav.run("drv")
+    assert log == [
+        "login",
+        "navigate",
+        "process",
+        "fill",
+        "nav_add",
+        "submit_add",
+        "default",
+        "save",
+    ]
