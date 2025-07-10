@@ -26,6 +26,11 @@ class PSATimeAutomation:
         memory_config: MemoryConfig | None = None,
     ) -> None:
         """Prépare la configuration et les services nécessaires."""
+    def __enter__(self) -> PSATimeAutomation:
+        """Ouvre le ``ResourceManager`` interne."""
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        """Ferme toutes les ressources via le ``ResourceManager``."""
 ```
 
 - ``log_initialisation() -> None`` – initialise les logs et vérifie les
