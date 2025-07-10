@@ -80,7 +80,7 @@ def test_initialize_shared_memory_error(monkeypatch, sample_config):
     sap.context.encryption_service = DummyEnc()
     sap.context.shared_memory_service = DummySHMService()
     monkeypatch.setattr(
-        sap.context.encryption_service,
+        sap._ORCHESTRATOR.resource_manager._encryption_service,
         "retrieve_credentials",
         lambda: sap.Credentials(
             aes_key=b"k" * 32,
@@ -100,27 +100,29 @@ def test_initialize_shared_memory_error(monkeypatch, sample_config):
     assert exit_called["exit"] == 1
 
 
-def test_switch_to_iframe_main_target_win0_false(monkeypatch):
+def test_switch_to_iframe_main_target_win0_false(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     monkeypatch.setattr(
         sap._AUTOMATION.waiter, "wait_for_element", lambda *a, **k: True
     )
     monkeypatch.setattr(sap.BrowserSession, "go_to_iframe", lambda *a, **k: False)
-    if sap._AUTOMATION:
-        sap._AUTOMATION.browser_session.go_to_iframe = lambda *a, **k: False
+    sap._AUTOMATION.browser_session.go_to_iframe = lambda *a, **k: False
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
     assert sap.switch_to_iframe_main_target_win0("drv") is False
 
 
-def test_submit_date_cible_no_element(monkeypatch):
+def test_submit_date_cible_no_element(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     monkeypatch.setattr(
-        sap._AUTOMATION.date_entry_page, "submit_date_cible", lambda driver: False
+        sap._ORCHESTRATOR.date_entry_page, "submit_date_cible", lambda driver: False
     )
-    assert sap.submit_date_cible("drv") is False
+    assert sap._ORCHESTRATOR.submit_date_cible("drv") is False
 
 
-def test_navigate_from_work_schedule_without_element(monkeypatch):
+def test_navigate_from_work_schedule_without_element(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     called = {}
     monkeypatch.setattr(
         sap._AUTOMATION.additional_info_page,
@@ -134,7 +136,8 @@ def test_navigate_from_work_schedule_without_element(monkeypatch):
     assert called["nav"] is True
 
 
-def test_submit_and_validate_additional_information_no_iframe(monkeypatch):
+def test_submit_and_validate_additional_information_no_iframe(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     monkeypatch.setattr(
         sap._AUTOMATION.additional_info_page,
         "submit_and_validate_additional_information",
@@ -146,7 +149,8 @@ def test_submit_and_validate_additional_information_no_iframe(monkeypatch):
     sap.submit_and_validate_additional_information("drv")
 
 
-def test_save_draft_and_validate_no_element(monkeypatch):
+def test_save_draft_and_validate_no_element(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     monkeypatch.setattr(
         sap._AUTOMATION.additional_info_page,
         "save_draft_and_validate",
@@ -158,12 +162,26 @@ def test_save_draft_and_validate_no_element(monkeypatch):
     assert sap.save_draft_and_validate("drv") is False
 
 
-def test_cleanup_resources_calls():
+def test_cleanup_resources_calls(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     enc = DummyEnc()
     manager = DummyManager("log.html")
     sap.context.encryption_service = enc
     shm_service = DummySHMService()
     sap.context.shared_memory_service = shm_service
+    sap._ORCHESTRATOR.context.shared_memory_service = shm_service
+    sap._ORCHESTRATOR.resource_manager._encryption_service.shared_memory_service = shm_service
+    sap._ORCHESTRATOR.resource_manager._credentials = sap.Credentials(
+        b"k",
+        "c",
+        b"u",
+        "n",
+        b"p",
+        None,
+    )
+    sap._ORCHESTRATOR._cleanup_callback = (
+        lambda mk, ml, mp: sap._AUTOMATION.cleanup_resources(manager, mk, ml, mp)
+    )
     sap._ORCHESTRATOR.browser_session = manager
     sap.cleanup_resources(manager, "c", "n", None)
     assert shm_service.removed == ["c", "n"]

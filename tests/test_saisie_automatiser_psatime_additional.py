@@ -151,7 +151,8 @@ def test_connect_to_psatime(monkeypatch, sample_config):
     assert "dom" in actions
 
 
-def test_switch_to_iframe(monkeypatch):
+def test_switch_to_iframe(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     calls = []
     monkeypatch.setattr(
         sap._AUTOMATION.waiter, "wait_for_element", lambda *a, **k: True
@@ -171,14 +172,15 @@ def test_switch_to_iframe(monkeypatch):
     assert "dom" in calls
 
 
-def test_submit_date_cible(monkeypatch):
+def test_submit_date_cible(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     called = {}
     monkeypatch.setattr(
-        sap._AUTOMATION.date_entry_page,
+        sap._ORCHESTRATOR.date_entry_page,
         "submit_date_cible",
         lambda driver: called.setdefault("done", True) or True,
     )
-    assert sap.submit_date_cible("drv") is True
+    assert sap._ORCHESTRATOR.submit_date_cible("drv") is True
     assert called["done"] is True
 
 
@@ -194,7 +196,8 @@ def test_navigation_pages(monkeypatch, sample_config):
     assert called["nav"] is True
 
 
-def test_additional_information(monkeypatch):
+def test_additional_information(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     called = {}
     monkeypatch.setattr(
         sap._AUTOMATION.additional_info_page,
@@ -223,7 +226,8 @@ def test_save_draft_and_validate(monkeypatch, sample_config):
     assert called["done"] is True
 
 
-def test_cleanup_resources(monkeypatch):
+def test_cleanup_resources(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     called = []
     manager = types.SimpleNamespace(close=lambda: called.append("close"))
     enc = DummyEnc()
