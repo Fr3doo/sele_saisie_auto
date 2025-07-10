@@ -64,7 +64,7 @@ def test_navigate_from_work_schedule_positive(monkeypatch):
         "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_default_content",
         lambda *a, **k: actions.append("switch"),
     )
-    sap.navigate_from_work_schedule_to_additional_information_page("drv")
+    sap._ORCHESTRATOR.navigate_from_work_schedule_to_additional_information_page("drv")
     assert actions.count("click") == 1
     assert "switch" in actions
 

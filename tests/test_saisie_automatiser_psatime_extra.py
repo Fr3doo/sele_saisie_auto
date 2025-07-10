@@ -132,11 +132,13 @@ def test_navigate_from_work_schedule_without_element(monkeypatch, sample_config)
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
-    sap.navigate_from_work_schedule_to_additional_information_page("drv")
+    sap._ORCHESTRATOR.navigate_from_work_schedule_to_additional_information_page("drv")
     assert called["nav"] is True
 
 
-def test_submit_and_validate_additional_information_no_iframe(monkeypatch, sample_config):
+def test_submit_and_validate_additional_information_no_iframe(
+    monkeypatch, sample_config
+):
     setup_init(monkeypatch, sample_config)
     monkeypatch.setattr(
         sap._AUTOMATION.additional_info_page,
@@ -170,7 +172,9 @@ def test_cleanup_resources_calls(monkeypatch, sample_config):
     shm_service = DummySHMService()
     sap.context.shared_memory_service = shm_service
     sap._ORCHESTRATOR.context.shared_memory_service = shm_service
-    sap._ORCHESTRATOR.resource_manager._encryption_service.shared_memory_service = shm_service
+    sap._ORCHESTRATOR.resource_manager._encryption_service.shared_memory_service = (
+        shm_service
+    )
     sap._ORCHESTRATOR.resource_manager._credentials = sap.Credentials(
         b"k",
         "c",
