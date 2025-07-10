@@ -152,7 +152,7 @@ def test_navigate_from_home_to_date_entry_page_no_elements(monkeypatch, sample_c
         "navigate_from_home_to_date_entry_page",
         lambda driver: False,
     )
-    sap.navigate_from_home_to_date_entry_page("drv")
+    sap._ORCHESTRATOR.navigate_from_home_to_date_entry_page("drv")
 
 
 def test_handle_date_input_no_element(monkeypatch, sample_config):

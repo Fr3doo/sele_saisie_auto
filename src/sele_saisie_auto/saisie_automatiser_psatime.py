@@ -745,13 +745,6 @@ def switch_to_iframe_main_target_win0(driver):
     return _ORCHESTRATOR.switch_to_iframe_main_target_win0(driver)
 
 
-def navigate_from_home_to_date_entry_page(driver):
-    """Atteint la page de saisie des dates."""
-    if not _ORCHESTRATOR:
-        raise AutomationNotInitializedError("Automation non initialisée")
-    return _ORCHESTRATOR.navigate_from_home_to_date_entry_page(driver)
-
-
 def submit_date_cible(driver):
     """Valide la date cible sélectionnée."""
     if not _ORCHESTRATOR:
