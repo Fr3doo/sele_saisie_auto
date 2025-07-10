@@ -235,16 +235,22 @@ class AutomationOrchestrator:
             creds = rm.initialize_shared_memory(self.logger)
             driver = rm.get_driver(headless=headless, no_sandbox=no_sandbox)
             try:
-                self.page_navigator.login(
-                    driver,
-                    creds.aes_key,
-                    creds.login,
-                    creds.password,
-                )
-                self.page_navigator.navigate_to_date_entry(
-                    driver, self.config.date_cible
-                )
-                self._fill_and_save_timesheet(driver)
+                if hasattr(self.page_navigator, "prepare") and hasattr(
+                    self.page_navigator, "run"
+                ):
+                    self.page_navigator.prepare(creds, self.config.date_cible)
+                    self.page_navigator.run(driver)
+                else:
+                    self.page_navigator.login(
+                        driver,
+                        creds.aes_key,
+                        creds.login,
+                        creds.password,
+                    )
+                    self.page_navigator.navigate_to_date_entry(
+                        driver, self.config.date_cible
+                    )
+                    self._fill_and_save_timesheet(driver)
             finally:
                 self.cleanup_resources(
                     creds.mem_key,

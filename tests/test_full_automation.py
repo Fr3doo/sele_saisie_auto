@@ -165,17 +165,11 @@ def test_full_automation(monkeypatch, sample_config):
             lambda *a, **k: calls.append("login"),
         )
         monkeypatch.setattr(
-            orch,
-            "navigate_from_home_to_date_entry_page",
-            lambda *a, **k: calls.append("navigate") or True,
-        )
-        monkeypatch.setattr(
-            orch, "_process_date_entry", lambda *a, **k: calls.append("process")
-        )
-        monkeypatch.setattr(
-            orch,
-            "_fill_and_save_timesheet",
-            lambda *a, **k: calls.extend(["fill", "submit"]),
+            orch.page_navigator,
+            "run",
+            lambda *a, **k: calls.extend(
+                ["login", "navigate", "process", "fill", "submit"]
+            ),
         )
         monkeypatch.setattr(orch, "initialize_shared_memory", lambda: CREDS)
         monkeypatch.setattr(orch, "wait_for_dom", lambda *a, **k: None)

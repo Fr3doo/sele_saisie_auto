@@ -136,6 +136,27 @@ def test_run_calls_services(monkeypatch, sample_config):
         True,
         timesheet_helper_cls=DummyHelper,
     )
+    orch.page_navigator = PageNavigator(
+        session,
+        login,
+        date_page,
+        add_page,
+        DummyHelper(None, logger),
+    )
+    orch.page_navigator = PageNavigator(
+        session,
+        login,
+        date_page,
+        add_page,
+        DummyHelper(None, logger),
+    )
+    orch.page_navigator = PageNavigator(
+        session,
+        login,
+        date_page,
+        add_page,
+        DummyHelper(None, logger),
+    )
 
     orch.page_navigator = PageNavigator(
         session,
@@ -237,22 +258,19 @@ def test_run_order(monkeypatch, sample_config):
         True,
         timesheet_helper_cls=DummyHelper,
     )
+    orch.page_navigator = PageNavigator(
+        session,
+        login,
+        date_page,
+        add_page,
+        DummyHelper(None, logger),
+    )
 
     calls = []
     monkeypatch.setattr(
-        orch.login_handler, "connect_to_psatime", lambda *a, **k: calls.append("login")
+        orch.page_navigator, "prepare", lambda *a, **k: calls.append("prepare")
     )
-    monkeypatch.setattr(
-        orch,
-        "navigate_from_home_to_date_entry_page",
-        lambda *a, **k: calls.append("navigate") or True,
-    )
-    monkeypatch.setattr(orch, "_process_date_entry", lambda *a, **k: None)
-    monkeypatch.setattr(
-        orch,
-        "_fill_and_save_timesheet",
-        lambda *a, **k: (calls.append("fill"), calls.append("submit")),
-    )
+    monkeypatch.setattr(orch.page_navigator, "run", lambda *a, **k: calls.append("run"))
     monkeypatch.setattr(orch, "initialize_shared_memory", lambda: creds)
     monkeypatch.setattr(orch, "wait_for_dom", lambda *a, **k: None)
     monkeypatch.setattr(orch, "switch_to_iframe_main_target_win0", lambda *a, **k: None)
@@ -263,7 +281,7 @@ def test_run_order(monkeypatch, sample_config):
     orch.browser_session.go_to_default_content = lambda: None
     orch.run()
 
-    assert calls == ["login", "navigate", "fill", "submit"]
+    assert calls == ["prepare", "run"]
 
 
 def test_run_uses_passed_cleanup_function(monkeypatch, sample_config):
@@ -365,10 +383,8 @@ def test_run_sequence_with_mocks(sample_config):
 
     pn = MagicMock()
     pn.browser_session = Mock(waiter=None)
-    pn.login.side_effect = lambda *a, **k: order.append("login")
-    pn.navigate_to_date_entry.side_effect = lambda *a, **k: order.append("navigate")
-    pn.fill_timesheet.side_effect = lambda *a, **k: order.append("fill")
-    pn.finalize_timesheet.side_effect = lambda *a, **k: order.append("finalize")
+    pn.prepare.side_effect = lambda *a, **k: order.append("prepare")
+    pn.run.side_effect = lambda *a, **k: order.append("run")
 
     ctx = SaisieContext(app_cfg, None, None, {}, [])
     svc = types.SimpleNamespace(app_config=app_cfg)
@@ -389,11 +405,9 @@ def test_run_sequence_with_mocks(sample_config):
     assert order == [
         "enter",
         "init",
+        "prepare",
         "driver",
-        "login",
-        "navigate",
-        "fill",
-        "finalize",
+        "run",
         "cleanup",
         "exit",
     ]
