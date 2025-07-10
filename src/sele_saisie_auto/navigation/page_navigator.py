@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from sele_saisie_auto import plugins
 from sele_saisie_auto.automation import (
     AdditionalInfoPage,
     BrowserSession,
@@ -7,12 +8,18 @@ from sele_saisie_auto.automation import (
     LoginHandler,
 )
 from sele_saisie_auto.remplir_jours_feuille_de_temps import TimeSheetHelper
+from sele_saisie_auto.selenium_utils import detecter_doublons_jours
 
 __all__ = ["PageNavigator"]
 
 
 class PageNavigator:
-    """Orchestre la navigation de haut niveau entre les pages PSA Time."""
+    """Drive the navigation between PSA Time pages.
+
+    The navigator's single responsibility is to chain page objects to achieve
+    a complete submission of the timesheet while leaving all business logic to
+    those pages.
+    """
 
     def __init__(
         self,
@@ -60,6 +67,13 @@ class PageNavigator:
     def submit_timesheet(self, driver) -> None:
         """Enregistre le brouillon et lance la validation finale."""
         self.additional_info_page.save_draft_and_validate(driver)
+
+    def finalize_timesheet(self, driver) -> None:
+        """Detect duplicates, run hooks and submit the draft."""
+
+        detecter_doublons_jours(driver)
+        plugins.call("before_submit", driver)
+        self.submit_timesheet(driver)
 
     # ------------------------------------------------------------------
     # Low level delegations used by legacy APIs
