@@ -745,13 +745,6 @@ def switch_to_iframe_main_target_win0(driver):
     return _ORCHESTRATOR.switch_to_iframe_main_target_win0(driver)
 
 
-def submit_date_cible(driver):
-    """Valide la date cible sélectionnée."""
-    if not _ORCHESTRATOR:
-        raise AutomationNotInitializedError("Automation non initialisée")
-    return _ORCHESTRATOR.submit_date_cible(driver)
-
-
 def navigate_from_work_schedule_to_additional_information_page(driver):
     """Ouvre la fenêtre d'informations supplémentaires."""
     if not _ORCHESTRATOR:
