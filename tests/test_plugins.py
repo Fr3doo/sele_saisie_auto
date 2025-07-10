@@ -117,6 +117,13 @@ def test_run_invokes_hook(monkeypatch, sample_config):
         "close",
         lambda self: calls.append("close"),
     )
+    from tests.test_saisie_automatiser_psatime import DummyBrowserSession
+
+    monkeypatch.setattr(
+        DummyBrowserSession,
+        "close",
+        lambda self: calls.append("close"),
+    )
 
     sap.main("log.html")
 

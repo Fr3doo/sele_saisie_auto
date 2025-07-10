@@ -61,6 +61,11 @@ def test_main_creates_services_and_passes_flags(monkeypatch):
     class DummyAutomation:
         def __init__(self, lf, conf, logger=None, services=None):
             auto_data["init_auto"] = (lf, conf, logger, services)
+            self.resource_manager = object()
+            self.page_navigator = object()
+            self.context = types.SimpleNamespace()
+            self.logger = logger
+            self.choix_user = True
 
     class DummyOrchestrator:
         def __init__(self, *args, **kwargs):

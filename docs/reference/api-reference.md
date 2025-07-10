@@ -181,14 +181,10 @@ Orchestre la navigation entre les différentes pages PSA Time
 
 ```python
 class PageNavigator:
-    def login(self, driver, aes_key: bytes, encrypted_login: bytes, encrypted_password: bytes) -> None:
-        """Connecte l'utilisateur via ``LoginHandler``."""
-    def navigate_to_date_entry(self, driver, date_cible: str | None) -> None:
-        """Atteint la page de sélection de période."""
-    def fill_timesheet(self, driver) -> None:
-        """Remplit la feuille de temps et les infos additionnelles."""
-    def submit_timesheet(self, driver) -> None:
-        """Sauvegarde puis valide la feuille de temps."""
+    def prepare(self, credentials: Credentials, date_cible: str) -> None:
+        """Stocke les informations nécessaires pour ``run()``."""
+    def run(self, driver) -> None:
+        """Enchaîne connexion, saisie et validation."""
 ```
 
 ## Logger utils
@@ -237,7 +233,7 @@ Collection de fonctions Tkinter définies dans ``gui_builder.py``.
 ```python
 from config_manager import ConfigManager
 from selenium_driver_manager import SeleniumDriverManager
-from saisie_automatiser_psatime import PSATimeAutomation, TimeSheetHelper
+from saisie_automatiser_psatime import PSATimeAutomation
 
 cfg = ConfigManager().load()
 filler = PSATimeAutomation("log.html", cfg)
@@ -245,9 +241,7 @@ filler = PSATimeAutomation("log.html", cfg)
 with SeleniumDriverManager("log.html") as dm:
     driver = filler.setup_browser(dm)
     creds = filler.initialize_shared_memory()
-    filler.login_handler.login(
-        driver, creds, filler.context.encryption_service
-    )
-    TimeSheetHelper("log.html").run(driver)
+    filler.page_navigator.prepare(creds, cfg.date_cible)
+    filler.page_navigator.run(driver)
 ```
 
