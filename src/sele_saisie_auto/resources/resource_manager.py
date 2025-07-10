@@ -1,5 +1,5 @@
 # resource_manager.py
-"""Gestionnaire de contexte pour le chiffrement et la session navigateur."""
+"""Gestionnaire centralisé du navigateur et de la mémoire partagée."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ __all__ = ["ResourceManager"]
 
 
 class ResourceManager:
-    """Centralise les ressources lourdes nécessaires à l'automatisation."""
+    """Prépare et nettoie navigateur et mémoire pour l'automatisation."""
 
     def __init__(self, log_file: str) -> None:
         """Initialise le gestionnaire.

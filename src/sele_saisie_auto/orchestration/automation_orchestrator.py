@@ -23,10 +23,10 @@ from sele_saisie_auto.remplir_jours_feuille_de_temps import (
     context_from_app_config,
 )
 from sele_saisie_auto.resources.resource_manager import ResourceManager
-from sele_saisie_auto.selenium_utils import wait_for_dom_after
+from sele_saisie_auto.selenium_utils import detecter_doublons_jours, wait_for_dom_after
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 
-__all__ = ["AutomationOrchestrator"]
+__all__ = ["AutomationOrchestrator", "detecter_doublons_jours"]
 
 # pragma: no cover
 
@@ -70,6 +70,7 @@ class AutomationOrchestrator:
         self.timesheet_helper_cls = timesheet_helper_cls
         self._cleanup_callback = cleanup_resources
         self.resource_manager = resource_manager or ResourceManager(logger.log_file)
+        self.page_navigator: PageNavigator | None = None
         try:
             self.resource_manager._encryption_service = context.encryption_service
             self.resource_manager._config_manager = types.SimpleNamespace(
