@@ -85,6 +85,22 @@ class PageNavigator:
         plugins.call("before_submit", driver)
         self.submit_timesheet(driver)
 
+    def run(self, driver) -> None:
+        """Execute the complete navigation sequence."""
+
+        if self.credentials is None or self.date_cible is None:
+            raise RuntimeError("PageNavigator not prepared")
+
+        self.login(
+            driver,
+            self.credentials.aes_key,
+            self.credentials.login,
+            self.credentials.password,
+        )
+        self.navigate_to_date_entry(driver, self.date_cible)
+        self.fill_timesheet(driver)
+        self.finalize_timesheet(driver)
+
     # ------------------------------------------------------------------
     # Low level delegations used by legacy APIs
     # ------------------------------------------------------------------
