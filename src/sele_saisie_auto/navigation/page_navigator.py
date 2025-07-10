@@ -7,6 +7,7 @@ from sele_saisie_auto.automation import (
     DateEntryPage,
     LoginHandler,
 )
+from sele_saisie_auto.encryption_utils import Credentials
 from sele_saisie_auto.remplir_jours_feuille_de_temps import TimeSheetHelper
 from sele_saisie_auto.selenium_utils import detecter_doublons_jours
 
@@ -34,6 +35,14 @@ class PageNavigator:
         self.date_entry_page = date_entry_page
         self.additional_info_page = additional_info_page
         self.timesheet_helper = timesheet_helper
+        self.credentials: Credentials | None = None
+        self.date_cible: str | None = None
+
+    def prepare(self, credentials: Credentials, date_cible: str) -> None:
+        """Store ``credentials`` and ``date_cible`` for later use."""
+
+        self.credentials = credentials
+        self.date_cible = date_cible
 
     # ------------------------------------------------------------------
     # Delegated actions
@@ -71,7 +80,8 @@ class PageNavigator:
     def finalize_timesheet(self, driver) -> None:
         """Detect duplicates, run hooks and submit the draft."""
 
-        detecter_doublons_jours(driver)
+        if hasattr(driver, "find_elements"):
+            detecter_doublons_jours(driver)
         plugins.call("before_submit", driver)
         self.submit_timesheet(driver)
 
