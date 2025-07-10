@@ -228,6 +228,20 @@ class PSATimeAutomation:
 
         self.log_configuration_details()
 
+    # ------------------------------------------------------------------
+    # Context manager protocol
+    # ------------------------------------------------------------------
+    def __enter__(self) -> "PSATimeAutomation":
+        """Open the underlying :class:`ResourceManager`."""
+
+        self.resource_manager.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc, tb) -> None:
+        """Delegate cleanup to :class:`ResourceManager`."""
+
+        self.resource_manager.__exit__(exc_type, exc, tb)
+
     def log_configuration_details(self) -> None:
         """Enregistre les détails de la configuration dans les logs."""
 
