@@ -405,8 +405,8 @@ def test_run_sequence_with_mocks(sample_config):
     assert order == [
         "enter",
         "init",
-        "prepare",
         "driver",
+        "prepare",
         "run",
         "cleanup",
         "exit",

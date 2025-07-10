@@ -179,10 +179,9 @@ def make_logged_navigator():
 
 def test_full_sequence_order():
     log, nav = make_logged_navigator()
-    nav.login("drv", b"k", b"u", b"p")
-    nav.navigate_to_date_entry("drv", "2024")
-    nav.fill_timesheet("drv")
-    nav.submit_timesheet("drv")
+    creds = Credentials(b"k", None, b"u", None, b"p", None)
+    nav.prepare(creds, "2024")
+    nav.run("drv")
     assert log == [
         "login",
         "navigate",
