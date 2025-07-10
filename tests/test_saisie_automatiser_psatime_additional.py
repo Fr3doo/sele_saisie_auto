@@ -190,7 +190,7 @@ def test_navigation_pages(monkeypatch, sample_config):
         "navigate_from_home_to_date_entry_page",
         lambda driver: called.setdefault("nav", True),
     )
-    assert sap.navigate_from_home_to_date_entry_page("drv") is True
+    assert sap._ORCHESTRATOR.navigate_from_home_to_date_entry_page("drv") is True
     assert called["nav"] is True
 
 
