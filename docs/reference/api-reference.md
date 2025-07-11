@@ -27,7 +27,9 @@ class PSATimeAutomation:
 
 - ``run() -> None`` – lance toute la séquence d’automatisation. Cette méthode délègue maintenant à ``AutomationOrchestrator.run()``.
 
-Les fonctions de navigation détaillées ont été retirées de cette classe. Pour piloter manuellement le processus, instanciez ``AutomationOrchestrator`` puis appelez ``PageNavigator.run(driver)`` avec les identifiants préparés.
+Les fonctions de navigation détaillées ont été retirées de cette classe. Pour piloter manuellement le processus, instanciez ``AutomationOrchestrator`` puis appelez
+``PageNavigator.prepare(credentials, date_cible)`` pour injecter le contexte,
+puis ``PageNavigator.run(driver)``.
 
 ## AutomationOrchestrator
 
