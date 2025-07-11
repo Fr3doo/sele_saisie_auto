@@ -2,14 +2,6 @@
 
 Cette section décrit brièvement les principales classes exposées par le projet.
 
-## SolverCore
-
-### __init__
-```python
-def __init__(self, driver, algorithm):
-    """Initialise le solver principal avec un WebDriver et l'algorithme de
-    résolution fourni."""
-```
 
 ## SeleniumFiller (``PSATimeAutomation``)
 
@@ -33,21 +25,9 @@ class PSATimeAutomation:
         """Ferme toutes les ressources via le ``ResourceManager``."""
 ```
 
-- ``log_initialisation() -> None`` – initialise les logs et vérifie les
-  paramètres essentiels.
-- ``initialize_shared_memory() -> Credentials`` – récupère les identifiants
-  chiffrés depuis la mémoire partagée.
-- ``setup_browser(driver_manager: SeleniumDriverManager)`` – ouvre et configure
-  le navigateur.
-- `switch_to_iframe_main_target_win0(driver)` – bascule dans l’iframe principale.
-- `navigate_from_home_to_date_entry_page(driver)` – ouvre la page de saisie de date.
-- `submit_date_cible(driver)` – valide la date choisie.
-- `navigate_from_work_schedule_to_additional_information_page(driver)` – accède aux informations supplémentaires.
-- `save_draft_and_validate(driver)` – sauvegarde la feuille et déclenche la validation.
-- ``_ORCHESTRATOR.cleanup_resources(mem_key, mem_login, mem_password)`` – libère
-  la mémoire partagée et ferme le navigateur.
-  *Cette méthode peut être remplacée pour personnaliser la stratégie de nettoyage.*
-- ``run() -> None`` – lance toute la séquence d’automatisation. Désormais, cette méthode délègue à ``AutomationOrchestrator.run()`` pour la logique principale.
+- ``run() -> None`` – lance toute la séquence d’automatisation. Cette méthode délègue maintenant à ``AutomationOrchestrator.run()``.
+
+Les fonctions de navigation détaillées ont été retirées de cette classe. Pour piloter manuellement le processus, instanciez ``AutomationOrchestrator`` puis appelez ``PageNavigator.run(driver)`` avec les identifiants préparés.
 
 ## AutomationOrchestrator
 
@@ -232,16 +212,29 @@ Collection de fonctions Tkinter définies dans ``gui_builder.py``.
 
 ```python
 from config_manager import ConfigManager
-from selenium_driver_manager import SeleniumDriverManager
+from configuration import ServiceConfigurator
 from saisie_automatiser_psatime import PSATimeAutomation
+from orchestration import AutomationOrchestrator
 
 cfg = ConfigManager().load()
-filler = PSATimeAutomation("log.html", cfg)
+service_configurator = ServiceConfigurator(cfg)
+services = service_configurator.build_services("log.html")
 
-with SeleniumDriverManager("log.html") as dm:
-    driver = filler.setup_browser(dm)
-    creds = filler.initialize_shared_memory()
-    filler.page_navigator.prepare(creds, cfg.date_cible)
-    filler.page_navigator.run(driver)
+auto = PSATimeAutomation("log.html", cfg, services=services)
+orchestrator = AutomationOrchestrator.from_components(
+    auto.resource_manager,
+    auto.page_navigator,
+    service_configurator,
+    auto.context,
+    auto.logger,
+)
+orchestrator.run()
+
+# Pour un contrôle manuel
+with auto.resource_manager as rm:
+    creds = rm.initialize_shared_memory(auto.logger)
+    driver = rm.get_driver()
+    auto.page_navigator.prepare(creds, cfg.date_cible)
+    auto.page_navigator.run(driver)
 ```
 
