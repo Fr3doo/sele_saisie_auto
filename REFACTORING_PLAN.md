@@ -52,6 +52,48 @@ Décomposer `PSATimeAutomation` et implémenter les recommandations critiques po
 - [ ] Mapper chaque méthode vers la nouvelle classe appropriée
 - [ ] Créer un tableau de correspondance
 
+Tableau de correspondance proposé :
+
+| Méthode ou fonction | Nouvelle classe |
+|---------------------|-----------------|
+| `__init__` | `ServiceConfigurator` |
+| `__enter__` | `ResourceManager` |
+| `__exit__` | `ResourceManager` |
+| `log_configuration_details` | `ResourceManager` |
+| `_init_services` | `ServiceConfigurator` |
+| `login_handler` | `ServiceConfigurator` |
+| `date_entry_page` | `ServiceConfigurator` |
+| `additional_info_page` | `ServiceConfigurator` |
+| `log_initialisation` | `AutomationOrchestrator` |
+| `initialize_shared_memory` | `ResourceManager` |
+| `wait_for_dom` | `BrowserSession` |
+| `setup_browser` | `BrowserSession` |
+| `switch_to_iframe_main_target_win0` | `AutomationOrchestrator` |
+| `navigate_from_home_to_date_entry_page` | `PageNavigator` |
+| `submit_date_cible` | `PageNavigator` |
+| `navigate_from_work_schedule_to_additional_information_page` | `PageNavigator` |
+| `submit_and_validate_additional_information` | `PageNavigator` |
+| `save_draft_and_validate` | `PageNavigator` |
+| `cleanup_resources` | `ResourceManager` |
+| `_handle_date_alert` | `DateEntryPage` |
+| `_click_action_button` | `DateEntryPage` |
+| `_process_date_entry` | `DateEntryPage` |
+| `_fill_and_save_timesheet` | `AutomationOrchestrator` |
+| `run` | `AutomationOrchestrator` |
+| `seprateur_menu_affichage_log` | `Logger` |
+| `seprateur_menu_affichage_console` | `ConsoleUI` |
+| `get_next_saturday_if_not_saturday` | `DateUtils` |
+| `est_en_mission` | `TimeSheetHelper` |
+| `ajouter_jour_a_jours_remplis` | `TimeSheetHelper` |
+| `afficher_message_insertion` | `Logger` |
+| `main` | `CLI` |
+| `initialize` | `AutomationOrchestrator` |
+| `log_initialisation()` | `AutomationOrchestrator` |
+| `initialize_shared_memory()` | `AutomationOrchestrator` |
+| `setup_browser()` | `AutomationOrchestrator` |
+| `connect_to_psatime` | `LoginHandler` |
+| `switch_to_iframe_main_target_win0()` | `AutomationOrchestrator` |
+
 #### Mini-tâche 1.2.2 - Refactorisation par blocs
 - [ ] Migrer la gestion des ressources vers `ResourceManager`
 - [ ] Migrer l'orchestration vers `AutomationOrchestrator`
