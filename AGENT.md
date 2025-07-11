@@ -103,6 +103,9 @@ Ce fichier décrit le rôle des différents agents qui composent le projet. Pour
 - **Rôle** : Séquencer les étapes de navigation entre les pages.
 - **Entrées** : sessions et pages.
 - **Sorties** : aucune, délègue aux pages.
+- **Méthode principale** : `run(driver) -> None` effectue la connexion, la saisie
+  et la validation après un appel préalable à `prepare(credentials, date_cible)`
+  pour injecter les informations nécessaires.
 - **Tests** : `tests/test_page_navigator.py`.
 
 ### `AlertHandler`
