@@ -1,98 +1,110 @@
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 import pytest  # noqa: E402
 
+from sele_saisie_auto import plugins  # noqa: E402
 from sele_saisie_auto.encryption_utils import Credentials  # noqa: E402
+from sele_saisie_auto.navigation import page_navigator as pn_mod  # noqa: E402
 from sele_saisie_auto.navigation.page_navigator import PageNavigator  # noqa: E402
-from tests.conftest import (  # noqa: E402
-    DummyDatePage,
-    DummyHelper,
-    DummyInfoPage,
-    DummyLoginHandler,
-    DummySession,
-)
-from tests.conftest import LoggedDummyDateEntryPage as LoggedDummyDatePage  # noqa: E402
-from tests.conftest import (  # noqa: E402
-    LoggedDummyHelper,
-    LoggedDummyInfoPage,
-    LoggedDummyLoginHandler,
-    LoggedDummySession,
-)
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 
 def make_navigator():
-    session = DummySession()
-    login = DummyLoginHandler()
-    date_page = DummyDatePage()
-    info_page = DummyInfoPage()
-    helper = DummyHelper()
-    return (
-        session,
-        login,
-        date_page,
-        info_page,
-        helper,
-        PageNavigator(session, login, date_page, info_page, helper),
+    session = MagicMock(spec=["go_to_default_content"])
+    login = MagicMock(spec=["connect_to_psatime"])
+    date_page = MagicMock(
+        spec=["navigate_from_home_to_date_entry_page", "process_date"]
     )
+    info_page = MagicMock(
+        spec=[
+            "navigate_from_work_schedule_to_additional_information_page",
+            "submit_and_validate_additional_information",
+            "save_draft_and_validate",
+        ]
+    )
+    helper = MagicMock(spec=["run"])
+    navigator = PageNavigator(session, login, date_page, info_page, helper)
+    return session, login, date_page, info_page, helper, navigator
+
+
+# ---------------------------------------------------------------------------
+# Unit tests using mocks
+# ---------------------------------------------------------------------------
 
 
 def test_login_delegates():
-    session, login, _, _, _, nav = make_navigator()
+    _, login, _, _, _, nav = make_navigator()
     nav.login("drv", b"k", b"u", b"p")
-    assert login.calls == [("drv", b"k", b"u", b"p")]
+    login.connect_to_psatime.assert_called_once_with("drv", b"k", b"u", b"p")
 
 
 def test_navigate_to_date_entry():
     _, _, date_page, _, _, nav = make_navigator()
+    date_page.navigate_from_home_to_date_entry_page.return_value = True
     nav.navigate_to_date_entry("drv", "2024")
-    assert "nav" in date_page.calls
-    assert ("date", "2024") in date_page.calls
+    date_page.navigate_from_home_to_date_entry_page.assert_called_once_with("drv")
+    date_page.process_date.assert_called_once_with("drv", "2024")
 
 
 def test_fill_timesheet_calls_pages():
     session, _, _, info_page, helper, nav = make_navigator()
     nav.fill_timesheet("drv")
-    assert helper.calls == ["drv"]
-    assert "nav_add" in info_page.calls
-    assert "submit_add" in info_page.calls
-    assert "default" in session.calls
+    helper.run.assert_called_once_with("drv")
+    info_page.navigate_from_work_schedule_to_additional_information_page.assert_called_once_with(
+        "drv"
+    )
+    info_page.submit_and_validate_additional_information.assert_called_once_with("drv")
+    session.go_to_default_content.assert_called_once_with()
 
 
 def test_submit_timesheet():
     _, _, _, info_page, _, nav = make_navigator()
     nav.submit_timesheet("drv")
-    assert "save" in info_page.calls
+    info_page.save_draft_and_validate.assert_called_once_with("drv")
 
 
-def make_logged_navigator():
-    log = []
-    session = LoggedDummySession(log)
-    login = LoggedDummyLoginHandler(log)
-    date_page = LoggedDummyDatePage(log)
-    info_page = LoggedDummyInfoPage(log)
-    helper = LoggedDummyHelper(log)
-    navigator = PageNavigator(session, login, date_page, info_page, helper)
-    return log, navigator
+def test_finalize_timesheet(monkeypatch):
+    _, _, _, _, _, nav = make_navigator()
+    driver = MagicMock(find_elements=True)
+    detect = MagicMock()
+    monkeypatch.setattr(pn_mod, "detecter_doublons_jours", detect)
+    call_hook = MagicMock()
+    monkeypatch.setattr(plugins, "call", call_hook)
+    nav.submit_timesheet = MagicMock()
+
+    nav.finalize_timesheet(driver)
+
+    detect.assert_called_once_with(driver)
+    call_hook.assert_called_once_with("before_submit", driver)
+    nav.submit_timesheet.assert_called_once_with(driver)
 
 
-def test_full_sequence_order():
-    log, nav = make_logged_navigator()
+def test_run_sequence(monkeypatch):
+    _, _, _, _, _, nav = make_navigator()
     creds = Credentials(b"k", None, b"u", None, b"p", None)
-    nav.prepare(creds, "2024")
+    nav.credentials = creds
+    nav.date_cible = "2024"
+    order = []
+
+    monkeypatch.setattr(nav, "login", lambda *a, **k: order.append("login"))
+    monkeypatch.setattr(
+        nav, "navigate_to_date_entry", lambda *a, **k: order.append("navigate")
+    )
+    monkeypatch.setattr(nav, "fill_timesheet", lambda *a, **k: order.append("fill"))
+    monkeypatch.setattr(
+        nav, "finalize_timesheet", lambda *a, **k: order.append("finalize")
+    )
+
     nav.run("drv")
-    assert log == [
-        "login",
-        "navigate",
-        "process",
-        "fill",
-        "nav_add",
-        "submit_add",
-        "default",
-        "save",
-    ]
+
+    assert order == ["login", "navigate", "fill", "finalize"]
 
 
 def test_prepare_sets_attributes():
@@ -107,20 +119,3 @@ def test_run_requires_prepare():
     _, _, _, _, _, nav = make_navigator()
     with pytest.raises(RuntimeError):
         nav.run("drv")
-
-
-def test_run_calls_sequence():
-    log, nav = make_logged_navigator()
-    creds = Credentials(b"k", None, b"u", None, b"p", None)
-    nav.prepare(creds, "2024")
-    nav.run("drv")
-    assert log == [
-        "login",
-        "navigate",
-        "process",
-        "fill",
-        "nav_add",
-        "submit_add",
-        "default",
-        "save",
-    ]
