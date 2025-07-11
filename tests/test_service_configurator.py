@@ -2,7 +2,7 @@ import pytest
 
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
 from sele_saisie_auto.automation import BrowserSession
-from sele_saisie_auto.configuration import Services, build_services
+from sele_saisie_auto.configuration import ServiceConfigurator, Services, build_services
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.selenium_utils import Waiter
 
@@ -87,3 +87,23 @@ def test_build_services_invalid_config(tmp_path):
 
     with pytest.raises(AttributeError):
         build_services(Dummy(), str(tmp_path / "log.html"))
+
+
+def test_create_methods(sample_config):
+    """Ensure individual factory helpers return properly configured objects."""
+
+    app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
+    configurator = ServiceConfigurator(app_cfg)
+
+    waiter = configurator.create_waiter()
+    assert isinstance(waiter, Waiter)
+    assert waiter.wrapper.default_timeout == app_cfg.default_timeout
+    assert waiter.wrapper.long_timeout == app_cfg.long_timeout
+
+    browser_session = configurator.create_browser_session("log.html")
+    assert isinstance(browser_session, BrowserSession)
+    assert browser_session.app_config is app_cfg
+    assert isinstance(browser_session.waiter, Waiter)
+
+    enc_service = configurator.create_encryption_service("log.html")
+    assert isinstance(enc_service, EncryptionService)
