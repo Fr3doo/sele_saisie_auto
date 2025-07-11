@@ -7,56 +7,20 @@ import pytest  # noqa: E402
 
 from sele_saisie_auto.encryption_utils import Credentials  # noqa: E402
 from sele_saisie_auto.navigation.page_navigator import PageNavigator  # noqa: E402
-
-
-class DummyLoginHandler:
-    def __init__(self):
-        self.calls = []
-
-    def connect_to_psatime(self, driver, key, login, pwd):
-        self.calls.append((driver, key, login, pwd))
-
-
-class DummyDatePage:
-    def __init__(self):
-        self.calls = []
-
-    def navigate_from_home_to_date_entry_page(self, driver):
-        self.calls.append("nav")
-        return True
-
-    def process_date(self, driver, date):
-        self.calls.append(("date", date))
-
-
-class DummyInfoPage:
-    def __init__(self):
-        self.calls = []
-
-    def navigate_from_work_schedule_to_additional_information_page(self, driver):
-        self.calls.append("nav_add")
-
-    def submit_and_validate_additional_information(self, driver):
-        self.calls.append("submit_add")
-
-    def save_draft_and_validate(self, driver):
-        self.calls.append("save")
-
-
-class DummyHelper:
-    def __init__(self):
-        self.calls = []
-
-    def run(self, driver):
-        self.calls.append(driver)
-
-
-class DummySession:
-    def __init__(self):
-        self.calls = []
-
-    def go_to_default_content(self):
-        self.calls.append("default")
+from tests.conftest import (  # noqa: E402
+    DummyDatePage,
+    DummyHelper,
+    DummyInfoPage,
+    DummyLoginHandler,
+    DummySession,
+)
+from tests.conftest import LoggedDummyDateEntryPage as LoggedDummyDatePage  # noqa: E402
+from tests.conftest import (  # noqa: E402
+    LoggedDummyHelper,
+    LoggedDummyInfoPage,
+    LoggedDummyLoginHandler,
+    LoggedDummySession,
+)
 
 
 def make_navigator():
@@ -101,69 +65,6 @@ def test_submit_timesheet():
     _, _, _, info_page, _, nav = make_navigator()
     nav.submit_timesheet("drv")
     assert "save" in info_page.calls
-
-
-class LoggedDummyLoginHandler(DummyLoginHandler):
-    def __init__(self, log):
-        super().__init__()
-        self.log = log
-
-    def connect_to_psatime(self, driver, key, login, pwd):
-        super().connect_to_psatime(driver, key, login, pwd)
-        self.log.append("login")
-
-
-class LoggedDummyDatePage(DummyDatePage):
-    def __init__(self, log):
-        super().__init__()
-        self.log = log
-
-    def navigate_from_home_to_date_entry_page(self, driver):
-        result = super().navigate_from_home_to_date_entry_page(driver)
-        self.log.append("navigate")
-        return result
-
-    def process_date(self, driver, date):
-        super().process_date(driver, date)
-        self.log.append("process")
-
-
-class LoggedDummyInfoPage(DummyInfoPage):
-    def __init__(self, log):
-        super().__init__()
-        self.log = log
-
-    def navigate_from_work_schedule_to_additional_information_page(self, driver):
-        super().navigate_from_work_schedule_to_additional_information_page(driver)
-        self.log.append("nav_add")
-
-    def submit_and_validate_additional_information(self, driver):
-        super().submit_and_validate_additional_information(driver)
-        self.log.append("submit_add")
-
-    def save_draft_and_validate(self, driver):
-        super().save_draft_and_validate(driver)
-        self.log.append("save")
-
-
-class LoggedDummyHelper(DummyHelper):
-    def __init__(self, log):
-        super().__init__()
-        self.log = log
-
-    def run(self, driver):
-        super().run(driver)
-        self.log.append("fill")
-
-
-class LoggedDummySession(DummySession):
-    def __init__(self, log):
-        super().__init__()
-        self.log = log
-
-    def go_to_default_content(self):
-        super().go_to_default_content()
-        self.log.append("default")
 
 
 def make_logged_navigator():
