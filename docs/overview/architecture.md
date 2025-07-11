@@ -7,6 +7,7 @@ Afin de clarifier la logique de l'automatisation, la classe `PSATimeAutomation` 
 - **ServiceConfigurator** – instancie le navigateur, le chiffrement et le `Waiter`.
 - **ResourceManager** – gère la configuration, la session Selenium et la récupération des identifiants.
 - **PageNavigator** – orchestre la connexion et la navigation dans PSA Time.
+- Toute la navigation se déclenche via son unique méthode `run()`.
 - **AutomationOrchestrator** – coordonne l'ensemble du processus en s'appuyant sur les trois précédents.
 
 ## Diagramme d'interaction
@@ -16,5 +17,5 @@ flowchart TD
     ServiceConfigurator --> ResourceManager
     ServiceConfigurator --> PageNavigator
     ResourceManager --> AutomationOrchestrator
-    PageNavigator --> AutomationOrchestrator
+    AutomationOrchestrator -- run() --> PageNavigator
 ```
