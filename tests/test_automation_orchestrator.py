@@ -12,88 +12,13 @@ from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.navigation import PageNavigator  # noqa: E402
 from sele_saisie_auto.orchestration import AutomationOrchestrator  # noqa: E402
 from sele_saisie_auto.saisie_automatiser_psatime import SaisieContext  # noqa: E402
-
-
-class DummyBrowserSession:
-    def __init__(self):
-        self.open_calls = []
-        self.driver = "drv"
-        self.waiter = types.SimpleNamespace(wait_for_element=lambda *a, **k: True)
-
-    def wait_for_dom(self, driver):
-        self.wait_called = True
-
-    def go_to_iframe(self, frame_id):
-        self.iframe_called = frame_id
-        return True
-
-    def open(self, url, headless=False, no_sandbox=False):
-        self.open_calls.append((url, headless, no_sandbox))
-        return self.driver
-
-    def go_to_default_content(self):
-        self.default_called = True
-
-    def close(self):
-        pass
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
-        self.close()
-
-
-class DummyLoginHandler:
-    def __init__(self):
-        self.calls = []
-
-    def connect_to_psatime(self, driver, key, login, pwd):
-        self.calls.append((driver, key, login, pwd))
-
-
-class DummyDateEntryPage:
-    def __init__(self):
-        self.calls = []
-
-    def navigate_from_home_to_date_entry_page(self, driver):
-        self.calls.append("nav")
-        return True
-
-    def process_date(self, driver, date):
-        self.calls.append(("date", date))
-
-    def _click_action_button(self, driver, create_new):
-        self.calls.append("click")
-
-    def submit_date_cible(self, driver):
-        self.calls.append("submit")
-
-
-class DummyAddPage:
-    def __init__(self):
-        self.calls = []
-
-    def navigate_from_work_schedule_to_additional_information_page(self, driver):
-        self.calls.append("nav_add")
-
-    def submit_and_validate_additional_information(self, driver):
-        self.calls.append("submit_add")
-
-    def save_draft_and_validate(self, driver):
-        self.calls.append("save")
-
-
-class DummyHelper:
-    ran = None
-
-    def __init__(self, ctx, logger, waiter=None):
-        self.ctx = ctx
-        self.logger = logger
-        self.waiter = waiter
-
-    def run(self, driver):
-        DummyHelper.ran = driver
+from tests.conftest import (  # noqa: E402
+    DummyAddPage,
+    DummyBrowserSession,
+    DummyDateEntryPage,
+    DummyHelper,
+    DummyLoginHandler,
+)
 
 
 def test_run_calls_services(monkeypatch, sample_config):
