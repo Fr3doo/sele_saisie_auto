@@ -235,7 +235,10 @@ def test_cleanup_resources(monkeypatch, sample_config):
     shm_service = DummySHMService()
     sap.context.shared_memory_service = shm_service
     sap._ORCHESTRATOR.browser_session = manager
-    sap.cleanup_resources(manager, "c", "n", "p")
+    sap._ORCHESTRATOR._cleanup_callback = (
+        lambda mk, ml, mp: sap._AUTOMATION.cleanup_resources(manager, mk, ml, mp)
+    )
+    sap._ORCHESTRATOR.cleanup_resources("c", "n", "p")
     assert shm_service.removed == ["c", "n", "p"]
     assert "close" in called
 
@@ -302,6 +305,11 @@ def test_main_exceptions(monkeypatch, sample_config):
         "close",
         lambda self: cleanup.setdefault("done", True),
     )
+    monkeypatch.setattr(
+        DummyBrowserSession,
+        "close",
+        lambda self: cleanup.setdefault("done", True),
+    )
     for exc in EXCEPTIONS:
         monkeypatch.setattr(
             sap.LoginHandler,
@@ -309,4 +317,5 @@ def test_main_exceptions(monkeypatch, sample_config):
             lambda *a, exc=exc, **k: (_ for _ in ()).throw(exc),
         )
         sap.main("log.html")
+        sap._ORCHESTRATOR.cleanup_resources(None, None, None)
     assert cleanup["done"] is True

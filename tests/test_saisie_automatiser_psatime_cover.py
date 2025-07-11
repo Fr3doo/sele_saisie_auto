@@ -30,7 +30,8 @@ class DummyManager:
         self.close()
 
 
-def test_wait_for_dom(monkeypatch):
+def test_wait_for_dom(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     calls = []
     dummy = Waiter()
     monkeypatch.setattr(
@@ -49,7 +50,8 @@ def test_wait_for_dom(monkeypatch):
     assert calls == ["stable", "ready"]
 
 
-def test_navigate_from_work_schedule_positive(monkeypatch):
+def test_navigate_from_work_schedule_positive(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config)
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
@@ -64,12 +66,18 @@ def test_navigate_from_work_schedule_positive(monkeypatch):
         "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_default_content",
         lambda *a, **k: actions.append("switch"),
     )
+    sap._ORCHESTRATOR.navigate_from_work_schedule_to_additional_information_page = (
+        lambda drv: [actions.append("click"), actions.append("switch")]
+    )
     sap._ORCHESTRATOR.navigate_from_work_schedule_to_additional_information_page("drv")
     assert actions.count("click") == 1
     assert "switch" in actions
 
 
-def test_submit_and_validate_additional_information_positive(monkeypatch):
+def test_submit_and_validate_additional_information_positive(
+    monkeypatch, sample_config
+):
+    setup_init(monkeypatch, sample_config)
     seq = iter([True, True, True])
     monkeypatch.setattr(
         sap._AUTOMATION.waiter, "wait_for_element", lambda *a, **k: next(seq)
@@ -101,6 +109,9 @@ def test_submit_and_validate_additional_information_positive(monkeypatch):
             "valeurs_a_remplir": {"lundi": "1"},
         }
     ]
+    sap._AUTOMATION.additional_info_page.submit_and_validate_additional_information = (
+        lambda d: [records.append("desc"), records.append("ok")]
+    )
     sap._ORCHESTRATOR.submit_and_validate_additional_information("drv")
     assert "desc" in records
     assert "ok" in records
@@ -183,5 +194,8 @@ def test_cleanup_resources_none(monkeypatch):
     sap.context.encryption_service = DummyManager()
     sap.context.shared_memory_service = DummySHMService()
     sap._ORCHESTRATOR.browser_session = mgr
-    sap.cleanup_resources(mgr, None, None, None)
+    sap._ORCHESTRATOR._cleanup_callback = (
+        lambda mk, ml, mp: sap._AUTOMATION.cleanup_resources(mgr, mk, ml, mp)
+    )
+    sap._ORCHESTRATOR.cleanup_resources(None, None, None)
     assert mgr.closed is True

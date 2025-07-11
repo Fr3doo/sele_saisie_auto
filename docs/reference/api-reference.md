@@ -44,8 +44,9 @@ class PSATimeAutomation:
 - `submit_date_cible(driver)` – valide la date choisie.
 - `navigate_from_work_schedule_to_additional_information_page(driver)` – accède aux informations supplémentaires.
 - `save_draft_and_validate(driver)` – sauvegarde la feuille et déclenche la validation.
-- `cleanup_resources(mem_key, mem_login, mem_password)` – fonction injectable pour fermer le navigateur et libérer la mémoire.
-- *Cette propriété peut être redéfinie pour personnaliser la stratégie de nettoyage.*
+- ``_ORCHESTRATOR.cleanup_resources(mem_key, mem_login, mem_password)`` – libère
+  la mémoire partagée et ferme le navigateur.
+  *Cette méthode peut être remplacée pour personnaliser la stratégie de nettoyage.*
 - ``run() -> None`` – lance toute la séquence d’automatisation. Désormais, cette méthode délègue à ``AutomationOrchestrator.run()`` pour la logique principale.
 
 ## AutomationOrchestrator
