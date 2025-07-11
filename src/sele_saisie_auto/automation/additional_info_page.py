@@ -34,8 +34,11 @@ class AdditionalInfoPage:
         self, automation: PSATimeAutomation, waiter: Waiter | None = None
     ) -> None:
         self._automation = automation
-        ctx = getattr(self._automation, "context", None)
-        cfg = getattr(ctx, "config", None)
+        self.context = getattr(automation, "context", None)
+        self.browser_session = getattr(automation, "browser_session", None)
+        self._log_file = automation.log_file
+        self.logger = automation.logger
+        cfg = getattr(self.context, "config", None)
         self.waiter = (
             waiter
             or getattr(automation, "waiter", None)
@@ -45,7 +48,7 @@ class AdditionalInfoPage:
         )
         self.alert_handler = AlertHandler(automation, waiter=self.waiter)
         self.helper = ExtraInfoHelper(
-            logger=self._automation.logger,
+            logger=self.logger,
             waiter=self.waiter,
             page=self,
             app_config=cfg if hasattr(cfg, "default_timeout") else None,
@@ -56,12 +59,11 @@ class AdditionalInfoPage:
 
     @property
     def log_file(self) -> str:
-        return self._automation.log_file
+        return self._log_file
 
     @property
     def config(self) -> AppConfig:
-        ctx = getattr(self._automation, "context", None)
-        cfg = getattr(ctx, "config", None)
+        cfg = getattr(self.context, "config", None)
         if cfg is None or not hasattr(cfg, "default_timeout"):
             return SimpleNamespace(
                 default_timeout=DEFAULT_TIMEOUT,
@@ -96,7 +98,8 @@ class AdditionalInfoPage:
             sap.click_element_without_wait(
                 driver, By.ID, Locators.ADDITIONAL_INFO_LINK.value
             )
-        self._automation.browser_session.go_to_default_content()
+        if self.browser_session is not None:
+            self.browser_session.go_to_default_content()
         self.wait_for_dom(driver)
 
     @wait_for_dom_after
@@ -112,12 +115,15 @@ class AdditionalInfoPage:
             timeout=self.config.default_timeout,
         )
         if element_present:
-            switched_to_iframe = self._automation.browser_session.go_to_iframe(
-                Locators.MODAL_FRAME.value
-            )
+            switched_to_iframe = None
+            if self.browser_session is not None:
+                switched_to_iframe = self.browser_session.go_to_iframe(
+                    Locators.MODAL_FRAME.value
+                )
 
         if switched_to_iframe:
-            for config in self._automation.context.descriptions:
+            descriptions = getattr(self.context, "descriptions", [])
+            for config in descriptions:
                 sap.traiter_description(driver, config)
             write_log(
                 format_message("ADDITIONAL_INFO_DONE", {}),
