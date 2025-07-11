@@ -18,6 +18,8 @@ L'objectif est de gagner du temps sur cette tâche répétitive tout en restant 
 poetry install --no-root
 poetry run psatime-launcher
 ```
+Cette commande effectue automatiquement la phase `prepare` avant de lancer
+`PageNavigator.run()`.
 
 Pour aller plus loin, référez-vous à [../guides/installation.md](../guides/installation.md) et [../index.md](../index.md).
 
