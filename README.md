@@ -78,11 +78,13 @@ Lors du démarrage, une clé AES temporaire est générée pour chiffrer ces inf
   `logs/` si aucun chemin n'est spécifié.
   Les commandes `psatime-auto` et `psatime-launcher` acceptent aussi
   `--headless` et `--no-sandbox` pour ajuster le lancement du navigateur.
-- Exécution directe des scripts :
-  ```bash
-  python -m sele_saisie_auto.launcher
-  python -m sele_saisie_auto.saisie_automatiser_psatime
-  python -m sele_saisie_auto.remplir_jours_feuille_de_temps
+Exemple minimal en Python :
+```python
+from sele_saisie_auto.navigation import PageNavigator
+
+# après récupération des identifiants et ouverture du driver
+navigator.prepare(credentials, cfg.date_cible)
+navigator.run(driver)
 > **Note :** la logique principale réside désormais dans ``AutomationOrchestrator.run()``.
 > Cet orchestrateur utilise un ``ResourceManager`` pour centraliser navigateur et identifiants,
 > un ``PageNavigator`` pour enchaîner les étapes et un ``ServiceConfigurator`` pour
