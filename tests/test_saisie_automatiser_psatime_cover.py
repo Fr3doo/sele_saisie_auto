@@ -46,7 +46,7 @@ def test_wait_for_dom(monkeypatch, sample_config):
     )
     if sap._AUTOMATION:
         sap._AUTOMATION.browser_session.waiter = dummy
-    sap.wait_for_dom("driver")
+    sap._ORCHESTRATOR.wait_for_dom("driver")
     assert calls == ["stable", "ready"]
 
 

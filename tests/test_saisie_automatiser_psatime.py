@@ -347,7 +347,7 @@ def test_main_flow(monkeypatch, sample_config):
     monkeypatch.setattr(sap.BrowserSession, "go_to_iframe", lambda *a, **k: True)
     monkeypatch.setattr(sap, "click_element_without_wait", lambda *a, **k: None)
     monkeypatch.setattr(sap, "send_keys_to_element", lambda *a, **k: None)
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(sap._ORCHESTRATOR, "wait_for_dom", lambda *a, **k: None)
     monkeypatch.setattr(
         sap._AUTOMATION.browser_session.waiter,
         "wait_until_dom_is_stable",
@@ -377,6 +377,11 @@ def test_main_flow(monkeypatch, sample_config):
         DummyBrowserSession,
         "close",
         lambda self: close_called.setdefault("done", True),
+    )
+    monkeypatch.setattr(
+        sap._ORCHESTRATOR,
+        "cleanup_resources",
+        lambda *a, **k: close_called.setdefault("done", True),
     )
     monkeypatch.setattr(sap, "seprateur_menu_affichage_console", lambda: None)
     monkeypatch.setattr(console_ui, "ask_continue", lambda *a, **k: None)
