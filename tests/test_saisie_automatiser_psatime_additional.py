@@ -222,7 +222,7 @@ def test_save_draft_and_validate(monkeypatch, sample_config):
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
-    assert sap.save_draft_and_validate("drv") is True
+    assert sap._ORCHESTRATOR.save_draft_and_validate("drv") is True
     assert called["done"] is True
 
 

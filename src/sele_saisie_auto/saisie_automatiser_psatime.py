@@ -745,13 +745,6 @@ def switch_to_iframe_main_target_win0(driver):
     return _ORCHESTRATOR.switch_to_iframe_main_target_win0(driver)
 
 
-def save_draft_and_validate(driver):
-    """Enregistre le brouillon et valide la feuille de temps."""
-    if not _ORCHESTRATOR:
-        raise AutomationNotInitializedError("Automation non initialisée")
-    return _ORCHESTRATOR.save_draft_and_validate(driver)
-
-
 def cleanup_resources(session, memoire_cle, memoire_nom, memoire_mdp):
     """Nettoie les ressources utilisées par l'automatisation."""
     if not _ORCHESTRATOR:

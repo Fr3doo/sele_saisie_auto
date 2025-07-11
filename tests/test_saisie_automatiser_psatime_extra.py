@@ -161,7 +161,7 @@ def test_save_draft_and_validate_no_element(monkeypatch, sample_config):
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
-    assert sap.save_draft_and_validate("drv") is False
+    assert sap._ORCHESTRATOR.save_draft_and_validate("drv") is False
 
 
 def test_cleanup_resources_calls(monkeypatch, sample_config):
