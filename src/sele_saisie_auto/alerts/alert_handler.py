@@ -33,6 +33,9 @@ class AlertHandler:
         self, automation: PSATimeAutomation, waiter: Waiter | None = None
     ) -> None:
         self._automation = automation
+        self.context = getattr(automation, "context", None)
+        self.browser_session = getattr(automation, "browser_session", None)
+        self._log_file = automation.log_file
         self.waiter = waiter or getattr(automation, "waiter", None) or Waiter()
 
     # ------------------------------------------------------------------
@@ -40,12 +43,11 @@ class AlertHandler:
     # ------------------------------------------------------------------
     @property
     def log_file(self) -> str:  # pragma: no cover - passthrough
-        return self._automation.log_file
+        return self._log_file
 
     @property
     def config(self) -> AppConfig:  # pragma: no cover - accessor
-        ctx = getattr(self._automation, "context", None)
-        cfg = getattr(ctx, "config", None)
+        cfg = getattr(self.context, "config", None)
         if cfg is None or not hasattr(cfg, "default_timeout"):
             return SimpleNamespace(
                 default_timeout=DEFAULT_TIMEOUT,
@@ -60,7 +62,8 @@ class AlertHandler:
         """Close alert if the date already exists."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        self._automation.browser_session.go_to_default_content()
+        if self.browser_session is not None:
+            self.browser_session.go_to_default_content()
         for alerte in self.alert_configs.get("date_alerts", []):
             if self.waiter.wait_for_element(
                 driver, By.ID, alerte, timeout=self.config.default_timeout
@@ -85,7 +88,8 @@ class AlertHandler:
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
         alerts = self.alert_configs.get("save_alerts", [])
-        self._automation.browser_session.go_to_default_content()
+        if self.browser_session is not None:
+            self.browser_session.go_to_default_content()
         for alerte in alerts:
             if self.waiter.wait_for_element(
                 driver, By.ID, alerte, timeout=self.config.default_timeout
