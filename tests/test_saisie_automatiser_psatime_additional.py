@@ -207,7 +207,7 @@ def test_additional_information(monkeypatch, sample_config):
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
-    sap.submit_and_validate_additional_information("drv")
+    sap._ORCHESTRATOR.submit_and_validate_additional_information("drv")
     assert called["done"] is True
 
 
