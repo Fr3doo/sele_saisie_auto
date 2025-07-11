@@ -107,3 +107,21 @@ def test_create_methods(sample_config):
 
     enc_service = configurator.create_encryption_service("log.html")
     assert isinstance(enc_service, EncryptionService)
+
+
+def test_service_configurator_build_services(sample_config):
+    """Vérifie que ``ServiceConfigurator.build_services`` configure correctement les services."""
+
+    app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
+    configurator = ServiceConfigurator(app_cfg)
+
+    services = configurator.build_services("log.html")
+
+    assert isinstance(services, Services)
+    assert isinstance(services.encryption_service, EncryptionService)
+    assert isinstance(services.browser_session, BrowserSession)
+    assert isinstance(services.waiter, Waiter)
+    assert services.browser_session.app_config is app_cfg
+    assert services.browser_session.waiter is services.waiter
+    assert services.waiter.wrapper.default_timeout == app_cfg.default_timeout
+    assert services.waiter.wrapper.long_timeout == app_cfg.long_timeout
