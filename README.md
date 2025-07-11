@@ -89,6 +89,7 @@ Lors du démarrage, une clé AES temporaire est générée pour chiffrer ces inf
 > initialiser ``EncryptionService`` et ``BrowserSession``.
 > Les pages emploient ``AlertHandler`` pour gérer les pop-ups et ``DescriptionProcessor``
 > s'occupe du remplissage détaillé des lignes.
+> Toute la navigation se fait via la méthode ``PageNavigator.run``.
   ```
 
 ## 🔌 Injection de dépendances
@@ -130,7 +131,7 @@ graph TD
     A[Utilisateur] --> AO(AutomationOrchestrator)
   end
   AO --> RM(ResourceManager)
-  AO --> PN(PageNavigator)
+  AO -- run() --> PN(PageNavigator)
   AO --> SC(ServiceConfigurator)
   PN --> DE(DateEntryPage)
   PN --> AI(AdditionalInfoPage)
@@ -144,7 +145,7 @@ Cette séparation facilite les tests et l'évolution du code.
 - **AutomationOrchestrator** : supervise l'ensemble du processus.
 - **ResourceManager** : centralise configuration, identifiants et session Selenium.
 - **ServiceConfigurator** : prépare chiffrement et navigateur.
-- **PageNavigator** : enchaîne connexion et navigation.
+- **PageNavigator** : enchaîne connexion et navigation via la méthode unique `run()`.
 - **DateEntryPage** : sélection de la période à remplir.
 - **AdditionalInfoPage** : saisie des informations complémentaires.
 - **AlertHandler** : ferme les éventuelles pop‑ups.
