@@ -745,13 +745,6 @@ def switch_to_iframe_main_target_win0(driver):
     return _ORCHESTRATOR.switch_to_iframe_main_target_win0(driver)
 
 
-def cleanup_resources(session, memoire_cle, memoire_nom, memoire_mdp):
-    """Nettoie les ressources utilisées par l'automatisation."""
-    if not _ORCHESTRATOR:
-        raise AutomationNotInitializedError("Automation non initialisée")
-    return _ORCHESTRATOR.cleanup_resources(memoire_cle, memoire_nom, memoire_mdp)
-
-
 def wait_for_dom(driver):
     """Attend la stabilisation du DOM via l'automate."""
     if not _ORCHESTRATOR:

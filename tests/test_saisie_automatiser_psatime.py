@@ -373,11 +373,17 @@ def test_main_flow(monkeypatch, sample_config):
         "close",
         lambda self: close_called.setdefault("done", True),
     )
+    monkeypatch.setattr(
+        DummyBrowserSession,
+        "close",
+        lambda self: close_called.setdefault("done", True),
+    )
     monkeypatch.setattr(sap, "seprateur_menu_affichage_console", lambda: None)
     monkeypatch.setattr(console_ui, "ask_continue", lambda *a, **k: None)
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
 
     sap.main("log.html")
+    sap._ORCHESTRATOR.cleanup_resources(None, None, None)
 
     assert close_called["done"] is True
 

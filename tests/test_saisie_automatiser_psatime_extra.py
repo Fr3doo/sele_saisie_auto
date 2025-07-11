@@ -187,7 +187,7 @@ def test_cleanup_resources_calls(monkeypatch, sample_config):
         lambda mk, ml, mp: sap._AUTOMATION.cleanup_resources(manager, mk, ml, mp)
     )
     sap._ORCHESTRATOR.browser_session = manager
-    sap.cleanup_resources(manager, "c", "n", None)
+    sap._ORCHESTRATOR.cleanup_resources("c", "n", None)
     assert shm_service.removed == ["c", "n"]
     assert manager.driver is None
 
