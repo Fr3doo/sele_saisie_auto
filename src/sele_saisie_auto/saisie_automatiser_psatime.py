@@ -745,12 +745,5 @@ def switch_to_iframe_main_target_win0(driver):
     return _ORCHESTRATOR.switch_to_iframe_main_target_win0(driver)
 
 
-def wait_for_dom(driver):
-    """Attend la stabilisation du DOM via l'automate."""
-    if not _ORCHESTRATOR:
-        raise AutomationNotInitializedError("Automation non initialisée")
-    _ORCHESTRATOR.wait_for_dom(driver)
-
-
 if __name__ == "__main__":  # pragma: no cover - manual invocation
     main()

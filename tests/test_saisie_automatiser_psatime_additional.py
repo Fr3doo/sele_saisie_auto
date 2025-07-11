@@ -274,7 +274,7 @@ def test_main_exceptions(monkeypatch, sample_config):
     monkeypatch.setattr(sap.BrowserSession, "go_to_iframe", lambda *a, **k: True)
     monkeypatch.setattr(sap, "click_element_without_wait", lambda *a, **k: None)
     monkeypatch.setattr(sap, "send_keys_to_element", lambda *a, **k: None)
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(sap._ORCHESTRATOR, "wait_for_dom", lambda *a, **k: None)
     monkeypatch.setattr(
         sap._AUTOMATION.browser_session.waiter,
         "wait_until_dom_is_stable",
@@ -309,6 +309,11 @@ def test_main_exceptions(monkeypatch, sample_config):
         DummyBrowserSession,
         "close",
         lambda self: cleanup.setdefault("done", True),
+    )
+    monkeypatch.setattr(
+        sap.PSATimeAutomation,
+        "run",
+        lambda self, headless=False, no_sandbox=False: cleanup.setdefault("done", True),
     )
     for exc in EXCEPTIONS:
         monkeypatch.setattr(

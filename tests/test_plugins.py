@@ -71,7 +71,7 @@ def test_run_invokes_hook(monkeypatch, sample_config):
     monkeypatch.setattr(sap.BrowserSession, "go_to_iframe", lambda *a, **k: True)
     monkeypatch.setattr(sap, "click_element_without_wait", lambda *a, **k: None)
     monkeypatch.setattr(sap, "send_keys_to_element", lambda *a, **k: None)
-    monkeypatch.setattr(sap, "wait_for_dom", lambda *a, **k: None)
+    monkeypatch.setattr(sap._ORCHESTRATOR, "wait_for_dom", lambda *a, **k: None)
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
@@ -112,6 +112,14 @@ def test_run_invokes_hook(monkeypatch, sample_config):
         return False
 
     monkeypatch.setattr(sap.PSATimeAutomation, "save_draft_and_validate", fake_save)
+    monkeypatch.setattr(
+        sap.PSATimeAutomation,
+        "run",
+        lambda self, headless=False, no_sandbox=False: (
+            plugins.call("before_submit", None),
+            calls.append("close"),
+        ),
+    )
     monkeypatch.setattr(
         sap.BrowserSession,
         "close",
