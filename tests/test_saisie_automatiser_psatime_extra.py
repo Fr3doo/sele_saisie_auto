@@ -148,7 +148,7 @@ def test_submit_and_validate_additional_information_no_iframe(
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
-    sap.submit_and_validate_additional_information("drv")
+    sap._ORCHESTRATOR.submit_and_validate_additional_information("drv")
 
 
 def test_save_draft_and_validate_no_element(monkeypatch, sample_config):

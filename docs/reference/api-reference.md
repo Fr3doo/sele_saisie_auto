@@ -43,7 +43,6 @@ class PSATimeAutomation:
 - `navigate_from_home_to_date_entry_page(driver)` – ouvre la page de saisie de date.
 - `submit_date_cible(driver)` – valide la date choisie.
 - `navigate_from_work_schedule_to_additional_information_page(driver)` – accède aux informations supplémentaires.
-- `submit_and_validate_additional_information(driver)` – remplit puis confirme les données complémentaires.
 - `save_draft_and_validate(driver)` – sauvegarde la feuille et déclenche la validation.
 - `cleanup_resources(mem_key, mem_login, mem_password)` – fonction injectable pour fermer le navigateur et libérer la mémoire.
 - *Cette propriété peut être redéfinie pour personnaliser la stratégie de nettoyage.*

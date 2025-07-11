@@ -101,7 +101,7 @@ def test_submit_and_validate_additional_information_positive(monkeypatch):
             "valeurs_a_remplir": {"lundi": "1"},
         }
     ]
-    sap.submit_and_validate_additional_information("drv")
+    sap._ORCHESTRATOR.submit_and_validate_additional_information("drv")
     assert "desc" in records
     assert "ok" in records
 
@@ -174,7 +174,7 @@ def test_submit_and_validate_additional_information_none(monkeypatch):
         lambda driver: (_ for _ in ()).throw(NameError()),
     )
     with pytest.raises(NameError):
-        sap.submit_and_validate_additional_information("drv")
+        sap._ORCHESTRATOR.submit_and_validate_additional_information("drv")
 
 
 def test_cleanup_resources_none(monkeypatch):
