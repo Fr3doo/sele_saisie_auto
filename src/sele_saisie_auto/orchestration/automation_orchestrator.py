@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Callable
 
 from selenium.webdriver.common.by import By
 
+from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import ServiceConfigurator
@@ -56,6 +57,7 @@ class AutomationOrchestrator:
         context: SaisieContext,
         choix_user: bool = True,
         *,
+        alert_handler: AlertHandler | None = None,
         timesheet_helper_cls: type[TimeSheetHelperProtocol] = TimeSheetHelper,
         cleanup_resources: Callable[[object, object, object], None] | None = None,
         resource_manager: ResourceManager | None = None,
@@ -72,6 +74,9 @@ class AutomationOrchestrator:
         self._cleanup_callback = cleanup_resources
         self.resource_manager = resource_manager or ResourceManager(logger.log_file)
         self.page_navigator: PageNavigator | None = None
+        self.log_file = logger.log_file
+        self.waiter = getattr(browser_session, "waiter", None)
+        self.alert_handler = alert_handler or AlertHandler(self, waiter=self.waiter)
         try:
             self.resource_manager._encryption_service = context.encryption_service
             self.resource_manager._config_manager = types.SimpleNamespace(
@@ -95,6 +100,7 @@ class AutomationOrchestrator:
         logger: LoggerProtocol,
         choix_user: bool = True,
         *,
+        alert_handler: AlertHandler | None = None,
         timesheet_helper_cls: type[TimeSheetHelperProtocol] = TimeSheetHelper,
         cleanup_resources: Callable[[object, object, object], None] | None = None,
     ) -> AutomationOrchestrator:
@@ -109,6 +115,7 @@ class AutomationOrchestrator:
             page_navigator.additional_info_page,
             context,
             choix_user,
+            alert_handler=alert_handler,
             timesheet_helper_cls=timesheet_helper_cls,
             cleanup_resources=cleanup_resources,
             resource_manager=resource_manager,

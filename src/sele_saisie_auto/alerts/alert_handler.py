@@ -9,7 +9,7 @@ from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
-from sele_saisie_auto.selenium_utils import Waiter
+from sele_saisie_auto.selenium_utils import Waiter, click_element_without_wait
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -66,15 +66,13 @@ class AlertHandler:
         AutomationExitError
             If a conflicting date alert was found and closed.
         """
-        from sele_saisie_auto import saisie_automatiser_psatime as sap
-
         if self.browser_session is not None:
             self.browser_session.go_to_default_content()
         for alerte in self.alert_configs.get("date_alerts", []):
             if self.waiter.wait_for_element(
                 driver, By.ID, alerte, timeout=self.config.default_timeout
             ):
-                sap.click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
+                click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
                 write_log(
                     format_message("TIME_SHEET_EXISTS_ERROR", {}),
                     self.log_file,
@@ -91,8 +89,6 @@ class AlertHandler:
 
     def handle_save_alerts(self, driver) -> None:
         """Dismiss any alert shown after saving."""
-        from sele_saisie_auto import saisie_automatiser_psatime as sap
-
         alerts = self.alert_configs.get("save_alerts", [])
         if self.browser_session is not None:
             self.browser_session.go_to_default_content()
@@ -100,7 +96,7 @@ class AlertHandler:
             if self.waiter.wait_for_element(
                 driver, By.ID, alerte, timeout=self.config.default_timeout
             ):
-                sap.click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
+                click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
                 write_log(
                     format_message("SAVE_ALERT_WARNING", {}),
                     self.log_file,
