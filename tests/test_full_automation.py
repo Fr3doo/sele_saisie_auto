@@ -124,7 +124,6 @@ def test_full_automation(monkeypatch, sample_config):
     logger = Logger(log_file)
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
-    monkeypatch.setattr(resource_manager, "EncryptionService", DummyEncryption)
     monkeypatch.setattr(
         "sele_saisie_auto.automation.browser_session.SeleniumDriverManager",
         DummyManager,
@@ -138,7 +137,7 @@ def test_full_automation(monkeypatch, sample_config):
         lambda *a, **k: types.SimpleNamespace(traiter_description=lambda *a, **k: None),
     )
 
-    with resource_manager.ResourceManager(log_file) as rm:
+    with resource_manager.ResourceManager(log_file, DummyEncryption(log_file)) as rm:
         ctx = SaisieContext(APP_CFG, rm._encryption_service, DummySHMService(), {}, [])
         automation = DummyAutomation(log_file, ctx, rm._session, logger)
         login = LoginHandler(log_file, rm._encryption_service, rm._session)

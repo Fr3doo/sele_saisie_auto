@@ -57,8 +57,9 @@ class DummyEncryption:
 
 
 class DummyResourceContext:
-    def __init__(self, log_file):
+    def __init__(self, log_file, encryption_service=None):
         self.log_file = log_file
+        self.encryption_service = encryption_service
         self.ctx_entered = False
         self._creds = None
 
@@ -80,7 +81,9 @@ def test_resource_manager_basic(monkeypatch):
     monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
     monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
-    with resource_manager.ResourceManager("log.html") as rm:
+    with resource_manager.ResourceManager(
+        "log.html", DummyEncryption("log.html")
+    ) as rm:
         driver = rm.get_driver()
         creds = rm.get_credentials()
 
@@ -129,7 +132,9 @@ def test_resource_manager_cleanup(monkeypatch):
     monkeypatch.setattr(resource_manager, "BrowserSession", CleanBrowserSession)
     monkeypatch.setattr(resource_manager, "ResourceContext", CleanResourceContext)
 
-    with resource_manager.ResourceManager("log.html") as rm:
+    with resource_manager.ResourceManager(
+        "log.html", DummyEncryption("log.html")
+    ) as rm:
         creds = rm.get_credentials()
         driver = rm.get_driver()
         names = [
@@ -165,7 +170,7 @@ def test_resource_manager_close_method(monkeypatch):
     monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
     monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
-    rm = resource_manager.ResourceManager("log.html")
+    rm = resource_manager.ResourceManager("log.html", DummyEncryption("log.html"))
     rm.__enter__()
     rm.get_driver()
     rm.close()
@@ -180,7 +185,7 @@ def test_resource_manager_close_is_idempotent(monkeypatch):
     monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
     monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
-    rm = resource_manager.ResourceManager("log.html")
+    rm = resource_manager.ResourceManager("log.html", DummyEncryption("log.html"))
     rm.__enter__()
     rm.get_driver()
 
@@ -225,7 +230,9 @@ def test_resource_manager_context_calls(monkeypatch):
     monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
     monkeypatch.setattr(resource_manager, "ResourceContext", SpyResourceContext)
 
-    with resource_manager.ResourceManager("log.html") as rm:
+    with resource_manager.ResourceManager(
+        "log.html", DummyEncryption("log.html")
+    ) as rm:
         driver = rm.get_driver()
         creds = rm.get_credentials()
 
@@ -259,7 +266,9 @@ def test_resource_manager_same_instances(monkeypatch):
     monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
     monkeypatch.setattr(resource_manager, "ResourceContext", SpyResourceContext)
 
-    with resource_manager.ResourceManager("log.html") as rm:
+    with resource_manager.ResourceManager(
+        "log.html", DummyEncryption("log.html")
+    ) as rm:
         driver1 = rm.get_driver()
         driver2 = rm.get_driver()
         creds1 = rm.get_credentials()
@@ -280,8 +289,8 @@ def test_exit_uses_shared_memory_service(monkeypatch):
             self.removed.append(mem)
 
     class SpyCtx(DummyResourceContext):
-        def __init__(self, log_file):
-            super().__init__(log_file)
+        def __init__(self, log_file, encryption_service=None):
+            super().__init__(log_file, encryption_service)
             self.shared_memory_service = shm_service
             self.mem_key = object()
             self.mem_login = object()
@@ -313,9 +322,15 @@ def test_exit_uses_shared_memory_service(monkeypatch):
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
     monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
     enc = SpyCtx("log.html")
-    monkeypatch.setattr(resource_manager, "ResourceContext", lambda log_file: enc)
+    monkeypatch.setattr(
+        resource_manager,
+        "ResourceContext",
+        lambda log_file, encryption_service=None: enc,
+    )
 
-    with resource_manager.ResourceManager("log.html") as rm:
+    with resource_manager.ResourceManager(
+        "log.html", DummyEncryption("log.html")
+    ) as rm:
         rm.get_credentials()
 
     assert shm_service.removed == [enc.mem_key, enc.mem_login, enc.mem_password]
@@ -323,8 +338,8 @@ def test_exit_uses_shared_memory_service(monkeypatch):
 
 def test_close_removes_shared_memory_segments(monkeypatch):
     class CleanResourceContext(DummyResourceContext):
-        def __init__(self, log_file):
-            super().__init__(log_file)
+        def __init__(self, log_file, encryption_service=None):
+            super().__init__(log_file, encryption_service)
             self.shared_memory_service = SharedMemoryService(Logger(None))
 
         def __enter__(self):
@@ -361,7 +376,7 @@ def test_close_removes_shared_memory_segments(monkeypatch):
     monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
     monkeypatch.setattr(resource_manager, "ResourceContext", CleanResourceContext)
 
-    rm = resource_manager.ResourceManager("log.html")
+    rm = resource_manager.ResourceManager("log.html", DummyEncryption("log.html"))
     rm.__enter__()
     creds = rm.get_credentials()
     names = [
@@ -385,7 +400,7 @@ def test_context_manager_returns_self(monkeypatch):
     monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
     monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
-    rm = resource_manager.ResourceManager("log.html")
+    rm = resource_manager.ResourceManager("log.html", DummyEncryption("log.html"))
     with rm as ctx_rm:
         assert ctx_rm is rm
 
@@ -406,7 +421,9 @@ def test_context_manager_without_driver(monkeypatch):
     monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
     monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
-    with resource_manager.ResourceManager("log.html") as rm:
+    with resource_manager.ResourceManager(
+        "log.html", DummyEncryption("log.html")
+    ) as rm:
         rm.get_credentials()  # do not open driver
 
     assert calls["open"] == 0
@@ -421,7 +438,7 @@ def test_enter_raises_runtime_error(monkeypatch):
             raise FileNotFoundError("missing")
 
     monkeypatch.setattr(resource_manager, "ConfigManager", FailingConfigManager)
-    rm = resource_manager.ResourceManager("log.html")
+    rm = resource_manager.ResourceManager("log.html", DummyEncryption("log.html"))
     with pytest.raises(resource_manager.ResourceManagerInitError):
         with rm:
             pass
@@ -460,7 +477,7 @@ def test_no_shared_memory_left_after_close(monkeypatch):
     monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
     monkeypatch.setattr(resource_manager, "ResourceContext", CleanResourceContext)
 
-    rm = resource_manager.ResourceManager("log.html")
+    rm = resource_manager.ResourceManager("log.html", DummyEncryption("log.html"))
     rm.__enter__()
     creds = rm.get_credentials()
     names = [creds.mem_key.name, creds.mem_login.name, creds.mem_password.name]

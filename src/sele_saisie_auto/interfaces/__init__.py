@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 from .protocols import (
-    LoggerProtocol,
-    WaiterProtocol,
-    BrowserSessionProtocol,
-    LoginHandlerProtocol,
-    DateEntryPageProtocol,
     AdditionalInfoPageProtocol,
+    BrowserSessionProtocol,
+    DateEntryPageProtocol,
+    LoggerProtocol,
+    LoginHandlerProtocol,
     TimeSheetHelperProtocol,
+    WaiterProtocol,
 )
 
 __all__ = [

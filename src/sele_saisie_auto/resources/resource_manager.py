@@ -5,14 +5,11 @@ from __future__ import annotations
 
 from sele_saisie_auto.automation import BrowserSession
 from sele_saisie_auto.config_manager import ConfigManager
-from sele_saisie_auto.encryption_utils import Credentials
+from sele_saisie_auto.encryption_utils import Credentials, EncryptionService
 from sele_saisie_auto.exceptions import AutomationExitError, ResourceManagerInitError
 from sele_saisie_auto.interfaces import BrowserSessionProtocol
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.resources.resource_context import ResourceContext
-
-# Backward compatibility: tests may patch ``EncryptionService``
-EncryptionService = ResourceContext
 
 __all__ = ["ResourceManager"]
 
@@ -20,7 +17,9 @@ __all__ = ["ResourceManager"]
 class ResourceManager:
     """Prépare et nettoie navigateur et mémoire pour l'automatisation."""
 
-    def __init__(self, log_file: str) -> None:
+    def __init__(
+        self, log_file: str, encryption_service: EncryptionService | None = None
+    ) -> None:
         """Initialise le gestionnaire.
 
         Args:
@@ -29,17 +28,8 @@ class ResourceManager:
 
         self.log_file = log_file
         self._config_manager = ConfigManager(log_file)
-        try:
-            self._resource_context = ResourceContext(
-                log_file, EncryptionService(log_file)
-            )
-        except TypeError:
-            self._resource_context = ResourceContext(log_file)
-        self._encryption_service = getattr(
-            self._resource_context,
-            "encryption_service",
-            EncryptionService(log_file),
-        )
+        self._encryption_service = encryption_service or EncryptionService(log_file)
+        self._resource_context = ResourceContext(log_file, self._encryption_service)
         self._credentials: Credentials | None = None
         self._session: BrowserSessionProtocol | None = None
         self._driver = None
@@ -59,7 +49,6 @@ class ResourceManager:
             self._app_config = self._config_manager.load()
             if self._session is None:
                 self._session = BrowserSession(self.log_file, self._app_config)
-            self._resource_context.encryption_service = self._encryption_service
             if hasattr(self._resource_context, "__enter__"):
                 self._res_ctx = self._resource_context.__enter__()
             else:
@@ -111,10 +100,6 @@ class ResourceManager:
     def get_credentials(self) -> Credentials:
         """Retourne les identifiants chiffrés stockés en mémoire partagée."""
         if self._credentials is None:
-            # ensure potential patches on ``_encryption_service`` are used even
-            # when the manager is not entered
-            if hasattr(self._resource_context, "encryption_service"):
-                self._resource_context.encryption_service = self._encryption_service
             self._credentials = self._resource_context.get_credentials()
         return self._credentials
 

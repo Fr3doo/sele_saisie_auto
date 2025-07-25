@@ -109,7 +109,11 @@ def setup_init(monkeypatch, cfg):
         "BrowserSession",
         lambda log_file, cfg=app_cfg: DummyBrowserSession(log_file, cfg, waiter=waiter),
     )
-    monkeypatch.setattr(rm, "EncryptionService", lambda log_file: DummyEnc())
+    monkeypatch.setattr(
+        sap,
+        "ResourceManager",
+        lambda log_file: rm.ResourceManager(log_file, DummyEnc()),
+    )
     auto = sap.PSATimeAutomation("log.html", app_cfg)
     service_configurator = ServiceConfigurator(app_cfg)
     orch = AutomationOrchestrator.from_components(
