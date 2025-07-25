@@ -8,6 +8,7 @@ import sys
 from sele_saisie_auto.automation import BrowserSession
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import Credentials, EncryptionService
+from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.logging_service import Logger
 
 __all__ = ["ResourceManager"]
@@ -116,7 +117,9 @@ class ResourceManager:
                 logger.error(
                     "🚨 La mémoire partagée n'a pas été initialisée correctement. Assurez-vous que les identifiants ont été chiffrés"
                 )
-            sys.exit(1)
+            raise AutomationExitError(
+                "La mémoire partagée n'a pas été initialisée correctement"
+            )
         return creds
 
     def get_driver(self, *, headless: bool = False, no_sandbox: bool = False):

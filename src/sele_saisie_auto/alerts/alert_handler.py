@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import sys
 from types import SimpleNamespace
 from typing import TYPE_CHECKING
 
 from selenium.webdriver.common.by import By
 
 from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import Waiter
@@ -58,14 +58,13 @@ class AlertHandler:
     # ------------------------------------------------------------------
     # Alert helpers
     # ------------------------------------------------------------------
-    def handle_date_alert(self, driver) -> bool:
+    def handle_date_alert(self, driver) -> None:
         """Close alert if the date already exists.
 
-        Returns
-        -------
-        bool
-            ``False`` if a conflicting date alert was found and closed,
-            ``True`` otherwise.
+        Raises
+        ------
+        AutomationExitError
+            If a conflicting date alert was found and closed.
         """
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
@@ -86,10 +85,9 @@ class AlertHandler:
                     self.log_file,
                     "INFO",
                 )
-                return False
+                raise AutomationExitError(format_message("TIME_SHEET_EXISTS_ERROR", {}))
 
         write_log(format_message("DATE_VALIDATED", {}), self.log_file, "DEBUG")
-        return True
 
     def handle_save_alerts(self, driver) -> None:
         """Dismiss any alert shown after saving."""

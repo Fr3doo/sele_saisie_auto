@@ -4,6 +4,7 @@ import pytest
 from selenium.webdriver.common.by import By
 
 from sele_saisie_auto.alerts.alert_handler import AlertHandler
+from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.locators import Locators
 
 
@@ -61,7 +62,8 @@ def test_handle_alerts_date(monkeypatch):
         "sele_saisie_auto.saisie_automatiser_psatime.write_log",
         lambda *a, **k: None,
     )
-    assert handler.handle_alerts("drv", alert_type="date_alert") is False
+    with pytest.raises(AutomationExitError):
+        handler.handle_alerts("drv", alert_type="date_alert")
 
 
 def test_handle_alerts_unknown(monkeypatch):

@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pytest
 
+from sele_saisie_auto.exceptions import AutomationExitError
+
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.automation.date_entry_page import DateEntryPage  # noqa: E402
@@ -174,10 +176,11 @@ def test_handle_date_alert(monkeypatch):
 
     def fake_handle(driver):
         calls.append("handled")
-        return False
+        raise AutomationExitError("stop")
 
     monkeypatch.setattr(page.alert_handler, "handle_date_alert", fake_handle)
-    assert page._handle_date_alert("drv") is False
+    with pytest.raises(AutomationExitError):
+        page._handle_date_alert("drv")
     assert "handled" in calls
 
 

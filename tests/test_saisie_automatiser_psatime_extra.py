@@ -91,13 +91,9 @@ def test_initialize_shared_memory_error(monkeypatch, sample_config):
             mem_password=None,
         ),
     )
-    exit_called = {}
-    monkeypatch.setattr(
-        sap.sys, "exit", lambda code=0: exit_called.setdefault("exit", code)
-    )
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
-    sap.initialize_shared_memory()
-    assert exit_called["exit"] == 1
+    with pytest.raises(sap.AutomationExitError):
+        sap.initialize_shared_memory()
 
 
 def test_switch_to_iframe_main_target_win0_false(monkeypatch, sample_config):
