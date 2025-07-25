@@ -3,13 +3,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from sele_saisie_auto.app_config import AppConfig
-from sele_saisie_auto.automation import BrowserSession
+from sele_saisie_auto.automation import BrowserSession, LoginHandler
 from sele_saisie_auto.encryption_utils import (
     DefaultEncryptionBackend,
     EncryptionBackend,
     EncryptionService,
 )
-from sele_saisie_auto.interfaces import BrowserSessionProtocol, WaiterProtocol
+from sele_saisie_auto.interfaces import (
+    BrowserSessionProtocol,
+    LoginHandlerProtocol,
+    WaiterProtocol,
+)
 from sele_saisie_auto.selenium_utils import Waiter
 
 
@@ -20,16 +24,21 @@ class Services:
     encryption_service: EncryptionService
     browser_session: BrowserSessionProtocol
     waiter: WaiterProtocol
+    login_handler: LoginHandlerProtocol
 
 
 class ServiceConfigurator:
     """Configure core services based on :class:`AppConfig`."""
 
     def __init__(
-        self, app_config: AppConfig, encryption_backend: EncryptionBackend | None = None
+        self,
+        app_config: AppConfig,
+        encryption_backend: EncryptionBackend | None = None,
+        login_handler_cls: type[LoginHandlerProtocol] | None = None,
     ) -> None:
         self.app_config = app_config
         self.encryption_backend = encryption_backend
+        self.login_handler_cls = login_handler_cls or LoginHandler
 
     def create_encryption_service(self, log_file: str) -> EncryptionService:
         """Return a new :class:`EncryptionService`."""
@@ -50,13 +59,26 @@ class ServiceConfigurator:
 
         return BrowserSession(log_file, self.app_config, waiter=self.create_waiter())
 
+    def create_login_handler(
+        self,
+        log_file: str,
+        encryption_service: EncryptionService,
+        browser_session: BrowserSessionProtocol,
+    ) -> LoginHandlerProtocol:
+        """Return a new :class:`LoginHandler`."""
+
+        return self.login_handler_cls(log_file, encryption_service, browser_session)
+
     def build_services(self, log_file: str) -> Services:
         """Convenient helper returning all core services."""
 
         waiter = self.create_waiter()
         browser_session = BrowserSession(log_file, self.app_config, waiter=waiter)
         encryption_service = self.create_encryption_service(log_file)
-        return Services(encryption_service, browser_session, waiter)
+        login_handler = self.create_login_handler(
+            log_file, encryption_service, browser_session
+        )
+        return Services(encryption_service, browser_session, waiter, login_handler)
 
 
 def build_services(
@@ -67,10 +89,11 @@ def build_services(
     """Instancier et retourner les services principaux de l'application.
 
     Ce constructeur configure un :class:`Waiter` selon les valeurs fournies
-    par ``app_config`` puis initialise ``BrowserSession`` et
-    ``EncryptionService`` avec le même fichier de log. Les instances sont
-    renvoyées regroupées dans la dataclass :class:`Services` afin de partager
-    facilement ces outils entre les différentes étapes de l'automatisation.
+    par ``app_config`` puis initialise ``BrowserSession``,
+    ``EncryptionService`` et ``LoginHandler`` avec le même fichier de log.
+    Les instances sont renvoyées regroupées dans la dataclass :class:`Services`
+    afin de partager facilement ces outils entre les différentes étapes de
+    l'automatisation.
 
     Parameters
     ----------
@@ -83,7 +106,7 @@ def build_services(
     -------
     Services
         Instance de :class:`Services` regroupant ``encryption_service``,
-        ``browser_session`` et ``waiter`` prêts à être utilisés.
+        ``browser_session``, ``waiter`` et ``login_handler`` prêts à être utilisés.
     """
     configurator = ServiceConfigurator(app_config, encryption_backend)
     return configurator.build_services(log_file)

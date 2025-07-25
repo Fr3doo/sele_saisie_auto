@@ -140,6 +140,7 @@ class PSATimeAutomation:
         self.waiter = self.services.waiter
         self.browser_session = self.services.browser_session
         self.encryption_service = self.services.encryption_service
+        self._login_handler = getattr(self.services, "login_handler", None)
         self.context = SaisieContext(
             config=app_config,
             encryption_service=self.encryption_service,
@@ -348,15 +349,19 @@ class PSATimeAutomation:
     @property
     def login_handler(self) -> LoginHandler:
         if self._login_handler is None:
-            cls = LoginHandler
-            if hasattr(cls, "from_automation"):
-                self._login_handler = cls.from_automation(self)
-            else:  # pragma: no cover - fallback for patched classes
-                self._login_handler = cls(
-                    self.log_file,
-                    self.encryption_service,
-                    self.browser_session,
-                )
+            handler = getattr(self.services, "login_handler", None)
+            if handler is not None:
+                self._login_handler = handler
+            else:
+                cls = LoginHandler
+                if hasattr(cls, "from_automation"):
+                    self._login_handler = cls.from_automation(self)
+                else:  # pragma: no cover - fallback for patched classes
+                    self._login_handler = cls(
+                        self.log_file,
+                        self.encryption_service,
+                        self.browser_session,
+                    )
         return self._login_handler
 
     @property
