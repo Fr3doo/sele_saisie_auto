@@ -397,23 +397,11 @@ class PSATimeAutomation:
         )
 
     def initialize_shared_memory(self):
-        """Récupère les données de la mémoire partagée pour le login."""
-        credentials = self.context.encryption_service.retrieve_credentials()
+        """Récupère les données chiffrées via :class:`ResourceManager`."""
 
-        if (
-            credentials.mem_login is None
-            or credentials.mem_password is None
-            or credentials.mem_key is None
-        ):
-            write_log(
-                "🚨 La mémoire partagée n'a pas été initialisée correctement. Assurez-vous que les identifiants ont été chiffrés",
-                self.log_file,
-                "ERROR",
-            )
-            sys.exit(1)
+        credentials = self.resource_manager.initialize_shared_memory(self.logger)
         if hasattr(self.page_navigator, "prepare"):
             self.page_navigator.prepare(credentials, self.context.config.date_cible)
-
         return credentials
 
     def wait_for_dom(self, driver):
