@@ -1,5 +1,6 @@
 import types
 from configparser import ConfigParser
+from pathlib import Path
 
 import pytest
 
@@ -31,23 +32,11 @@ def dummy_logger():
 
 @pytest.fixture
 def sample_config():
-    """Provide a sample ConfigParser similar to real config."""
+    """Load the minimal example configuration."""
     cfg = ConfigParser()
-    cfg["credentials"] = {"login": "enc_login", "mdp": "enc_pwd"}
-    cfg["settings"] = {
-        "url": "http://test",
-        "date_cible": "01/07/2024",
-        "liste_items_planning": '"desc1", "desc2"',
-    }
-    cfg["work_schedule"] = {"lundi": "En mission,8"}
-    cfg["project_information"] = {"billing_action": "Facturable"}
-    cfg["additional_information_rest_period_respected"] = {"lundi": "Oui"}
-    cfg["additional_information_work_time_range"] = {"lundi": "8-16"}
-    cfg["additional_information_half_day_worked"] = {"lundi": "Non"}
-    cfg["additional_information_lunch_break_duration"] = {"lundi": "1"}
-    cfg["work_location_am"] = {"lundi": "CGI"}
-    cfg["work_location_pm"] = {"lundi": "CGI"}
-    cfg["cgi_options_billing_action"] = {"Facturable": "B"}
+    path = Path(__file__).resolve().parents[1] / "examples" / "config_minimal.ini"
+    cfg.read(path, encoding="utf-8")
+    cfg["settings"]["url"] = "http://test"
     return cfg
 
 

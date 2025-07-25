@@ -28,6 +28,7 @@ Automatiser la saisie de la feuille de temps PSA Time via Selenium et une interf
 ## ⚡ Démarrage rapide
 ```bash
 poetry install --no-root
+cp examples/config_minimal.ini config.ini  # première utilisation
 poetry run psatime-launcher
 ```
 
@@ -191,6 +192,7 @@ l'installation des dépendances hors de l'environnement Poetry.
 
 ## 🛠️ Fichiers de configuration
 - `config.ini` : paramètres de connexion et de planning
+- `examples/config_minimal.ini` : configuration minimale à copier pour démarrer rapidement
 - `examples/config_example.ini` : modèle listant toutes les sections nécessaires
 - `examples/dropdown_defaults.json` : valeurs par défaut des menus déroulants si
   les sections correspondantes sont absentes de `config.ini`
