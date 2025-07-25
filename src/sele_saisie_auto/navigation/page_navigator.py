@@ -59,10 +59,11 @@ class PageNavigator:
             driver, aes_key, encrypted_login, encrypted_password
         )
 
-    def navigate_to_date_entry(self, driver, date_cible: str | None) -> None:
+    def navigate_to_date_entry(self, driver, date_cible: str | None) -> bool | None:
         """Ouvre la page de sélection de période et choisit ``date_cible``."""
         if self.date_entry_page.navigate_from_home_to_date_entry_page(driver):
-            self.date_entry_page.process_date(driver, date_cible)
+            return self.date_entry_page.process_date(driver, date_cible)
+        return None
 
     def fill_timesheet(self, driver) -> None:
         """Remplit la feuille de temps puis les informations additionnelles."""

@@ -174,11 +174,10 @@ def test_handle_date_alert(monkeypatch):
 
     def fake_handle(driver):
         calls.append("handled")
-        raise SystemExit()
+        return False
 
     monkeypatch.setattr(page.alert_handler, "handle_date_alert", fake_handle)
-    with pytest.raises(SystemExit):
-        page._handle_date_alert("drv")
+    assert page._handle_date_alert("drv") is False
     assert "handled" in calls
 
 

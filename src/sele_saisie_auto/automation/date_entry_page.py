@@ -160,8 +160,12 @@ class DateEntryPage:
         return element_present
 
     @handle_selenium_errors(default_return=None)
-    def process_date(self, driver, date_cible) -> None:
-        """Orchestrate date selection and validation."""
+    def process_date(self, driver, date_cible) -> bool | None:
+        """Orchestrate date selection and validation.
+
+        Returns ``False`` if a conflicting date alert was detected,
+        ``True`` if submission succeeded without alert, ``None`` otherwise.
+        """
 
         self.handle_date_input(driver, date_cible)
         program_break_time(
@@ -170,13 +174,14 @@ class DateEntryPage:
         )
         write_log(format_message("DOM_STABLE", {}), self.log_file, "DEBUG")
         if self.submit_date_cible(driver):
-            self._handle_date_alert(driver)
+            return self._handle_date_alert(driver)
+        return True
 
     @handle_selenium_errors(default_return=None)
-    def _handle_date_alert(self, driver) -> None:
+    def _handle_date_alert(self, driver) -> bool:
         """Delegate alert handling to :class:`AlertHandler`."""
 
-        self.alert_handler.handle_date_alert(driver)
+        return self.alert_handler.handle_date_alert(driver)
 
     @handle_selenium_errors(default_return=None)
     def _click_action_button(self, driver, create_new: bool) -> None:

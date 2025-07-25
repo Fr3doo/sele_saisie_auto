@@ -247,10 +247,11 @@ class AutomationOrchestrator:
                         creds.login,
                         creds.password,
                     )
-                    self.page_navigator.navigate_to_date_entry(
+                    result = self.page_navigator.navigate_to_date_entry(
                         driver, self.config.date_cible
                     )
-                    self._fill_and_save_timesheet(driver)
+                    if result is not False:
+                        self._fill_and_save_timesheet(driver)
             finally:
                 self.cleanup_resources(
                     creds.mem_key,
