@@ -27,7 +27,10 @@ from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import ServiceConfigurator, Services, build_services
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.encryption_utils import EncryptionService
-from sele_saisie_auto.exceptions import AutomationNotInitializedError
+from sele_saisie_auto.exceptions import (
+    AutomationExitError,
+    AutomationNotInitializedError,
+)
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.logging_service import Logger, LoggingConfigurator, get_logger
@@ -92,6 +95,7 @@ __all__ = [
     "modifier_date_input",
     "send_keys_to_element",
     "click_element_without_wait",
+    "AutomationExitError",
 ]
 
 # Legacy globals for plugins/tests

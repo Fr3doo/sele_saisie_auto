@@ -11,3 +11,7 @@ class InvalidConfigError(Exception):
 
 class AutomationNotInitializedError(Exception):
     """Raised when a global automation wrapper is used before initialization."""
+
+
+class AutomationExitError(Exception):
+    """Raised when the automation must stop gracefully."""
