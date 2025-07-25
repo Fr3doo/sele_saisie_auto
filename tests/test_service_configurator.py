@@ -1,7 +1,7 @@
 import pytest
 
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
-from sele_saisie_auto.automation import BrowserSession
+from sele_saisie_auto.automation import BrowserSession, LoginHandler
 from sele_saisie_auto.configuration import ServiceConfigurator, Services, build_services
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.selenium_utils import Waiter
@@ -15,6 +15,7 @@ def test_build_services(sample_config):
     assert isinstance(services.encryption_service, EncryptionService)
     assert isinstance(services.browser_session, BrowserSession)
     assert isinstance(services.waiter, Waiter)
+    assert isinstance(services.login_handler, LoginHandler)
     assert services.browser_session.app_config is app_cfg
     assert services.browser_session.waiter is services.waiter
 
@@ -121,6 +122,7 @@ def test_service_configurator_build_services(sample_config):
     assert isinstance(services.encryption_service, EncryptionService)
     assert isinstance(services.browser_session, BrowserSession)
     assert isinstance(services.waiter, Waiter)
+    assert isinstance(services.login_handler, LoginHandler)
     assert services.browser_session.app_config is app_cfg
     assert services.browser_session.waiter is services.waiter
     assert services.waiter.wrapper.default_timeout == app_cfg.default_timeout

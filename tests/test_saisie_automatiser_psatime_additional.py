@@ -93,9 +93,10 @@ def setup_init(monkeypatch, cfg):
 
     def fake_build(cfg_b, lf_b):
         waiter = get_waiter(cfg_b)
-        return Services(
-            DummyEnc(), sap.BrowserSession(lf_b, cfg_b, waiter=waiter), waiter
-        )
+        session = sap.BrowserSession(lf_b, cfg_b, waiter=waiter)
+        enc = DummyEnc()
+        login = sap.LoginHandler(lf_b, enc, session)
+        return Services(enc, session, waiter, login)
 
     monkeypatch.setattr(sap, "build_services", fake_build)
     waiter = get_waiter(app_cfg)

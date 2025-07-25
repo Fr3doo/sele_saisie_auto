@@ -195,11 +195,10 @@ def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
 
         def fake_build(cfg_b, lf_b):
             waiter = get_waiter(cfg_b)
-            return Services(
-                DummyEnc(),
-                sap.BrowserSession(lf_b, cfg_b, waiter=waiter),
-                waiter,
-            )
+            session = sap.BrowserSession(lf_b, cfg_b, waiter=waiter)
+            enc = DummyEnc()
+            login = sap.LoginHandler(lf_b, enc, session)
+            return Services(enc, session, waiter, login)
 
         monkeypatch.setattr(sap, "build_services", fake_build)
         waiter = get_waiter(app_cfg)
@@ -287,7 +286,7 @@ def test_initialize_sets_globals(monkeypatch, sample_config):
 def test_init_services(monkeypatch, sample_config):
     from sele_saisie_auto.configuration import Services
 
-    dummy = Services(None, None, None)
+    dummy = Services(None, None, None, None)
     called = {}
 
     def fake_build(cfg, lf):
