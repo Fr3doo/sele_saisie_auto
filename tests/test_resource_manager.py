@@ -56,10 +56,29 @@ class DummyEncryption:
         return Credentials(b"k", None, b"u", None, b"p", None)
 
 
+class DummyResourceContext:
+    def __init__(self, log_file):
+        self.log_file = log_file
+        self.ctx_entered = False
+        self._creds = None
+
+    def __enter__(self):
+        self.ctx_entered = True
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        pass
+
+    def get_credentials(self):
+        if self._creds is None:
+            self._creds = Credentials(b"k", None, b"u", None, b"p", None)
+        return self._creds
+
+
 def test_resource_manager_basic(monkeypatch):
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
     monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
-    monkeypatch.setattr(resource_manager, "EncryptionService", DummyEncryption)
+    monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
     with resource_manager.ResourceManager("log.html") as rm:
         driver = rm.get_driver()
@@ -77,10 +96,7 @@ def test_resource_manager_cleanup(monkeypatch):
             super().__init__(log_file, app_config)
             sessions.append(self)
 
-    class CleanEncryption:
-        def __init__(self, log_file):
-            self.log_file = log_file
-
+    class CleanResourceContext(DummyResourceContext):
         def __enter__(self):
             self.mem_key = shared_memory.SharedMemory(create=True, size=1)
             self.mem_login = shared_memory.SharedMemory(create=True, size=1)
@@ -99,7 +115,7 @@ def test_resource_manager_cleanup(monkeypatch):
                 except FileNotFoundError:
                     pass
 
-        def retrieve_credentials(self):
+        def get_credentials(self):
             return Credentials(
                 b"k",
                 self.mem_key,
@@ -111,7 +127,7 @@ def test_resource_manager_cleanup(monkeypatch):
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
     monkeypatch.setattr(resource_manager, "BrowserSession", CleanBrowserSession)
-    monkeypatch.setattr(resource_manager, "EncryptionService", CleanEncryption)
+    monkeypatch.setattr(resource_manager, "ResourceContext", CleanResourceContext)
 
     with resource_manager.ResourceManager("log.html") as rm:
         creds = rm.get_credentials()
@@ -147,7 +163,7 @@ def test_resource_manager_close_method(monkeypatch):
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
     monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
-    monkeypatch.setattr(resource_manager, "EncryptionService", DummyEncryption)
+    monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
     rm = resource_manager.ResourceManager("log.html")
     rm.__enter__()
@@ -180,18 +196,18 @@ def test_resource_manager_context_calls(monkeypatch):
             calls["closed"] = True
             super().close()
 
-    class SpyEncryption(DummyEncryption):
+    class SpyResourceContext(DummyResourceContext):
         def __enter__(self):
-            calls["enc_enter"] = True
+            calls["ctx_enter"] = True
             return super().__enter__()
 
         def __exit__(self, exc_type, exc, tb):
-            calls["enc_exit"] = True
+            calls["ctx_exit"] = True
             return super().__exit__(exc_type, exc, tb)
 
     monkeypatch.setattr(resource_manager, "ConfigManager", SpyConfigManager)
     monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
-    monkeypatch.setattr(resource_manager, "EncryptionService", SpyEncryption)
+    monkeypatch.setattr(resource_manager, "ResourceContext", SpyResourceContext)
 
     with resource_manager.ResourceManager("log.html") as rm:
         driver = rm.get_driver()
@@ -200,8 +216,8 @@ def test_resource_manager_context_calls(monkeypatch):
     assert driver == "driver"
     assert creds.login == b"u"
     assert calls.get("config_loaded") is True
-    assert calls.get("enc_enter") is True
-    assert calls.get("enc_exit") is True
+    assert calls.get("ctx_enter") is True
+    assert calls.get("ctx_exit") is True
     assert calls.get("session_created") is True
     assert calls.get("open_called") == ("http://example", False, False)
     assert calls.get("closed") is True
@@ -217,14 +233,15 @@ def test_resource_manager_same_instances(monkeypatch):
             calls["open"] += 1
             return object()
 
-    class SpyEncryption(DummyEncryption):
-        def retrieve_credentials(self):
-            calls["creds"] += 1
-            return Credentials(b"k", None, b"u", None, b"p", None)
+    class SpyResourceContext(DummyResourceContext):
+        def get_credentials(self):
+            if self._creds is None:
+                calls["creds"] += 1
+            return super().get_credentials()
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
     monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
-    monkeypatch.setattr(resource_manager, "EncryptionService", SpyEncryption)
+    monkeypatch.setattr(resource_manager, "ResourceContext", SpyResourceContext)
 
     with resource_manager.ResourceManager("log.html") as rm:
         driver1 = rm.get_driver()
@@ -246,7 +263,7 @@ def test_exit_uses_shared_memory_service(monkeypatch):
         def supprimer_memoire_partagee_securisee(self, mem):
             self.removed.append(mem)
 
-    class SpyEnc(DummyEncryption):
+    class SpyCtx(DummyResourceContext):
         def __init__(self, log_file):
             super().__init__(log_file)
             self.shared_memory_service = shm_service
@@ -254,7 +271,18 @@ def test_exit_uses_shared_memory_service(monkeypatch):
             self.mem_login = object()
             self.mem_password = object()
 
-        def retrieve_credentials(self):
+        def __exit__(self, exc_type, exc, tb):
+            self.shared_memory_service.supprimer_memoire_partagee_securisee(
+                self.mem_key
+            )
+            self.shared_memory_service.supprimer_memoire_partagee_securisee(
+                self.mem_login
+            )
+            self.shared_memory_service.supprimer_memoire_partagee_securisee(
+                self.mem_password
+            )
+
+        def get_credentials(self):
             return Credentials(
                 b"k",
                 self.mem_key,
@@ -268,8 +296,8 @@ def test_exit_uses_shared_memory_service(monkeypatch):
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
     monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
-    enc = SpyEnc("log.html")
-    monkeypatch.setattr(resource_manager, "EncryptionService", lambda log_file: enc)
+    enc = SpyCtx("log.html")
+    monkeypatch.setattr(resource_manager, "ResourceContext", lambda log_file: enc)
 
     with resource_manager.ResourceManager("log.html") as rm:
         rm.get_credentials()
@@ -278,7 +306,7 @@ def test_exit_uses_shared_memory_service(monkeypatch):
 
 
 def test_close_removes_shared_memory_segments(monkeypatch):
-    class CleanEncryption(DummyEncryption):
+    class CleanResourceContext(DummyResourceContext):
         def __init__(self, log_file):
             super().__init__(log_file)
             self.shared_memory_service = SharedMemoryService(Logger(None))
@@ -292,7 +320,7 @@ def test_close_removes_shared_memory_segments(monkeypatch):
             self.mem_password.buf[:1] = b"p"
             return self
 
-        def retrieve_credentials(self):
+        def get_credentials(self):
             return Credentials(
                 b"k",
                 self.mem_key,
@@ -302,9 +330,20 @@ def test_close_removes_shared_memory_segments(monkeypatch):
                 self.mem_password,
             )
 
+        def __exit__(self, exc_type, exc, tb):
+            self.shared_memory_service.supprimer_memoire_partagee_securisee(
+                self.mem_key
+            )
+            self.shared_memory_service.supprimer_memoire_partagee_securisee(
+                self.mem_login
+            )
+            self.shared_memory_service.supprimer_memoire_partagee_securisee(
+                self.mem_password
+            )
+
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
     monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
-    monkeypatch.setattr(resource_manager, "EncryptionService", CleanEncryption)
+    monkeypatch.setattr(resource_manager, "ResourceContext", CleanResourceContext)
 
     rm = resource_manager.ResourceManager("log.html")
     rm.__enter__()
@@ -328,7 +367,7 @@ def test_close_removes_shared_memory_segments(monkeypatch):
 def test_context_manager_returns_self(monkeypatch):
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
     monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
-    monkeypatch.setattr(resource_manager, "EncryptionService", DummyEncryption)
+    monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
     rm = resource_manager.ResourceManager("log.html")
     with rm as ctx_rm:
@@ -349,7 +388,7 @@ def test_context_manager_without_driver(monkeypatch):
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
     monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
-    monkeypatch.setattr(resource_manager, "EncryptionService", DummyEncryption)
+    monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
     with resource_manager.ResourceManager("log.html") as rm:
         rm.get_credentials()  # do not open driver
