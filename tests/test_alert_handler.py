@@ -34,7 +34,7 @@ def test_handle_alerts_clicks_confirm_ok_and_logs(monkeypatch):
         clicks.append((by, locator))
 
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
+        "sele_saisie_auto.alerts.alert_handler.click_element_without_wait",
         fake_click,
     )
 
@@ -55,11 +55,11 @@ def test_handle_alerts_date(monkeypatch):
     handler = AlertHandler(dummy)
     monkeypatch.setattr(handler.waiter, "wait_for_element", lambda *a, **k: True)
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
+        "sele_saisie_auto.alerts.alert_handler.click_element_without_wait",
         lambda *a, **k: None,
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.write_log",
+        "sele_saisie_auto.alerts.alert_handler.write_log",
         lambda *a, **k: None,
     )
     with pytest.raises(AutomationExitError):
