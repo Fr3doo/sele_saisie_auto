@@ -80,7 +80,11 @@ class ResourceManager:
         self._session = None
 
     def close(self) -> None:
-        """Ferme explicitement les ressources en appelant ``__exit__``."""
+        """Ferme explicitement les ressources en appelant ``__exit__``.
+
+        Cette méthode est **idempotente** : elle peut être invoquée
+        plusieurs fois sans provoquer d'erreur ni rouvrir de ressources.
+        """
 
         self.__exit__(None, None, None)
 

@@ -175,6 +175,22 @@ def test_resource_manager_close_method(monkeypatch):
     assert rm._driver is None
 
 
+def test_resource_manager_close_is_idempotent(monkeypatch):
+    monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
+    monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
+    monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
+
+    rm = resource_manager.ResourceManager("log.html")
+    rm.__enter__()
+    rm.get_driver()
+
+    rm.close()
+    rm.close()  # Should not raise
+
+    assert rm._session is None
+    assert rm._driver is None
+
+
 def test_resource_manager_context_calls(monkeypatch):
     calls = {}
 
