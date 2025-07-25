@@ -10,6 +10,7 @@ import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: 
 from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.decorators import handle_selenium_errors
+from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.remplir_informations_supp_utils import ExtraInfoHelper
@@ -25,13 +26,13 @@ class AdditionalInfoPage:
 
     @classmethod
     def from_automation(
-        cls, automation: PSATimeAutomation, waiter: Waiter | None = None
+        cls, automation: PSATimeAutomation, waiter: WaiterProtocol | None = None
     ) -> AdditionalInfoPage:
         """Create a page instance from a :class:`PSATimeAutomation`."""
         return cls(automation, waiter=waiter)
 
     def __init__(
-        self, automation: PSATimeAutomation, waiter: Waiter | None = None
+        self, automation: PSATimeAutomation, waiter: WaiterProtocol | None = None
     ) -> None:
         self._automation = automation
         self.context = getattr(automation, "context", None)

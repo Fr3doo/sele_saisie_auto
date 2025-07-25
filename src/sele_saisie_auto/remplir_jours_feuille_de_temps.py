@@ -24,6 +24,7 @@ from sele_saisie_auto.dropdown_options import (
     cgi_options_billing_action as default_cgi_options_billing_action,
 )
 from sele_saisie_auto.error_handler import log_error
+from sele_saisie_auto.interfaces import LoggerProtocol, WaiterProtocol
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini
@@ -128,7 +129,7 @@ def initialize(log_file: str) -> TimeSheetContext:
 # ----------------------------------------------------------------------------- #
 
 
-def wait_for_dom(driver, waiter: Waiter | None = None):
+def wait_for_dom(driver, waiter: WaiterProtocol | None = None):
     """Attend que le DOM soit chargé et stable."""
     if waiter is None:
         wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
@@ -365,7 +366,7 @@ def insert_with_retries(  # pragma: no cover
     driver,
     field_id: str,
     value: str,
-    waiter: Waiter | None = None,
+    waiter: WaiterProtocol | None = None,
 ):
     """Generic helper using :func:`_insert_value_with_retries` with default attempts."""
 
@@ -381,7 +382,7 @@ def traiter_champs_mission(  # pragma: no cover
     project_mission_info,
     context: TimeSheetContext,
     max_attempts=5,
-    waiter: Waiter | None = None,
+    waiter: WaiterProtocol | None = None,
 ):
     """Traite les champs associés aux missions ('En mission') en insérant les valeurs nécessaires."""
     for id in listes_id_informations_mission:
@@ -421,8 +422,8 @@ class TimeSheetHelper:
     def __init__(
         self,
         context: TimeSheetContext,
-        logger: Logger,
-        waiter: Waiter | None = None,
+        logger: LoggerProtocol,
+        waiter: WaiterProtocol | None = None,
     ) -> None:
         """Initialise l'assistant avec un ``Logger`` et un ``Waiter``."""
         self.context = context

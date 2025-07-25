@@ -7,8 +7,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.encryption_utils import EncryptionService
+from sele_saisie_auto.interfaces import BrowserSessionProtocol
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import send_keys_to_element, wait_for_dom_after
@@ -33,7 +33,7 @@ class LoginHandler:
         self,
         log_file: str | None,
         encryption_service: EncryptionService,
-        browser_session: BrowserSession,
+        browser_session: BrowserSessionProtocol,
     ) -> None:
         self.log_file = log_file
         self.encryption_service = encryption_service

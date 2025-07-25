@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from sele_saisie_auto import plugins
-from sele_saisie_auto.automation import (
-    AdditionalInfoPage,
-    BrowserSession,
-    DateEntryPage,
-    LoginHandler,
-)
 from sele_saisie_auto.encryption_utils import Credentials
-from sele_saisie_auto.remplir_jours_feuille_de_temps import TimeSheetHelper
+from sele_saisie_auto.interfaces import (
+    AdditionalInfoPageProtocol,
+    BrowserSessionProtocol,
+    DateEntryPageProtocol,
+    LoginHandlerProtocol,
+    TimeSheetHelperProtocol,
+)
 from sele_saisie_auto.selenium_utils import detecter_doublons_jours
 
 __all__ = ["PageNavigator"]
@@ -24,11 +24,11 @@ class PageNavigator:
 
     def __init__(
         self,
-        browser_session: BrowserSession,
-        login_handler: LoginHandler,
-        date_entry_page: DateEntryPage,
-        additional_info_page: AdditionalInfoPage,
-        timesheet_helper: TimeSheetHelper,
+        browser_session: BrowserSessionProtocol,
+        login_handler: LoginHandlerProtocol,
+        date_entry_page: DateEntryPageProtocol,
+        additional_info_page: AdditionalInfoPageProtocol,
+        timesheet_helper: TimeSheetHelperProtocol,
     ) -> None:
         self.browser_session = browser_session
         self.login_handler = login_handler

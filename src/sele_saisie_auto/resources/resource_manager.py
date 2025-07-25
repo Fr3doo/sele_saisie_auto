@@ -7,6 +7,7 @@ from sele_saisie_auto.automation import BrowserSession
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import Credentials
 from sele_saisie_auto.exceptions import AutomationExitError, ResourceManagerInitError
+from sele_saisie_auto.interfaces import BrowserSessionProtocol
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.resources.resource_context import ResourceContext
 
@@ -40,7 +41,7 @@ class ResourceManager:
             EncryptionService(log_file),
         )
         self._credentials: Credentials | None = None
-        self._session: BrowserSession | None = None
+        self._session: BrowserSessionProtocol | None = None
         self._driver = None
         self._app_config = None
 
@@ -96,7 +97,9 @@ class ResourceManager:
         return self._app_config
 
     @property
-    def browser_session(self):  # pragma: no cover - simple accessor
+    def browser_session(
+        self,
+    ) -> BrowserSessionProtocol:  # pragma: no cover - simple accessor
         if self._session is None:
             raise RuntimeError("Resource manager not initialized")
         return self._session
