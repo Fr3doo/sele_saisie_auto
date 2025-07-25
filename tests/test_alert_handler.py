@@ -61,8 +61,7 @@ def test_handle_alerts_date(monkeypatch):
         "sele_saisie_auto.saisie_automatiser_psatime.write_log",
         lambda *a, **k: None,
     )
-    with pytest.raises(SystemExit):
-        handler.handle_alerts("drv", alert_type="date_alert")
+    assert handler.handle_alerts("drv", alert_type="date_alert") is False
 
 
 def test_handle_alerts_unknown(monkeypatch):

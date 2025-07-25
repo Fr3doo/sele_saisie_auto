@@ -58,8 +58,15 @@ class AlertHandler:
     # ------------------------------------------------------------------
     # Alert helpers
     # ------------------------------------------------------------------
-    def handle_date_alert(self, driver) -> None:
-        """Close alert if the date already exists."""
+    def handle_date_alert(self, driver) -> bool:
+        """Close alert if the date already exists.
+
+        Returns
+        -------
+        bool
+            ``False`` if a conflicting date alert was found and closed,
+            ``True`` otherwise.
+        """
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
         if self.browser_session is not None:
@@ -79,9 +86,10 @@ class AlertHandler:
                     self.log_file,
                     "INFO",
                 )
-                sys.exit()
+                return False
 
         write_log(format_message("DATE_VALIDATED", {}), self.log_file, "DEBUG")
+        return True
 
     def handle_save_alerts(self, driver) -> None:
         """Dismiss any alert shown after saving."""
@@ -123,4 +131,4 @@ class AlertHandler:
         handler = handlers.get(alert_type)
         if handler is None:
             raise ValueError(f"Unknown alert_type: {alert_type}")
-        handler(driver)
+        return handler(driver)
