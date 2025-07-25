@@ -6,6 +6,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: N812
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.decorators import handle_selenium_errors
+from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import (
     Waiter,
@@ -78,7 +79,7 @@ class BrowserSession:
         self,
         log_file: str,
         app_config: AppConfig | None = None,
-        waiter: Waiter | None = None,
+        waiter: WaiterProtocol | None = None,
     ) -> None:  # pragma: no cover - simple wiring
         self.log_file = log_file
         self.app_config = app_config

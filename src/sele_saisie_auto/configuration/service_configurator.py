@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation import BrowserSession
 from sele_saisie_auto.encryption_utils import EncryptionService
+from sele_saisie_auto.interfaces import BrowserSessionProtocol, WaiterProtocol
 from sele_saisie_auto.selenium_utils import Waiter
 
 
@@ -13,8 +14,8 @@ class Services:
     """Bundle of commonly used automation services."""
 
     encryption_service: EncryptionService
-    browser_session: BrowserSession
-    waiter: Waiter
+    browser_session: BrowserSessionProtocol
+    waiter: WaiterProtocol
 
 
 class ServiceConfigurator:
@@ -36,7 +37,7 @@ class ServiceConfigurator:
             long_timeout=self.app_config.long_timeout,
         )
 
-    def create_browser_session(self, log_file: str) -> BrowserSession:
+    def create_browser_session(self, log_file: str) -> BrowserSessionProtocol:
         """Return a new :class:`BrowserSession`."""
 
         return BrowserSession(log_file, self.app_config, waiter=self.create_waiter())
@@ -72,11 +73,11 @@ def build_services(app_config: AppConfig, log_file: str) -> Services:
         Instance de :class:`Services` regroupant ``encryption_service``,
         ``browser_session`` et ``waiter`` prêts à être utilisés.
     """
-    waiter: Waiter = Waiter(
+    waiter: WaiterProtocol = Waiter(
         default_timeout=app_config.default_timeout,
         long_timeout=app_config.long_timeout,
     )
-    browser_session: BrowserSession = BrowserSession(
+    browser_session: BrowserSessionProtocol = BrowserSession(
         log_file, app_config, waiter=waiter
     )
     encryption_service: EncryptionService = EncryptionService(log_file)

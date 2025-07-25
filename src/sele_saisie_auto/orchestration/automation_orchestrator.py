@@ -7,16 +7,17 @@ from typing import TYPE_CHECKING, Callable
 from selenium.webdriver.common.by import By
 
 from sele_saisie_auto.app_config import AppConfig
-from sele_saisie_auto.automation import (
-    AdditionalInfoPage,
-    BrowserSession,
-    DateEntryPage,
-    LoginHandler,
-)
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import ServiceConfigurator
+from sele_saisie_auto.interfaces import (
+    AdditionalInfoPageProtocol,
+    BrowserSessionProtocol,
+    DateEntryPageProtocol,
+    LoggerProtocol,
+    LoginHandlerProtocol,
+    TimeSheetHelperProtocol,
+)
 from sele_saisie_auto.locators import Locators
-from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.navigation import PageNavigator
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (
     TimeSheetHelper,
@@ -47,15 +48,15 @@ class AutomationOrchestrator:
     def __init__(
         self,
         config: AppConfig,
-        logger: Logger,
-        browser_session: BrowserSession,
-        login_handler: LoginHandler,
-        date_entry_page: DateEntryPage,
-        additional_info_page: AdditionalInfoPage,
+        logger: LoggerProtocol,
+        browser_session: BrowserSessionProtocol,
+        login_handler: LoginHandlerProtocol,
+        date_entry_page: DateEntryPageProtocol,
+        additional_info_page: AdditionalInfoPageProtocol,
         context: SaisieContext,
         choix_user: bool = True,
         *,
-        timesheet_helper_cls: type[TimeSheetHelper] = TimeSheetHelper,
+        timesheet_helper_cls: type[TimeSheetHelperProtocol] = TimeSheetHelper,
         cleanup_resources: Callable[[object, object, object], None] | None = None,
         resource_manager: ResourceManager | None = None,
     ) -> None:
@@ -91,10 +92,10 @@ class AutomationOrchestrator:
         page_navigator: PageNavigator,
         service_configurator: ServiceConfigurator,
         context: SaisieContext,
-        logger: Logger,
+        logger: LoggerProtocol,
         choix_user: bool = True,
         *,
-        timesheet_helper_cls: type[TimeSheetHelper] = TimeSheetHelper,
+        timesheet_helper_cls: type[TimeSheetHelperProtocol] = TimeSheetHelper,
         cleanup_resources: Callable[[object, object, object], None] | None = None,
     ) -> AutomationOrchestrator:
         """Create an orchestrator from high level components."""
