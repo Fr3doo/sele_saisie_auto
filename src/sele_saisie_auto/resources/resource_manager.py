@@ -102,6 +102,18 @@ class ResourceManager:
             self._credentials = self._resource_context.get_credentials()
         return self._credentials
 
+    def read_credentials(self) -> tuple[str, str]:
+        """Return decrypted credentials using the encryption service."""
+
+        creds = self.get_credentials()
+        login = self._encryption_service.dechiffrer_donnees(
+            creds.login, creds.aes_key
+        )
+        password = self._encryption_service.dechiffrer_donnees(
+            creds.password, creds.aes_key
+        )
+        return login, password
+
     def initialize_shared_memory(self, logger: Logger | None = None) -> Credentials:
         """Retrieve credentials and ensure shared memory is initialized."""
 
