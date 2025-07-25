@@ -644,10 +644,14 @@ def main(
 
     with get_logger(log_file):
         cfg = ConfigManager(log_file=log_file).load()
-        PSATimeAutomation(log_file, cfg).run(
-            headless=headless,
-            no_sandbox=no_sandbox,
-        )
+        automation = PSATimeAutomation(log_file, cfg)
+        try:
+            automation.run(
+                headless=headless,
+                no_sandbox=no_sandbox,
+            )
+        finally:
+            automation.resource_manager.close()
 
 
 # ----------------------------------------------------------------------------
