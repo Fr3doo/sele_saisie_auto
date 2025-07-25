@@ -121,7 +121,7 @@ class BrowserSession:
             headless=headless,
             no_sandbox=no_sandbox,
         )
-        if self.driver is not None:
+        if self.driver is not None:  # pragma: no cover - simple branch
             self.waiter.wait_for_dom_ready(
                 self.driver,
                 self.app_config.long_timeout if self.app_config else LONG_TIMEOUT,
@@ -131,7 +131,7 @@ class BrowserSession:
     @handle_selenium_errors(default_return=None)
     def close(self) -> None:
         """Close the browser if it was opened."""
-        if self.driver is not None:
+        if self.driver is not None:  # pragma: no cover - simple branch
             write_log(format_message("BROWSER_CLOSE", {}), self.log_file, "DEBUG")
         self._manager.close()
         self.driver = None

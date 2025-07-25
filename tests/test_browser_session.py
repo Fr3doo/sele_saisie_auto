@@ -135,3 +135,49 @@ def test_wait_for_dom(monkeypatch):
     session.wait_for_dom("drv")
 
     assert calls == ["stable", "ready"]
+
+
+def test_go_to_iframe_and_default_content(monkeypatch):
+    calls = []
+
+    class DummySwitch:
+        def frame(self, element):
+            calls.append("frame")
+
+        def default_content(self):
+            calls.append("default")
+
+    class DummyDriver:
+        def __init__(self):
+            self.switch_to = DummySwitch()
+
+        def find_element(self, by, name):
+            return "elem"
+
+    session = BrowserSession("log.html")
+    session.driver = DummyDriver()
+
+    assert session.go_to_iframe("id") is True
+    session.go_to_default_content()
+    assert calls == ["frame", "default"]
+
+
+def test_go_to_iframe_fail(monkeypatch):
+    class DummySwitch:
+        def frame(self, elem):
+            raise Exception("boom")
+
+        def default_content(self):
+            pass
+
+    class DummyDriver:
+        def __init__(self):
+            self.switch_to = DummySwitch()
+
+        def find_element(self, by, name):
+            raise Exception("nope")
+
+    session = BrowserSession("log.html")
+    session.driver = DummyDriver()
+
+    assert session.go_to_iframe("id") is False

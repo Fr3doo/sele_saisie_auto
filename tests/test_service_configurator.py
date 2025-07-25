@@ -125,3 +125,33 @@ def test_service_configurator_build_services(sample_config):
     assert services.browser_session.waiter is services.waiter
     assert services.waiter.wrapper.default_timeout == app_cfg.default_timeout
     assert services.waiter.wrapper.long_timeout == app_cfg.long_timeout
+
+
+def test_encryption_backend_injection(sample_config):
+    app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
+
+    class DummyBackend:
+        def __init__(self):
+            self.called = False
+
+        def generer_cle_aes(self, taille_cle: int = 32) -> bytes:
+            self.called = True
+            return b"x" * taille_cle
+
+        def chiffrer_donnees(
+            self, donnees: str, cle: bytes, taille_bloc: int = 128
+        ) -> bytes:
+            return donnees.encode()
+
+        def dechiffrer_donnees(
+            self, donnees_chiffrees: bytes, cle: bytes, taille_bloc: int = 128
+        ) -> str:
+            return donnees_chiffrees.decode()
+
+    backend = DummyBackend()
+    configurator = ServiceConfigurator(app_cfg, encryption_backend=backend)
+    enc_service = configurator.create_encryption_service("log.html")
+
+    key = enc_service.generer_cle_aes()
+    assert backend.called
+    assert key == b"x" * 32
