@@ -29,8 +29,8 @@ from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.exceptions import AutomationNotInitializedError
 from sele_saisie_auto.locators import Locators
-from sele_saisie_auto.logger_utils import initialize_logger, write_log
-from sele_saisie_auto.logging_service import Logger, get_logger
+from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logging_service import Logger, LoggingConfigurator, get_logger
 from sele_saisie_auto.navigation import PageNavigator
 from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.resources.resource_manager import ResourceManager
@@ -127,8 +127,7 @@ class PSATimeAutomation:
         self.log_file = log_file
         self.choix_user = choix_user
         self.memory_config = memory_config or MemoryConfig()
-        set_log_file_selenium(log_file)
-        initialize_logger(app_config.raw, log_level_override=app_config.debug_mode)
+        LoggingConfigurator.setup(log_file, app_config.debug_mode, app_config.raw)
         self.logger = logger or get_logger(log_file)
         self.shared_memory_service = shared_memory_service or SharedMemoryService(
             self.logger

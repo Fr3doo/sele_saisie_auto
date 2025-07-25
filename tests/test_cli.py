@@ -92,7 +92,9 @@ def test_main_creates_services_and_passes_flags(monkeypatch):
 
     monkeypatch.setattr(cli, "get_logger", lambda lf: DummyLogger())
     monkeypatch.setattr(
-        cli, "initialize_logger", lambda cfg_raw, log_level_override=None: None
+        cli.LoggingConfigurator,
+        "setup",
+        lambda log_file, debug_mode, config=None: None,
     )
 
     cli.main([])

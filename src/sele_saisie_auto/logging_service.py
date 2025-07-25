@@ -83,3 +83,23 @@ def get_logger(log_file: str | None) -> Logger:
     if log_file not in _LOGGERS:
         _LOGGERS[log_file] = Logger(log_file)
     return _LOGGERS[log_file]
+
+
+class LoggingConfigurator:
+    """Utility to configure global logging for the application."""
+
+    @staticmethod
+    def setup(log_file: str, debug_mode: str | None, config) -> None:
+        """Configure logging for Selenium helpers and the logger utils."""
+
+        from configparser import ConfigParser
+
+        from sele_saisie_auto.logger_utils import initialize_logger
+        from sele_saisie_auto.selenium_utils import (
+            set_log_file as set_log_file_selenium,
+        )
+
+        set_log_file_selenium(log_file)
+
+        if isinstance(config, ConfigParser):
+            initialize_logger(config, log_level_override=debug_mode)
