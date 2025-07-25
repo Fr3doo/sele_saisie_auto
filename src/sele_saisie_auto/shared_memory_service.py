@@ -1,5 +1,6 @@
 """Utilities to manage data in shared memory."""
 
+import os
 from multiprocessing import shared_memory
 
 from sele_saisie_auto.logging_service import Logger
@@ -47,6 +48,11 @@ class SharedMemoryService:
         self, nom: str, taille: int
     ) -> tuple[shared_memory.SharedMemory, bytes]:
         """Read bytes from an existing shared memory segment."""
+        if os.name == "posix":
+            path = f"/dev/shm/{nom}"  # nosec B108
+            if not os.path.exists(path):
+                self.logger.warning(f"Shared memory segment '{nom}' is not accessible.")
+                raise FileNotFoundError(nom)
         try:
             memoire = shared_memory.SharedMemory(name=nom)
             donnees = bytes(memoire.buf[:taille])
@@ -54,6 +60,9 @@ class SharedMemoryService:
                 f"💀 Données récupérées depuis la mémoire partagée avec le nom '{nom}'."
             )
             return memoire, donnees
+        except FileNotFoundError:
+            self.logger.warning(f"Shared memory segment '{nom}' is not accessible.")
+            raise
         except Exception as e:  # pragma: no cover - defensive
             self.logger.error(
                 f"❌ Erreur lors de la récupération depuis la mémoire partagée : {e}"

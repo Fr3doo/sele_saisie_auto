@@ -127,6 +127,17 @@ def test_recuperer_de_memoire_partagee_error(monkeypatch):
         service.recuperer_de_memoire_partagee("name", 4)
 
 
+def test_recuperer_de_memoire_partagee_warning(monkeypatch):
+    logs = []
+    logger = Logger(None, writer=lambda *a, **k: None)
+    monkeypatch.setattr(logger, "warning", lambda msg: logs.append(msg))
+    service = SharedMemoryService(logger)
+    name = f"missing_{uuid4().hex}"
+    with pytest.raises(FileNotFoundError):
+        service.recuperer_de_memoire_partagee(name, 4)
+    assert logs and "not accessible" in logs[0]
+
+
 def test_dechiffrer_donnees_error(monkeypatch):
     service = EncryptionService()
     key = service.generer_cle_aes()
