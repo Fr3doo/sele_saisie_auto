@@ -79,6 +79,9 @@ def test_initialize_shared_memory_error(monkeypatch, sample_config):
     )
     sap.context.encryption_service = DummyEnc()
     sap.context.shared_memory_service = DummySHMService()
+    sap._ORCHESTRATOR.resource_manager._resource_context.encryption_service = (
+        sap._ORCHESTRATOR.resource_manager._encryption_service
+    )
     monkeypatch.setattr(
         sap._ORCHESTRATOR.resource_manager._encryption_service,
         "retrieve_credentials",

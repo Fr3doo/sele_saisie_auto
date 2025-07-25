@@ -17,7 +17,10 @@ class LoggerProtocol(Protocol):
     def critical(self, message: str) -> None: ...
 
     def __enter__(self) -> "LoggerProtocol": ...
-    def __exit__(self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: Any) -> None: ...
+
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: Any
+    ) -> None: ...
 
 
 @runtime_checkable
@@ -35,7 +38,14 @@ class BrowserSessionProtocol(Protocol):
     waiter: WaiterProtocol
     app_config: AppConfig | None
 
-    def open(self, url: str, *, fullscreen: bool = False, headless: bool = False, no_sandbox: bool = False): ...
+    def open(
+        self,
+        url: str,
+        *,
+        fullscreen: bool = False,
+        headless: bool = False,
+        no_sandbox: bool = False,
+    ): ...
     def close(self) -> None: ...
     def wait_for_dom(self, driver) -> None: ...
     def go_to_iframe(self, id_or_name: str) -> bool: ...
@@ -44,7 +54,9 @@ class BrowserSessionProtocol(Protocol):
 
 @runtime_checkable
 class LoginHandlerProtocol(Protocol):
-    def connect_to_psatime(self, driver, aes_key: bytes, encrypted_login: bytes, encrypted_password: bytes) -> None: ...
+    def connect_to_psatime(
+        self, driver, aes_key: bytes, encrypted_login: bytes, encrypted_password: bytes
+    ) -> None: ...
 
 
 @runtime_checkable

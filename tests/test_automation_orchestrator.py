@@ -49,6 +49,14 @@ def test_run_calls_services(monkeypatch, sample_config):
     shm_service = DummySHMService()
 
     ctx = SaisieContext(app_cfg, enc_service, shm_service, {}, [])
+    from sele_saisie_auto.orchestration import automation_orchestrator as orch_mod
+    from sele_saisie_auto.resources import resource_manager as rm
+
+    monkeypatch.setattr(
+        orch_mod,
+        "ResourceManager",
+        lambda log_file: rm.ResourceManager(log_file, enc_service),
+    )
 
     orch = AutomationOrchestrator(
         app_cfg,
@@ -172,6 +180,14 @@ def test_run_order(monkeypatch, sample_config):
             pass
 
     ctx = SaisieContext(app_cfg, DummyEncService(), DummySHMService(), {}, [])
+    from sele_saisie_auto.orchestration import automation_orchestrator as orch_mod
+    from sele_saisie_auto.resources import resource_manager as rm
+
+    monkeypatch.setattr(
+        orch_mod,
+        "ResourceManager",
+        lambda log_file: rm.ResourceManager(log_file, DummyEncService()),
+    )
     orch = AutomationOrchestrator(
         app_cfg,
         logger,
@@ -237,6 +253,14 @@ def test_run_uses_passed_cleanup_function(monkeypatch, sample_config):
     shm_service = DummySHMService()
 
     ctx = SaisieContext(app_cfg, enc_service, shm_service, {}, [])
+    from sele_saisie_auto.orchestration import automation_orchestrator as orch_mod
+    from sele_saisie_auto.resources import resource_manager as rm
+
+    monkeypatch.setattr(
+        orch_mod,
+        "ResourceManager",
+        lambda log_file: rm.ResourceManager(log_file, enc_service),
+    )
 
     cleanup_args = {}
 
