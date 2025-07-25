@@ -7,9 +7,13 @@ import sys
 
 from sele_saisie_auto.automation import BrowserSession
 from sele_saisie_auto.config_manager import ConfigManager
-from sele_saisie_auto.encryption_utils import Credentials, EncryptionService
+from sele_saisie_auto.encryption_utils import Credentials
 from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.logging_service import Logger
+from sele_saisie_auto.resources.resource_context import ResourceContext
+
+# Backward compatibility: tests may patch ``EncryptionService``
+EncryptionService = ResourceContext
 
 __all__ = ["ResourceManager"]
 
@@ -26,9 +30,15 @@ class ResourceManager:
 
         self.log_file = log_file
         self._config_manager = ConfigManager(log_file)
-        self._encryption_service = EncryptionService(log_file)
-        self._session: BrowserSession | None = None
+        try:
+            self._resource_context = ResourceContext(
+                log_file, EncryptionService(log_file)
+            )
+        except TypeError:
+            self._resource_context = ResourceContext(log_file)
+        self._encryption_service = self._resource_context.encryption_service
         self._credentials: Credentials | None = None
+        self._session: BrowserSession | None = None
         self._driver = None
         self._app_config = None
 
@@ -45,10 +55,11 @@ class ResourceManager:
         self._app_config = self._config_manager.load()
         if self._session is None:
             self._session = BrowserSession(self.log_file, self._app_config)
-        if hasattr(self._encryption_service, "__enter__"):
-            self._enc_ctx = self._encryption_service.__enter__()
+        self._resource_context.encryption_service = self._encryption_service
+        if hasattr(self._resource_context, "__enter__"):
+            self._res_ctx = self._resource_context.__enter__()
         else:
-            self._enc_ctx = None
+            self._res_ctx = None
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:
@@ -57,22 +68,8 @@ class ResourceManager:
         if self._driver is not None and self._session is not None:
             self._session.close()
 
-        if hasattr(self._encryption_service, "__exit__"):
-            self._encryption_service.__exit__(exc_type, exc, tb)
-
-        if self._credentials is not None:
-            for mem in (
-                self._credentials.mem_key,
-                self._credentials.mem_login,
-                self._credentials.mem_password,
-            ):
-                if mem is not None:
-                    try:
-                        self._encryption_service.shared_memory_service.supprimer_memoire_partagee_securisee(
-                            mem
-                        )
-                    except Exception:  # nosec B110 - cleanup best effort
-                        pass
+        if hasattr(self._resource_context, "__exit__"):
+            self._resource_context.__exit__(exc_type, exc, tb)
         self._credentials = None
         self._driver = None
         self._session = None
@@ -101,9 +98,8 @@ class ResourceManager:
 
     def get_credentials(self) -> Credentials:
         """Retourne les identifiants chiffrés stockés en mémoire partagée."""
-
         if self._credentials is None:
-            self._credentials = self._encryption_service.retrieve_credentials()
+            self._credentials = self._resource_context.get_credentials()
         return self._credentials
 
     def initialize_shared_memory(self, logger: Logger | None = None) -> Credentials:
