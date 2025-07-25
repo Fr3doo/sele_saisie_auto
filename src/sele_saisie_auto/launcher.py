@@ -17,8 +17,8 @@ from sele_saisie_auto.gui_builder import (
     create_modern_label_with_pack,
     create_tab,
 )
-from sele_saisie_auto.logger_utils import LOG_LEVELS, initialize_logger
-from sele_saisie_auto.logging_service import Logger, get_logger
+from sele_saisie_auto.logger_utils import LOG_LEVELS
+from sele_saisie_auto.logging_service import Logger, LoggingConfigurator, get_logger
 from sele_saisie_auto.read_or_write_file_config_ini_utils import (
     read_config_ini,
     write_config_ini,
@@ -165,7 +165,7 @@ def main(argv: list[str] | None = None) -> None:
         logger.info("Initialisation")
 
         config = read_config_ini(log_file)
-        initialize_logger(config, log_level_override=args.log_level)
+        LoggingConfigurator.setup(log_file, args.log_level, config)
 
         multiprocessing.freeze_support()
         with EncryptionService(log_file) as encryption_service:

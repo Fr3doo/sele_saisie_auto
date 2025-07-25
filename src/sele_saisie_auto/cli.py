@@ -7,8 +7,8 @@ import argparse
 from sele_saisie_auto import __version__
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import ServiceConfigurator
-from sele_saisie_auto.logger_utils import LOG_LEVELS, initialize_logger
-from sele_saisie_auto.logging_service import get_logger
+from sele_saisie_auto.logger_utils import LOG_LEVELS
+from sele_saisie_auto.logging_service import LoggingConfigurator, get_logger
 from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
 from sele_saisie_auto.shared_utils import get_log_file
@@ -51,7 +51,7 @@ def main(argv: list[str] | None = None) -> None:
     log_file = get_log_file()
     with get_logger(log_file) as logger:
         cfg = ConfigManager(log_file=log_file).load()
-        initialize_logger(cfg.raw, log_level_override=args.log_level)
+        LoggingConfigurator.setup(log_file, args.log_level, cfg.raw)
 
         service_configurator = ServiceConfigurator(cfg)
         services = service_configurator.build_services(log_file)

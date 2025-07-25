@@ -339,9 +339,9 @@ def test_main(monkeypatch):
     monkeypatch.setattr(launcher, "read_config_ini", lambda lf: cfg)
     init = {}
     monkeypatch.setattr(
-        launcher,
-        "initialize_logger",
-        lambda c, log_level_override=None: init.setdefault("lvl", log_level_override),
+        launcher.LoggingConfigurator,
+        "setup",
+        lambda log_file, debug_mode, config=None: init.setdefault("lvl", debug_mode),
     )
     monkeypatch.setattr(
         launcher.multiprocessing,
