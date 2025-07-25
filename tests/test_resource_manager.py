@@ -409,3 +409,52 @@ def test_enter_raises_runtime_error(monkeypatch):
     with pytest.raises(resource_manager.ResourceManagerInitError):
         with rm:
             pass
+
+
+def test_no_shared_memory_left_after_close(monkeypatch):
+    class CleanResourceContext(DummyResourceContext):
+        def __enter__(self):
+            self.mem_key = shared_memory.SharedMemory(create=True, size=1)
+            self.mem_login = shared_memory.SharedMemory(create=True, size=1)
+            self.mem_password = shared_memory.SharedMemory(create=True, size=1)
+            self.mem_key.buf[:1] = b"k"
+            self.mem_login.buf[:1] = b"u"
+            self.mem_password.buf[:1] = b"p"
+            return self
+
+        def get_credentials(self):
+            return Credentials(
+                b"k",
+                self.mem_key,
+                b"u",
+                self.mem_login,
+                b"p",
+                self.mem_password,
+            )
+
+        def __exit__(self, exc_type, exc, tb):
+            for mem in (self.mem_key, self.mem_login, self.mem_password):
+                try:
+                    mem.close()
+                    mem.unlink()
+                except FileNotFoundError:
+                    pass
+
+    monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
+    monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
+    monkeypatch.setattr(resource_manager, "ResourceContext", CleanResourceContext)
+
+    rm = resource_manager.ResourceManager("log.html")
+    rm.__enter__()
+    creds = rm.get_credentials()
+    names = [creds.mem_key.name, creds.mem_login.name, creds.mem_password.name]
+
+    rm.close()
+
+    for name in names:
+        with pytest.raises(FileNotFoundError):
+            shared_memory.SharedMemory(name=name)
+    # avoid ResourceWarning in CPython
+    creds.mem_key.close()
+    creds.mem_login.close()
+    creds.mem_password.close()
