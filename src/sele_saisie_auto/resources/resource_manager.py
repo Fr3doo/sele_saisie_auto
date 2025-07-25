@@ -3,12 +3,10 @@
 
 from __future__ import annotations
 
-import sys
-
 from sele_saisie_auto.automation import BrowserSession
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import Credentials
-from sele_saisie_auto.exceptions import AutomationExitError
+from sele_saisie_auto.exceptions import AutomationExitError, ResourceManagerInitError
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.resources.resource_context import ResourceContext
 
@@ -56,14 +54,17 @@ class ResourceManager:
             ResourceManager: Instance prête à l'emploi.
         """
 
-        self._app_config = self._config_manager.load()
-        if self._session is None:
-            self._session = BrowserSession(self.log_file, self._app_config)
-        self._resource_context.encryption_service = self._encryption_service
-        if hasattr(self._resource_context, "__enter__"):
-            self._res_ctx = self._resource_context.__enter__()
-        else:
-            self._res_ctx = None
+        try:
+            self._app_config = self._config_manager.load()
+            if self._session is None:
+                self._session = BrowserSession(self.log_file, self._app_config)
+            self._resource_context.encryption_service = self._encryption_service
+            if hasattr(self._resource_context, "__enter__"):
+                self._res_ctx = self._resource_context.__enter__()
+            else:
+                self._res_ctx = None
+        except Exception as exc:  # pragma: no cover - error handling
+            raise ResourceManagerInitError(str(exc)) from exc
         return self
 
     def __exit__(self, exc_type, exc, tb) -> None:

@@ -397,3 +397,15 @@ def test_context_manager_without_driver(monkeypatch):
     assert calls["close"] == 0
     assert rm._session is None
     assert rm._driver is None
+
+
+def test_enter_raises_runtime_error(monkeypatch):
+    class FailingConfigManager(DummyConfigManager):
+        def load(self):
+            raise FileNotFoundError("missing")
+
+    monkeypatch.setattr(resource_manager, "ConfigManager", FailingConfigManager)
+    rm = resource_manager.ResourceManager("log.html")
+    with pytest.raises(resource_manager.ResourceManagerInitError):
+        with rm:
+            pass

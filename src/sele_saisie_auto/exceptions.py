@@ -15,3 +15,7 @@ class AutomationNotInitializedError(Exception):
 
 class AutomationExitError(Exception):
     """Raised when the automation must stop gracefully."""
+
+
+class ResourceManagerInitError(RuntimeError):
+    """Raised when :class:`ResourceManager` initialization fails."""
