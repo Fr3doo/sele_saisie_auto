@@ -4,7 +4,11 @@ from dataclasses import dataclass
 
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation import BrowserSession
-from sele_saisie_auto.encryption_utils import EncryptionService
+from sele_saisie_auto.encryption_utils import (
+    DefaultEncryptionBackend,
+    EncryptionBackend,
+    EncryptionService,
+)
 from sele_saisie_auto.interfaces import BrowserSessionProtocol, WaiterProtocol
 from sele_saisie_auto.selenium_utils import Waiter
 
@@ -21,13 +25,17 @@ class Services:
 class ServiceConfigurator:
     """Configure core services based on :class:`AppConfig`."""
 
-    def __init__(self, app_config: AppConfig) -> None:
+    def __init__(
+        self, app_config: AppConfig, encryption_backend: EncryptionBackend | None = None
+    ) -> None:
         self.app_config = app_config
+        self.encryption_backend = encryption_backend
 
     def create_encryption_service(self, log_file: str) -> EncryptionService:
         """Return a new :class:`EncryptionService`."""
 
-        return EncryptionService(log_file)
+        backend = self.encryption_backend or DefaultEncryptionBackend(log_file)
+        return EncryptionService(log_file, backend=backend)
 
     def create_waiter(self) -> Waiter:
         """Return a configured :class:`Waiter`."""
@@ -47,11 +55,15 @@ class ServiceConfigurator:
 
         waiter = self.create_waiter()
         browser_session = BrowserSession(log_file, self.app_config, waiter=waiter)
-        encryption_service = EncryptionService(log_file)
+        encryption_service = self.create_encryption_service(log_file)
         return Services(encryption_service, browser_session, waiter)
 
 
-def build_services(app_config: AppConfig, log_file: str) -> Services:
+def build_services(
+    app_config: AppConfig,
+    log_file: str,
+    encryption_backend: EncryptionBackend | None = None,
+) -> Services:
     """Instancier et retourner les services principaux de l'application.
 
     Ce constructeur configure un :class:`Waiter` selon les valeurs fournies
@@ -73,15 +85,8 @@ def build_services(app_config: AppConfig, log_file: str) -> Services:
         Instance de :class:`Services` regroupant ``encryption_service``,
         ``browser_session`` et ``waiter`` prêts à être utilisés.
     """
-    waiter: WaiterProtocol = Waiter(
-        default_timeout=app_config.default_timeout,
-        long_timeout=app_config.long_timeout,
-    )
-    browser_session: BrowserSessionProtocol = BrowserSession(
-        log_file, app_config, waiter=waiter
-    )
-    encryption_service: EncryptionService = EncryptionService(log_file)
-    return Services(encryption_service, browser_session, waiter)
+    configurator = ServiceConfigurator(app_config, encryption_backend)
+    return configurator.build_services(log_file)
 
 
 __all__ = ["Services", "build_services", "ServiceConfigurator"]
