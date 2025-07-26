@@ -18,6 +18,7 @@ from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
 )
 from sele_saisie_auto.resources import resource_manager  # noqa: E402
 from sele_saisie_auto.saisie_automatiser_psatime import SaisieContext  # noqa: E402
+from tests.conftest import FakeEncryptionService  # noqa: E402
 
 
 class DummyConfigManager:
@@ -26,23 +27,6 @@ class DummyConfigManager:
 
     def load(self):
         return APP_CFG
-
-
-class DummyEncryption:
-    def __init__(self, log_file: str) -> None:
-        self.log_file = log_file
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
-        pass
-
-    def retrieve_credentials(self):
-        return CREDS
-
-    def dechiffrer_donnees(self, data, key):
-        return data.decode() if isinstance(data, bytes) else data
 
 
 class DummyManager:
@@ -137,7 +121,9 @@ def test_full_automation(monkeypatch, sample_config):
         lambda *a, **k: types.SimpleNamespace(traiter_description=lambda *a, **k: None),
     )
 
-    with resource_manager.ResourceManager(log_file, DummyEncryption(log_file)) as rm:
+    with resource_manager.ResourceManager(
+        log_file, FakeEncryptionService(log_file)
+    ) as rm:
         ctx = SaisieContext(APP_CFG, rm._encryption_service, DummySHMService(), {}, [])
         automation = DummyAutomation(log_file, ctx, rm._session, logger)
         login = LoginHandler(log_file, rm._encryption_service, rm._session)

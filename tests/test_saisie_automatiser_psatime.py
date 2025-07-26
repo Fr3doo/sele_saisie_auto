@@ -14,39 +14,12 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
+from tests.conftest import FakeEncryptionService  # noqa: E402
 
 # Les tests de ce module s'appuient sur l'orchestrateur refactorisé
 # `AutomationOrchestrator` afin de valider le nouveau fonctionnement.
 
 pytestmark = pytest.mark.slow
-
-
-class DummyEnc:
-    def __init__(self):
-        self.removed = []
-        self.cle_aes = b"k" * 32
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
-        pass
-
-    def retrieve_credentials(self):
-        return sap.Credentials(
-            aes_key=self.cle_aes,
-            mem_key=object(),
-            login=b"user",
-            mem_login=object(),
-            password=b"pass",
-            mem_password=object(),
-        )
-
-    def dechiffrer_donnees(self, data, key):
-        return data.decode() if isinstance(data, bytes) else data
-
-    def supprimer_memoire_partagee_securisee(self, mem):
-        self.removed.append(mem)
 
 
 class DummySHMService:
@@ -196,7 +169,7 @@ def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
         def fake_build(cfg_b, lf_b):
             waiter = get_waiter(cfg_b)
             session = sap.BrowserSession(lf_b, cfg_b, waiter=waiter)
-            enc = DummyEnc()
+            enc = FakeEncryptionService()
             login = sap.LoginHandler(lf_b, enc, session)
             return Services(enc, session, waiter, login)
 
@@ -217,13 +190,13 @@ def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
         monkeypatch.setattr(
             sap,
             "ResourceManager",
-            lambda log_file: rm.ResourceManager(log_file, DummyEnc()),
+            lambda log_file: rm.ResourceManager(log_file, FakeEncryptionService()),
         )
     else:
         monkeypatch.setattr(
             sap,
             "ResourceManager",
-            lambda log_file: rm.ResourceManager(log_file, DummyEnc()),
+            lambda log_file: rm.ResourceManager(log_file, FakeEncryptionService()),
         )
     auto = sap.PSATimeAutomation("log.html", app_cfg)
     service_configurator = ServiceConfigurator(app_cfg)
@@ -306,7 +279,7 @@ def test_initialize_shared_memory(monkeypatch, sample_config):
     monkeypatch.setattr(
         sap, "shared_memory", types.SimpleNamespace(SharedMemory=DummySHM)
     )
-    sap.context.encryption_service = DummyEnc()
+    sap.context.encryption_service = FakeEncryptionService()
     sap.context.shared_memory_service = DummySHMService()
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
     result = sap.initialize_shared_memory()
