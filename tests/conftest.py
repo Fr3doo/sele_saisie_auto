@@ -40,6 +40,39 @@ def sample_config():
     return cfg
 
 
+class FakeEncryptionService:
+    """Lightweight encryption stub used in integration tests."""
+
+    def __init__(self, log_file: str | None = None) -> None:
+        self.log_file = log_file
+        self.cle_aes = b"k" * 32
+        self.removed: list[object] = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        pass
+
+    def retrieve_credentials(self):
+        from sele_saisie_auto.encryption_utils import Credentials
+
+        return Credentials(
+            aes_key=self.cle_aes,
+            mem_key=object(),
+            login=b"user",
+            mem_login=object(),
+            password=b"pass",
+            mem_password=object(),
+        )
+
+    def dechiffrer_donnees(self, data, key):
+        return data.decode() if isinstance(data, bytes) else data
+
+    def supprimer_memoire_partagee_securisee(self, mem):
+        self.removed.append(mem)
+
+
 # ----------------------------
 # Common test stubs
 # ----------------------------

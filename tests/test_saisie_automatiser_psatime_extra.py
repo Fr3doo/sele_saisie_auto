@@ -5,10 +5,10 @@ import pytest
 from sele_saisie_auto import saisie_automatiser_psatime as sap
 from sele_saisie_auto.utils import misc as utils_misc
 from tests.test_saisie_automatiser_psatime import (
-    DummyEnc,
     DummyManager,
     DummySHM,
     DummySHMService,
+    FakeEncryptionService,
     setup_init,
 )
 
@@ -22,7 +22,9 @@ def test_initialize_date_none(monkeypatch, sample_config):
 
     app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
-    monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyEnc())
+    monkeypatch.setattr(
+        sap, "EncryptionService", lambda lf, shm=None: FakeEncryptionService()
+    )
     sap.initialize(
         "log.html",
         app_cfg,
@@ -77,7 +79,7 @@ def test_initialize_shared_memory_error(monkeypatch, sample_config):
     monkeypatch.setattr(
         sap, "shared_memory", types.SimpleNamespace(SharedMemory=DummySHM)
     )
-    sap.context.encryption_service = DummyEnc()
+    sap.context.encryption_service = FakeEncryptionService()
     sap.context.shared_memory_service = DummySHMService()
     sap._ORCHESTRATOR.resource_manager._resource_context.encryption_service = (
         sap._ORCHESTRATOR.resource_manager._encryption_service
@@ -165,7 +167,7 @@ def test_save_draft_and_validate_no_element(monkeypatch, sample_config):
 
 def test_cleanup_resources_calls(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
-    enc = DummyEnc()
+    enc = FakeEncryptionService()
     manager = DummyManager("log.html")
     sap.context.encryption_service = enc
     shm_service = DummySHMService()
