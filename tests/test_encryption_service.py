@@ -205,3 +205,31 @@ def test_retrieve_after_exit_fails():
 
     with pytest.raises(FileNotFoundError):
         service.retrieve_credentials()
+
+
+def test_enter_cleans_on_failure(monkeypatch):
+    service = EncryptionService()
+
+    original_store = service.shared_memory_service.stocker_en_memoire_partagee
+
+    def store(name, data):
+        return original_store(name, data)
+
+    monkeypatch.setattr(
+        service.shared_memory_service,
+        "stocker_en_memoire_partagee",
+        store,
+    )
+
+    class FailingList(list):
+        def append(self, item):  # type: ignore[override]
+            super().append(item)
+            raise RuntimeError("boom")
+
+    service._memoires = FailingList()
+
+    with pytest.raises(RuntimeError):
+        with service:
+            pass
+    with pytest.raises(FileNotFoundError):
+        shared_memory.SharedMemory(name="memoire_partagee_cle")

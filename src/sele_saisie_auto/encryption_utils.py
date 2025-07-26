@@ -117,6 +117,7 @@ class EncryptionService:
             self.shared_memory_service = SharedMemoryService(logger)
         else:
             self.shared_memory_service = shared_memory_service
+        self.logger = get_logger(log_file)
         self.cle_aes: bytes | None = None
         self._memoires: list[object] = []
 
@@ -146,11 +147,27 @@ class EncryptionService:
     def __enter__(self) -> "EncryptionService":
         """Generate and store the AES key in shared memory."""
         self.cle_aes = self.generer_cle_aes()
-        mem = self.shared_memory_service.stocker_en_memoire_partagee(
-            "memoire_partagee_cle",
-            self.cle_aes,
-        )
-        self._memoires.append(mem)
+        mem = None
+        try:
+            mem = self.shared_memory_service.stocker_en_memoire_partagee(
+                "memoire_partagee_cle",
+                self.cle_aes,
+            )
+            self._memoires.append(mem)
+        except Exception as exc:  # pragma: no cover - cleanup best effort
+            if mem is not None:
+                try:
+                    self.shared_memory_service.supprimer_memoire_partagee_securisee(mem)
+                except Exception:  # nosec B110
+                    pass
+            self.cle_aes = None
+            self.logger.error(
+                f"❌ Impossible d'initialiser la mémoire partagée : {exc}"
+            )
+            raise
+        else:
+            if self.log_file:
+                self.logger.info("✅ Mémoire partagée initialisée")
         return self
 
     def store_credentials(self, login_data: bytes, password_data: bytes) -> None:
