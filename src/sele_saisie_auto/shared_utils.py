@@ -1,19 +1,25 @@
 # shared_utils.py
+from __future__ import annotations
 import os
 from datetime import datetime
+from typing import Literal
+
 
 # Constantes globales pour la configuration
 """Les modules externes n'accèdent pas directement à _log_file.
 Ils passent par get_log_file(), qui garantit une gestion contrôlée du fichier de log.
 Variable privée pour éviter des modifications externes"""
-_log_file = None
+_log_file: str | None = None
 
-DEFAULT_LOG_DIR = "logs"
-HTML_FORMAT = "html"
-TXT_FORMAT = "txt"
+DEFAULT_LOG_DIR: str = "logs"
+HTML_FORMAT: Literal["html"] = "html"
+TXT_FORMAT: Literal["txt"] = "txt"
 
 
-def setup_logs(log_dir=DEFAULT_LOG_DIR, log_format=HTML_FORMAT):
+def setup_logs(
+    log_dir: str = DEFAULT_LOG_DIR,
+    log_format: Literal["html", "txt"] = HTML_FORMAT,
+) -> str:
     """
     Prépare un fichier de log journalier.
 
@@ -39,7 +45,7 @@ def setup_logs(log_dir=DEFAULT_LOG_DIR, log_format=HTML_FORMAT):
         ) from e
 
 
-def get_log_file():
+def get_log_file() -> str:
     """Retourne le fichier de log utilisé dans l'application, en l'initialisant si nécessaire.
 
     Cette fonction est utilisée pour centraliser la gestion du fichier de log dans le programme.

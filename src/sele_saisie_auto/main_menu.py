@@ -1,8 +1,9 @@
 """Main menu interface."""
 
 from __future__ import annotations
-
 import tkinter as tk
+from tkinter import ttk
+from sele_saisie_auto.encryption_utils import EncryptionService
 
 from sele_saisie_auto.gui_builder import (
     create_button_without_style,
@@ -17,7 +18,7 @@ from sele_saisie_auto.launcher import run_psatime_with_credentials, start_config
 def main_menu(
     cle_aes: bytes,
     log_file: str,
-    encryption_service,
+    encryption_service: EncryptionService,
     *,
     headless: bool = False,
     no_sandbox: bool = False,
@@ -28,12 +29,20 @@ def main_menu(
     menu.resizable(False, False)
     menu.geometry("400x300")
 
+    # Conteneur ttk pour satisfaire les helpers typés « ttk.Widget »
+    root_frame = ttk.Frame(menu)
+    root_frame.pack(fill="both", expand=True)
+
     login_var = tk.StringVar()
     mdp_var = tk.StringVar()
 
     tk.Label(menu, text="Program PSATime Auto", font=("Segoe UI", 14)).pack(pady=10)
     credentials = create_labeled_frame(
-        menu, text="Identifiants", padx=20, pady=10, padding=(10, 5)
+        root_frame,
+        text="Identifiants",
+        padx=20,
+        pady=10,
+        padding=(10, 5, 10, 5),  # 4 valeurs requises
     )
     create_modern_label_with_grid(credentials, text="Login:", row=0, col=0)
     login_entry = create_modern_entry_with_grid(
@@ -45,7 +54,7 @@ def main_menu(
     create_modern_entry_with_grid_for_password(credentials, var=mdp_var, row=1, col=1)
 
     launch = create_button_without_style(
-        menu,
+        root_frame,
         text="Lancer votre PSATime",
         command=lambda: run_psatime_with_credentials(
             encryption_service,
@@ -59,19 +68,21 @@ def main_menu(
     )
     launch.bind("<Return>", lambda _: launch.invoke())
 
+    # Fonction séparée pour éviter le lambda qui retournait une liste
+    def open_config() -> None:
+        menu.destroy()
+        start_configuration(
+            cle_aes,
+            log_file,
+            encryption_service,
+            headless=headless,
+            no_sandbox=no_sandbox,
+        )
+
     config_btn = create_button_without_style(
-        menu,
+        root_frame,
         text="Configurer le lancement",
-        command=lambda: [
-            menu.destroy(),
-            start_configuration(
-                cle_aes,
-                log_file,
-                encryption_service,
-                headless=headless,
-                no_sandbox=no_sandbox,
-            ),
-        ],
+        command=open_config,
     )
     config_btn.bind("<Return>", lambda _: config_btn.invoke())
 

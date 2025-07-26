@@ -1,6 +1,10 @@
 from enum import Enum, auto
+from typing import Any, Dict, List
 
-_LOCATOR_MAP = {
+# --------------------------------------------------------------------------- #
+# Mapping brut id_logique ➜ id_HTML
+# --------------------------------------------------------------------------- #
+_LOCATOR_MAP: Dict[str, str] = {
     "USERNAME": "userid",
     "PASSWORD": "pwd",  # nosec B105 - refers to field id, not credentials
     "MAIN_FRAME": "main_target_win0",
@@ -22,13 +26,24 @@ _LOCATOR_MAP = {
 }
 
 
-class Locators(Enum):
+# --------------------------------------------------------------------------- #
+# Enum centralisé des sélecteurs Selenium
+# --------------------------------------------------------------------------- #
+class Locators(str, Enum):
     """Central Selenium locators used across modules."""
 
     @staticmethod
-    def _generate_next_value_(name, start, count, last_values):
+    def _generate_next_value_(
+        name: str,
+        start: int,
+        count: int,
+        last_values: List[Any],
+    ) -> str:
         return _LOCATOR_MAP[name]
 
+    # --------------------------------------------------------------------- #
+    # Membres
+    # --------------------------------------------------------------------- #
     USERNAME = auto()
     PASSWORD = auto()  # nosec B105 - refers to field id, not credentials
     MAIN_FRAME = auto()

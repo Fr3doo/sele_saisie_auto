@@ -6,7 +6,7 @@ import os
 from collections.abc import Callable
 from configparser import ConfigParser
 from dataclasses import dataclass
-from typing import Any, NotRequired, TypedDict, TypeVar
+from typing import Any, NotRequired, TypedDict, TypeVar, cast, Optional, Literal
 
 from sele_saisie_auto.dropdown_options import (
     BillingActionOption,
@@ -45,7 +45,8 @@ class DayValues(TypedDict, total=False):
     samedi: NotRequired[str]
 
 
-class AdditionalInformation(TypedDict):
+# --- Infos CGI : clés optionnelles ------------------------------------- #
+class AdditionalInformation(TypedDict, total=False):
     """Nested info collected for CGI fields."""
 
     periode_repos_respectee: DayValues
@@ -119,8 +120,8 @@ class AppConfigRaw:
 class AppConfig:
     """Structured configuration loaded from ``config.ini``."""
 
-    encrypted_login: str | None
-    encrypted_mdp: str | None
+    encrypted_login: Optional[str]
+    encrypted_mdp: Optional[str]
     url: str
     date_cible: str | None
     debug_mode: str
@@ -140,7 +141,7 @@ class AppConfig:
     raw: ConfigParser
 
     @staticmethod
-    def _charger_credentials(parser: ConfigParser) -> tuple[str | None, str | None]:
+    def _charger_credentials(parser: ConfigParser) -> tuple[Optional[str], Optional[str]]:
         """Extrait les identifiants chiffrés depuis ``parser``."""
         encrypted_login = parser.get("credentials", "login", fallback="").strip()
         encrypted_mdp = parser.get("credentials", "mdp", fallback="").strip()
@@ -181,19 +182,22 @@ class AppConfig:
             "long_timeout": long_timeout,
         }
 
+    # ------------------------------------------------------------------ #
+    # Chargement des blocs de configuration
+    # ------------------------------------------------------------------ #
     @staticmethod
     def _charger_work_schedule(parser: ConfigParser) -> dict[str, WorkSchedule]:
         """Extrait ``work_schedule`` et retourne ``{"work_schedule": {...}}``."""
 
-        work_schedule: WorkSchedule = {}
+        work_schedule_dict: dict[str, tuple[str, str]] = {}
         if parser.has_section("work_schedule"):
             for day, value in parser.items("work_schedule"):
-                work_schedule[day] = (
+                work_schedule_dict[day] = (
                     value.partition(",")[0].strip(),
                     value.partition(",")[2].strip(),
                 )
 
-        return {"work_schedule": work_schedule}
+        return {"work_schedule": cast(WorkSchedule, work_schedule_dict)}
 
     @staticmethod
     def _charger_project_information(
@@ -201,13 +205,14 @@ class AppConfig:
     ) -> dict[str, ProjectInformation]:
         """Extrait ``project_information`` et retourne ``{"project_information": {...}}``."""
 
-        project_information: ProjectInformation = (
-            dict(parser.items("project_information"))  # type: ignore[typeddict-item]
+        if not parser.has_section("project_information"):
+            return {"project_information": {}}
+        project_information_dict: dict[str, str] = (
+            dict(parser.items("project_information"))
             if parser.has_section("project_information")
             else {}
         )
-
-        return {"project_information": project_information}
+        return {"project_information": cast(ProjectInformation, project_information_dict)}
 
     @staticmethod
     def _charger_additional_information(
@@ -215,44 +220,55 @@ class AppConfig:
     ) -> dict[str, AdditionalInformation]:
         """Extrait les informations complémentaires et retourne ``{"additional_information": {...}}``."""
 
-        additional_information: AdditionalInformation = {}
+        additional_information_dict: dict[str, DayValues] = {}
         if parser.has_section("additional_information_rest_period_respected"):
-            additional_information["periode_repos_respectee"] = dict(
-                parser.items("additional_information_rest_period_respected")
+            additional_information_dict["periode_repos_respectee"] = cast(
+                DayValues,
+                dict(parser.items("additional_information_rest_period_respected"))
             )
         if parser.has_section("additional_information_work_time_range"):
-            additional_information["horaire_travail_effectif"] = dict(
-                parser.items("additional_information_work_time_range")
+            additional_information_dict["horaire_travail_effectif"] = cast(
+                DayValues,
+                dict(parser.items("additional_information_work_time_range"))
             )
         if parser.has_section("additional_information_half_day_worked"):
-            additional_information["plus_demi_journee_travaillee"] = dict(
-                parser.items("additional_information_half_day_worked")
+            additional_information_dict["plus_demi_journee_travaillee"] = cast(
+                DayValues,
+                dict(parser.items("additional_information_half_day_worked"))
             )
         if parser.has_section("additional_information_lunch_break_duration"):
-            additional_information["duree_pause_dejeuner"] = dict(
-                parser.items("additional_information_lunch_break_duration")
+            additional_information_dict["duree_pause_dejeuner"] = cast(
+                DayValues,
+                dict(parser.items("additional_information_lunch_break_duration"))
             )
 
-        return {"additional_information": additional_information}
+        if not additional_information_dict:
+            return {"additional_information": {}}
+        return {
+            "additional_information": cast(
+                AdditionalInformation, additional_information_dict
+            )
+        }
+
 
     @staticmethod
     def _charger_work_locations(parser: ConfigParser) -> dict[str, WorkLocation]:
         """Extrait les localisations et retourne ``{"work_location_am": ..., "work_location_pm": ...}``."""
 
-        work_location_am: WorkLocation = (
-            dict(parser.items("work_location_am"))  # type: ignore[typeddict-item]
+        work_location_am_dict: dict[str, str] = (
+            dict(parser.items("work_location_am"))
             if parser.has_section("work_location_am")
             else {}
         )
-        work_location_pm: WorkLocation = (
-            dict(parser.items("work_location_pm"))  # type: ignore[typeddict-item]
+        work_location_pm_dict: dict[str, str] = (
+            dict(parser.items("work_location_pm"))
             if parser.has_section("work_location_pm")
             else {}
         )
 
         return {
-            "work_location_am": work_location_am,
-            "work_location_pm": work_location_pm,
+            "work_location_am": cast(WorkLocation, work_location_am_dict),
+            "work_location_pm": cast(WorkLocation, work_location_pm_dict),
         }
 
     @staticmethod
@@ -285,7 +301,7 @@ class AppConfig:
             CGILunchOption,
         )
         if parser.has_section("cgi_options_billing_action"):
-            cgi_options_billing_action = [
+            cgi_options_billing_action: list[BillingActionOption] = [
                 BillingActionOption(label=k, code=v)
                 for k, v in parser.items("cgi_options_billing_action")
             ]
@@ -333,10 +349,13 @@ class AppConfig:
         """Build an ``AppConfig`` instance from a ``ConfigParser``."""
         encrypted_login, encrypted_mdp = cls._charger_credentials(parser)
         autres: dict[str, Any] = cls._charger_autres_parametres(parser)
+        # Only keep keys that match the dataclass fields
+        valid_keys = {field.name for field in cls.__dataclass_fields__.values()}
+        filtered_autres = {k: v for k, v in autres.items() if k in valid_keys}
         return cls(
             encrypted_login=encrypted_login,
             encrypted_mdp=encrypted_mdp,
-            **autres,
+            **filtered_autres,
             raw=parser,
         )
 

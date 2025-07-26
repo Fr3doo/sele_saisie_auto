@@ -13,7 +13,11 @@ class SharedMemoryService:
         """Initialise le service avec un ``Logger`` déjà créé."""
         self.logger = logger
 
-    def stocker_en_memoire_partagee(self, nom: str, donnees: bytes):
+    def stocker_en_memoire_partagee(
+        self, 
+        nom: str, 
+        donnees: bytes
+    ) -> shared_memory.SharedMemory:
         """Create a shared memory segment and write ``donnees`` into it."""
         try:
             memoire = shared_memory.SharedMemory(

@@ -10,6 +10,7 @@ from cryptography.hazmat.primitives.padding import PKCS7
 
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.logging_service import get_logger
+from sele_saisie_auto.shared_utils import get_log_file
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 
 
@@ -32,7 +33,8 @@ class DefaultEncryptionBackend:  # pragma: no cover - simple backend
     """Backend concret reposant sur ``cryptography``."""
 
     def __init__(self, log_file: str | None = None) -> None:  # pragma: no cover
-        self.log_file = log_file
+        # Garantit que ``write_log`` reçoit toujours une *str*
+        self.log_file: str = log_file if log_file is not None else get_log_file()
 
     def generer_cle_aes(self, taille_cle: int = 32) -> bytes:  # pragma: no cover
         try:
@@ -56,8 +58,9 @@ class DefaultEncryptionBackend:  # pragma: no cover - simple backend
             padder = PKCS7(taille_bloc).padder()
             donnees_pad = padder.update(donnees.encode()) + padder.finalize()
             donnees_chiffrees = chiffreur.update(donnees_pad) + chiffreur.finalize()
+            iv_bytes: bytes = bytes(chiffre.mode.initialization_vector)
             write_log("💀 Données chiffrées avec succès.", self.log_file, "CRITICAL")
-            return chiffre.mode.initialization_vector + donnees_chiffrees
+            return iv_bytes + donnees_chiffrees
         except Exception as e:  # pragma: no cover - defensive
             write_log(
                 f"❌ Erreur lors du chiffrement des données : {e}",
@@ -110,7 +113,8 @@ class EncryptionService:
         backend: EncryptionBackend | None = None,
     ) -> None:
         """Prépare le service de chiffrement."""
-        self.log_file = log_file
+        # Toujours fournir un chemin de fichier valide à ``write_log``
+        self.log_file: str = log_file if log_file is not None else get_log_file()
         self.backend = backend or DefaultEncryptionBackend(log_file)
         if shared_memory_service is None:
             logger = get_logger(log_file)
@@ -119,7 +123,7 @@ class EncryptionService:
             self.shared_memory_service = shared_memory_service
         self.logger = get_logger(log_file)
         self.cle_aes: bytes | None = None
-        self._memoires: list[object] = []
+        self._memoires: list[shared_memory.SharedMemory] = []
 
     def generer_cle_aes(self, taille_cle: int = 32) -> bytes:
         """Génère aléatoirement une clé AES."""

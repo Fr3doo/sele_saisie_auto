@@ -1,14 +1,24 @@
 # gui_builder.py
+
 """Fonctions utilitaires pour la création de widgets Tkinter."""
+
+from __future__ import annotations
 
 import tkinter as tk
 from tkinter import ttk
+from typing import Any, Callable, Literal
+
+# Types lisibles -----------------------------------------------------------
+Orient = Literal["horizontal", "vertical"]
+PackFill = Literal["none", "x", "y", "both"]
+Side = Literal["left", "right", "top", "bottom"]
+Padding = tuple[int, int, int, int]
 
 
 def seperator_ttk(
     menu: ttk.Widget,
-    orient: str = "horizontal",
-    fill: str = "x",
+    orient: Orient = "horizontal",
+    fill: PackFill = "x",
     padx: int = 10,
     pady: int = 5,
 ) -> None:
@@ -18,7 +28,10 @@ def seperator_ttk(
 
 
 def create_tab(
-    notebook: ttk.Notebook, title: str, style: str = "Modern.TFrame", padding: int = 20
+    notebook: ttk.Notebook, 
+    title: str, 
+    style: str = "Modern.TFrame", 
+    padding: int = 20
 ) -> ttk.Frame:
     """Créer un onglet dans ``notebook``.
 
@@ -62,7 +75,7 @@ def create_title_label_with_grid(
     style: str = "Title.TLabel",
     padx: int = 5,
     pady: int = 5,
-    sticky: str | None = "w",
+    sticky: str = "w",
 ) -> ttk.Label:
     """Créer un label de titre positionné avec ``grid``."""
     title_label = ttk.Label(frame, text=text, style=style)
@@ -73,16 +86,30 @@ def create_title_label_with_grid(
 def create_a_frame(
     parent: ttk.Widget,
     style: str = "Modern.TFrame",
-    side: str | None = None,
-    fill: str = "both",
+    side: Side | None = None,
+    fill: PackFill = "both",
     expand: bool = True,
     padx: int = 0,
     pady: int = 0,
-    padding: tuple[int, int, int, int] | None = None,
+    padding: Padding | None = None,
 ) -> ttk.Frame:
     """Créer un ``ttk.Frame`` configuré et positionné avec ``pack``."""
-    frame = ttk.Frame(parent, style=style, padding=padding)
-    frame.pack(side=side, fill=fill, expand=expand, padx=padx, pady=pady)
+    if padding is None:
+        frame = ttk.Frame(parent, style=style)
+    else:
+        frame = ttk.Frame(parent, style=style, padding=padding)
+
+    pack_kwargs: dict[str, Any] = {"expand": expand}
+    if side is not None:
+        pack_kwargs["side"] = side
+    if fill is not None:
+        pack_kwargs["fill"] = fill
+    if padx is not None:
+        pack_kwargs["padx"] = padx
+    if pady is not None:
+        pack_kwargs["pady"] = pady
+
+    frame.pack(**pack_kwargs)
     return frame
 
 
@@ -90,16 +117,35 @@ def create_labeled_frame(
     parent: ttk.Widget,
     text: str = "",
     style: str = "Parametres.TLabelframe",
-    side: str | None = None,
-    fill: str = "both",
+    side: Side | None = None,
+    fill: PackFill = "both",
     expand: bool = True,
     padx: int = 0,
     pady: int = 0,
-    padding: tuple[int, int, int, int] | None = None,
+    padding: Padding | None = None,
 ) -> ttk.LabelFrame:
     """Créer un ``ttk.LabelFrame`` avec ``pack``."""
-    label_frame = ttk.LabelFrame(parent, text=text, style=style, padding=padding)
-    label_frame.pack(side=side, fill=fill, expand=expand, padx=padx, pady=pady)
+    if padding is None:
+        label_frame = ttk.LabelFrame(parent, text=text, style=style)
+    else:
+        label_frame = ttk.LabelFrame(
+            parent,
+            text=text,
+            style=style,
+            padding=padding,
+        )
+
+    pack_kwargs: dict[str, Any] = {"expand": expand}
+    if side is not None:
+        pack_kwargs["side"] = side
+    if fill is not None:
+        pack_kwargs["fill"] = fill
+    if padx is not None:
+        pack_kwargs["padx"] = padx
+    if pady is not None:
+        pack_kwargs["pady"] = pady
+
+    label_frame.pack(**pack_kwargs)
     return label_frame
 
 
@@ -107,14 +153,21 @@ def create_modern_label_with_pack(
     frame: ttk.Widget,
     text: str,
     style: str = "Modern.TLabel",
-    side: str | None = None,
+    side: Side | None = None,
     padx: int = 0,
     pady: int = 0,
     sticky: str | None = None,
 ) -> ttk.Label:
     """Créer un label stylisé positionné avec ``pack``."""
     modern_label_pack = ttk.Label(frame, text=text, style=style)
-    modern_label_pack.pack(side=side, padx=padx, pady=pady, sticky=sticky)
+    pack_kwargs: dict[str, Any] = {}
+    if side is not None:
+        pack_kwargs["side"] = side
+    if padx:
+        pack_kwargs["padx"] = padx
+    if pady:
+        pack_kwargs["pady"] = pady
+    modern_label_pack.pack(**pack_kwargs)
     return modern_label_pack
 
 
@@ -123,13 +176,20 @@ def create_modern_entry_with_pack(
     var: tk.Variable,
     width: int = 20,
     style: str = "Settings.TEntry",
-    side: str | None = None,
+    side: Side | None = None,
     padx: int = 0,
     pady: int = 0,
 ) -> ttk.Entry:
     """Créer une zone de saisie stylisée positionnée avec ``pack``."""
     modern_entry_pack = ttk.Entry(frame, textvariable=var, width=width, style=style)
-    modern_entry_pack.pack(side=side, padx=padx, pady=pady)
+    pack_kwargs: dict[str, Any] = {}
+    if side is not None:
+        pack_kwargs["side"] = side
+    if padx:
+        pack_kwargs["padx"] = padx
+    if pady:
+        pack_kwargs["pady"] = pady
+    modern_entry_pack.pack(**pack_kwargs)
     return modern_entry_pack
 
 
@@ -137,13 +197,20 @@ def create_modern_checkbox_with_pack(
     parent: ttk.Widget,
     var: tk.Variable,
     style_checkbox: str = "Modern.TCheckbutton",
-    side: str | None = None,
+    side: Side | None = None,
     padx: int = 0,
     pady: int = 0,
 ) -> ttk.Checkbutton:
     """Créer une case à cocher positionnée avec ``pack``."""
     checkbox = ttk.Checkbutton(parent, variable=var, style=style_checkbox)
-    checkbox.pack(side=side, padx=padx, pady=pady)
+    pack_kwargs: dict[str, Any] = {}
+    if side is not None:
+        pack_kwargs["side"] = side
+    if padx:
+        pack_kwargs["padx"] = padx
+    if pady:
+        pack_kwargs["pady"] = pady
+    checkbox.pack(**pack_kwargs)
     return checkbox
 
 
@@ -208,7 +275,7 @@ def create_combobox_with_pack(
     width: int = 20,
     style: str = "Modern.TCombobox",
     state: str = "normal",
-    side: str = "top",
+    side: Side = "top",
     padx: int = 5,
     pady: int = 5,
 ) -> ttk.Combobox:
@@ -221,7 +288,12 @@ def create_combobox_with_pack(
         style=style,
         state=state,
     )
-    modern_combobox_pack.pack(side=side, padx=padx, pady=pady)
+    pack_kwargs: dict[str, Any] = {"side": side}
+    if padx:
+        pack_kwargs["padx"] = padx
+    if pady:
+        pack_kwargs["pady"] = pady
+    modern_combobox_pack.pack(**pack_kwargs)
     return modern_combobox_pack
 
 
@@ -253,31 +325,63 @@ def create_combobox(
 def create_button_with_style(
     frame: ttk.Widget,
     text: str,
-    command,
+    command: Callable[[], Any] | str | None,
     style: str = "Modern.TButton",
-    side: str | None = None,
-    fill: str | None = None,
+    side: Side | None = None,
+    fill: PackFill | None = None,
     padx: int | None = None,
     pady: int | None = None,
     ipady: int | None = None,
 ) -> ttk.Button:
     """Créer un ``ttk.Button`` stylisé et positionné avec ``pack``."""
-    button = ttk.Button(frame, text=text, command=command, style=style)
-    button.pack(side=side, fill=fill, padx=padx, pady=pady, ipady=ipady)
+    if command is None:
+        button = ttk.Button(frame, text=text, style=style)
+    else:
+        button = ttk.Button(frame, text=text, command=command, style=style)
+
+    pack_kwargs: dict[str, Any] = {}
+    if side is not None:
+        pack_kwargs["side"] = side
+    if fill is not None:
+        pack_kwargs["fill"] = fill
+    if padx is not None:
+        pack_kwargs["padx"] = padx
+    if pady is not None:
+        pack_kwargs["pady"] = pady
+    if ipady is not None:
+        pack_kwargs["ipady"] = ipady
+
+    button.pack(**pack_kwargs)
     return button
 
 
 def create_button_without_style(
     frame: tk.Widget,
     text: str,
-    command,
-    side: str | None = None,
-    fill: str = "x",
+    command: Callable[[], Any] | str | None,
+    side: Side | None = None,
+    fill: PackFill = "x",
     padx: int = 20,
     pady: int = 5,
     ipady: int = 5,
 ) -> tk.Button:
     """Créer un ``tk.Button`` sans style et positionné avec ``pack``."""
-    button = tk.Button(frame, text=text, command=command)
-    button.pack(side=side, fill=fill, padx=padx, pady=pady, ipady=ipady)
+    if command is None:
+        button = tk.Button(frame, text=text)
+    else:
+        button = tk.Button(frame, text=text, command=command)
+
+    pack_kwargs: dict[str, Any] = {}
+    if side is not None:
+        pack_kwargs["side"] = side
+    if fill is not None:
+        pack_kwargs["fill"] = fill
+    if padx is not None:
+        pack_kwargs["padx"] = padx
+    if pady is not None:
+        pack_kwargs["pady"] = pady
+    if ipady is not None:
+        pack_kwargs["ipady"] = ipady
+
+    button.pack(**pack_kwargs)
     return button

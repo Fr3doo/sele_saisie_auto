@@ -1,18 +1,21 @@
 import os
+from __future__ import annotations
+
 from configparser import ConfigParser
 from datetime import datetime
+from typing import Literal
 
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
-DEFAULT_LOG_DIR = "logs"
-HTML_FORMAT = "html"
-TXT_FORMAT = "txt"
-COLUMN_WIDTHS = {"timestamp": "10%", "level": "6%", "message": "84%"}
-ROW_HEIGHT = "20px"
-FONT_SIZE = "12px"
-PADDING = "2px"
-LOG_LEVELS = {
+DEFAULT_LOG_DIR: str = "logs"
+HTML_FORMAT: Literal["html"] = "html"
+TXT_FORMAT: Literal["txt"] = "txt"
+COLUMN_WIDTHS: dict[str, str] = {"timestamp": "10%", "level": "6%", "message": "84%"}
+ROW_HEIGHT: str = "20px"
+FONT_SIZE: str = "12px"
+PADDING: str = "2px"
+LOG_LEVELS: dict[str, int] = {
     "INFO": 10,
     "DEBUG": 20,
     "WARNING": 30,
@@ -22,11 +25,11 @@ LOG_LEVELS = {
 }
 
 # Par défaut, on commence avec un niveau de log minimal (par ex., "INFO")
-DEFAULT_LOG_LEVEL = "INFO"
-LOG_LEVEL_FILTER = DEFAULT_LOG_LEVEL
+DEFAULT_LOG_LEVEL: str = "INFO"
+LOG_LEVEL_FILTER: str = DEFAULT_LOG_LEVEL
 
 # Mapping between short codes and user-facing log messages.
-MESSAGE_TEMPLATES = {
+MESSAGE_TEMPLATES: dict[str, str] = {
     "BROWSER_OPEN": "Ouverture du navigateur",
     "BROWSER_CLOSE": "Fermeture du navigateur",
     "DECRYPT_CREDENTIALS": "Déchiffrement des identifiants",
@@ -45,7 +48,10 @@ MESSAGE_TEMPLATES = {
 # ------------------------------------------------------------------------------------------- #
 
 
-def initialize_logger(config, log_level_override: str | None = None) -> None:
+def initialize_logger(
+    config: ConfigParser, 
+    log_level_override: str | None = None
+) -> None:
     """Initialise le niveau de log.
 
     La priorité est donnée au niveau fourni en argument. Si aucun
@@ -63,7 +69,7 @@ def initialize_logger(config, log_level_override: str | None = None) -> None:
         LOG_LEVEL_FILTER = config.get("settings", "debug_mode", fallback="INFO")
 
 
-def is_log_level_allowed(current_level, configured_level):
+def is_log_level_allowed(current_level: str, configured_level: str) -> bool:
     """
     Vérifie si le niveau actuel est autorisé en fonction de la configuration.
 
@@ -77,7 +83,7 @@ def is_log_level_allowed(current_level, configured_level):
     return LOG_LEVELS[current_level] >= LOG_LEVELS[configured_level]
 
 
-def format_message(code: str, details: dict | None = None) -> str:
+def format_message(code: str, details: dict[str, str] | None = None) -> str:
     """Return the message associated with ``code`` formatted with ``details``."""
 
     template = MESSAGE_TEMPLATES.get(code)
@@ -101,7 +107,7 @@ def _parse_column_widths(value: str) -> dict[str, str]:
     return widths
 
 
-def get_html_style():
+def get_html_style() -> str:
     """
     Retourne le style HTML/CSS utilisé pour les fichiers de log.
 
@@ -169,7 +175,7 @@ def get_html_style():
     """
 
 
-def initialize_html_log_file(log_file):
+def initialize_html_log_file(log_file: str) -> None:
     """
     Initialise un fichier de log HTML avec le style requis si le fichier n'existe pas.
     Si le fichier existe déjà, vérifie si une table est ouverte.
@@ -190,12 +196,12 @@ def initialize_html_log_file(log_file):
 
 
 def write_log(
-    message,
-    log_file,
-    level="INFO",
-    log_format=HTML_FORMAT,
-    auto_close=False,
-):
+    message: str,
+    log_file: str,
+    level: str = "INFO",
+    log_format: Literal["html", "txt"] = HTML_FORMAT,
+    auto_close: bool = False,
+) -> None:
     """Écrit un message dans le fichier de log."""
     try:
         # Vérifier si le niveau de log est valide
@@ -237,7 +243,10 @@ def write_log(
         ) from e
 
 
-def close_logs(log_file, log_format=HTML_FORMAT):
+def close_logs(
+    log_file: str,
+    log_format: Literal["html", "txt"] = HTML_FORMAT,
+) -> None:
     """
     Ajoute une fermeture propre du tableau HTML si nécessaire.
 
