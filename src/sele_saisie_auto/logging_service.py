@@ -98,6 +98,8 @@ class Logger:
 _LOGGERS: dict[str, Logger] = {}
 
 from sele_saisie_auto.shared_utils import get_log_file
+
+
 def get_logger(log_file: str | None) -> Logger:
     """Return a :class:`Logger` instance for ``log_file``.
 

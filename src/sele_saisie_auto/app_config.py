@@ -6,7 +6,7 @@ import os
 from collections.abc import Callable
 from configparser import ConfigParser
 from dataclasses import dataclass
-from typing import Any, NotRequired, TypedDict, TypeVar, cast, Optional, Literal
+from typing import Any, Literal, NotRequired, Optional, TypedDict, TypeVar, cast
 
 from sele_saisie_auto.dropdown_options import (
     BillingActionOption,

@@ -1,6 +1,6 @@
-import os
 from __future__ import annotations
 
+import os
 from configparser import ConfigParser
 from datetime import datetime
 from typing import Literal

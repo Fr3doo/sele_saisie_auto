@@ -1,10 +1,11 @@
 """Main menu interface."""
 
 from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
-from sele_saisie_auto.encryption_utils import EncryptionService
 
+from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.gui_builder import (
     create_button_without_style,
     create_labeled_frame,
@@ -53,10 +54,10 @@ def main_menu(
     create_modern_label_with_grid(credentials, text="Mot de passe:", row=1, col=0)
     create_modern_entry_with_grid_for_password(credentials, var=mdp_var, row=1, col=1)
 
-    launch = create_button_without_style(
-        root_frame,
-        text="Lancer votre PSATime",
-        command=lambda: run_psatime_with_credentials(
+    # Fonction séparée pour éviter le lambda qui retournait une liste
+    def launch_psatime() -> None:
+        """Démarre PSATime avec les identifiants saisis."""
+        run_psatime_with_credentials(
             encryption_service,
             login_var,
             mdp_var,
@@ -64,7 +65,12 @@ def main_menu(
             menu,
             headless=headless,
             no_sandbox=no_sandbox,
-        ),
+    )
+
+    launch = create_button_without_style(
+        root_frame,
+        text="Lancer votre PSATime",
+        command=launch_psatime,          
     )
     launch.bind("<Return>", lambda _: launch.invoke())
 

@@ -10,8 +10,8 @@ from cryptography.hazmat.primitives.padding import PKCS7
 
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.logging_service import get_logger
-from sele_saisie_auto.shared_utils import get_log_file
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
+from sele_saisie_auto.shared_utils import get_log_file
 
 
 @runtime_checkable

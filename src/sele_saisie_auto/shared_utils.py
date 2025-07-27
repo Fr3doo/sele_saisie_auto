@@ -1,9 +1,9 @@
 # shared_utils.py
 from __future__ import annotations
+
 import os
 from datetime import datetime
 from typing import Literal
-
 
 # Constantes globales pour la configuration
 """Les modules externes n'accèdent pas directement à _log_file.
