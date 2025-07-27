@@ -1,8 +1,10 @@
+# src\sele_saisie_auto\selenium_utils\navigation.py
 """Browser navigation helpers."""
 
 from __future__ import annotations
+from typing_extensions import Literal
 
-import requests  # type: ignore[import]
+import requests
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
@@ -13,7 +15,7 @@ from sele_saisie_auto.logging_service import Logger
 from . import get_default_logger
 
 
-def verifier_accessibilite_url(url, logger: Logger | None = None):
+def verifier_accessibilite_url(url: str, logger: Logger | None = None) -> bool:
     """Teste l'accessibilité d'une URL."""
     logger = logger or get_default_logger()
     try:
@@ -35,12 +37,21 @@ def verifier_accessibilite_url(url, logger: Logger | None = None):
         except Exception as e:  # noqa: BLE001
             logger.error(f"❌ URL inaccessible, sans vérification SSL : {e}")
             return False
+        # Si la requête sans vérification SSL n’a pas renvoyé 200
+        logger.error(f"❌ URL inaccessible, même sans vérification SSL - statut : {response.status_code}")
+        return False
+    except requests.exceptions.ConnectionError as conn_err:
+        logger.error(f"❌ Erreur de connexion à l'URL : {conn_err}")
+        return False
+    except requests.exceptions.Timeout:
+        logger.error(f"❌ Délai d'attente dépassé pour l'URL : {url}")
+        return False
     except requests.exceptions.RequestException as req_err:
         logger.error(f"❌ Erreur de connexion à l'URL : {req_err}")
         return False
 
 
-def switch_to_frame_by_id(driver, frame_id, logger: Logger | None = None):
+def switch_to_frame_by_id(driver: webdriver.Edge, frame_id: str, logger: Logger | None = None) -> bool:
     """Switch into a frame identified by its DOM id."""
     logger = logger or get_default_logger()
     driver.switch_to.frame(driver.find_element(By.ID, frame_id))
@@ -49,16 +60,18 @@ def switch_to_frame_by_id(driver, frame_id, logger: Logger | None = None):
 
 
 def ouvrir_navigateur_sur_ecran_principal(
-    plein_ecran=False,
-    url="https://www.example.com",
-    headless=False,
-    no_sandbox=False,
+    plein_ecran: bool = False,
+    url: str = "https://www.example.com",
+    headless: bool = False,
+    no_sandbox: bool = False,
     logger: Logger | None = None,
-):
+) -> webdriver.Edge | None:
     """Open the Edge browser and navigate to the URL."""
     logger = logger or get_default_logger()
     edge_browser_options = EdgeOptions()
-    edge_browser_options.use_chromium = True
+    edge_browser_options = EdgeOptions()
+    # Active le moteur Chromium pour Edge (non typé dans les stubs Selenium)
+    edge_browser_options.use_chromium = True  # type: ignore[attr-defined]
 
     if headless:
         edge_browser_options.add_argument("--headless")
@@ -83,8 +96,8 @@ def ouvrir_navigateur_sur_ecran_principal(
 
 
 def definir_taille_navigateur(
-    navigateur, largeur, hauteur, logger: Logger | None = None
-):
+    navigateur: webdriver.Edge, largeur: int, hauteur: int, logger: Logger | None = None
+) -> webdriver.Edge:
     """Set the browser window size."""
     logger = logger or get_default_logger()
     navigateur.set_window_size(largeur, hauteur)

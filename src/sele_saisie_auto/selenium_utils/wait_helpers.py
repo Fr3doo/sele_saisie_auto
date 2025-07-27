@@ -1,3 +1,4 @@
+#src\sele_saisie_auto\selenium_utils\wait_helpers.py
 """Selenium wait helper functions."""
 
 from __future__ import annotations
@@ -5,9 +6,12 @@ from __future__ import annotations
 import inspect
 import time
 from functools import wraps
+from typing import Any, Callable, Optional
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
 
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
@@ -18,9 +22,13 @@ from . import wrapper as _wrapper
 Wrapper = _wrapper.Wrapper
 is_document_complete = _wrapper.is_document_complete
 # expose WebDriverWait for monkeypatching in tests
-WebDriverWait = _wrapper.WebDriverWait
-# ensure wrapper shares the same time module for monkeypatching in tests
-_wrapper.time = time
+
+# ------------------------------------------------------------------
+# Monkey-patches utiles aux tests.  Les attributs n’existent pas dans
+# les stubs → on ignore l’avertissement « attr-defined ».
+# ------------------------------------------------------------------
+WebDriverWait = _wrapper.WebDriverWait  # type: ignore[attr-defined]
+_wrapper.time = time  # type: ignore[attr-defined]
 
 
 class Waiter:
@@ -35,28 +43,28 @@ class Waiter:
     ) -> None:  # pragma: no cover - simple initializer
         """Configure les délais d'attente par défaut."""
         self.logger = logger or get_default_logger()
-        self.wrapper = wrapper or Wrapper(
+        self.wrapper: Wrapper = wrapper or Wrapper(
             default_timeout,
             long_timeout,
             logger=self.logger,
         )
 
-    def wait_for_dom_ready(self, driver, timeout: int | None = None):
+    def wait_for_dom_ready(self, driver: WebDriver, timeout: int | None = None) -> None:
         """Wait until the DOM is fully loaded."""
         self.wrapper.wait_for_dom_ready(driver, timeout)
 
-    def wait_until_dom_is_stable(self, driver, timeout: int | None = None) -> bool:
+    def wait_until_dom_is_stable(self, driver: WebDriver, timeout: int | None = None) -> bool:
         """Return True when the DOM remains unchanged for ``timeout`` seconds."""
         return self.wrapper.wait_until_dom_is_stable(driver, timeout)
 
     def wait_for_element(
         self,
-        driver,
-        by=By.ID,
-        locator_value=None,
-        condition=ec.presence_of_element_located,
-        timeout: int | None = None,
-    ):
+        driver: WebDriver,
+        by: str = By.ID,
+        locator_value: Optional[str] = None,
+        condition: Callable[[tuple[str, str]], Any] = ec.presence_of_element_located,
+        timeout: Optional[int] = None,
+    ) -> Optional[WebElement]:
         """Wait for an element to satisfy ``condition`` or return ``None``."""
         return self.wrapper.wait_for_element(
             driver,
@@ -67,15 +75,15 @@ class Waiter:
         )
 
     # Convenience wrappers -------------------------------------------------
-    def find_clickable(self, driver, by, locator_value, timeout: int | None = None):
+    def find_clickable(self, driver: WebDriver, by: str, locator_value: Optional[str] = None, timeout: Optional[int] = None) -> Optional[WebElement]:
         """Return element when it becomes clickable."""
         return self.wrapper.find_clickable(driver, by, locator_value, timeout)
 
-    def find_visible(self, driver, by, locator_value, timeout: int | None = None):
+    def find_visible(self, driver: WebDriver, by: str, locator_value: Optional[str] = None, timeout: Optional[int] = None) -> Optional[WebElement]:
         """Return element when it is visible."""
         return self.wrapper.find_visible(driver, by, locator_value, timeout)
 
-    def find_present(self, driver, by, locator_value, timeout: int | None = None):
+    def find_present(self, driver: WebDriver, by: str, locator_value: Optional[str] = None, timeout: Optional[int] = None) -> Optional[WebElement]:
         """Return element when it is present in the DOM."""
         return self.wrapper.find_present(driver, by, locator_value, timeout)
 
@@ -84,11 +92,11 @@ DEFAULT_WAITER = Waiter()
 
 
 def wait_for_dom_ready(
-    driver,
+    driver : WebDriver,
     timeout: int | None = None,
     waiter: Waiter | None = None,
     logger: Logger | None = None,
-):
+) -> None:
     """Wait until the DOM is fully loaded."""
     w = waiter or DEFAULT_WAITER
     if logger is not None:
@@ -98,7 +106,7 @@ def wait_for_dom_ready(
 
 
 def wait_until_dom_is_stable(
-    driver,
+    driver : WebDriver,
     timeout: int | None = None,
     waiter: Waiter | None = None,
     logger: Logger | None = None,
@@ -112,14 +120,14 @@ def wait_until_dom_is_stable(
 
 
 def wait_for_element(
-    driver,
-    by=By.ID,
-    locator_value=None,
-    condition=ec.presence_of_element_located,
+    driver : WebDriver,
+    by: str = By.ID,
+    locator_value: Optional[str] = None,
+    condition: Callable[[tuple[str, str]], Any] = ec.presence_of_element_located,
     timeout: int | None = None,
     waiter: Waiter | None = None,
     logger: Logger | None = None,
-):
+) -> Optional[WebElement]:
     """Attend qu'un élément réponde à ``condition``."""
     w = waiter or DEFAULT_WAITER
     if logger is not None:
@@ -129,13 +137,13 @@ def wait_for_element(
 
 
 def find_clickable(
-    driver,
-    by,
-    locator_value,
-    timeout: int | None = None,
+    driver : WebDriver,
+    by: str = By.ID,
+    locator_value: Optional[str] = None,
+    timeout: Optional[int] = None,
     waiter: Waiter | None = None,
     logger: Logger | None = None,
-):
+) -> Optional[WebElement]:
     """Retourne l'élément lorsqu'il devient cliquable."""
     w = waiter or DEFAULT_WAITER
     if logger is not None:
@@ -145,13 +153,13 @@ def find_clickable(
 
 
 def find_visible(
-    driver,
-    by,
-    locator_value,
-    timeout: int | None = None,
+    driver: WebDriver,
+    by: str = By.ID,
+    locator_value: Optional[str] = None,
+    timeout: Optional[int] = None,
     waiter: Waiter | None = None,
     logger: Logger | None = None,
-):
+) -> Optional[WebElement]:
     """Retourne l'élément lorsqu'il est visible."""
     w = waiter or DEFAULT_WAITER
     if logger is not None:
@@ -161,13 +169,13 @@ def find_visible(
 
 
 def find_present(
-    driver,
-    by,
-    locator_value,
-    timeout: int | None = None,
+    driver: WebDriver,
+    by: str = By.ID,
+    locator_value: Optional[str] = None,
+    timeout: Optional[int] = None,
     waiter: Waiter | None = None,
     logger: Logger | None = None,
-):
+) -> Optional[WebElement]:
     """Retourne l'élément dès qu'il est présent dans le DOM."""
     w = waiter or DEFAULT_WAITER
     if logger is not None:
@@ -176,11 +184,11 @@ def find_present(
     return w.find_present(driver, by, locator_value, timeout)
 
 
-def wait_for_dom_after(func):
+def wait_for_dom_after(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator calling ``self.wait_for_dom`` after function execution."""
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         """Exécute ``func`` puis attend que le DOM soit prêt."""
         result = func(*args, **kwargs)
         if args:

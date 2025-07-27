@@ -4,7 +4,7 @@
 # flake8: noqa: E402
 import time
 
-import requests  # type: ignore[import]
+import requests
 from selenium import webdriver
 from selenium.common.exceptions import (
     NoSuchElementException,

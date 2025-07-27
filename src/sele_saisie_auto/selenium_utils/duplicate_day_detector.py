@@ -1,7 +1,10 @@
+# src\sele_saisie_auto\selenium_utils\duplicate_day_detector.py
+"""Detect duplicate days in time sheet entries."""
 from __future__ import annotations
 
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto import messages
 from sele_saisie_auto.constants import JOURS_SEMAINE
@@ -20,7 +23,7 @@ class DuplicateDayDetector:
         self.logger = logger or get_default_logger()
 
     @staticmethod
-    def _determine_row_range(driver, max_rows: int | None):
+    def _determine_row_range(driver: WebDriver, max_rows: int | None) -> range:
         if max_rows is None:
             row_elements = driver.find_elements(By.CSS_SELECTOR, "[id^='POL_DESCR$']")
             return range(len(row_elements))
@@ -33,7 +36,7 @@ class DuplicateDayDetector:
         day_name = JOURS_SEMAINE[day_counter]
         tracker.setdefault(day_name, []).append(description)
 
-    def detect(self, driver, max_rows: int | None = None) -> None:
+    def detect(self, driver: WebDriver, max_rows: int | None = None) -> None:
         """Log duplicate days across description lines."""
         filled_days: dict[str, list[str]] = {}
         row_range = self._determine_row_range(driver, max_rows)
@@ -62,8 +65,8 @@ class DuplicateDayDetector:
                 )
                 try:
                     day_field = driver.find_element(By.ID, day_input_id)
-                    day_content = day_field.get_attribute("value")
-                    if day_content.strip():
+                    day_content: str | None = day_field.get_attribute("value")
+                    if day_content and day_content.strip():
                         self._update_tracker(filled_days, day_counter, description)
                 except NoSuchElementException:  # pragma: no cover - best effort
                     self.logger.warning(
