@@ -246,7 +246,6 @@ Consultez [TESTING.md](TESTING.md) pour plus de détails.
 - Tri des imports : `isort`
 - Lint : `flake8` et `ruff`
 - Analyse de complexité : `radon`
-- Génération de rapports HTML : `radon-html`
 - Analyse de sécurité : `bandit` et `safety`
 - Typage statique : `mypy`
 
