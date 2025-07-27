@@ -1,9 +1,12 @@
-# remplir_jours_feuille_de_temps.py
+# src\sele_saisie_auto\remplir_jours_feuille_de_temps.py
 
 
 # Import des bibliothèques nécessaires
+from __future__ import annotations
 from configparser import ConfigParser
 from dataclasses import dataclass
+from typing import Any, Callable, TYPE_CHECKING, cast
+from selenium.webdriver.remote.webdriver import WebDriver
 
 from selenium.common.exceptions import (
     NoSuchElementException,
@@ -65,15 +68,15 @@ def context_from_app_config(
     billing_map = {
         opt.label.lower(): opt.code for opt in app_config.cgi_options_billing_action
     }
-    informations = {
-        item: billing_map.get(value.lower(), value)
+    informations: dict[str, str] = {
+        item: billing_map.get(str(value).lower(), str(value))
         for item, value in app_config.project_information.items()
     }
 
     return TimeSheetContext(
         log_file=log_file,
         item_descriptions=app_config.liste_items_planning,
-        work_days=app_config.work_schedule,
+        work_days=cast(dict[str, tuple[str, str]], app_config.work_schedule),
         project_mission_info=informations,
         config=app_config.raw,
     )
@@ -83,7 +86,7 @@ def context_from_app_config(
 # ----------------------------------- CONSTANTE --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
 # Variables initialisées lors de l'``initialize``
-LOG_FILE: str | None = None
+LOG_FILE: str = ""
 
 MAX_ATTEMPTS = 5
 
@@ -129,7 +132,7 @@ def initialize(log_file: str) -> TimeSheetContext:
 # ----------------------------------------------------------------------------- #
 
 
-def wait_for_dom(driver, waiter: WaiterProtocol | None = None):
+def wait_for_dom(driver: WebDriver, waiter: WaiterProtocol | None = None) -> None:
     """Attend que le DOM soit chargé et stable."""
     if waiter is None:
         wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
@@ -139,24 +142,24 @@ def wait_for_dom(driver, waiter: WaiterProtocol | None = None):
         waiter.wait_for_dom_ready(driver, LONG_TIMEOUT)
 
 
-def est_en_mission(description):
+def est_en_mission(description: str) -> bool:
     """Renvoie True si la description indique un jour 'En mission'."""
     return description == "En mission"
 
 
-def est_en_mission_presente(work_days):
+def est_en_mission_presente(work_days: dict[str, tuple[str, str]]) -> bool:
     """Vérifie si un jour de travail est marqué comme 'En mission'."""
     return any(value[0] == "En mission" for value in work_days.values())
 
 
-def ajouter_jour_a_jours_remplis(jour, filled_days):
+def ajouter_jour_a_jours_remplis(jour: str, filled_days: list[str]) -> list[str]:
     """Ajoute un jour à la liste jours_remplis si ce n'est pas déjà fait."""
     if jour not in filled_days:
         filled_days.append(jour)
     return filled_days
 
 
-def afficher_message_insertion(jour, valeur, tentative, message):
+def afficher_message_insertion(jour: str, valeur: str, tentative: int, message: str) -> None:
     """Affiche un message d'insertion de la valeur."""
     if message == messages.TENTATIVE_INSERTION:
         write_log(
@@ -178,12 +181,12 @@ def afficher_message_insertion(jour, valeur, tentative, message):
 
 
 def remplir_jours(
-    driver,
-    item_descriptions,
-    week_days,
-    filled_days,
+    driver: WebDriver,
+    item_descriptions: list[str],
+    week_days: dict[int, str],
+    filled_days: list[str],
     context: TimeSheetContext,
-):
+) -> list[str]:
     """Remplir les jours dans l'application web."""
     # Parcourir chaque description dans item_descriptions
     for description_cible in item_descriptions:
@@ -197,7 +200,7 @@ def remplir_jours(
                 input_id = f"POL_TIME{jour_index}${row_index}"
 
                 # Vérifier la présence de l'élément
-                element = wait_for_element(
+                element = cast(Any, wait_for_element)(
                     driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
                 )
 
@@ -213,13 +216,13 @@ def remplir_jours(
 
 
 def traiter_jour(
-    driver,
-    jour,
-    description_cible,
-    value_to_fill,
-    filled_days,
+    driver: WebDriver,
+    jour: str,
+    description_cible: str,
+    value_to_fill: str,
+    filled_days: list[str],
     context: TimeSheetContext,
-):
+) -> list[str]:
     """Traiter un jour spécifique pour le remplissage."""
 
     if jour in filled_days or not description_cible:
@@ -234,7 +237,9 @@ def traiter_jour(
         ]
         input_id = f"POL_TIME{jour_index}${row_index}"
 
-        element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
+        element = cast(Any, wait_for_element)(
+            driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
+        )
 
         if element and insert_with_retries(driver, input_id, value_to_fill, None):
             filled_days = ajouter_jour_a_jours_remplis(jour, filled_days)
@@ -243,11 +248,11 @@ def traiter_jour(
 
 
 def remplir_mission(
-    driver,
-    work_days,
-    filled_days,
+    driver: WebDriver,
+    work_days: dict[str, tuple[str, str]],
+    filled_days: list[str],
     context: TimeSheetContext,
-):
+) -> list[str]:
     """Remplir les jours de travail pour les missions."""
     for jour, (description_cible, value_to_fill) in work_days.items():
         if (
@@ -275,28 +280,34 @@ def remplir_mission(
 
 
 def remplir_mission_specifique(
-    driver,
-    jour,
-    value_to_fill,
-    filled_days,
+    driver: WebDriver,
+    jour: str,
+    value_to_fill: str,
+    filled_days: list[str],
     context: TimeSheetContext,
-):
+) -> None:
     """Cas spécifique pour les jours en mission.
     Cas où description_cible est "En mission", on écrit directement dans les IDs spécifiques sans utiliser `description_cible`
     """
     jour_index = list(JOURS_SEMAINE.keys())[list(JOURS_SEMAINE.values()).index(jour)]
     input_id = f"TIME{jour_index}$0"  # Définir l'ID de l'élément pour ce jour
 
-    element = wait_for_element(driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT)
+    element = cast(Any, wait_for_element)(
+        driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
+    )
 
     if element and insert_with_retries(driver, input_id, value_to_fill, None):
         filled_days = ajouter_jour_a_jours_remplis(jour, filled_days)
         afficher_message_insertion(jour, value_to_fill, 0, "après insertion")
 
 
-def _insert_value_with_retries(
-    driver, field_id, value, max_attempts, waiter  # pragma: no cover
-):  # pragma: no cover  # pragma: no cover
+def _insert_value_with_retries( # pragma: no cover
+    driver: WebDriver,
+    field_id: str,
+    value: str,
+    max_attempts: int,
+    waiter: WaiterProtocol | None # pragma: no cover
+) -> bool:  # pragma: no cover
     """Essaye d'insérer la valeur plusieurs fois si nécessaire."""
     if waiter is not None:  # pragma: no cover
         # pragma: no cover
@@ -305,11 +316,11 @@ def _insert_value_with_retries(
         wait_for_dom(driver)  # pragma: no cover
     # pragma: no cover
     element = (  # pragma: no cover
-        waiter.wait_for_element(
+        cast(Any, waiter.wait_for_element)(
             driver, By.ID, field_id, timeout=DEFAULT_TIMEOUT
         )  # pragma: no cover
         if waiter  # pragma: no cover
-        else wait_for_element(
+        else cast(Any, wait_for_element)(
             driver, By.ID, field_id, timeout=DEFAULT_TIMEOUT
         )  # pragma: no cover
     )  # pragma: no cover
@@ -338,7 +349,9 @@ def _insert_value_with_retries(
             )  # pragma: no cover
             write_log(messages.DOM_STABLE, LOG_FILE, "DEBUG")  # pragma: no cover
             # pragma: no cover
-            if controle_insertion(input_field, value):  # pragma: no cover
+            if cast(Callable[[Any, str], bool], controle_insertion)(
+                input_field, value  # pragma: no cover
+            ): # pragma: no cover
                 write_log(  # pragma: no cover
                     f"Valeur '{value}' insérée avec succès pour '{field_id}'.",  # pragma: no cover
                     LOG_FILE,  # pragma: no cover
@@ -363,11 +376,11 @@ def _insert_value_with_retries(
 
 
 def insert_with_retries(  # pragma: no cover
-    driver,
+    driver : WebDriver,
     field_id: str,
     value: str,
     waiter: WaiterProtocol | None = None,
-):
+) -> bool:
     """Generic helper using :func:`_insert_value_with_retries` with default attempts."""
 
     return _insert_value_with_retries(
@@ -376,18 +389,18 @@ def insert_with_retries(  # pragma: no cover
 
 
 def traiter_champs_mission(  # pragma: no cover
-    driver,
-    listes_id_informations_mission,
-    id_to_key_mapping,
-    project_mission_info,
+    driver: WebDriver,
+    listes_id_informations_mission: list[str],
+    id_to_key_mapping: dict[str, str],
+    project_mission_info: dict[str, str],
     context: TimeSheetContext,
-    max_attempts=5,
+    max_attempts: int = 5,
     waiter: WaiterProtocol | None = None,
-):
+) -> None:
     """Traite les champs associés aux missions ('En mission') en insérant les valeurs nécessaires."""
     for id in listes_id_informations_mission:
         key = id_to_key_mapping.get(id)
-        if key == "sub_category_code":  # Exclure les champs non concernés
+        if key is None or key == "sub_category_code":  # Exclure les champs non concernés
             continue
 
         value_to_fill = project_mission_info.get(key)
@@ -431,19 +444,22 @@ class TimeSheetHelper:
         self.log_file = logger.log_file
         if waiter is None:
             cfg = context.config
-            if hasattr(cfg, "default_timeout") and hasattr(cfg, "long_timeout"):
-                timeout = cfg.default_timeout
-                long_timeout = cfg.long_timeout
-            else:
-                timeout = DEFAULT_TIMEOUT
-                long_timeout = LONG_TIMEOUT
-            self.waiter = Waiter(default_timeout=timeout, long_timeout=long_timeout)
+            timeout = cast(
+                int, getattr(cfg, "default_timeout", DEFAULT_TIMEOUT)
+            )
+            long_timeout = cast(
+                int, getattr(cfg, "long_timeout", LONG_TIMEOUT)
+            )
+            self.waiter: WaiterProtocol = cast(
+                WaiterProtocol,
+                Waiter(default_timeout=timeout, long_timeout=long_timeout),
+            )
         else:
             self.waiter = waiter
         global LOG_FILE
-        LOG_FILE = self.log_file
+        LOG_FILE = self.log_file  # type: ignore[assignment]
 
-    def wait_for_dom(self, driver) -> None:
+    def wait_for_dom(self, driver: WebDriver) -> None:
         """Attend que le DOM soit prêt via ``Waiter``."""
         self.waiter.wait_until_dom_is_stable(driver)
         self.waiter.wait_for_dom_ready(driver)
@@ -452,41 +468,46 @@ class TimeSheetHelper:
         """Return the current context without reloading from disk."""
         return self.context
 
-    def fill_standard_days(self, driver, filled_days: list[str]) -> list[str]:
+    def fill_standard_days(self, driver: WebDriver, filled_days: list[str]) -> list[str]:
         """Remplit les jours hors mission."""
         self.logger.debug("Début du remplissage des jours hors mission...")
         liste = [] if self.context is None else self.context.item_descriptions
-        ctx = self.context or TimeSheetContext(self.log_file, [], {}, {})
+        ctx = self.context or TimeSheetContext(self.log_file or "", [], {}, {})
         return remplir_jours(driver, liste, JOURS_SEMAINE, filled_days, ctx)
 
-    def fill_work_missions(self, driver, filled_days: list[str]) -> list[str]:
+    def fill_work_missions(self, driver: WebDriver, filled_days: list[str]) -> list[str]:
         """Traite les jours en mission."""
         self.logger.debug("Début du traitement des jours de travail et des missions...")
         work_days = {} if self.context is None else self.context.work_days
-        ctx = self.context or TimeSheetContext(self.log_file, [], {}, {})
+        ctx = self.context or TimeSheetContext(self.log_file or "", [], {}, {})
         return remplir_mission(driver, work_days, filled_days, ctx)
 
-    def handle_additional_fields(self, driver) -> None:
+    def handle_additional_fields(self, driver: WebDriver) -> None:
         """Insère les champs complémentaires liés aux missions."""
         if self.context and est_en_mission_presente(self.context.work_days):
             self.logger.debug(
                 "Jour 'En mission' détecté. Traitement des champs associés..."
             )
             traiter_champs_mission(
-                driver,
-                LISTES_ID_INFORMATIONS_MISSION,
-                ID_TO_KEY_MAPPING,
-                self.context.project_mission_info,
-                self.context,
+                driver=driver,
+                listes_id_informations_mission=LISTES_ID_INFORMATIONS_MISSION,
+                id_to_key_mapping=ID_TO_KEY_MAPPING,
+                project_mission_info=self.context.project_mission_info,
+                context=self.context,
                 waiter=self.waiter,
             )
         else:
             self.logger.debug("Aucun Jour 'En mission' détecté.")
 
-    def run(self, driver) -> None:
+    def run(self, driver: WebDriver | None) -> None:
         """Orchestre toutes les étapes de remplissage."""
         if self.context is None:  # pragma: no cover - guard clause
             raise RuntimeError("TimeSheetContext not provided")
+        if driver is None:  # pragma: no cover - guard clause
+            raise ValueError("WebDriver instance is required for filling the timesheet")
+        if driver is None:  # pragma: no cover - extra safety
+            raise RuntimeError("WebDriver not supplied")
+        assert driver is not None  # garantit à mypy que driver est bien un WebDriver
         try:
             filled_days: list[str] = []
 
@@ -517,13 +538,13 @@ class TimeSheetHelper:
             log_error(f"{messages.ERREUR_INATTENDUE} : {str(e)}.", LOG_FILE)
 
 
-def main(driver, log_file: str) -> None:
+def main(driver: WebDriver | None, log_file: str) -> None:
     """Minimal orchestrator creating the helper and launching the process."""
     ctx = initialize(log_file)
     if ctx is None:  # pragma: no cover - fallback path
         ctx = TimeSheetContext(log_file, [], {}, {})
     logger = Logger(log_file)
-    TimeSheetHelper(ctx, logger).run(driver)
+    TimeSheetHelper(ctx, cast(LoggerProtocol, logger)).run(driver)
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation

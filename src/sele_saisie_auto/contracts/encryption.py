@@ -1,6 +1,9 @@
+#src\sele_saisie_auto\contracts\encryption.py
+
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from types import TracebackType
+from typing import Protocol, Tuple, runtime_checkable
 
 
 @runtime_checkable
@@ -21,9 +24,9 @@ class EncryptionService(Protocol):
 
     def store_credentials(self, login_data: bytes, password_data: bytes) -> None: ...
 
-    def retrieve_credentials(self): ...
+    def retrieve_credentials(self) -> Tuple[bytes, bytes]: ...
 
     def __enter__(self) -> "EncryptionService": ...
 
-    def __exit__(self, exc_type, exc, tb) -> None: ...
+    def __exit__(self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None) -> None: ...
 

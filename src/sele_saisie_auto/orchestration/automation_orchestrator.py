@@ -1,8 +1,9 @@
+# src\sele_saisie_auto\orchestration\automation_orchestrator.py
 # pragma: no cover
 from __future__ import annotations
 
 import types
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, Any, cast
 
 from selenium.webdriver.common.by import By
 
@@ -72,18 +73,23 @@ class AutomationOrchestrator:
         self.choix_user = choix_user
         self.timesheet_helper_cls = timesheet_helper_cls
         self._cleanup_callback = cleanup_resources
-        self.resource_manager = resource_manager or ResourceManager(logger.log_file)
+        self.resource_manager = resource_manager or ResourceManager(
+            cast(str, logger.log_file)  # logger.log_file peut être None
+        )
         self.page_navigator: PageNavigator | None = None
+        self.service_configurator: ServiceConfigurator | None = None
         self.log_file = logger.log_file
         self.waiter = getattr(browser_session, "waiter", None)
-        self.alert_handler = alert_handler or AlertHandler(self, waiter=self.waiter)
+        # AlertHandler attend `PSATimeAutomation`; on force le type pour éviter
+        # l’incompatibilité de type avec AlertHandlerProtocol.
+        self.alert_handler = alert_handler or AlertHandler(self, waiter=self.waiter)  # type: ignore[arg-type]
         try:
             self.resource_manager._encryption_service = context.encryption_service
-            self.resource_manager._config_manager = types.SimpleNamespace(
-                load=lambda: config
+            self.resource_manager._config_manager = cast(
+                Any, types.SimpleNamespace(load=lambda: config)
             )
             self.resource_manager._session = browser_session
-            self.resource_manager._app_config = config
+            setattr(self.resource_manager, "_app_config", config)
         except Exception:  # nosec B110 - best effort configuration
             pass
 
@@ -125,12 +131,19 @@ class AutomationOrchestrator:
         inst.service_configurator = service_configurator
         return inst
 
-    def initialize_shared_memory(self):  # pragma: no cover - tested elsewhere
+    def initialize_shared_memory(self) -> Any:
         """Delegate credential retrieval to :class:`ResourceManager`."""
 
-        return self.resource_manager.initialize_shared_memory(self.logger)
+        # ResourceManager attend Logger | None ; on passe None pour éviter
+        # l’incompatibilité de type avec LoggerProtocol.
+        return self.resource_manager.initialize_shared_memory(None)
 
-    def cleanup_resources(self, mem_key, mem_login, mem_pwd) -> None:
+    def cleanup_resources(
+        self,
+        mem_key: object,
+        mem_login: object,
+        mem_pwd: object
+    ) -> None:
         """Release all held resources."""
 
         if self._cleanup_callback:
@@ -141,15 +154,13 @@ class AutomationOrchestrator:
     # ------------------------------------------------------------------
     # DOM & iframe helpers
     # ------------------------------------------------------------------
-    def wait_for_dom(self, driver) -> None:  # pragma: no cover - simple wrapper
+    def wait_for_dom(self, driver: Any) -> None:  # pragma: no cover
         """Delegate DOM wait to :class:`BrowserSession`."""
 
         self.browser_session.wait_for_dom(driver)
 
-    @wait_for_dom_after
-    def switch_to_iframe_main_target_win0(
-        self, driver
-    ):  # pragma: no cover - simple wrapper
+    @wait_for_dom_after # type: ignore[misc]
+    def switch_to_iframe_main_target_win0(self, driver: Any) -> bool:
         """Switch to the ``main_target_win0`` iframe."""
 
         waiter = self.browser_session.waiter
@@ -169,57 +180,57 @@ class AutomationOrchestrator:
             raise NameError("main_target_win0 not found")
         return switched_to_iframe
 
-    def _process_date_entry(self, driver) -> None:  # pragma: no cover - simple wrapper
+    def _process_date_entry(self, driver: Any) -> None:
         """Renseigne la date cible dans l'interface."""
 
         self.date_entry_page.process_date(driver, self.config.date_cible)
 
-    def navigate_from_home_to_date_entry_page(
-        self, driver
-    ):  # pragma: no cover - simple wrapper
+    def navigate_from_home_to_date_entry_page(self, driver: Any) -> bool:
         """Navigate to the date entry page."""
 
         return self.date_entry_page.navigate_from_home_to_date_entry_page(driver)
 
-    def submit_date_cible(self, driver):  # pragma: no cover - simple wrapper
+    def submit_date_cible(self, driver: Any) -> None:
         """Submit the selected date."""
 
-        return self.date_entry_page.submit_date_cible(driver)
+        self.date_entry_page.submit_date_cible(driver)
 
-    @wait_for_dom_after
-    def navigate_from_work_schedule_to_additional_information_page(
-        self, driver
-    ):  # pragma: no cover - simple wrapper
+    @wait_for_dom_after # type: ignore[misc]
+    def navigate_from_work_schedule_to_additional_information_page(self, driver: Any) -> bool:
         """Open the additional information modal."""
 
         return self.additional_info_page.navigate_from_work_schedule_to_additional_information_page(
             driver
         )
 
-    @wait_for_dom_after
-    def submit_and_validate_additional_information(
-        self, driver
-    ):  # pragma: no cover - simple wrapper
+    @wait_for_dom_after # type: ignore[misc]
+    def submit_and_validate_additional_information(self, driver: Any) -> None:
         """Fill in and submit the additional information."""
 
-        return self.additional_info_page.submit_and_validate_additional_information(
-            driver
-        )
+        self.additional_info_page.submit_and_validate_additional_information(driver)
 
-    @wait_for_dom_after
-    def save_draft_and_validate(self, driver):  # pragma: no cover - simple wrapper
+    @wait_for_dom_after # type: ignore[misc]
+    def save_draft_and_validate(self, driver: Any) -> None:  # pragma: no cover - simple wrapper
         """Save the current timesheet as draft."""
 
-        return self.additional_info_page.save_draft_and_validate(driver)
+        self.additional_info_page.save_draft_and_validate(driver)
 
-    def _fill_and_save_timesheet(self, driver) -> None:
+    def _fill_and_save_timesheet(self, driver: Any) -> None:
         """Delegate the complete timesheet workflow to :class:`PageNavigator`."""
-
-        helper = self.timesheet_helper_cls(
-            context_from_app_config(self.config, self.logger.log_file),
-            self.logger,
-            waiter=self.browser_session.waiter,
+        assert self.page_navigator is not None
+        # Initialize the timesheet helper with the context and logger
+        helper = cast(
+            TimeSheetHelper,
+            self.timesheet_helper_cls(  # type: ignore[call-arg]
+                context_from_app_config(
+                    self.config,
+                    cast(str, self.logger.log_file),
+                ),
+                self.logger,
+                waiter=self.browser_session.waiter,
+            ),
         )
+        assert self.page_navigator is not None
         self.page_navigator.timesheet_helper = helper
         self.page_navigator.fill_timesheet(driver)
         self.page_navigator.finalize_timesheet(driver)
@@ -240,15 +251,19 @@ class AutomationOrchestrator:
             self.config = ConfigManager().load()
 
         with self.resource_manager as rm:
-            creds = rm.initialize_shared_memory(self.logger)
+            creds = rm.initialize_shared_memory(None)
             driver = rm.get_driver(headless=headless, no_sandbox=no_sandbox)
             try:
                 if hasattr(self.page_navigator, "prepare") and hasattr(
                     self.page_navigator, "run"
                 ):
-                    self.page_navigator.prepare(creds, self.config.date_cible)
+                    assert self.page_navigator is not None
+                    self.page_navigator.prepare( 
+                        creds, cast(str, self.config.date_cible)
+                    )
                     self.page_navigator.run(driver)
                 else:
+                    assert self.page_navigator is not None
                     self.page_navigator.login(
                         driver,
                         creds.aes_key,
@@ -256,7 +271,7 @@ class AutomationOrchestrator:
                         creds.password,
                     )
                     result = self.page_navigator.navigate_to_date_entry(
-                        driver, self.config.date_cible
+                        driver, cast(str, self.config.date_cible)
                     )
                     if result is not False:
                         self._fill_and_save_timesheet(driver)
