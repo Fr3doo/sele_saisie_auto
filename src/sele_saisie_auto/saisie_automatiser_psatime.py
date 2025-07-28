@@ -313,8 +313,7 @@ class PSATimeAutomation:
         """Initialise les services principaux via :class:`ServiceConfigurator`."""
 
         configurator = service_configurator_factory(app_config)
-        self.services = configurator.build_services(self.log_file)
-        return self.services
+        return configurator.build_services(self.log_file)
 
     # ------------------------------------------------------------------
     # Lazy page/service instantiation
