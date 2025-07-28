@@ -20,12 +20,16 @@ from tests.conftest import (  # noqa: E402
 
 def make_navigator():
     log = []
+    session = StubBrowserSession(log)
+    info_page = StubAdditionalInfoPage(log)
     navigator = PageNavigator(
-        StubBrowserSession(log),
+        session,
         StubLoginHandler(log),
         StubDateEntryPage(log),
-        StubAdditionalInfoPage(log),
-        StubTimeSheetHelper(log),
+        info_page,
+        StubTimeSheetHelper(
+            log, additional_info_page=info_page, browser_session=session
+        ),
     )
     return log, navigator
 

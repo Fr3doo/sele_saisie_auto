@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import types
-from typing import TYPE_CHECKING, Callable, Any, cast
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 from selenium.webdriver.common.by import By
 
@@ -139,10 +139,7 @@ class AutomationOrchestrator:
         return self.resource_manager.initialize_shared_memory(None)
 
     def cleanup_resources(
-        self,
-        mem_key: object,
-        mem_login: object,
-        mem_pwd: object
+        self, mem_key: object, mem_login: object, mem_pwd: object
     ) -> None:
         """Release all held resources."""
 
@@ -159,7 +156,7 @@ class AutomationOrchestrator:
 
         self.browser_session.wait_for_dom(driver)
 
-    @wait_for_dom_after # type: ignore[misc]
+    @wait_for_dom_after  # type: ignore[misc]
     def switch_to_iframe_main_target_win0(self, driver: Any) -> bool:
         """Switch to the ``main_target_win0`` iframe."""
 
@@ -195,29 +192,33 @@ class AutomationOrchestrator:
 
         self.date_entry_page.submit_date_cible(driver)
 
-    @wait_for_dom_after # type: ignore[misc]
-    def navigate_from_work_schedule_to_additional_information_page(self, driver: Any) -> bool:
+    @wait_for_dom_after  # type: ignore[misc]
+    def navigate_from_work_schedule_to_additional_information_page(
+        self, driver: Any
+    ) -> bool:
         """Open the additional information modal."""
 
         return self.additional_info_page.navigate_from_work_schedule_to_additional_information_page(
             driver
         )
 
-    @wait_for_dom_after # type: ignore[misc]
+    @wait_for_dom_after  # type: ignore[misc]
     def submit_and_validate_additional_information(self, driver: Any) -> None:
         """Fill in and submit the additional information."""
 
         self.additional_info_page.submit_and_validate_additional_information(driver)
 
-    @wait_for_dom_after # type: ignore[misc]
-    def save_draft_and_validate(self, driver: Any) -> None:  # pragma: no cover - simple wrapper
+    @wait_for_dom_after  # type: ignore[misc]
+    def save_draft_and_validate(
+        self, driver: Any
+    ) -> None:  # pragma: no cover - simple wrapper
         """Save the current timesheet as draft."""
 
         self.additional_info_page.save_draft_and_validate(driver)
 
     def _fill_and_save_timesheet(self, driver: Any) -> None:
         """Delegate the complete timesheet workflow to :class:`PageNavigator`."""
-        assert self.page_navigator is not None
+        assert self.page_navigator is not None  # nosec B101
         # Initialize the timesheet helper with the context and logger
         helper = cast(
             TimeSheetHelper,
@@ -228,10 +229,16 @@ class AutomationOrchestrator:
                 ),
                 self.logger,
                 waiter=self.browser_session.waiter,
+                additional_info_page=self.additional_info_page,
+                browser_session=self.browser_session,
             ),
         )
-        assert self.page_navigator is not None
+        assert self.page_navigator is not None  # nosec B101
         self.page_navigator.timesheet_helper = helper
+        if hasattr(helper, "additional_info_page"):
+            helper.additional_info_page = self.additional_info_page
+        if hasattr(helper, "browser_session"):
+            helper.browser_session = self.browser_session
         self.page_navigator.fill_timesheet(driver)
         self.page_navigator.finalize_timesheet(driver)
 
@@ -257,13 +264,13 @@ class AutomationOrchestrator:
                 if hasattr(self.page_navigator, "prepare") and hasattr(
                     self.page_navigator, "run"
                 ):
-                    assert self.page_navigator is not None
-                    self.page_navigator.prepare( 
+                    assert self.page_navigator is not None  # nosec B101
+                    self.page_navigator.prepare(
                         creds, cast(str, self.config.date_cible)
                     )
                     self.page_navigator.run(driver)
                 else:
-                    assert self.page_navigator is not None
+                    assert self.page_navigator is not None  # nosec B101
                     self.page_navigator.login(
                         driver,
                         creds.aes_key,

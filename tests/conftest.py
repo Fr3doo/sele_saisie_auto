@@ -166,12 +166,23 @@ class DummyAdditionalInfoPage:
 class DummyTimeSheetHelper:
     ran = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self, *args, additional_info_page=None, browser_session=None, **kwargs
+    ):
         self.calls = []
+        self.additional_info_page = additional_info_page
+        self.browser_session = browser_session
 
     def run(self, driver):
         self.__class__.ran = driver
         self.calls.append(driver)
+        if self.additional_info_page is not None:
+            self.additional_info_page.navigate_from_work_schedule_to_additional_information_page(
+                driver
+            )
+            self.additional_info_page.submit_and_validate_additional_information(driver)
+        if self.browser_session is not None:
+            self.browser_session.go_to_default_content()
 
 
 class LoggedDummyLoginHandler(DummyLoginHandler):
