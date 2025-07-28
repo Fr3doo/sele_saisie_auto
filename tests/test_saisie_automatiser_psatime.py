@@ -218,6 +218,7 @@ def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
     auto.orchestrator = orch
     monkeypatch.setattr(sap, "_AUTOMATION", auto, raising=False)
     monkeypatch.setattr(sap, "_ORCHESTRATOR", orch, raising=False)
+    monkeypatch.setattr(sap, "orchestrator", orch, raising=False)
     monkeypatch.setattr(sap, "context", auto.context, raising=False)
     monkeypatch.setattr(sap, "LOG_FILE", "log.html", raising=False)
     monkeypatch.setattr(
@@ -259,7 +260,7 @@ def test_initialize_sets_globals(monkeypatch, sample_config):
     assert sap.context.config.url == "http://test"
     assert sap.context.config.work_schedule["lundi"] == ("En mission", "8")
     assert sap.context.project_mission_info["billing_action"] == "B"
-    assert sap._AUTOMATION.choix_user is True
+    assert sap.orchestrator.choix_user is True
     assert isinstance(sap._AUTOMATION.memory_config, sap.MemoryConfig)
 
 
@@ -304,7 +305,7 @@ def test_main_flow(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
     sap.context.config.url = "http://test"
     sap.context.config.date_cible = "06/07/2024"
-    sap._AUTOMATION.choix_user = True
+    sap.orchestrator.choix_user = True
 
     monkeypatch.setattr(sap, "log_initialisation", lambda: None)
     monkeypatch.setattr(
