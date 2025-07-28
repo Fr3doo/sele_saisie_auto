@@ -113,8 +113,8 @@ def test_full_automation(monkeypatch, sample_config):
         DummyManager,
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.selenium_utils.waiter_factory.get_waiter",
-        lambda cfg: dummy_waiter,
+        "sele_saisie_auto.selenium_utils.waiter_factory.create_waiter",
+        lambda timeout: dummy_waiter,
     )
     monkeypatch.setattr(
         "sele_saisie_auto.automation.additional_info_page.ExtraInfoHelper",

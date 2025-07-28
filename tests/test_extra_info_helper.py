@@ -4,6 +4,8 @@ from pathlib import Path  # noqa: E402
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+import types  # noqa: E402
+
 import pytest  # noqa: E402
 
 import sele_saisie_auto.remplir_informations_supp_utils as risu  # noqa: E402
@@ -132,11 +134,14 @@ def test_submit_without_page(monkeypatch):
 def test_waiter_created_with_factory(monkeypatch):
     captured = {}
 
-    def fake_get_waiter(cfg):
-        captured["cfg"] = cfg
+    def fake_create_waiter(timeout):
+        captured["timeout"] = timeout
         return "w"
 
-    monkeypatch.setattr(risu.WaiterFactory, "get_waiter", fake_get_waiter)
-    helper = ExtraInfoHelper(Logger("log"), app_config="cfg")
+    monkeypatch.setattr(risu, "create_waiter", fake_create_waiter)
+    helper = ExtraInfoHelper(
+        Logger("log"),
+        app_config=types.SimpleNamespace(default_timeout=3, long_timeout=6),
+    )
     assert helper.waiter == "w"
-    assert captured["cfg"] == "cfg"
+    assert captured["timeout"] == 3

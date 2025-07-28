@@ -68,7 +68,7 @@ from .wait_helpers import (
     wait_for_element,
     wait_until_dom_is_stable,
 )
-from .waiter_factory import get_waiter
+from .waiter_factory import create_waiter
 from .wrapper import Wrapper, is_document_complete
 
 __all__ = [
@@ -87,7 +87,7 @@ __all__ = [
     "find_present",
     "Wrapper",
     "Waiter",
-    "get_waiter",
+    "create_waiter",
     "modifier_date_input",
     "switch_to_frame_by_id",
     "switch_to_iframe_by_id_or_name",

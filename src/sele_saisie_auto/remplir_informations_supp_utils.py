@@ -2,18 +2,20 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
+
 from selenium.webdriver.remote.webdriver import WebDriver
 
-import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: N812
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.form_processing.description_processor import process_description
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.selenium_utils import Waiter
+from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.strategies import (
     ElementFillingContext,
     InputFillingStrategy,
     SelectFillingStrategy,
 )
+from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 
 # remplir_informations_supp_france.py
 
@@ -67,7 +69,12 @@ class ExtraInfoHelper:
     ) -> None:
         """Initialise l'assistant avec ``Logger`` et ``Waiter``."""
         if waiter is None:
-            self.waiter = WaiterFactory.get_waiter(app_config)
+            timeout = DEFAULT_TIMEOUT
+            if hasattr(app_config, "default_timeout"):
+                timeout = app_config.default_timeout
+            self.waiter = create_waiter(timeout)
+            if hasattr(app_config, "long_timeout"):
+                self.waiter.wrapper.long_timeout = app_config.long_timeout
         else:
             self.waiter = waiter
         self.page = page
@@ -91,7 +98,9 @@ class ExtraInfoHelper:
     # ------------------------------------------------------------------
     # Delegation to :class:`AdditionalInfoPage`
     # ------------------------------------------------------------------
-    def navigate_from_work_schedule_to_additional_information_page(self, driver: WebDriver) -> Any:
+    def navigate_from_work_schedule_to_additional_information_page(
+        self, driver: WebDriver
+    ) -> Any:
         """Ouvre la fenêtre des informations supplémentaires."""
         if not self.page:
             raise RuntimeError("AdditionalInfoPage not configured")
