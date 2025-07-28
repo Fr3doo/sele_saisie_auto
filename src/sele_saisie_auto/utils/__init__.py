@@ -1,3 +1,3 @@
 """Utility subpackages."""
 
-__all__ = ["misc"]
+__all__ = ["misc", "mission"]

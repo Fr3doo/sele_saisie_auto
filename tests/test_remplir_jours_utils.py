@@ -7,11 +7,11 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     afficher_message_insertion,
     ajouter_jour_a_jours_remplis,
-    est_en_mission,
     est_en_mission_presente,
     insert_with_retries,
 )
 from sele_saisie_auto.utils.misc import clear_screen  # noqa: E402
+from sele_saisie_auto.utils.mission import est_en_mission  # noqa: E402
 
 
 def test_utilities(monkeypatch):

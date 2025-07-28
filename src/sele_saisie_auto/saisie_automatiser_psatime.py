@@ -49,6 +49,7 @@ from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.logging_service import Logger, LoggingConfigurator, get_logger
 from sele_saisie_auto.navigation import PageNavigator
 from sele_saisie_auto.orchestration import AutomationOrchestrator
+from sele_saisie_auto.remplir_jours_feuille_de_temps import ajouter_jour_a_jours_remplis
 from sele_saisie_auto.resources.resource_manager import ResourceManager
 from sele_saisie_auto.selenium_utils import (
     click_element_without_wait,
@@ -61,6 +62,7 @@ from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
+from sele_saisie_auto.utils.mission import est_en_mission
 
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
@@ -617,18 +619,6 @@ def get_next_saturday_if_not_saturday(date_str: str) -> str:
         next_saturday_date = initial_date + timedelta(days=days_to_next_saturday)
         return next_saturday_date.strftime("%d/%m/%Y")
     return date_str
-
-
-def est_en_mission(description: str) -> bool:
-    """Renvoie True si la description indique un jour 'En mission'."""
-    return description == "En mission"
-
-
-def ajouter_jour_a_jours_remplis(jour: str, filled_days: list[str]) -> list[str]:
-    """Ajoute un jour à la liste jours_remplis si ce n'est pas déjà fait."""
-    if jour not in filled_days:
-        filled_days.append(jour)
-    return filled_days
 
 
 def afficher_message_insertion(
