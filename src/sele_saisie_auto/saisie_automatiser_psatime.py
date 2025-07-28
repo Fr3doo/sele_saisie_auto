@@ -219,21 +219,7 @@ class PSATimeAutomation:
         self._additional_info_page: AdditionalInfoPage | None = None
 
         # Initialise orchestrator helpers
-        timesheet_ctx = remplir_jours_feuille_de_temps.context_from_app_config(
-            app_config, log_file
-        )  # pragma: no cover
-        timesheet_helper = remplir_jours_feuille_de_temps.TimeSheetHelper(
-            timesheet_ctx,
-            cast(LoggerProtocol, self.logger),
-            waiter=self.waiter,
-        )  # pragma: no cover
-        self.page_navigator = PageNavigator(  # pragma: no cover
-            self.browser_session,
-            self.login_handler,
-            self.date_entry_page,
-            self.additional_info_page,
-            timesheet_helper,
-        )
+        self.page_navigator = PageNavigator.from_automation(self)  # pragma: no cover
         self.resource_manager = ResourceManager(log_file)  # pragma: no cover
         self.orchestrator: AutomationOrchestrator | None = None
 

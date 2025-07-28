@@ -1,4 +1,5 @@
 import sys
+import types
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -7,9 +8,18 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 import pytest  # noqa: E402
 
 from sele_saisie_auto import plugins  # noqa: E402
+from sele_saisie_auto.app_config import AppConfig, AppConfigRaw  # noqa: E402
 from sele_saisie_auto.encryption_utils import Credentials  # noqa: E402
+from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.navigation import page_navigator as pn_mod  # noqa: E402
 from sele_saisie_auto.navigation.page_navigator import PageNavigator  # noqa: E402
+from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter  # noqa: E402
+from tests.conftest import (  # noqa: E402
+    DummyAdditionalInfoPage,
+    DummyBrowserSession,
+    DummyDateEntryPage,
+    DummyLoginHandler,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -119,3 +129,25 @@ def test_run_requires_prepare():
     _, _, _, _, _, nav = make_navigator()
     with pytest.raises(RuntimeError):
         nav.run("drv")
+
+
+def test_from_automation_builds_navigator(sample_config):
+    app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
+    automation = types.SimpleNamespace(
+        log_file="log.html",
+        logger=Logger("log.html"),
+        waiter=create_waiter(app_cfg.default_timeout),
+        browser_session=DummyBrowserSession(),
+        login_handler=DummyLoginHandler(),
+        date_entry_page=DummyDateEntryPage(),
+        additional_info_page=DummyAdditionalInfoPage(),
+        context=types.SimpleNamespace(config=app_cfg),
+    )
+
+    nav = PageNavigator.from_automation(automation)
+
+    assert nav.browser_session is automation.browser_session
+    assert nav.login_handler is automation.login_handler
+    assert nav.date_entry_page is automation.date_entry_page
+    assert nav.additional_info_page is automation.additional_info_page
+    assert nav.timesheet_helper is not None
