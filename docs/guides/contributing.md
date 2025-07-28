@@ -105,7 +105,8 @@ Utilisez cette commande avant d’ouvrir une pull request pour vous assurer que 
       - `@codecov-ai-reviewer review`
       - `@codecov-ai-reviewer test`
   5. Avant d’ouvrir la PR :
-      - exécuter `poetry install` et `poetry.lock`
+     - exécuter `poetry install`
+     - si `pyproject.toml` change, lancer `poetry lock` pour mettre à jour `poetry.lock`
       - exécuter `poetry run pre-commit run --all-files`, `poetry run pytest`.
 
   6. Création de branche
