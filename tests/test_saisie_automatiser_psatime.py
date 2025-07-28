@@ -12,6 +12,7 @@ from sele_saisie_auto.utils import misc as utils_misc
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+import sele_saisie_auto.logger_utils as logger_utils  # noqa: E402
 from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
 from sele_saisie_auto.logger_utils import afficher_message_insertion  # noqa: E402
@@ -255,7 +256,9 @@ def test_helpers(monkeypatch, sample_config):
     sap.seprateur_menu_affichage_log("log.html")
     with monkeypatch.context() as m:
         called = []
-        m.setattr(console_ui, "show_separator", lambda: called.append(True))
+        m.setattr(
+            logger_utils, "show_log_separator", lambda *a, **k: called.append(True)
+        )
         sap.seprateur_menu_affichage_console()
     sap.log_initialisation()
     assert messages

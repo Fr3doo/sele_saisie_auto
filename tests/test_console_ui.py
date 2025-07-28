@@ -1,5 +1,6 @@
 import builtins
 
+import sele_saisie_auto.logger_utils as logger_utils
 from sele_saisie_auto.console_ui import ask_continue, show_separator
 
 
@@ -8,7 +9,7 @@ def test_console_utils(monkeypatch):
     monkeypatch.setattr(builtins, "input", lambda p: prompts.append(p) or "ok")
     logged: list[str] = []
     monkeypatch.setattr(
-        "sele_saisie_auto.console_ui.write_log",
+        "sele_saisie_auto.logger_utils.write_log",
         lambda msg, log_file, level="INFO", log_format="html", auto_close=False: logged.append(
             msg
         ),

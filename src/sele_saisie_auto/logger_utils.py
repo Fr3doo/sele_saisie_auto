@@ -290,3 +290,13 @@ def close_logs(
         raise RuntimeError(
             f"Erreur inattendue lors de la fermeture des logs : {e}"
         ) from e
+
+
+def show_log_separator(log_file: str, level: str = "INFO") -> None:
+    """Write a visual separator to ``log_file``."""
+
+    write_log(
+        "*************************************************************",
+        log_file,
+        level,
+    )
