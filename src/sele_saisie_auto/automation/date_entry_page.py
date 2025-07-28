@@ -1,13 +1,15 @@
+# src\sele_saisie_auto\automation\date_entry_page.py
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as ec
 
 import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: N812
+from selenium.webdriver.remote.webdriver import WebDriver
 from sele_saisie_auto import messages
 from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
@@ -49,7 +51,7 @@ class DateEntryPage:
         return self._automation.log_file
 
     @property
-    def config(self) -> AppConfig:  # pragma: no cover - accessor
+    def config(self) -> AppConfig | Any:  # pragma: no cover - accessor
         ctx = getattr(self._automation, "context", None)
         cfg = getattr(ctx, "config", None)
         if cfg is None or not hasattr(cfg, "default_timeout"):
@@ -62,11 +64,11 @@ class DateEntryPage:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-    def wait_for_dom(self, driver) -> None:
+    def wait_for_dom(self, driver: WebDriver) -> None:
         """Delegate DOM wait to the parent automation."""
         self._automation.wait_for_dom(driver)
 
-    def switch_to_main_frame(self, driver):
+    def switch_to_main_frame(self, driver: WebDriver) -> WebDriver | Any:
         """Switch to the main iframe using the parent automation."""
         return self._automation.switch_to_iframe_main_target_win0(driver)
 
@@ -75,7 +77,7 @@ class DateEntryPage:
     # ------------------------------------------------------------------
     @wait_for_dom_after
     @handle_selenium_errors(default_return=False)
-    def navigate_from_home_to_date_entry_page(self, driver):
+    def navigate_from_home_to_date_entry_page(self, driver: WebDriver) -> Any:
         """Navigate from the home page to the date entry page."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
@@ -108,7 +110,7 @@ class DateEntryPage:
         return self.switch_to_main_frame(driver)
 
     @handle_selenium_errors(default_return=None)
-    def handle_date_input(self, driver, date_cible):
+    def handle_date_input(self, driver: WebDriver, date_cible: str | None) -> None:
         """Fill the date field with ``date_cible`` or next Saturday."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
@@ -133,7 +135,7 @@ class DateEntryPage:
                         "Prochain samedi appliqué",
                     )
                 else:
-                    sap.write_log(
+                    write_log(
                         format_message("NO_DATE_CHANGE", {}),
                         self.log_file,
                         "DEBUG",
@@ -142,7 +144,7 @@ class DateEntryPage:
 
     @wait_for_dom_after
     @handle_selenium_errors(default_return=False)
-    def submit_date_cible(self, driver):
+    def submit_date_cible(self, driver: WebDriver) -> None:
         """Validate the chosen date."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
@@ -161,7 +163,7 @@ class DateEntryPage:
         return element_present
 
     @handle_selenium_errors(default_return=None)
-    def process_date(self, driver, date_cible) -> bool | None:
+    def process_date(self, driver: WebDriver, date_cible: str | None) -> Any | None:
         """Orchestrate date selection and validation.
 
         Returns ``False`` if a conflicting date alert was detected,
@@ -177,13 +179,13 @@ class DateEntryPage:
         if self.submit_date_cible(driver):
             self._handle_date_alert(driver)
 
-    def _handle_date_alert(self, driver) -> None:
+    def _handle_date_alert(self, driver: WebDriver) -> None:
         """Delegate alert handling to :class:`AlertHandler`."""
 
         self.alert_handler.handle_date_alert(driver)
 
     @handle_selenium_errors(default_return=None)
-    def _click_action_button(self, driver, create_new: bool) -> None:
+    def _click_action_button(self, driver: WebDriver, create_new: bool) -> None:
         """Click the appropriate action button on the page."""
         elem_id = (
             Locators.OK_BUTTON.value if create_new else Locators.COPY_TIME_BUTTON.value

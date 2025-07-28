@@ -1,3 +1,4 @@
+# src\sele_saisie_auto\automation\login_handler.py
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -7,7 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from sele_saisie_auto.encryption_utils import EncryptionService
+from sele_saisie_auto.encryption_utils import Credentials, EncryptionService
 from sele_saisie_auto.interfaces import BrowserSessionProtocol
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
@@ -43,7 +44,7 @@ class LoginHandler:
         """Delegate DOM wait to :class:`BrowserSession`."""
         self.browser_session.wait_for_dom(driver)
 
-    def login(self, driver: WebDriver, credentials) -> None:
+    def login(self, driver: WebDriver, credentials: Credentials) -> None:
         """Fill username and password fields using decrypted credentials."""
         write_log(format_message("DECRYPT_CREDENTIALS", {}), self.log_file, "DEBUG")
         username = self.encryption_service.dechiffrer_donnees(

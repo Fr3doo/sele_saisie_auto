@@ -1,3 +1,4 @@
+# src\sele_saisie_auto\automation\browser_session.py
 from __future__ import annotations
 
 from selenium.webdriver.common.by import By
@@ -84,7 +85,7 @@ class BrowserSession:
         self.log_file = log_file
         self.app_config = app_config
         if waiter is None:
-            self.waiter = WaiterFactory.get_waiter(app_config)
+            self.waiter: WaiterProtocol = WaiterFactory.get_waiter(app_config)
         else:
             self.waiter = waiter
         if app_config is not None:
@@ -140,7 +141,7 @@ class BrowserSession:
     # DOM helpers
     # ------------------------------------------------------------------
     @handle_selenium_errors(default_return=None)
-    def wait_for_dom(self, driver) -> None:
+    def wait_for_dom(self, driver: WebDriver) -> None:
         """Wait until the DOM is stable and fully loaded."""
         default_timeout = (
             self.app_config.default_timeout

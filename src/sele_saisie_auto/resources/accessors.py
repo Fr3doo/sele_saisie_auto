@@ -1,6 +1,7 @@
 """Simplified helpers to retrieve credentials and open a browser."""
 
 from sele_saisie_auto.automation.browser_session import BrowserSession
+from selenium.webdriver.remote.webdriver import WebDriver
 from sele_saisie_auto.encryption_utils import Credentials, EncryptionService
 
 __all__ = ["get_credentials", "get_driver"]
@@ -17,6 +18,6 @@ def get_driver(
     *,
     headless: bool = False,
     no_sandbox: bool = False,
-):
+) -> WebDriver | None:
     """Open the browser through ``browser_session`` and return the driver."""
     return browser_session.open(url, headless=headless, no_sandbox=no_sandbox)

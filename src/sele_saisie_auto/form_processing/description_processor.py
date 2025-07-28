@@ -1,8 +1,10 @@
+# src\sele_saisie_auto\form_processing\description_processor.py
 """Processing helpers for descriptions and weekly day values."""
 
 from __future__ import annotations
-
+from typing import Optional, Any, cast
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto import messages
 from sele_saisie_auto.constants import JOURS_SEMAINE
@@ -20,7 +22,7 @@ from sele_saisie_auto.selenium_utils import (
 from sele_saisie_auto.strategies import ElementFillingContext
 
 
-def _get_element(driver, waiter: Waiter | None, element_id: str):
+def _get_element(driver: WebDriver, waiter: Waiter | None, element_id: str) -> Optional[Any]:
     """Retrieve a Selenium element either via :class:`Waiter` or default wait."""
     if waiter:
         return waiter.wait_for_element(driver, By.ID, element_id)
@@ -28,7 +30,7 @@ def _get_element(driver, waiter: Waiter | None, element_id: str):
 
 
 def _find_description_row(
-    driver, description: str, id_value_row: str, log_file: str
+    driver: WebDriver, description: str, id_value_row: str, log_file: str
 ) -> int | None:
     """Return the row index matching ``description`` and log the search result."""
     write_log(
@@ -55,7 +57,7 @@ def _find_description_row(
 
 
 def _collect_filled_days(
-    driver,
+    driver: WebDriver,
     waiter: Waiter | None,
     id_value_days: str,
     row_index: int,
@@ -100,7 +102,7 @@ def _collect_filled_days(
 
 
 def _fill_days(
-    driver,
+    driver: WebDriver,
     waiter: Waiter | None,
     id_value_days: str,
     row_index: int,
@@ -158,8 +160,8 @@ def _fill_days(
 
 
 def process_description(
-    driver,
-    config: dict,
+    driver: WebDriver,
+    config: dict[str, Any],
     log_file: str,
     waiter: Waiter | None = None,
     *,

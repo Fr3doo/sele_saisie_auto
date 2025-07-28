@@ -1,9 +1,11 @@
+# src\sele_saisie_auto\alerts\alert_handler.py
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.exceptions import AutomationExitError
@@ -46,7 +48,7 @@ class AlertHandler:
         return self._log_file
 
     @property
-    def config(self) -> AppConfig:  # pragma: no cover - accessor
+    def config(self) -> AppConfig | Any:  # pragma: no cover - accessor
         cfg = getattr(self.context, "config", None)
         if cfg is None or not hasattr(cfg, "default_timeout"):
             return SimpleNamespace(
@@ -58,7 +60,7 @@ class AlertHandler:
     # ------------------------------------------------------------------
     # Alert helpers
     # ------------------------------------------------------------------
-    def handle_date_alert(self, driver) -> None:
+    def handle_date_alert(self, driver: WebDriver) -> None:
         """Close alert if the date already exists.
 
         Raises
@@ -87,7 +89,7 @@ class AlertHandler:
 
         write_log(format_message("DATE_VALIDATED", {}), self.log_file, "DEBUG")
 
-    def handle_save_alerts(self, driver) -> None:
+    def handle_save_alerts(self, driver: WebDriver) -> None:
         """Dismiss any alert shown after saving."""
         alerts = self.alert_configs.get("save_alerts", [])
         if self.browser_session is not None:
@@ -104,7 +106,7 @@ class AlertHandler:
                 )
                 break
 
-    def handle_alerts(self, driver, alert_type: str = "save_alerts") -> None:
+    def handle_alerts(self, driver: WebDriver, alert_type: str = "save_alerts") -> None:
         """General wrapper to dispatch alert handling.
 
         Parameters
