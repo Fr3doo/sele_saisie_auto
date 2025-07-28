@@ -1,21 +1,24 @@
 # src\sele_saisie_auto\alerts\alert_handler.py
 from __future__ import annotations
 
+from configparser import ConfigParser
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from sele_saisie_auto.app_config import AppConfig
+import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: N812
+from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
 from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
-from sele_saisie_auto.selenium_utils import Waiter, click_element_without_wait
+from sele_saisie_auto.selenium_utils import click_element_without_wait
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 if TYPE_CHECKING:  # pragma: no cover
     from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
+    from sele_saisie_auto.selenium_utils.wait_helpers import Waiter
 
 
 class AlertHandler:
@@ -32,13 +35,22 @@ class AlertHandler:
     }
 
     def __init__(
-        self, automation: PSATimeAutomation, waiter: Waiter | None = None
+        self, automation: PSATimeAutomation, waiter: "Waiter" | None = None
     ) -> None:
         self._automation = automation
         self.context = getattr(automation, "context", None)
         self.browser_session = getattr(automation, "browser_session", None)
         self._log_file = automation.log_file
-        self.waiter = waiter or getattr(automation, "waiter", None) or Waiter()
+        if waiter is None:
+            cfg = getattr(self.context, "config", None)
+            app_cfg = (
+                AppConfig.from_raw(AppConfigRaw(cfg))
+                if isinstance(cfg, ConfigParser)
+                else None
+            )
+            self.waiter = WaiterFactory.get_waiter(app_cfg)
+        else:
+            self.waiter = waiter
 
     # ------------------------------------------------------------------
     # Common properties

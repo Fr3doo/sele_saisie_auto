@@ -3,10 +3,10 @@
 
 # Import des bibliothèques nécessaires
 from __future__ import annotations
+
 from configparser import ConfigParser
 from dataclasses import dataclass
-from typing import Any, Callable, TYPE_CHECKING, cast
-from selenium.webdriver.remote.webdriver import WebDriver
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 from selenium.common.exceptions import (
     NoSuchElementException,
@@ -15,9 +15,11 @@ from selenium.common.exceptions import (
     WebDriverException,
 )
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
 
+import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: N812
 from sele_saisie_auto import messages
-from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
 from sele_saisie_auto.constants import (
     ID_TO_KEY_MAPPING,
     JOURS_SEMAINE,
@@ -32,7 +34,6 @@ from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini
 from sele_saisie_auto.selenium_utils import (
-    Waiter,
     controle_insertion,
     detecter_et_verifier_contenu,
     effacer_et_entrer_valeur,
@@ -159,7 +160,9 @@ def ajouter_jour_a_jours_remplis(jour: str, filled_days: list[str]) -> list[str]
     return filled_days
 
 
-def afficher_message_insertion(jour: str, valeur: str, tentative: int, message: str) -> None:
+def afficher_message_insertion(
+    jour: str, valeur: str, tentative: int, message: str
+) -> None:
     """Affiche un message d'insertion de la valeur."""
     if message == messages.TENTATIVE_INSERTION:
         write_log(
@@ -301,12 +304,12 @@ def remplir_mission_specifique(
         afficher_message_insertion(jour, value_to_fill, 0, "après insertion")
 
 
-def _insert_value_with_retries( # pragma: no cover
+def _insert_value_with_retries(  # pragma: no cover
     driver: WebDriver,
     field_id: str,
     value: str,
     max_attempts: int,
-    waiter: WaiterProtocol | None # pragma: no cover
+    waiter: WaiterProtocol | None,  # pragma: no cover
 ) -> bool:  # pragma: no cover
     """Essaye d'insérer la valeur plusieurs fois si nécessaire."""
     if waiter is not None:  # pragma: no cover
@@ -351,7 +354,7 @@ def _insert_value_with_retries( # pragma: no cover
             # pragma: no cover
             if cast(Callable[[Any, str], bool], controle_insertion)(
                 input_field, value  # pragma: no cover
-            ): # pragma: no cover
+            ):  # pragma: no cover
                 write_log(  # pragma: no cover
                     f"Valeur '{value}' insérée avec succès pour '{field_id}'.",  # pragma: no cover
                     LOG_FILE,  # pragma: no cover
@@ -376,7 +379,7 @@ def _insert_value_with_retries( # pragma: no cover
 
 
 def insert_with_retries(  # pragma: no cover
-    driver : WebDriver,
+    driver: WebDriver,
     field_id: str,
     value: str,
     waiter: WaiterProtocol | None = None,
@@ -400,7 +403,9 @@ def traiter_champs_mission(  # pragma: no cover
     """Traite les champs associés aux missions ('En mission') en insérant les valeurs nécessaires."""
     for id in listes_id_informations_mission:
         key = id_to_key_mapping.get(id)
-        if key is None or key == "sub_category_code":  # Exclure les champs non concernés
+        if (
+            key is None or key == "sub_category_code"
+        ):  # Exclure les champs non concernés
             continue
 
         value_to_fill = project_mission_info.get(key)
@@ -444,16 +449,10 @@ class TimeSheetHelper:
         self.log_file = logger.log_file
         if waiter is None:
             cfg = context.config
-            timeout = cast(
-                int, getattr(cfg, "default_timeout", DEFAULT_TIMEOUT)
-            )
-            long_timeout = cast(
-                int, getattr(cfg, "long_timeout", LONG_TIMEOUT)
-            )
-            self.waiter: WaiterProtocol = cast(
-                WaiterProtocol,
-                Waiter(default_timeout=timeout, long_timeout=long_timeout),
-            )
+            app_cfg = None
+            if isinstance(cfg, ConfigParser):
+                app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
+            self.waiter = WaiterFactory.get_waiter(app_cfg)
         else:
             self.waiter = waiter
         global LOG_FILE
@@ -468,14 +467,18 @@ class TimeSheetHelper:
         """Return the current context without reloading from disk."""
         return self.context
 
-    def fill_standard_days(self, driver: WebDriver, filled_days: list[str]) -> list[str]:
+    def fill_standard_days(
+        self, driver: WebDriver, filled_days: list[str]
+    ) -> list[str]:
         """Remplit les jours hors mission."""
         self.logger.debug("Début du remplissage des jours hors mission...")
         liste = [] if self.context is None else self.context.item_descriptions
         ctx = self.context or TimeSheetContext(self.log_file or "", [], {}, {})
         return remplir_jours(driver, liste, JOURS_SEMAINE, filled_days, ctx)
 
-    def fill_work_missions(self, driver: WebDriver, filled_days: list[str]) -> list[str]:
+    def fill_work_missions(
+        self, driver: WebDriver, filled_days: list[str]
+    ) -> list[str]:
         """Traite les jours en mission."""
         self.logger.debug("Début du traitement des jours de travail et des missions...")
         work_days = {} if self.context is None else self.context.work_days
@@ -507,7 +510,9 @@ class TimeSheetHelper:
             raise ValueError("WebDriver instance is required for filling the timesheet")
         if driver is None:  # pragma: no cover - extra safety
             raise RuntimeError("WebDriver not supplied")
-        assert driver is not None  # garantit à mypy que driver est bien un WebDriver
+        assert (
+            driver is not None
+        )  # garantit à mypy que driver est bien un WebDriver  # nosec B101
         try:
             filled_days: list[str] = []
 
