@@ -159,6 +159,9 @@ class DummyAdditionalInfoPage:
     def save_draft_and_validate(self, driver):
         self.calls.append("save")
 
+    def log_information_details(self):
+        self.calls.append("log_info")
+
 
 class DummyTimeSheetHelper:
     ran = None
@@ -212,6 +215,10 @@ class LoggedDummyAdditionalInfoPage(DummyAdditionalInfoPage):
     def save_draft_and_validate(self, driver):
         super().save_draft_and_validate(driver)
         self.log.append("save")
+
+    def log_information_details(self):
+        super().log_information_details()
+        self.log.append("log_info")
 
 
 class LoggedDummyTimeSheetHelper(DummyTimeSheetHelper):
