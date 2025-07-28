@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from sele_saisie_auto.additional_info_locators import LOCATOR_MAP
+
 """Utilities for building Selenium element identifiers."""
 
 
@@ -16,7 +18,7 @@ class ElementIdBuilder:
         ``10`` and the row index is always ``0``.
         """
 
-        if "UC_TIME_LIN_WRK_UC_DAILYREST" in base_id:
+        if LOCATOR_MAP["DAY_UC_DAILYREST_SPECIAL"] in base_id:
             return f"{base_id}{10 + day_index}$0"
         return f"{base_id}{day_index}${row_index}"
 
