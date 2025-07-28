@@ -215,32 +215,32 @@ def traiter_jour(
     context: TimeSheetContext,
 ) -> list[str]:
     """Traiter un jour spécifique pour le remplissage."""
-
     if jour in filled_days or not description_cible:
         return filled_days
 
     id_value = "POL_DESCR$"
     row_index = trouver_ligne_par_description(driver, description_cible, id_value)
+    if row_index is None:
+        return filled_days
 
-    if row_index is not None:
-        jour_index = list(JOURS_SEMAINE.keys())[
-            list(JOURS_SEMAINE.values()).index(jour)
-        ]
-        input_id = f"POL_TIME{jour_index}${row_index}"
+    jour_index = list(JOURS_SEMAINE.keys())[list(JOURS_SEMAINE.values()).index(jour)]
+    input_id = f"POL_TIME{jour_index}${row_index}"
 
-        element = cast(Any, wait_for_element)(
-            driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
+    element = cast(Any, wait_for_element)(
+        driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
+    )
+    if not element:
+        return filled_days
+
+    if insert_with_retries(driver, input_id, value_to_fill, None):
+        filled_days = ajouter_jour_a_jours_remplis(jour, filled_days)
+        afficher_message_insertion(
+            jour,
+            value_to_fill,
+            0,
+            "après insertion",
+            LOG_FILE,
         )
-
-        if element and insert_with_retries(driver, input_id, value_to_fill, None):
-            filled_days = ajouter_jour_a_jours_remplis(jour, filled_days)
-            afficher_message_insertion(
-                jour,
-                value_to_fill,
-                0,
-                "après insertion",
-                LOG_FILE,
-            )
     return filled_days
 
 
@@ -252,11 +252,15 @@ def remplir_mission(
 ) -> list[str]:
     """Remplir les jours de travail pour les missions."""
     for jour, (description_cible, value_to_fill) in work_days.items():
-        if (
-            description_cible
-            and not est_en_mission(description_cible)
-            and jour not in filled_days
-        ):
+        if jour in filled_days:
+            continue
+        if not description_cible:
+            continue
+        if est_en_mission(description_cible):
+            remplir_mission_specifique(
+                driver, jour, value_to_fill, filled_days, context
+            )
+        else:
             traiter_jour(
                 driver,
                 jour,
@@ -264,14 +268,6 @@ def remplir_mission(
                 value_to_fill,
                 filled_days,
                 context,
-            )
-        elif (
-            description_cible
-            and est_en_mission(description_cible)
-            and jour not in filled_days
-        ):
-            remplir_mission_specifique(
-                driver, jour, value_to_fill, filled_days, context
             )
     return filled_days
 
