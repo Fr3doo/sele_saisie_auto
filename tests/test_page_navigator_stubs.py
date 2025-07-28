@@ -19,7 +19,9 @@ def make_navigator():
     login = StubLoginHandler()
     date_page = StubDateEntryPage()
     info_page = StubAdditionalInfoPage()
-    helper = StubTimeSheetHelper()
+    helper = StubTimeSheetHelper(
+        additional_info_page=info_page, browser_session=session
+    )
     navigator = PageNavigator(session, login, date_page, info_page, helper)
     return session, login, date_page, info_page, helper, navigator
 

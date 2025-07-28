@@ -28,7 +28,12 @@ from sele_saisie_auto.dropdown_options import (
     cgi_options_billing_action as default_cgi_options_billing_action,
 )
 from sele_saisie_auto.error_handler import log_error
-from sele_saisie_auto.interfaces import LoggerProtocol, WaiterProtocol
+from sele_saisie_auto.interfaces import (
+    AdditionalInfoPageProtocol,
+    BrowserSessionProtocol,
+    LoggerProtocol,
+    WaiterProtocol,
+)
 from sele_saisie_auto.logger_utils import afficher_message_insertion, write_log
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini
@@ -438,6 +443,9 @@ class TimeSheetHelper:
         context: TimeSheetContext,
         logger: LoggerProtocol,
         waiter: WaiterProtocol | None = None,
+        *,
+        additional_info_page: AdditionalInfoPageProtocol | None = None,
+        browser_session: BrowserSessionProtocol | None = None,
     ) -> None:
         """Initialise l'assistant avec un ``Logger`` et un ``Waiter``."""
         self.context = context
@@ -455,6 +463,8 @@ class TimeSheetHelper:
                 self.waiter.wrapper.long_timeout = app_cfg.long_timeout
         else:
             self.waiter = waiter
+        self.additional_info_page = additional_info_page
+        self.browser_session = browser_session
         global LOG_FILE
         LOG_FILE = self.log_file  # type: ignore[assignment]
 
@@ -529,6 +539,15 @@ class TimeSheetHelper:
             self.logger.debug(f"Finalisation des jours remplis : {filled_days}")
 
             self.handle_additional_fields(driver)
+            if self.additional_info_page is not None:
+                self.additional_info_page.navigate_from_work_schedule_to_additional_information_page(
+                    driver
+                )
+                self.additional_info_page.submit_and_validate_additional_information(
+                    driver
+                )
+            if self.browser_session is not None:
+                self.browser_session.go_to_default_content()
             self.logger.debug("Tous les jours et missions ont été traités avec succès.")
 
         except NoSuchElementException as e:

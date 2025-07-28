@@ -45,6 +45,8 @@ class PageNavigator:
             timesheet_ctx,
             cast(LoggerProtocol, automation.logger),
             waiter=automation.waiter,
+            additional_info_page=automation.additional_info_page,
+            browser_session=automation.browser_session,
         )
         return cls(
             automation.browser_session,
@@ -67,6 +69,10 @@ class PageNavigator:
         self.date_entry_page = date_entry_page
         self.additional_info_page = additional_info_page
         self.timesheet_helper = timesheet_helper
+        if hasattr(self.timesheet_helper, "additional_info_page"):
+            setattr(self.timesheet_helper, "additional_info_page", additional_info_page)
+        if hasattr(self.timesheet_helper, "browser_session"):
+            setattr(self.timesheet_helper, "browser_session", browser_session)
         self.credentials: Credentials | None = None
         self.date_cible: str | None = None
 
@@ -102,13 +108,8 @@ class PageNavigator:
         return None
 
     def fill_timesheet(self, driver: WebDriver) -> None:
-        """Remplit la feuille de temps puis les informations additionnelles."""
+        """Delegate the entire filling process to :class:`TimeSheetHelper`."""
         self.timesheet_helper.run(driver)
-        self.additional_info_page.navigate_from_work_schedule_to_additional_information_page(
-            driver
-        )
-        self.additional_info_page.submit_and_validate_additional_information(driver)
-        self.browser_session.go_to_default_content()
 
     def submit_timesheet(self, driver: WebDriver) -> None:
         """Enregistre le brouillon et lance la validation finale."""

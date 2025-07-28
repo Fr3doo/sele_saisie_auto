@@ -67,11 +67,9 @@ def test_fill_timesheet_calls_pages():
     session, _, _, info_page, helper, nav = make_navigator()
     nav.fill_timesheet("drv")
     helper.run.assert_called_once_with("drv")
-    info_page.navigate_from_work_schedule_to_additional_information_page.assert_called_once_with(
-        "drv"
-    )
-    info_page.submit_and_validate_additional_information.assert_called_once_with("drv")
-    session.go_to_default_content.assert_called_once_with()
+    info_page.navigate_from_work_schedule_to_additional_information_page.assert_not_called()
+    info_page.submit_and_validate_additional_information.assert_not_called()
+    session.go_to_default_content.assert_not_called()
 
 
 def test_submit_timesheet():
