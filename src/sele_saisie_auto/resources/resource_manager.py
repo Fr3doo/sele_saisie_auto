@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from multiprocessing import shared_memory
+
 from sele_saisie_auto.automation.browser_session import BrowserSession, create_session
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import Credentials, EncryptionService
@@ -65,9 +67,31 @@ class ResourceManager:
 
         if hasattr(self._resource_context, "__exit__"):
             self._resource_context.__exit__(exc_type, exc, tb)
+        if self._credentials is not None:
+            self._cleanup_shared_memory(
+                [
+                    self._credentials.mem_key,
+                    self._credentials.mem_login,
+                    self._credentials.mem_password,
+                ]
+            )
         self._credentials = None
         self._driver = None
         self._session = None
+
+    def _cleanup_shared_memory(
+        self, memories: list[shared_memory.SharedMemory | None]
+    ) -> None:
+        """Close and unlink given shared memory segments."""
+
+        for mem in memories:
+            if mem is None:
+                continue
+            for action in ("close", "unlink"):
+                try:
+                    getattr(mem, action)()
+                except (AttributeError, FileNotFoundError):
+                    pass
 
     def close(self) -> None:
         """Ferme explicitement les ressources en appelant ``__exit__``.
