@@ -114,8 +114,8 @@ def setup_init(monkeypatch, cfg):
     )
     monkeypatch.setattr(
         rm,
-        "BrowserSession",
-        lambda log_file, cfg=app_cfg: DummyBrowserSession(log_file, cfg, waiter=waiter),
+        "create_session",
+        lambda cfg=app_cfg: DummyBrowserSession("log.html", cfg, waiter=waiter),
     )
     monkeypatch.setattr(
         sap,

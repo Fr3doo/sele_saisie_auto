@@ -14,7 +14,8 @@ from sele_saisie_auto.selenium_utils import (
     ouvrir_navigateur_sur_ecran_principal,
     wait_for_dom_ready,
 )
-from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
+from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter, get_waiter
+from sele_saisie_auto.shared_utils import get_log_file
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 
@@ -190,3 +191,9 @@ class BrowserSession:
         if self.driver is None:
             return
         self.driver.switch_to.default_content()
+
+
+def create_session(app_config: AppConfig) -> BrowserSession:
+    """Create a :class:`BrowserSession` configured from ``app_config``."""
+
+    return BrowserSession(get_log_file(), app_config, waiter=get_waiter(app_config))
