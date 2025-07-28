@@ -182,24 +182,14 @@ class AdditionalInfoPage:
 
         cfg = self.context.config
 
-        write_log("👉 Infos_supp_cgi_periode_repos_respectee:", self.log_file, "DEBUG")
-        for day, status in cfg.additional_information[
-            "periode_repos_respectee"
-        ].items():
-            write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
+        sections = {
+            "periode_repos_respectee": "👉 Infos_supp_cgi_periode_repos_respectee:",
+            "horaire_travail_effectif": "👉 Infos_supp_cgi_horaire_travail_effectif:",
+            "plus_demi_journee_travaillee": "👉 Planning de travail de la semaine:",
+            "duree_pause_dejeuner": "👉 Infos_supp_cgi_duree_pause_dejeuner:",
+        }
 
-        write_log("👉 Infos_supp_cgi_horaire_travail_effectif:", self.log_file, "DEBUG")
-        for day, status in cfg.additional_information[
-            "horaire_travail_effectif"
-        ].items():
-            write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
-
-        write_log("👉 Planning de travail de la semaine:", self.log_file, "DEBUG")
-        for day, status in cfg.additional_information[
-            "plus_demi_journee_travaillee"
-        ].items():
-            write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
-
-        write_log("👉 Infos_supp_cgi_duree_pause_dejeuner:", self.log_file, "DEBUG")
-        for day, status in cfg.additional_information["duree_pause_dejeuner"].items():
-            write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
+        for key, title in sections.items():
+            write_log(title, self.log_file, "DEBUG")
+            for day, status in cfg.additional_information.get(key, {}).items():
+                write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
