@@ -10,7 +10,7 @@ def get_waiter(app_config: AppConfig | None) -> Waiter:
     """Return a :class:`Waiter` configured with ``app_config`` timeouts."""
     if app_config is None:
         return Waiter()
-    return Waiter(
-        default_timeout=app_config.default_timeout,
-        long_timeout=app_config.long_timeout,
-    )
+    from sele_saisie_auto.configuration import ServiceConfigurator
+
+    configurator = ServiceConfigurator.from_config(app_config)
+    return configurator.create_waiter()
