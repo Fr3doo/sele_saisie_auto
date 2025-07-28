@@ -696,6 +696,7 @@ def main(
 
 _AUTOMATION: PSATimeAutomation | None = None
 _ORCHESTRATOR: AutomationOrchestrator | None = None
+orchestrator: AutomationOrchestrator | None = None
 context: SaisieContext | None = None
 LOG_FILE: str | None = None
 
@@ -707,7 +708,7 @@ def initialize(
     memory_config: MemoryConfig | None = None,
 ) -> None:
     """Instancie l'automatisation."""
-    global _AUTOMATION, _ORCHESTRATOR, context, LOG_FILE
+    global _AUTOMATION, _ORCHESTRATOR, orchestrator, context, LOG_FILE
     _AUTOMATION = PSATimeAutomation(
         log_file,
         app_config,
@@ -726,13 +727,25 @@ def initialize(
         choix_user=_AUTOMATION.choix_user,
     )
     _AUTOMATION.orchestrator = _ORCHESTRATOR
+    orchestrator = _ORCHESTRATOR
 
 
 def log_initialisation() -> None:
     """Enregistre les informations initiales dans les logs."""
-    if not _AUTOMATION:
+    if not orchestrator:
         raise AutomationNotInitializedError("Automation non initialisée")
-    _AUTOMATION.log_initialisation()
+    if not orchestrator.log_file:
+        raise RuntimeError(f"Fichier de log {messages.INTROUVABLE}.")
+    write_log(
+        "\ud83d\udccc D\u00e9marrage de la fonction 'saisie_automatiser_psatime.run()'",
+        orchestrator.log_file,
+        "INFO",
+    )
+    write_log(
+        f"\ud83d\udd0d Chemin du fichier log : {orchestrator.log_file}",
+        orchestrator.log_file,
+        "DEBUG",
+    )
 
 
 def initialize_shared_memory() -> EncryptionCredentials:
