@@ -50,6 +50,7 @@ from sele_saisie_auto.logger_utils import show_log_separator, write_log
 from sele_saisie_auto.logging_service import Logger, LoggingConfigurator, get_logger
 from sele_saisie_auto.navigation import PageNavigator
 from sele_saisie_auto.orchestration import AutomationOrchestrator
+from sele_saisie_auto.plugins_utils import call_hook
 from sele_saisie_auto.remplir_jours_feuille_de_temps import ajouter_jour_a_jours_remplis
 from sele_saisie_auto.resources.resource_manager import ResourceManager
 from sele_saisie_auto.selenium_utils import (
@@ -534,7 +535,7 @@ class PSATimeAutomation:
         self.wait_for_dom(driver)
         if self.switch_to_iframe_main_target_win0(driver):
             detecter_doublons_jours(driver)
-            plugins.call("before_submit", driver)
+            call_hook("before_submit", driver)
             self.page_navigator.submit_timesheet(driver)
 
     def run(
