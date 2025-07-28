@@ -19,6 +19,7 @@ from sele_saisie_auto import (
     messages,
     plugins,
     remplir_jours_feuille_de_temps,
+    shared_utils,
 )
 from sele_saisie_auto.additional_info_locators import AdditionalInfoLocators
 from sele_saisie_auto.app_config import AppConfig
@@ -45,7 +46,7 @@ from sele_saisie_auto.interfaces.protocols import (
     WaiterProtocol,
 )
 from sele_saisie_auto.locators import Locators
-from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logger_utils import show_log_separator, write_log
 from sele_saisie_auto.logging_service import Logger, LoggingConfigurator, get_logger
 from sele_saisie_auto.navigation import PageNavigator
 from sele_saisie_auto.orchestration import AutomationOrchestrator
@@ -600,16 +601,12 @@ class PSATimeAutomation:
 
 def seprateur_menu_affichage_log(log_file: str) -> None:
     """Affiche un séparateur dans le fichier de log."""
-    write_log(
-        "*************************************************************",
-        log_file,
-        "INFO",
-    )
+    show_log_separator(log_file)
 
 
 def seprateur_menu_affichage_console() -> None:
     """Affiche un séparateur dans la console."""
-    console_ui.show_separator()
+    show_log_separator(shared_utils.get_log_file(), "DEBUG")
 
 
 # ------------------------------------------------------------------------------------------------- #

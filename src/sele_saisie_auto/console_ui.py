@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from sele_saisie_auto import shared_utils
-from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logger_utils import show_log_separator
 
 
 def ask_continue(prompt: str) -> None:
@@ -13,8 +13,4 @@ def ask_continue(prompt: str) -> None:
 
 def show_separator() -> None:
     """Log a separator line."""
-    write_log(
-        "*************************************************************",
-        shared_utils.get_log_file(),
-        "DEBUG",
-    )
+    show_log_separator(shared_utils.get_log_file(), "DEBUG")
