@@ -4,8 +4,8 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+from sele_saisie_auto.logger_utils import afficher_message_insertion  # noqa: E402
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
-    afficher_message_insertion,
     ajouter_jour_a_jours_remplis,
     est_en_mission_presente,
     insert_with_retries,
@@ -27,10 +27,10 @@ def test_utilities(monkeypatch):
 
     logs = []
     monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
+        "sele_saisie_auto.logger_utils.write_log",
         lambda msg, file, level: logs.append(msg),
     )
-    afficher_message_insertion("lun", "8", 0, "test")
+    afficher_message_insertion("lun", "8", 0, "test", "log.html")
     assert logs
 
     called = {}

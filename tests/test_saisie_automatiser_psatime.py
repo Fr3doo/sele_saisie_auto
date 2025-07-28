@@ -14,6 +14,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
+from sele_saisie_auto.logger_utils import afficher_message_insertion  # noqa: E402
 from tests.conftest import FakeEncryptionService  # noqa: E402
 
 # Les tests de ce module s'appuient sur l'orchestrateur refactorisé
@@ -229,14 +230,21 @@ def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
 def test_helpers(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
     logs = []
-    monkeypatch.setattr(sap, "write_log", lambda msg, f, level: logs.append(msg))
+    monkeypatch.setattr(
+        "sele_saisie_auto.logger_utils.write_log",
+        lambda msg, f, level: logs.append(msg),
+    )
     assert sap.get_next_saturday_if_not_saturday("01/07/2024") == "06/07/2024"
     assert sap.get_next_saturday_if_not_saturday("06/07/2024") == "06/07/2024"
     assert sap.est_en_mission("En mission") is True
     filled_days = []
     assert sap.ajouter_jour_a_jours_remplis("lundi", filled_days) == ["lundi"]
-    sap.afficher_message_insertion(
-        "lundi", "8", 0, messages.TENTATIVE_INSERTION, "log.html"
+    afficher_message_insertion(
+        "lundi",
+        "8",
+        0,
+        messages.TENTATIVE_INSERTION,
+        "log.html",
     )
     monkeypatch.setattr(
         utils_misc.subprocess,

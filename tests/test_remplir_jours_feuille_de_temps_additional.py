@@ -7,9 +7,9 @@ import pytest
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto import messages  # noqa: E402
+from sele_saisie_auto.logger_utils import afficher_message_insertion  # noqa: E402
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     TimeSheetContext,
-    afficher_message_insertion,
     main,
     remplir_jours,
     remplir_mission,
@@ -39,10 +39,16 @@ def test_wait_for_dom(monkeypatch):
 def test_afficher_message_insertion_branch(monkeypatch):
     logs = []
     monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
+        "sele_saisie_auto.logger_utils.write_log",
         lambda msg, *_: logs.append(msg),
     )
-    afficher_message_insertion("lun", "8", 1, messages.TENTATIVE_INSERTION)
+    afficher_message_insertion(
+        "lun",
+        "8",
+        1,
+        messages.TENTATIVE_INSERTION,
+        "log.html",
+    )
     assert f"{messages.TENTATIVE_INSERTION}2" in logs[0]
 
 

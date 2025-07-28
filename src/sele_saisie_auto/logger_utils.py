@@ -5,6 +5,8 @@ from configparser import ConfigParser
 from datetime import datetime
 from typing import Literal
 
+from sele_saisie_auto import messages
+
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
@@ -49,8 +51,7 @@ MESSAGE_TEMPLATES: dict[str, str] = {
 
 
 def initialize_logger(
-    config: ConfigParser, 
-    log_level_override: str | None = None
+    config: ConfigParser, log_level_override: str | None = None
 ) -> None:
     """Initialise le niveau de log.
 
@@ -173,6 +174,29 @@ def get_html_style() -> str:
     <table>
     <tr><th>Timestamp</th><th>Level</th><th>Message</th></tr>
     """
+
+
+def afficher_message_insertion(
+    jour: str,
+    valeur: str,
+    tentative: int,
+    message: str,
+    log_file: str,
+) -> None:
+    """Log un message de confirmation d'insertion."""
+
+    if message == messages.TENTATIVE_INSERTION:
+        write_log(
+            f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' ({message}{tentative + 1})",
+            log_file,
+            "DEBUG",
+        )
+    else:
+        write_log(
+            f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' {message})",
+            log_file,
+            "DEBUG",
+        )
 
 
 def initialize_html_log_file(log_file: str) -> None:

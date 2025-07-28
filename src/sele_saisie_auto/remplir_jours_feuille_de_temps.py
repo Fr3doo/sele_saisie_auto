@@ -29,7 +29,7 @@ from sele_saisie_auto.dropdown_options import (
 )
 from sele_saisie_auto.error_handler import log_error
 from sele_saisie_auto.interfaces import LoggerProtocol, WaiterProtocol
-from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logger_utils import afficher_message_insertion, write_log
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini
 from sele_saisie_auto.selenium_utils import (
@@ -156,24 +156,6 @@ def ajouter_jour_a_jours_remplis(jour: str, filled_days: list[str]) -> list[str]
     return filled_days
 
 
-def afficher_message_insertion(
-    jour: str, valeur: str, tentative: int, message: str
-) -> None:
-    """Affiche un message d'insertion de la valeur."""
-    if message == messages.TENTATIVE_INSERTION:
-        write_log(
-            f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' ({message}{tentative + 1})",
-            LOG_FILE,
-            "DEBUG",
-        )
-    else:
-        write_log(
-            f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' {message})",
-            LOG_FILE,
-            "DEBUG",
-        )
-
-
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
@@ -242,7 +224,13 @@ def traiter_jour(
 
         if element and insert_with_retries(driver, input_id, value_to_fill, None):
             filled_days = ajouter_jour_a_jours_remplis(jour, filled_days)
-            afficher_message_insertion(jour, value_to_fill, 0, "après insertion")
+            afficher_message_insertion(
+                jour,
+                value_to_fill,
+                0,
+                "après insertion",
+                LOG_FILE,
+            )
     return filled_days
 
 
@@ -297,7 +285,13 @@ def remplir_mission_specifique(
 
     if element and insert_with_retries(driver, input_id, value_to_fill, None):
         filled_days = ajouter_jour_a_jours_remplis(jour, filled_days)
-        afficher_message_insertion(jour, value_to_fill, 0, "après insertion")
+        afficher_message_insertion(
+            jour,
+            value_to_fill,
+            0,
+            "après insertion",
+            LOG_FILE,
+        )
 
 
 def _insert_value_with_retries(  # pragma: no cover
