@@ -89,14 +89,15 @@ def setup_init(monkeypatch, cfg):
     monkeypatch.setattr(sap, "SharedMemoryService", lambda logger: DummySHMService())
     from sele_saisie_auto.configuration import Services
     from sele_saisie_auto.resources import resource_manager as rm
-    from sele_saisie_auto.selenium_utils.waiter_factory import get_waiter
+    from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 
     class DummyConfigurator:
         def __init__(self, cfg_b):
             self.cfg = cfg_b
+            self.app_config = cfg_b
 
         def build_services(self, lf_b):
-            waiter = get_waiter(self.cfg)
+            waiter = create_waiter(self.cfg.default_timeout)
             session = sap.BrowserSession(lf_b, self.cfg, waiter=waiter)
             enc = DummyEnc()
             login = sap.LoginHandler(lf_b, enc, session)
@@ -105,7 +106,7 @@ def setup_init(monkeypatch, cfg):
     monkeypatch.setattr(
         sap, "service_configurator_factory", lambda cfg_b: DummyConfigurator(cfg_b)
     )
-    waiter = get_waiter(app_cfg)
+    waiter = create_waiter(app_cfg.default_timeout)
     monkeypatch.setattr(
         rm,
         "ConfigManager",

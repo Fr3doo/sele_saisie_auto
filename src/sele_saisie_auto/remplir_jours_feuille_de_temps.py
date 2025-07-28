@@ -17,7 +17,6 @@ from selenium.common.exceptions import (
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
-import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: N812
 from sele_saisie_auto import messages
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
 from sele_saisie_auto.constants import (
@@ -46,6 +45,7 @@ from sele_saisie_auto.selenium_utils import (
     wait_for_element,
     wait_until_dom_is_stable,
 )
+from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
 
@@ -450,9 +450,13 @@ class TimeSheetHelper:
         if waiter is None:
             cfg = context.config
             app_cfg = None
+            timeout = DEFAULT_TIMEOUT
             if isinstance(cfg, ConfigParser):
                 app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
-            self.waiter = WaiterFactory.get_waiter(app_cfg)
+                timeout = app_cfg.default_timeout
+            self.waiter = create_waiter(timeout)
+            if app_cfg is not None:
+                self.waiter.wrapper.long_timeout = app_cfg.long_timeout
         else:
             self.waiter = waiter
         global LOG_FILE

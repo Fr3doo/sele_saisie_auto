@@ -6,10 +6,9 @@ from typing import TYPE_CHECKING, Any
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as ec
 
-import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: N812
-from selenium.webdriver.remote.webdriver import WebDriver
 from sele_saisie_auto import messages
 from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
@@ -18,6 +17,7 @@ from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import Waiter, wait_for_dom_after
+from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
 
@@ -39,11 +39,21 @@ class DateEntryPage:
         self, automation: PSATimeAutomation, waiter: WaiterProtocol | None = None
     ) -> None:
         self._automation = automation
-        self.waiter = (
-            waiter
-            or getattr(automation, "waiter", None)
-            or WaiterFactory.get_waiter(self.config)
-        )
+        if waiter is not None:
+            self.waiter = waiter
+        else:
+            base_waiter = getattr(automation, "waiter", None)
+            if base_waiter is not None:
+                self.waiter = base_waiter
+            else:
+                timeout = (
+                    self.config.default_timeout
+                    if hasattr(self.config, "default_timeout")
+                    else DEFAULT_TIMEOUT
+                )
+                self.waiter = create_waiter(timeout)
+                if hasattr(self.config, "long_timeout"):
+                    self.waiter.wrapper.long_timeout = self.config.long_timeout
         self.alert_handler = AlertHandler(automation, waiter=self.waiter)
 
     @property

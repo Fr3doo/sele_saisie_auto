@@ -4,7 +4,6 @@ from __future__ import annotations
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
-import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: N812
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.interfaces import WaiterProtocol
@@ -15,6 +14,7 @@ from sele_saisie_auto.selenium_utils import (
     ouvrir_navigateur_sur_ecran_principal,
     wait_for_dom_ready,
 )
+from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 
@@ -85,7 +85,12 @@ class BrowserSession:
         self.log_file = log_file
         self.app_config = app_config
         if waiter is None:
-            self.waiter: WaiterProtocol = WaiterFactory.get_waiter(app_config)
+            timeout = DEFAULT_TIMEOUT
+            if app_config is not None and hasattr(app_config, "default_timeout"):
+                timeout = app_config.default_timeout
+            self.waiter = create_waiter(timeout)
+            if app_config is not None and hasattr(app_config, "long_timeout"):
+                self.waiter.wrapper.long_timeout = app_config.long_timeout
         else:
             self.waiter = waiter
         if app_config is not None:
