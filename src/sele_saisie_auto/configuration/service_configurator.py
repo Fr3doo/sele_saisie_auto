@@ -30,6 +30,11 @@ class Services:
 class ServiceConfigurator:
     """Configure core services based on :class:`AppConfig`."""
 
+    @classmethod
+    def from_config(cls, app_config: AppConfig) -> "ServiceConfigurator":
+        """Return a configurator for ``app_config``."""
+        return cls(app_config)
+
     def __init__(
         self,
         app_config: AppConfig,

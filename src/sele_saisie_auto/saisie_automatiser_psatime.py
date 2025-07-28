@@ -6,11 +6,13 @@
 
 import sys
 from dataclasses import dataclass
-from types import TracebackType
 from datetime import datetime, timedelta
 from multiprocessing import shared_memory
+from types import TracebackType
+from typing import Any, cast
 
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto import (
     console_ui,
@@ -18,7 +20,6 @@ from sele_saisie_auto import (
     plugins,
     remplir_jours_feuille_de_temps,
 )
-from typing import Any, cast
 from sele_saisie_auto.additional_info_locators import AdditionalInfoLocators
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation.additional_info_page import AdditionalInfoPage
@@ -28,31 +29,24 @@ from sele_saisie_auto.automation.login_handler import LoginHandler
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import ServiceConfigurator, Services, build_services
 from sele_saisie_auto.decorators import handle_selenium_errors
-from sele_saisie_auto.encryption_utils import (
-    EncryptionService,
-    Credentials as EncryptionCredentials,
-)
+from sele_saisie_auto.encryption_utils import Credentials as EncryptionCredentials
+from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.exceptions import (
     AutomationExitError,
     AutomationNotInitializedError,
 )
 from sele_saisie_auto.interfaces.protocols import (
-    LoggerProtocol, 
-    WaiterProtocol, 
-    BrowserSessionProtocol,
-    LoginHandlerProtocol,
-    DateEntryPageProtocol,
     AdditionalInfoPageProtocol,
+    BrowserSessionProtocol,
+    DateEntryPageProtocol,
+    LoggerProtocol,
+    LoginHandlerProtocol,
     TimeSheetHelperProtocol,
+    WaiterProtocol,
 )
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import write_log
-from sele_saisie_auto.logging_service import (
-    Logger,
-    LoggingConfigurator,
-    get_logger,
-)
-from selenium.webdriver.remote.webdriver import WebDriver
+from sele_saisie_auto.logging_service import Logger, LoggingConfigurator, get_logger
 from sele_saisie_auto.navigation import PageNavigator
 from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.resources.resource_manager import ResourceManager
@@ -116,8 +110,6 @@ __all__ = [
     "click_element_without_wait",
     "AutomationExitError",
 ]
-
-
 
 
 # ----------------------------------------------------------------------------
@@ -222,7 +214,7 @@ class PSATimeAutomation:
                 },
             ],
         )
-        
+
         self._date_entry_page: DateEntryPage | None = None
         self._additional_info_page: AdditionalInfoPage | None = None
 
@@ -363,9 +355,10 @@ class PSATimeAutomation:
             )  # pragma: no cover
 
     def _init_services(self, app_config: AppConfig) -> Services:
-        """Initialise les services principaux via :func:`build_services`."""
+        """Initialise les services principaux via :class:`ServiceConfigurator`."""
 
-        self.services = build_services(app_config, self.log_file)
+        configurator = ServiceConfigurator.from_config(app_config)
+        self.services = configurator.build_services(self.log_file)
         return self.services
 
     # ------------------------------------------------------------------
@@ -461,10 +454,7 @@ class PSATimeAutomation:
         )
 
     @wait_for_dom_after  # type: ignore[misc]
-    def switch_to_iframe_main_target_win0(
-        self, 
-        driver: WebDriver
-    ) -> bool:
+    def switch_to_iframe_main_target_win0(self, driver: WebDriver) -> bool:
         """Bascule vers l'iframe principale ``main_target_win0``."""
         switched_to_iframe: bool | None = None
         element_present = self.waiter.wait_for_element(  # type: ignore[no-untyped-call]
@@ -483,7 +473,7 @@ class PSATimeAutomation:
     def navigate_from_home_to_date_entry_page(self, driver: WebDriver) -> bool:
         """Delegate navigation to :class:`PageNavigator`."""
         return cast(
-            bool, 
+            bool,
             self.page_navigator.navigate_from_home_to_date_entry_page(driver),  # type: ignore[no-untyped-call]
         )
 
@@ -491,37 +481,39 @@ class PSATimeAutomation:
     def submit_date_cible(self, driver: WebDriver) -> bool:
         """Delegate submission to :class:`PageNavigator`."""
         return cast(
-            bool, 
+            bool,
             self.page_navigator.submit_date_cible(driver),  # type: ignore[no-untyped-call]
         )
 
-    @wait_for_dom_after # type: ignore[misc]
-    def navigate_from_work_schedule_to_additional_information_page(self, driver: WebDriver) -> bool:
+    @wait_for_dom_after  # type: ignore[misc]
+    def navigate_from_work_schedule_to_additional_information_page(
+        self, driver: WebDriver
+    ) -> bool:
         """Delegate to :class:`PageNavigator`."""
         return cast(
-            bool, 
-            self.page_navigator.navigate_from_work_schedule_to_additional_information_page( # type: ignore[no-untyped-call]
+            bool,
+            self.page_navigator.navigate_from_work_schedule_to_additional_information_page(  # type: ignore[no-untyped-call]
                 driver
             ),
         )
 
-    @wait_for_dom_after # type: ignore[misc]
+    @wait_for_dom_after  # type: ignore[misc]
     def submit_and_validate_additional_information(self, driver: WebDriver) -> bool:
         """Delegate to :class:`PageNavigator`."""
         return cast(
-            bool, 
-            self.page_navigator.submit_and_validate_additional_information( # type: ignore[no-untyped-call]
+            bool,
+            self.page_navigator.submit_and_validate_additional_information(  # type: ignore[no-untyped-call]
                 driver
             ),
         )
 
-    @wait_for_dom_after # type: ignore[misc]
+    @wait_for_dom_after  # type: ignore[misc]
     @handle_selenium_errors(default_return=False)
     def save_draft_and_validate(self, driver: WebDriver) -> bool:
         """Delegate to :class:`PageNavigator`."""
         return cast(
-            bool, 
-            self.page_navigator.save_draft_and_validate(driver), # type: ignore[no-untyped-call]
+            bool,
+            self.page_navigator.save_draft_and_validate(driver),  # type: ignore[no-untyped-call]
         )
 
     def cleanup_resources(
@@ -646,9 +638,7 @@ def est_en_mission(description: str) -> bool:
     return description == "En mission"
 
 
-def ajouter_jour_a_jours_remplis(
-    jour: str, filled_days: list[str]
-) -> list[str]:
+def ajouter_jour_a_jours_remplis(jour: str, filled_days: list[str]) -> list[str]:
     """Ajoute un jour à la liste jours_remplis si ce n'est pas déjà fait."""
     if jour not in filled_days:
         filled_days.append(jour)
@@ -656,11 +646,7 @@ def ajouter_jour_a_jours_remplis(
 
 
 def afficher_message_insertion(
-    jour: str,
-    valeur: str,
-    tentative: int,
-    message: str,
-    log_file: str
+    jour: str, valeur: str, tentative: int, message: str, log_file: str
 ) -> None:
     """Affiche un message d'insertion de la valeur."""
     if message == messages.TENTATIVE_INSERTION:
@@ -769,7 +755,7 @@ def initialize_shared_memory() -> EncryptionCredentials:
         raise AutomationNotInitializedError("Automation non initialisée")
     return cast(
         EncryptionCredentials,
-        _ORCHESTRATOR.initialize_shared_memory(), # type: ignore[no-untyped-call]
+        _ORCHESTRATOR.initialize_shared_memory(),  # type: ignore[no-untyped-call]
     )
 
 
@@ -782,9 +768,9 @@ def setup_browser(
     """Instancie le navigateur Selenium."""
     if not _ORCHESTRATOR:
         raise AutomationNotInitializedError("Automation non initialisée")
-    _ORCHESTRATOR.browser_session = session # type: ignore[assignment]
+    _ORCHESTRATOR.browser_session = session  # type: ignore[assignment]
     return cast(
-        WebDriver, 
+        WebDriver,
         _ORCHESTRATOR.browser_session.open(
             _ORCHESTRATOR.config.url,
             fullscreen=False,
@@ -793,11 +779,9 @@ def setup_browser(
         ),
     )
 
+
 def connect_to_psatime(
-    driver: WebDriver, 
-    cle_aes: bytes, 
-    login_c: bytes, 
-    pwd_c: bytes
+    driver: WebDriver, cle_aes: bytes, login_c: bytes, pwd_c: bytes
 ) -> Any:
     """Ouvre la session PSA Time avec les identifiants fournis."""
     if not _ORCHESTRATOR:
