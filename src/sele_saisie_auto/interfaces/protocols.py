@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Any, Protocol, runtime_checkable
 
-from sele_saisie_auto.app_config import AppConfig
 from selenium.webdriver.remote.webdriver import WebDriver
+
+from sele_saisie_auto.app_config import AppConfig
 
 
 @runtime_checkable
@@ -27,11 +28,20 @@ class LoggerProtocol(Protocol):
 
 @runtime_checkable
 class WaiterProtocol(Protocol):
-    def wait_for_dom_ready(self, driver: WebDriver, timeout: int | None = None) -> None: ...
-    def wait_until_dom_is_stable(self, driver: WebDriver, timeout: int | None = None) -> bool: ...
+    def wait_for_dom_ready(
+        self, driver: WebDriver, timeout: int | None = None
+    ) -> None: ...
+
+    def wait_until_dom_is_stable(
+        self, driver: WebDriver, timeout: int | None = None
+    ) -> bool: ...
+
     def wait_for_element(self, driver: WebDriver, *args: Any, **kwargs: Any) -> Any: ...
+
     def find_clickable(self, driver: WebDriver, *args: Any, **kwargs: Any) -> Any: ...
+
     def find_visible(self, driver: WebDriver, *args: Any, **kwargs: Any) -> Any: ...
+
     def find_present(self, driver: WebDriver, *args: Any, **kwargs: Any) -> Any: ...
 
 
@@ -65,7 +75,6 @@ class LoginHandlerProtocol(Protocol):
     ) -> None: ...
 
 
-
 @runtime_checkable
 class DateEntryPageProtocol(Protocol):
     def navigate_from_home_to_date_entry_page(self, driver: WebDriver) -> bool: ...
@@ -75,9 +84,12 @@ class DateEntryPageProtocol(Protocol):
 
 @runtime_checkable
 class AdditionalInfoPageProtocol(Protocol):
-    def navigate_from_work_schedule_to_additional_information_page(self, driver: WebDriver) -> bool: ...
+    def navigate_from_work_schedule_to_additional_information_page(
+        self, driver: WebDriver
+    ) -> bool: ...
     def submit_and_validate_additional_information(self, driver: WebDriver) -> None: ...
     def save_draft_and_validate(self, driver: WebDriver) -> None: ...
+    def log_information_details(self) -> None: ...
 
 
 @runtime_checkable

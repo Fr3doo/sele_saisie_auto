@@ -176,3 +176,30 @@ class AdditionalInfoPage:
         """Dismiss any alert shown after saving."""
 
         self.alert_handler.handle_alerts(driver, "save_alerts")
+
+    def log_information_details(self) -> None:
+        """Log the extra information configuration details."""
+
+        cfg = self.context.config
+
+        write_log("👉 Infos_supp_cgi_periode_repos_respectee:", self.log_file, "DEBUG")
+        for day, status in cfg.additional_information[
+            "periode_repos_respectee"
+        ].items():
+            write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
+
+        write_log("👉 Infos_supp_cgi_horaire_travail_effectif:", self.log_file, "DEBUG")
+        for day, status in cfg.additional_information[
+            "horaire_travail_effectif"
+        ].items():
+            write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
+
+        write_log("👉 Planning de travail de la semaine:", self.log_file, "DEBUG")
+        for day, status in cfg.additional_information[
+            "plus_demi_journee_travaillee"
+        ].items():
+            write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
+
+        write_log("👉 Infos_supp_cgi_duree_pause_dejeuner:", self.log_file, "DEBUG")
+        for day, status in cfg.additional_information["duree_pause_dejeuner"].items():
+            write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")

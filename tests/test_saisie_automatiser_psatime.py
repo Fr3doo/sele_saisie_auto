@@ -152,6 +152,9 @@ class DummyAdditionalInfoPage:
     def _handle_save_alerts(self, driver):
         self.alert_handler.handle_alerts(driver, "save_alerts")
 
+    def log_information_details(self):
+        self.calls.append("log_info")
+
 
 def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
     from sele_saisie_auto.app_config import AppConfig, AppConfigRaw

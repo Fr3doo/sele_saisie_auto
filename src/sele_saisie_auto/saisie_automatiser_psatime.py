@@ -289,45 +289,8 @@ class PSATimeAutomation:
                 "DEBUG",
             )  # pragma: no cover
 
-        write_log(
-            "👉 Infos_supp_cgi_periode_repos_respectee:", self.log_file, "DEBUG"
-        )  # pragma: no cover
-        for day, status in self.context.config.additional_information[
-            "periode_repos_respectee"
-        ].items():
-            write_log(
-                f"🔹 '{day}': '{status}'", self.log_file, "DEBUG"
-            )  # pragma: no cover
-
-        write_log(
-            "👉 Infos_supp_cgi_horaire_travail_effectif:", self.log_file, "DEBUG"
-        )  # pragma: no cover
-        for day, status in self.context.config.additional_information[
-            "horaire_travail_effectif"
-        ].items():
-            write_log(
-                f"🔹 '{day}': '{status}'", self.log_file, "DEBUG"
-            )  # pragma: no cover
-
-        write_log(
-            "👉 Planning de travail de la semaine:", self.log_file, "DEBUG"
-        )  # pragma: no cover
-        for day, status in self.context.config.additional_information[
-            "plus_demi_journee_travaillee"
-        ].items():
-            write_log(
-                f"🔹 '{day}': '{status}'", self.log_file, "DEBUG"
-            )  # pragma: no cover
-
-        write_log(
-            "👉 Infos_supp_cgi_duree_pause_dejeuner:", self.log_file, "DEBUG"
-        )  # pragma: no cover
-        for day, status in self.context.config.additional_information[
-            "duree_pause_dejeuner"
-        ].items():
-            write_log(
-                f"🔹 '{day}': '{status}'", self.log_file, "DEBUG"
-            )  # pragma: no cover
+        # Delegate detailed additional information logs to the page helper
+        self.additional_info_page.log_information_details()
 
         write_log(
             "👉 Lieu de travail Matin:", self.log_file, "DEBUG"
