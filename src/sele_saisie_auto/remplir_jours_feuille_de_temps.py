@@ -156,6 +156,25 @@ def ajouter_jour_a_jours_remplis(jour: str, filled_days: list[str]) -> list[str]
     return filled_days
 
 
+def _collect_filled_days_for_row(
+    driver: WebDriver, row_index: int, week_days: dict[int, str]
+) -> list[str]:
+    """Retourne les jours déjà remplis pour une ligne donnée."""
+
+    collected: list[str] = []
+    for jour_index, jour_name in week_days.items():
+        input_id = f"POL_TIME{jour_index}${row_index}"
+
+        element = cast(Any, wait_for_element)(
+            driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
+        )
+        if element:
+            jour_rempli = verifier_champ_jour_rempli(element, jour_name)
+            if jour_rempli:
+                collected.append(jour_rempli)
+    return collected
+
+
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
@@ -169,29 +188,20 @@ def remplir_jours(
     context: TimeSheetContext,
 ) -> list[str]:
     """Remplir les jours dans l'application web."""
+    if not item_descriptions:
+        return filled_days
+
     # Parcourir chaque description dans item_descriptions
     for description_cible in item_descriptions:
         # Recherche de la ligne avec la description spécifiée pour le jour
         id_value = "POL_DESCR$"
         row_index = trouver_ligne_par_description(driver, description_cible, id_value)
 
-        # Si la ligne est trouvée, remplir les jours de la semaine
+        # Si la ligne est trouvée, collecter les jours remplis pour cette ligne
         if row_index is not None:
-            for jour_index, jour_name in week_days.items():
-                input_id = f"POL_TIME{jour_index}${row_index}"
-
-                # Vérifier la présence de l'élément
-                element = cast(Any, wait_for_element)(
-                    driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
-                )
-
-                if element:
-                    # Vérifier s'il y a une valeur dans l'élément pour ce jour
-                    jour_rempli = verifier_champ_jour_rempli(element, jour_name)
-                    if jour_rempli:
-                        filled_days.append(
-                            jour_rempli
-                        )  # Ajouter le jour s'il est déjà rempli
+            filled_days.extend(
+                _collect_filled_days_for_row(driver, row_index, week_days)
+            )
 
     return filled_days
 
