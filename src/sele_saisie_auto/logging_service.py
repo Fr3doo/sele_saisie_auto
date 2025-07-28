@@ -6,6 +6,7 @@ from typing import Callable, Literal, Protocol
 
 LogFormat = Literal["html", "txt"]
 
+
 # Signature minimale acceptée pour la fonction d'écriture
 class _Writer(Protocol):
     def __call__(
@@ -17,13 +18,15 @@ class _Writer(Protocol):
         log_format: LogFormat,
         auto_close: bool = False,
     ) -> None: ...
+
+
 class Logger:
     """Simple logging wrapper around ``write_log``."""
 
     def __init__(
-        self, 
-        log_file: str | None = None, 
-        log_format: LogFormat = "html", 
+        self,
+        log_file: str | None = None,
+        log_format: LogFormat = "html",
         writer: _Writer | None = None,
     ) -> None:
         """Initialise le logger.
@@ -97,7 +100,7 @@ class Logger:
 
 _LOGGERS: dict[str, Logger] = {}
 
-from sele_saisie_auto.shared_utils import get_log_file
+from sele_saisie_auto.shared_utils import get_log_file  # noqa: E402
 
 
 def get_logger(log_file: str | None) -> Logger:
@@ -115,7 +118,7 @@ def get_logger(log_file: str | None) -> Logger:
 
 class LoggingConfigurator:
     """Utility to configure global logging for the application."""
-    
+
     @staticmethod
     def setup(log_file: str, debug_mode: str | None, config: ConfigParser) -> None:
         """Configure logging for Selenium helpers and the logger utils."""

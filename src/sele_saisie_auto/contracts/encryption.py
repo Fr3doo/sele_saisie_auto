@@ -1,4 +1,4 @@
-#src\sele_saisie_auto\contracts\encryption.py
+# src\sele_saisie_auto\contracts\encryption.py
 
 from __future__ import annotations
 
@@ -28,5 +28,9 @@ class EncryptionService(Protocol):
 
     def __enter__(self) -> "EncryptionService": ...
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None) -> None: ...
-
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None: ...

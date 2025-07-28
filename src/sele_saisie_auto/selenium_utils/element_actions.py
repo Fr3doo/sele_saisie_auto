@@ -3,16 +3,17 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from selenium.common.exceptions import (
     NoSuchElementException,
     StaleElementReferenceException,
 )
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.edge.webdriver import WebDriver as EdgeWebDriver
-from typing import cast
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support.ui import Select
 
 from sele_saisie_auto import messages
 from sele_saisie_auto.logging_service import Logger
@@ -23,7 +24,10 @@ from .navigation import switch_to_frame_by_id
 
 
 def modifier_date_input(
-    date_field: WebElement, new_date: str, update_message: str, logger: Logger | None = None
+    date_field: WebElement,
+    new_date: str,
+    update_message: str,
+    logger: Logger | None = None,
 ) -> None:
     """Change the value of a date input field and log the update."""
     logger = logger or get_default_logger()
@@ -37,9 +41,7 @@ def switch_to_iframe_by_id_or_name(
 ) -> None:
     """Switch into the iframe identified by id or name."""
     logger = logger or get_default_logger()
-    switch_to_frame_by_id(
-        cast(EdgeWebDriver, driver), iframe_identifier, logger=logger
-    )
+    switch_to_frame_by_id(cast(EdgeWebDriver, driver), iframe_identifier, logger=logger)
 
 
 def switch_to_default_content(driver: WebDriver, logger: Logger | None = None) -> None:
@@ -49,7 +51,9 @@ def switch_to_default_content(driver: WebDriver, logger: Logger | None = None) -
     logger.debug("Retour au contexte principal.")
 
 
-def click_element_without_wait(driver: WebDriver, by: By, locator_value: str, logger: Logger | None = None) -> None:
+def click_element_without_wait(
+    driver: WebDriver, by: By, locator_value: str, logger: Logger | None = None
+) -> None:
     """Click an element directly without waiting."""
     logger = logger or get_default_logger()
     target_element = driver.find_element(by, locator_value)
@@ -58,7 +62,11 @@ def click_element_without_wait(driver: WebDriver, by: By, locator_value: str, lo
 
 
 def send_keys_to_element(
-    driver: WebDriver, by: By, locator_value: str, input_text: str, logger: Logger | None = None
+    driver: WebDriver,
+    by: By,
+    locator_value: str,
+    input_text: str,
+    logger: Logger | None = None,
 ) -> None:
     """Send keys to a located element."""
     logger = logger or get_default_logger()
@@ -66,7 +74,9 @@ def send_keys_to_element(
     target_element.send_keys(input_text)
 
 
-def verifier_champ_jour_rempli(day_field: WebElement, day_label: str, logger: Logger | None = None) -> str | None:
+def verifier_champ_jour_rempli(
+    day_field: WebElement, day_label: str, logger: Logger | None = None
+) -> str | None:
     """Check if a day's field already contains a value."""
     logger = logger or get_default_logger()
     field_content: str | None = day_field.get_attribute("value")
@@ -80,12 +90,15 @@ def verifier_champ_jour_rempli(day_field: WebElement, day_label: str, logger: Lo
 
 
 def remplir_champ_texte(
-    day_input_field: WebElement, day_label: str, input_value: str, logger: Logger | None = None
+    day_input_field: WebElement,
+    day_label: str,
+    input_value: str,
+    logger: Logger | None = None,
 ) -> None:
     """Fill a day's input if empty."""
     logger = logger or get_default_logger()
     current_content: str | None = day_input_field.get_attribute("value")
-    
+
     if current_content is None or not current_content.strip():
         day_input_field.clear()
         day_input_field.send_keys(input_value)
@@ -145,7 +158,9 @@ def controle_insertion(day_input_field: WebElement, input_value: str) -> bool:
     return value is not None and value.strip() == input_value
 
 
-def select_by_text(element: WebElement, text: str, logger: Logger | None = None) -> None:
+def select_by_text(
+    element: WebElement, text: str, logger: Logger | None = None
+) -> None:
     """Select ``text`` from a Selenium ``Select`` element."""
     logger = logger or get_default_logger()
     try:

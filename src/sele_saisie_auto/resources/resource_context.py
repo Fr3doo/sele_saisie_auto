@@ -1,6 +1,7 @@
 """Context managing encryption and shared memory lifecycle."""
 
 from __future__ import annotations
+
 from typing import Any
 
 from sele_saisie_auto.encryption_utils import Credentials, EncryptionService
@@ -23,7 +24,9 @@ class ResourceContext:
             self.encryption_service.__enter__()
         return self
 
-    def __exit__(self, exc_type: type | None, exc: Exception | None, tb: Any | None) -> None:
+    def __exit__(
+        self, exc_type: type | None, exc: Exception | None, tb: Any | None
+    ) -> None:
         if hasattr(self.encryption_service, "__exit__"):
             self.encryption_service.__exit__(exc_type, exc, tb)
         if self._credentials is not None:

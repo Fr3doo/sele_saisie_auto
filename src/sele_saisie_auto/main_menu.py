@@ -65,12 +65,12 @@ def main_menu(
             menu,
             headless=headless,
             no_sandbox=no_sandbox,
-    )
+        )
 
     launch = create_button_without_style(
         root_frame,
         text="Lancer votre PSATime",
-        command=launch_psatime,          
+        command=launch_psatime,
     )
     launch.bind("<Return>", lambda _: launch.invoke())
 

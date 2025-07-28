@@ -64,20 +64,20 @@ _DEFAULTS: dict[str, Any] = _load_defaults()
 _work_location_labels: list[str] = cast(
     list[str],
     _DEFAULTS.get(
-    "work_location_options",
-    [
-        "",
-        "CGI",
-        "Demande CGI TLT",
-        "Exceptionel TLT",
-        "N/A",
-        "Ponctuel TLT",
-        "Regulier TLT",
-        "Site client",
-        "Vélo Site CGI",
-        "Vélo Site client",
-    ],
-    )
+        "work_location_options",
+        [
+            "",
+            "CGI",
+            "Demande CGI TLT",
+            "Exceptionel TLT",
+            "N/A",
+            "Ponctuel TLT",
+            "Regulier TLT",
+            "Site client",
+            "Vélo Site CGI",
+            "Vélo Site client",
+        ],
+    ),
 )
 work_location_options: list[WorkLocationOption] = [
     WorkLocationOption(label) for label in _work_location_labels
@@ -186,7 +186,7 @@ _work_schedule_labels: list[str] = cast(
             "Congé enfant malade non payé",
             "Assesseur judiciaire SS",
         ],
-    )
+    ),
 )
 work_schedule_options: list[WorkScheduleOption] = [
     WorkScheduleOption(label) for label in _work_schedule_labels
