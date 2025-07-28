@@ -1,6 +1,8 @@
+# src\sele_saisie_auto\remplir_informations_supp_utils.py
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+from selenium.webdriver.remote.webdriver import WebDriver
 
 import sele_saisie_auto.selenium_utils.waiter_factory as WaiterFactory  # noqa: N812
 from sele_saisie_auto.app_config import AppConfig
@@ -34,8 +36,8 @@ def _context_from_type(type_element: str) -> ElementFillingContext | None:
 
 
 def traiter_description(
-    driver,
-    config,
+    driver: WebDriver,
+    config: dict[str, str],
     log_file: str,
     waiter: Waiter | None = None,
     *,
@@ -76,7 +78,7 @@ class ExtraInfoHelper:
         """Définit la page d'informations supplémentaires."""
         self.page = page
 
-    def traiter_description(self, driver, config):
+    def traiter_description(self, driver: WebDriver, config: dict[str, str]) -> None:
         """Applique :func:`traiter_description` en utilisant l'instance courante."""
         traiter_description(
             driver,
@@ -89,7 +91,7 @@ class ExtraInfoHelper:
     # ------------------------------------------------------------------
     # Delegation to :class:`AdditionalInfoPage`
     # ------------------------------------------------------------------
-    def navigate_from_work_schedule_to_additional_information_page(self, driver):
+    def navigate_from_work_schedule_to_additional_information_page(self, driver: WebDriver) -> Any:
         """Ouvre la fenêtre des informations supplémentaires."""
         if not self.page:
             raise RuntimeError("AdditionalInfoPage not configured")
@@ -97,7 +99,7 @@ class ExtraInfoHelper:
             driver
         )
 
-    def submit_and_validate_additional_information(self, driver):
+    def submit_and_validate_additional_information(self, driver: WebDriver) -> Any:
         """Valide les informations supplémentaires et ferme la fenêtre."""
         if not self.page:
             raise RuntimeError("AdditionalInfoPage not configured")

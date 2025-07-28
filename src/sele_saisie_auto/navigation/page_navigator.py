@@ -1,3 +1,4 @@
+# src\sele_saisie_auto\navigation\page_navigator.py
 from __future__ import annotations
 
 from sele_saisie_auto import plugins
@@ -10,6 +11,8 @@ from sele_saisie_auto.interfaces import (
     TimeSheetHelperProtocol,
 )
 from sele_saisie_auto.selenium_utils import detecter_doublons_jours
+from typing import Optional, Any, cast
+from selenium.webdriver.remote.webdriver import WebDriver
 
 __all__ = ["PageNavigator"]
 
@@ -49,7 +52,7 @@ class PageNavigator:
     # ------------------------------------------------------------------
     def login(
         self,
-        driver,
+        driver: WebDriver,
         aes_key: bytes,
         encrypted_login: bytes,
         encrypted_password: bytes,
@@ -59,13 +62,17 @@ class PageNavigator:
             driver, aes_key, encrypted_login, encrypted_password
         )
 
-    def navigate_to_date_entry(self, driver, date_cible: str | None) -> bool | None:
+    def navigate_to_date_entry(
+        self, 
+        driver: WebDriver, 
+        date_cible: str,
+    ) -> Optional[Any]:
         """Ouvre la page de sélection de période et choisit ``date_cible``."""
         if self.date_entry_page.navigate_from_home_to_date_entry_page(driver):
             return self.date_entry_page.process_date(driver, date_cible)
         return None
 
-    def fill_timesheet(self, driver) -> None:
+    def fill_timesheet(self, driver: WebDriver) -> None:
         """Remplit la feuille de temps puis les informations additionnelles."""
         self.timesheet_helper.run(driver)
         self.additional_info_page.navigate_from_work_schedule_to_additional_information_page(
@@ -74,11 +81,11 @@ class PageNavigator:
         self.additional_info_page.submit_and_validate_additional_information(driver)
         self.browser_session.go_to_default_content()
 
-    def submit_timesheet(self, driver) -> None:
+    def submit_timesheet(self, driver: WebDriver) -> None:
         """Enregistre le brouillon et lance la validation finale."""
         self.additional_info_page.save_draft_and_validate(driver)
 
-    def finalize_timesheet(self, driver) -> None:
+    def finalize_timesheet(self, driver: WebDriver) -> None:
         """Detect duplicates, run hooks and submit the draft."""
 
         if hasattr(driver, "find_elements"):
@@ -86,7 +93,7 @@ class PageNavigator:
         plugins.call("before_submit", driver)
         self.submit_timesheet(driver)
 
-    def run(self, driver) -> None:
+    def run(self, driver: WebDriver) -> None:
         """Execute the complete navigation sequence."""
 
         if self.credentials is None or self.date_cible is None:
@@ -106,26 +113,22 @@ class PageNavigator:
     # Low level delegations used by legacy APIs
     # ------------------------------------------------------------------
 
-    def navigate_from_home_to_date_entry_page(self, driver):
+    def navigate_from_home_to_date_entry_page(self, driver: WebDriver) -> Optional[bool]:
         """Simple wrapper around :class:`DateEntryPage` navigation."""
         return self.date_entry_page.navigate_from_home_to_date_entry_page(driver)
 
-    def submit_date_cible(self, driver):
+    def submit_date_cible(self, driver: WebDriver) -> Any:
         """Delegate date submission to :class:`DateEntryPage`."""
         return self.date_entry_page.submit_date_cible(driver)
 
-    def navigate_from_work_schedule_to_additional_information_page(self, driver):
+    def navigate_from_work_schedule_to_additional_information_page(self, driver: WebDriver) -> Optional[bool]:
         """Open the additional information dialog from the schedule grid."""
-        return self.additional_info_page.navigate_from_work_schedule_to_additional_information_page(
-            driver
-        )
+        return self.additional_info_page.navigate_from_work_schedule_to_additional_information_page(driver)
 
-    def submit_and_validate_additional_information(self, driver):
+    def submit_and_validate_additional_information(self, driver: WebDriver) -> None:
         """Submit the additional information form."""
-        return self.additional_info_page.submit_and_validate_additional_information(
-            driver
-        )
+        self.additional_info_page.submit_and_validate_additional_information(driver)
 
-    def save_draft_and_validate(self, driver):
+    def save_draft_and_validate(self, driver: WebDriver) -> None:
         """Delegate draft saving to :class:`AdditionalInfoPage`."""
-        return self.additional_info_page.save_draft_and_validate(driver)
+        self.additional_info_page.save_draft_and_validate(driver)
