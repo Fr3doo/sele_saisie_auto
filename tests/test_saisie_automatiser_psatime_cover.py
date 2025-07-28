@@ -153,7 +153,7 @@ def test_switch_to_iframe_main_target_win0_no_element(monkeypatch):
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
     with pytest.raises(NameError):
-        sap.switch_to_iframe_main_target_win0("drv")
+        sap._ORCHESTRATOR.switch_to_iframe_main_target_win0("drv")
 
 
 def test_navigate_from_home_to_date_entry_page_no_elements(monkeypatch, sample_config):
