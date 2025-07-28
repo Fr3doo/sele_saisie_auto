@@ -3,6 +3,7 @@ import types
 import pytest
 
 from sele_saisie_auto import saisie_automatiser_psatime as sap
+from sele_saisie_auto.logger_utils import afficher_message_insertion
 from sele_saisie_auto.utils import misc as utils_misc
 from tests.test_saisie_automatiser_psatime import (
     DummyManager,
@@ -63,8 +64,11 @@ def test_ajouter_jour_a_jours_remplis_existing():
 
 def test_afficher_message_insertion_other(monkeypatch):
     logs = []
-    monkeypatch.setattr(sap, "write_log", lambda msg, f, level: logs.append(msg))
-    sap.afficher_message_insertion("mardi", "8", 1, "ok", "log.html")
+    monkeypatch.setattr(
+        "sele_saisie_auto.logger_utils.write_log",
+        lambda msg, f, level: logs.append(msg),
+    )
+    afficher_message_insertion("mardi", "8", 1, "ok", "log.html")
     assert logs
 
 

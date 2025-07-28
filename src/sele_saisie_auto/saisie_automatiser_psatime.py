@@ -614,24 +614,6 @@ def seprateur_menu_affichage_console() -> None:
     console_ui.show_separator()
 
 
-def afficher_message_insertion(
-    jour: str, valeur: str, tentative: int, message: str, log_file: str
-) -> None:
-    """Affiche un message d'insertion de la valeur."""
-    if message == messages.TENTATIVE_INSERTION:
-        write_log(
-            f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' ({message}{tentative + 1})",
-            log_file,
-            "DEBUG",
-        )
-    else:
-        write_log(
-            f"⚠️ Valeur '{valeur}' confirmée pour le jour '{jour}' {message})",
-            log_file,
-            "DEBUG",
-        )
-
-
 # ------------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS PRINCIPALES --------------------------------------- #
 # ------------------------------------------------------------------------------------------------- #
