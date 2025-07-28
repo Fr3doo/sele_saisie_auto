@@ -2,6 +2,9 @@
 
 Cette page récapitule les commandes utiles pour sept outils courants de formatage, de linting et d'analyse de code. Chaque tableau sépare les commandes fréquemment utilisées des options avancées. Les liens vers PyPI permettent d'accéder rapidement à la documentation de chaque outil.
 
+Note : Pour ce projet, qui fonctionne avec Poetry, en prefixe ajouter : `poetry run `
+Exemple : `poetry run mypy --strict --no-incremental src\sele_saisie_auto\navigation\page_navigator.py`
+
 ## Black - Formatage de code
 
 **PyPI :** [https://pypi.org/project/black/](https://pypi.org/project/black/)
