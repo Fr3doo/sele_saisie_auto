@@ -91,14 +91,22 @@ def setup_init(monkeypatch, cfg):
     from sele_saisie_auto.resources import resource_manager as rm
     from sele_saisie_auto.selenium_utils.waiter_factory import get_waiter
 
-    def fake_build(cfg_b, lf_b):
-        waiter = get_waiter(cfg_b)
-        session = sap.BrowserSession(lf_b, cfg_b, waiter=waiter)
-        enc = DummyEnc()
-        login = sap.LoginHandler(lf_b, enc, session)
-        return Services(enc, session, waiter, login)
+    class DummyConfigurator:
+        def __init__(self, cfg_b):
+            self.cfg = cfg_b
 
-    monkeypatch.setattr(sap, "build_services", fake_build)
+        def build_services(self, lf_b):
+            waiter = get_waiter(self.cfg)
+            session = sap.BrowserSession(lf_b, self.cfg, waiter=waiter)
+            enc = DummyEnc()
+            login = sap.LoginHandler(lf_b, enc, session)
+            return Services(enc, session, waiter, login)
+
+    monkeypatch.setattr(
+        ServiceConfigurator,
+        "from_config",
+        staticmethod(lambda cfg_b: DummyConfigurator(cfg_b)),
+    )
     waiter = get_waiter(app_cfg)
     monkeypatch.setattr(
         rm,

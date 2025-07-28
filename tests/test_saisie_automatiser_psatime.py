@@ -166,14 +166,22 @@ def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
         from sele_saisie_auto.configuration import Services
         from sele_saisie_auto.selenium_utils.waiter_factory import get_waiter
 
-        def fake_build(cfg_b, lf_b):
-            waiter = get_waiter(cfg_b)
-            session = sap.BrowserSession(lf_b, cfg_b, waiter=waiter)
-            enc = FakeEncryptionService()
-            login = sap.LoginHandler(lf_b, enc, session)
-            return Services(enc, session, waiter, login)
+        class DummyConfigurator:
+            def __init__(self, cfg_b):
+                self.cfg = cfg_b
 
-        monkeypatch.setattr(sap, "build_services", fake_build)
+            def build_services(self, lf_b):
+                waiter = get_waiter(self.cfg)
+                session = sap.BrowserSession(lf_b, self.cfg, waiter=waiter)
+                enc = FakeEncryptionService()
+                login = sap.LoginHandler(lf_b, enc, session)
+                return Services(enc, session, waiter, login)
+
+        monkeypatch.setattr(
+            ServiceConfigurator,
+            "from_config",
+            staticmethod(lambda cfg_b: DummyConfigurator(cfg_b)),
+        )
         waiter = get_waiter(app_cfg)
         monkeypatch.setattr(
             rm,
@@ -262,11 +270,19 @@ def test_init_services(monkeypatch, sample_config):
     dummy = Services(None, None, None, None)
     called = {}
 
-    def fake_build(cfg, lf):
-        called["args"] = (cfg, lf)
-        return dummy
+    class DummyConfigurator:
+        def __init__(self, cfg):
+            self.cfg = cfg
 
-    monkeypatch.setattr(sap, "build_services", fake_build)
+        def build_services(self, lf):
+            called["args"] = (self.cfg, lf)
+            return dummy
+
+    monkeypatch.setattr(
+        ServiceConfigurator,
+        "from_config",
+        staticmethod(lambda cfg: DummyConfigurator(cfg)),
+    )
 
     setup_init(monkeypatch, sample_config, patch_services=False)
 
