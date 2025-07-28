@@ -48,6 +48,7 @@ from sele_saisie_auto.selenium_utils import (
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
+from sele_saisie_auto.utils.mission import est_en_mission
 
 
 @dataclass
@@ -141,11 +142,6 @@ def wait_for_dom(driver: WebDriver, waiter: WaiterProtocol | None = None) -> Non
     else:
         waiter.wait_until_dom_is_stable(driver, timeout=DEFAULT_TIMEOUT)
         waiter.wait_for_dom_ready(driver, LONG_TIMEOUT)
-
-
-def est_en_mission(description: str) -> bool:
-    """Renvoie True si la description indique un jour 'En mission'."""
-    return description == "En mission"
 
 
 def est_en_mission_presente(work_days: dict[str, tuple[str, str]]) -> bool:
@@ -496,11 +492,11 @@ class TimeSheetHelper:
                 "Jour 'En mission' détecté. Traitement des champs associés..."
             )
             traiter_champs_mission(
-                driver=driver,
-                listes_id_informations_mission=LISTES_ID_INFORMATIONS_MISSION,
-                id_to_key_mapping=ID_TO_KEY_MAPPING,
-                project_mission_info=self.context.project_mission_info,
-                context=self.context,
+                driver,
+                LISTES_ID_INFORMATIONS_MISSION,
+                ID_TO_KEY_MAPPING,
+                self.context.project_mission_info,
+                self.context,
                 waiter=self.waiter,
             )
         else:
