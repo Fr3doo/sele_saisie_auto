@@ -129,6 +129,7 @@ def test_remplir_mission_dispatch(monkeypatch):
 
     # branch where conditions are false
     remplir_mission(None, {"mardi": ("desc", "8")}, ["mardi"], ctx)
+    assert called == {"jour": True, "spec": True}
 
 
 def test_remplir_mission_specifique_failure(monkeypatch):
