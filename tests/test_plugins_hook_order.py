@@ -1,4 +1,5 @@
 from sele_saisie_auto import plugins
+from sele_saisie_auto.plugins_utils import call_hook
 
 
 def test_hooks_called_in_registration_order():
@@ -13,7 +14,7 @@ def test_hooks_called_in_registration_order():
 
     plugins.register("before_submit", first)
     plugins.register("before_submit", second)
-    plugins.call("before_submit")
+    call_hook("before_submit")
 
     assert calls == ["first", "second"]
 
@@ -26,15 +27,15 @@ def test_clear_removes_all_hooks():
         called.append("cb")
 
     plugins.register("after_run", cb)
-    plugins.call("after_run")
+    call_hook("after_run")
     assert called == ["cb"]
 
     plugins.clear()
     called.clear()
 
-    plugins.call("after_run")
+    call_hook("after_run")
     assert called == []
 
     plugins.register("after_run", cb)
-    plugins.call("after_run")
+    call_hook("after_run")
     assert called == ["cb"]
