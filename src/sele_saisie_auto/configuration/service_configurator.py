@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from sele_saisie_auto.app_config import AppConfig
-from sele_saisie_auto.automation import BrowserSession, LoginHandler
+from sele_saisie_auto.automation import LoginHandler
+from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.encryption_utils import (
     DefaultEncryptionBackend,
     EncryptionBackend,

@@ -65,7 +65,11 @@ class DummyResourceContext:
 
 def test_resource_manager_basic(monkeypatch):
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
-    monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
+    monkeypatch.setattr(
+        resource_manager,
+        "create_session",
+        lambda cfg: DummyBrowserSession("log.html", cfg),
+    )
     monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
     with resource_manager.ResourceManager(
@@ -116,7 +120,11 @@ def test_resource_manager_cleanup(monkeypatch):
             )
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
-    monkeypatch.setattr(resource_manager, "BrowserSession", CleanBrowserSession)
+    monkeypatch.setattr(
+        resource_manager,
+        "create_session",
+        lambda cfg: CleanBrowserSession("log.html", cfg),
+    )
     monkeypatch.setattr(resource_manager, "ResourceContext", CleanResourceContext)
 
     with resource_manager.ResourceManager(
@@ -154,7 +162,11 @@ def test_resource_manager_close_method(monkeypatch):
             sessions.append(self)
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
-    monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
+    monkeypatch.setattr(
+        resource_manager,
+        "create_session",
+        lambda cfg: SpyBrowserSession("log.html", cfg),
+    )
     monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
     rm = resource_manager.ResourceManager("log.html", FakeEncryptionService("log.html"))
@@ -169,7 +181,11 @@ def test_resource_manager_close_method(monkeypatch):
 
 def test_resource_manager_close_is_idempotent(monkeypatch):
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
-    monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
+    monkeypatch.setattr(
+        resource_manager,
+        "create_session",
+        lambda cfg: DummyBrowserSession("log.html", cfg),
+    )
     monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
     rm = resource_manager.ResourceManager("log.html", FakeEncryptionService("log.html"))
@@ -214,7 +230,11 @@ def test_resource_manager_context_calls(monkeypatch):
             return super().__exit__(exc_type, exc, tb)
 
     monkeypatch.setattr(resource_manager, "ConfigManager", SpyConfigManager)
-    monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
+    monkeypatch.setattr(
+        resource_manager,
+        "create_session",
+        lambda cfg: SpyBrowserSession("log.html", cfg),
+    )
     monkeypatch.setattr(resource_manager, "ResourceContext", SpyResourceContext)
 
     with resource_manager.ResourceManager(
@@ -250,7 +270,11 @@ def test_resource_manager_same_instances(monkeypatch):
             return super().get_credentials()
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
-    monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
+    monkeypatch.setattr(
+        resource_manager,
+        "create_session",
+        lambda cfg: SpyBrowserSession("log.html", cfg),
+    )
     monkeypatch.setattr(resource_manager, "ResourceContext", SpyResourceContext)
 
     with resource_manager.ResourceManager(
@@ -307,7 +331,11 @@ def test_exit_uses_shared_memory_service(monkeypatch):
     shm_service = SpySHMService()
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
-    monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
+    monkeypatch.setattr(
+        resource_manager,
+        "create_session",
+        lambda cfg: DummyBrowserSession("log.html", cfg),
+    )
     enc = SpyCtx("log.html")
     monkeypatch.setattr(
         resource_manager,
@@ -360,7 +388,11 @@ def test_close_removes_shared_memory_segments(monkeypatch):
             )
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
-    monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
+    monkeypatch.setattr(
+        resource_manager,
+        "create_session",
+        lambda cfg: DummyBrowserSession("log.html", cfg),
+    )
     monkeypatch.setattr(resource_manager, "ResourceContext", CleanResourceContext)
 
     rm = resource_manager.ResourceManager("log.html", FakeEncryptionService("log.html"))
@@ -384,7 +416,11 @@ def test_close_removes_shared_memory_segments(monkeypatch):
 
 def test_context_manager_returns_self(monkeypatch):
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
-    monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
+    monkeypatch.setattr(
+        resource_manager,
+        "create_session",
+        lambda cfg: DummyBrowserSession("log.html", cfg),
+    )
     monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
     rm = resource_manager.ResourceManager("log.html", FakeEncryptionService("log.html"))
@@ -405,7 +441,11 @@ def test_context_manager_without_driver(monkeypatch):
             super().close()
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
-    monkeypatch.setattr(resource_manager, "BrowserSession", SpyBrowserSession)
+    monkeypatch.setattr(
+        resource_manager,
+        "create_session",
+        lambda cfg: SpyBrowserSession("log.html", cfg),
+    )
     monkeypatch.setattr(resource_manager, "ResourceContext", DummyResourceContext)
 
     with resource_manager.ResourceManager(
@@ -461,7 +501,11 @@ def test_no_shared_memory_left_after_close(monkeypatch):
                     pass
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
-    monkeypatch.setattr(resource_manager, "BrowserSession", DummyBrowserSession)
+    monkeypatch.setattr(
+        resource_manager,
+        "create_session",
+        lambda cfg: DummyBrowserSession("log.html", cfg),
+    )
     monkeypatch.setattr(resource_manager, "ResourceContext", CleanResourceContext)
 
     rm = resource_manager.ResourceManager("log.html", FakeEncryptionService("log.html"))

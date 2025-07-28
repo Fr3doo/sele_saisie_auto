@@ -1,7 +1,8 @@
 import pytest
 
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
-from sele_saisie_auto.automation import BrowserSession, LoginHandler
+from sele_saisie_auto.automation import LoginHandler
+from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.configuration import ServiceConfigurator, Services, build_services
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.selenium_utils import Waiter

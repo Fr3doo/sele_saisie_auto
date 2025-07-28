@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from sele_saisie_auto.automation import BrowserSession
+from sele_saisie_auto.automation.browser_session import BrowserSession, create_session
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import Credentials, EncryptionService
 from sele_saisie_auto.exceptions import AutomationExitError, ResourceManagerInitError
@@ -48,7 +48,7 @@ class ResourceManager:
         try:
             self._app_config = self._config_manager.load()
             if self._session is None:
-                self._session = BrowserSession(self.log_file, self._app_config)
+                self._session = create_session(self._app_config)
             if hasattr(self._resource_context, "__enter__"):
                 self._res_ctx = self._resource_context.__enter__()
             else:
