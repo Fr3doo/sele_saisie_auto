@@ -27,7 +27,7 @@ from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.automation.date_entry_page import DateEntryPage
 from sele_saisie_auto.automation.login_handler import LoginHandler
 from sele_saisie_auto.config_manager import ConfigManager
-from sele_saisie_auto.configuration import ServiceConfigurator, Services, build_services
+from sele_saisie_auto.configuration import Services, service_configurator_factory
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.encryption_utils import Credentials as EncryptionCredentials
 from sele_saisie_auto.encryption_utils import EncryptionService
@@ -357,7 +357,7 @@ class PSATimeAutomation:
     def _init_services(self, app_config: AppConfig) -> Services:
         """Initialise les services principaux via :class:`ServiceConfigurator`."""
 
-        configurator = ServiceConfigurator.from_config(app_config)
+        configurator = service_configurator_factory(app_config)
         self.services = configurator.build_services(self.log_file)
         return self.services
 
@@ -591,7 +591,7 @@ class PSATimeAutomation:
     ) -> None:  # pragma: no cover
         """Point d'entrée principal de l'automatisation."""
 
-        service_configurator = ServiceConfigurator(self.context.config)
+        service_configurator = service_configurator_factory(self.context.config)
         self.orchestrator = AutomationOrchestrator.from_components(
             self.resource_manager,
             self.page_navigator,
@@ -730,7 +730,7 @@ def initialize(
     )
     context = _AUTOMATION.context
     LOG_FILE = log_file
-    service_configurator = ServiceConfigurator(_AUTOMATION.context.config)
+    service_configurator = service_configurator_factory(_AUTOMATION.context.config)
     _ORCHESTRATOR = AutomationOrchestrator.from_components(
         _AUTOMATION.resource_manager,
         _AUTOMATION.page_navigator,

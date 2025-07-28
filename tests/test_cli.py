@@ -54,7 +54,9 @@ def test_main_creates_services_and_passes_flags(monkeypatch):
             service_calls["log_file"] = log_file
             return "services"
 
-    monkeypatch.setattr(cli, "ServiceConfigurator", DummyConfigurator)
+    monkeypatch.setattr(
+        cli, "service_configurator_factory", lambda cfg: DummyConfigurator(cfg)
+    )
 
     auto_data = {}
 

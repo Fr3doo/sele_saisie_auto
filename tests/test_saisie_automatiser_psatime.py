@@ -178,9 +178,7 @@ def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
                 return Services(enc, session, waiter, login)
 
         monkeypatch.setattr(
-            ServiceConfigurator,
-            "from_config",
-            staticmethod(lambda cfg_b: DummyConfigurator(cfg_b)),
+            sap, "service_configurator_factory", lambda cfg_b: DummyConfigurator(cfg_b)
         )
         waiter = get_waiter(app_cfg)
         monkeypatch.setattr(
@@ -279,9 +277,7 @@ def test_init_services(monkeypatch, sample_config):
             return dummy
 
     monkeypatch.setattr(
-        ServiceConfigurator,
-        "from_config",
-        staticmethod(lambda cfg: DummyConfigurator(cfg)),
+        sap, "service_configurator_factory", lambda cfg: DummyConfigurator(cfg)
     )
 
     setup_init(monkeypatch, sample_config, patch_services=False)
