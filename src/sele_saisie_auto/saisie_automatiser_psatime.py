@@ -62,7 +62,10 @@ from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
-from sele_saisie_auto.utils.mission import est_en_mission
+from sele_saisie_auto.utils.mission import (
+    est_en_mission,
+    get_next_saturday_if_not_saturday,
+)
 
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
@@ -111,6 +114,7 @@ __all__ = [
     "send_keys_to_element",
     "click_element_without_wait",
     "AutomationExitError",
+    "get_next_saturday_if_not_saturday",
 ]
 
 
@@ -608,17 +612,6 @@ def seprateur_menu_affichage_log(log_file: str) -> None:
 def seprateur_menu_affichage_console() -> None:
     """Affiche un séparateur dans la console."""
     console_ui.show_separator()
-
-
-def get_next_saturday_if_not_saturday(date_str: str) -> str:
-    """Retourne le prochain samedi si la date donnée n'est pas déjà un samedi."""
-    initial_date = datetime.strptime(date_str, "%d/%m/%Y")
-    initial_weekday = initial_date.weekday()
-    if initial_weekday != 5:
-        days_to_next_saturday = (5 - initial_weekday) % 7
-        next_saturday_date = initial_date + timedelta(days=days_to_next_saturday)
-        return next_saturday_date.strftime("%d/%m/%Y")
-    return date_str
 
 
 def afficher_message_insertion(
