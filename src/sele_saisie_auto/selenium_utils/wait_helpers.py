@@ -1,4 +1,4 @@
-#src\sele_saisie_auto\selenium_utils\wait_helpers.py
+# src\sele_saisie_auto\selenium_utils\wait_helpers.py
 """Selenium wait helper functions."""
 
 from __future__ import annotations
@@ -9,9 +9,9 @@ from functools import wraps
 from typing import Any, Callable, Optional
 
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support import expected_conditions as ec
 
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
@@ -53,7 +53,9 @@ class Waiter:
         """Wait until the DOM is fully loaded."""
         self.wrapper.wait_for_dom_ready(driver, timeout)
 
-    def wait_until_dom_is_stable(self, driver: WebDriver, timeout: int | None = None) -> bool:
+    def wait_until_dom_is_stable(
+        self, driver: WebDriver, timeout: int | None = None
+    ) -> bool:
         """Return True when the DOM remains unchanged for ``timeout`` seconds."""
         return self.wrapper.wait_until_dom_is_stable(driver, timeout)
 
@@ -75,15 +77,33 @@ class Waiter:
         )
 
     # Convenience wrappers -------------------------------------------------
-    def find_clickable(self, driver: WebDriver, by: str, locator_value: Optional[str] = None, timeout: Optional[int] = None) -> Optional[WebElement]:
+    def find_clickable(
+        self,
+        driver: WebDriver,
+        by: str,
+        locator_value: Optional[str] = None,
+        timeout: Optional[int] = None,
+    ) -> Optional[WebElement]:
         """Return element when it becomes clickable."""
         return self.wrapper.find_clickable(driver, by, locator_value, timeout)
 
-    def find_visible(self, driver: WebDriver, by: str, locator_value: Optional[str] = None, timeout: Optional[int] = None) -> Optional[WebElement]:
+    def find_visible(
+        self,
+        driver: WebDriver,
+        by: str,
+        locator_value: Optional[str] = None,
+        timeout: Optional[int] = None,
+    ) -> Optional[WebElement]:
         """Return element when it is visible."""
         return self.wrapper.find_visible(driver, by, locator_value, timeout)
 
-    def find_present(self, driver: WebDriver, by: str, locator_value: Optional[str] = None, timeout: Optional[int] = None) -> Optional[WebElement]:
+    def find_present(
+        self,
+        driver: WebDriver,
+        by: str,
+        locator_value: Optional[str] = None,
+        timeout: Optional[int] = None,
+    ) -> Optional[WebElement]:
         """Return element when it is present in the DOM."""
         return self.wrapper.find_present(driver, by, locator_value, timeout)
 
@@ -92,7 +112,7 @@ DEFAULT_WAITER = Waiter()
 
 
 def wait_for_dom_ready(
-    driver : WebDriver,
+    driver: WebDriver,
     timeout: int | None = None,
     waiter: Waiter | None = None,
     logger: Logger | None = None,
@@ -106,7 +126,7 @@ def wait_for_dom_ready(
 
 
 def wait_until_dom_is_stable(
-    driver : WebDriver,
+    driver: WebDriver,
     timeout: int | None = None,
     waiter: Waiter | None = None,
     logger: Logger | None = None,
@@ -120,7 +140,7 @@ def wait_until_dom_is_stable(
 
 
 def wait_for_element(
-    driver : WebDriver,
+    driver: WebDriver,
     by: str = By.ID,
     locator_value: Optional[str] = None,
     condition: Callable[[tuple[str, str]], Any] = ec.presence_of_element_located,
@@ -137,7 +157,7 @@ def wait_for_element(
 
 
 def find_clickable(
-    driver : WebDriver,
+    driver: WebDriver,
     by: str = By.ID,
     locator_value: Optional[str] = None,
     timeout: Optional[int] = None,

@@ -28,10 +28,7 @@ def seperator_ttk(
 
 
 def create_tab(
-    notebook: ttk.Notebook, 
-    title: str, 
-    style: str = "Modern.TFrame", 
-    padding: int = 20
+    notebook: ttk.Notebook, title: str, style: str = "Modern.TFrame", padding: int = 20
 ) -> ttk.Frame:
     """Créer un onglet dans ``notebook``.
 

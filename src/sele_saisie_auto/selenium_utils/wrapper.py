@@ -7,10 +7,10 @@ import time
 from typing import Any, Callable, Optional, cast
 
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support.ui import WebDriverWait
 
 from sele_saisie_auto import messages
 from sele_saisie_auto.logging_service import Logger
@@ -21,8 +21,8 @@ from . import get_default_logger
 
 def is_document_complete(driver: WebDriver) -> bool:
     """Return ``True`` when the DOM is fully loaded."""
-    ready_state: str = cast(    
-        str, driver.execute_script("return document.readyState") # type: ignore[no-untyped-call]
+    ready_state: str = cast(
+        str, driver.execute_script("return document.readyState")  # type: ignore[no-untyped-call]
     )
     return ready_state == "complete"
 
@@ -49,7 +49,9 @@ class Wrapper:
         WebDriverWait(driver, timeout).until(is_document_complete)
         self.logger.debug("DOM chargé avec succès.")
 
-    def wait_until_dom_is_stable(self, driver: WebDriver, timeout: int | None = None) -> bool:
+    def wait_until_dom_is_stable(
+        self, driver: WebDriver, timeout: int | None = None
+    ) -> bool:
         """Return ``True`` if the DOM remains unchanged for ``timeout`` seconds."""
         previous_dom_snapshot = ""
         unchanged_count = 0
@@ -95,9 +97,7 @@ class Wrapper:
         if found_elements:
             matched_element: WebElement = cast(
                 WebElement,
-                WebDriverWait(driver, timeout).until(
-                    condition((by, locator_value))
-                ),
+                WebDriverWait(driver, timeout).until(condition((by, locator_value))),
             )
             self.logger.debug(
                 f"Élément avec {by}='{locator_value}' trouvé et condition '{condition.__name__}' validée."
@@ -110,7 +110,7 @@ class Wrapper:
         return None
 
     def find_clickable(
-        self, 
+        self,
         driver: WebDriver,
         by: str = By.ID,
         locator_value: Optional[str] = None,
@@ -138,7 +138,7 @@ class Wrapper:
         driver: WebDriver,
         by: str = By.ID,
         locator_value: Optional[str] = None,
-        timeout: Optional[int] = None
+        timeout: Optional[int] = None,
     ) -> Optional[WebElement]:
         """Return the element once it is present in the DOM."""
         return self.wait_for_element(

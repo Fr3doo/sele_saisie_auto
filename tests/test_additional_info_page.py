@@ -67,7 +67,7 @@ def test_submit_and_validate_additional_information(monkeypatch):
         lambda *a, **k: records.append("desc"),
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.write_log",
+        "sele_saisie_auto.logger_utils.write_log",
         lambda msg, f, level: records.append("log"),
     )
     monkeypatch.setattr(

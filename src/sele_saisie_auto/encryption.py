@@ -12,4 +12,3 @@ class DefaultEncryptionService(_EncryptionService):
 
 
 __all__ = ["DefaultEncryptionService"]
-

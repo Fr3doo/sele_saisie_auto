@@ -141,7 +141,9 @@ class AppConfig:
     raw: ConfigParser
 
     @staticmethod
-    def _charger_credentials(parser: ConfigParser) -> tuple[Optional[str], Optional[str]]:
+    def _charger_credentials(
+        parser: ConfigParser,
+    ) -> tuple[Optional[str], Optional[str]]:
         """Extrait les identifiants chiffrés depuis ``parser``."""
         encrypted_login = parser.get("credentials", "login", fallback="").strip()
         encrypted_mdp = parser.get("credentials", "mdp", fallback="").strip()
@@ -212,7 +214,9 @@ class AppConfig:
             if parser.has_section("project_information")
             else {}
         )
-        return {"project_information": cast(ProjectInformation, project_information_dict)}
+        return {
+            "project_information": cast(ProjectInformation, project_information_dict)
+        }
 
     @staticmethod
     def _charger_additional_information(
@@ -224,22 +228,20 @@ class AppConfig:
         if parser.has_section("additional_information_rest_period_respected"):
             additional_information_dict["periode_repos_respectee"] = cast(
                 DayValues,
-                dict(parser.items("additional_information_rest_period_respected"))
+                dict(parser.items("additional_information_rest_period_respected")),
             )
         if parser.has_section("additional_information_work_time_range"):
             additional_information_dict["horaire_travail_effectif"] = cast(
-                DayValues,
-                dict(parser.items("additional_information_work_time_range"))
+                DayValues, dict(parser.items("additional_information_work_time_range"))
             )
         if parser.has_section("additional_information_half_day_worked"):
             additional_information_dict["plus_demi_journee_travaillee"] = cast(
-                DayValues,
-                dict(parser.items("additional_information_half_day_worked"))
+                DayValues, dict(parser.items("additional_information_half_day_worked"))
             )
         if parser.has_section("additional_information_lunch_break_duration"):
             additional_information_dict["duree_pause_dejeuner"] = cast(
                 DayValues,
-                dict(parser.items("additional_information_lunch_break_duration"))
+                dict(parser.items("additional_information_lunch_break_duration")),
             )
 
         if not additional_information_dict:
@@ -249,7 +251,6 @@ class AppConfig:
                 AdditionalInformation, additional_information_dict
             )
         }
-
 
     @staticmethod
     def _charger_work_locations(parser: ConfigParser) -> dict[str, WorkLocation]:

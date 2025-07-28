@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
+from sele_saisie_auto.enums import AlertType, LogLevel
 from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
@@ -95,16 +96,16 @@ class AlertHandler:
                 write_log(
                     format_message("TIME_SHEET_EXISTS_ERROR", {}),
                     self.log_file,
-                    "INFO",
+                    LogLevel.INFO,
                 )
                 write_log(
                     format_message("MODIFY_DATE_MESSAGE", {}),
                     self.log_file,
-                    "INFO",
+                    LogLevel.INFO,
                 )
                 raise AutomationExitError(format_message("TIME_SHEET_EXISTS_ERROR", {}))
 
-        write_log(format_message("DATE_VALIDATED", {}), self.log_file, "DEBUG")
+        write_log(format_message("DATE_VALIDATED", {}), self.log_file, LogLevel.DEBUG)
 
     def handle_save_alerts(self, driver: WebDriver) -> None:
         """Dismiss any alert shown after saving."""
@@ -119,11 +120,13 @@ class AlertHandler:
                 write_log(
                     format_message("SAVE_ALERT_WARNING", {}),
                     self.log_file,
-                    "INFO",
+                    LogLevel.INFO,
                 )
                 break
 
-    def handle_alerts(self, driver: WebDriver, alert_type: str = "save_alerts") -> None:
+    def handle_alerts(
+        self, driver: WebDriver, alert_type: AlertType | str = AlertType.SAVE_ALERTS
+    ) -> None:
         """General wrapper to dispatch alert handling.
 
         Parameters
@@ -137,9 +140,15 @@ class AlertHandler:
         """
 
         handlers = {
-            "save_alerts": self.handle_save_alerts,
-            "date_alert": self.handle_date_alert,
+            AlertType.SAVE_ALERTS: self.handle_save_alerts,
+            AlertType.DATE_ALERT: self.handle_date_alert,
         }
+
+        if not isinstance(alert_type, AlertType):
+            try:
+                alert_type = AlertType(alert_type)
+            except ValueError as exc:
+                raise ValueError(f"Unknown alert_type: {alert_type}") from exc
 
         handler = handlers.get(alert_type)
         if handler is None:

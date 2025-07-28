@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Literal
 
 from sele_saisie_auto import messages
+from sele_saisie_auto.enums import LogLevel
 
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
@@ -17,18 +18,18 @@ COLUMN_WIDTHS: dict[str, str] = {"timestamp": "10%", "level": "6%", "message": "
 ROW_HEIGHT: str = "20px"
 FONT_SIZE: str = "12px"
 PADDING: str = "2px"
-LOG_LEVELS: dict[str, int] = {
-    "INFO": 10,
-    "DEBUG": 20,
-    "WARNING": 30,
-    "ERROR": 40,
-    "CRITICAL": 50,
-    "OFF": 0,
+LOG_LEVELS: dict[LogLevel, int] = {
+    LogLevel.INFO: 10,
+    LogLevel.DEBUG: 20,
+    LogLevel.WARNING: 30,
+    LogLevel.ERROR: 40,
+    LogLevel.CRITICAL: 50,
+    LogLevel.OFF: 0,
 }
 
 # Par défaut, on commence avec un niveau de log minimal (par ex., "INFO")
-DEFAULT_LOG_LEVEL: str = "INFO"
-LOG_LEVEL_FILTER: str = DEFAULT_LOG_LEVEL
+DEFAULT_LOG_LEVEL: LogLevel = LogLevel.INFO
+LOG_LEVEL_FILTER: LogLevel = DEFAULT_LOG_LEVEL
 
 # Mapping between short codes and user-facing log messages.
 MESSAGE_TEMPLATES: dict[str, str] = {
@@ -51,7 +52,7 @@ MESSAGE_TEMPLATES: dict[str, str] = {
 
 
 def initialize_logger(
-    config: ConfigParser, log_level_override: str | None = None
+    config: ConfigParser, log_level_override: LogLevel | str | None = None
 ) -> None:
     """Initialise le niveau de log.
 
@@ -65,12 +66,20 @@ def initialize_logger(
 
     global LOG_LEVEL_FILTER
     if log_level_override:
-        LOG_LEVEL_FILTER = log_level_override
+        LOG_LEVEL_FILTER = (
+            log_level_override
+            if isinstance(log_level_override, LogLevel)
+            else LogLevel(log_level_override)
+        )
     else:
-        LOG_LEVEL_FILTER = config.get("settings", "debug_mode", fallback="INFO")
+        LOG_LEVEL_FILTER = LogLevel(
+            config.get("settings", "debug_mode", fallback=LogLevel.INFO.value)
+        )
 
 
-def is_log_level_allowed(current_level: str, configured_level: str) -> bool:
+def is_log_level_allowed(
+    current_level: LogLevel | str, configured_level: LogLevel | str
+) -> bool:
     """
     Vérifie si le niveau actuel est autorisé en fonction de la configuration.
 
@@ -81,7 +90,20 @@ def is_log_level_allowed(current_level: str, configured_level: str) -> bool:
     Returns:
         bool: True si le niveau est autorisé, False sinon.
     """
-    return LOG_LEVELS[current_level] >= LOG_LEVELS[configured_level]
+    try:
+        cur = (
+            current_level
+            if isinstance(current_level, LogLevel)
+            else LogLevel(current_level)
+        )
+        conf = (
+            configured_level
+            if isinstance(configured_level, LogLevel)
+            else LogLevel(configured_level)
+        )
+    except ValueError:
+        return False
+    return LOG_LEVELS[cur] >= LOG_LEVELS[conf]
 
 
 def format_message(code: str, details: dict[str, str] | None = None) -> str:
@@ -222,18 +244,22 @@ def initialize_html_log_file(log_file: str) -> None:
 def write_log(
     message: str,
     log_file: str,
-    level: str = "INFO",
+    level: LogLevel | str = LogLevel.INFO,
     log_format: Literal["html", "txt"] = HTML_FORMAT,
     auto_close: bool = False,
 ) -> None:
     """Écrit un message dans le fichier de log."""
     try:
         # Vérifier si le niveau de log est valide
-        if level not in LOG_LEVELS:
+        try:
+            lvl = level if isinstance(level, LogLevel) else LogLevel(level)
+        except ValueError:
+            return
+        if lvl not in LOG_LEVELS:
             return
 
         # Appliquer le filtre de niveau (gère les niveaux supérieurs ou égaux à LOG_LEVEL_FILTER)
-        if LOG_LEVELS[level] > LOG_LEVELS[LOG_LEVEL_FILTER]:
+        if LOG_LEVELS[lvl] > LOG_LEVELS[LOG_LEVEL_FILTER]:
             return
 
         # Securité supplementaire pour les logs: Si le mode DEBUG est désactivé, n'afficher que les logs INFO
@@ -242,7 +268,7 @@ def write_log(
 
         if log_format.lower() == HTML_FORMAT:
             log_message = (
-                f"<tr><td>{timestamp}</td><td>{level}</td><td>{message}</td></tr>\n"
+                f"<tr><td>{timestamp}</td><td>{lvl.value}</td><td>{message}</td></tr>\n"
             )
 
             initialize_html_log_file(log_file)
@@ -255,7 +281,7 @@ def write_log(
                 with open(log_file, "a", encoding="utf-8") as f:
                     f.write("</table></body></html>")
         else:  # Format texte brut
-            log_message = f"[{timestamp}] {level}: {message}\n"
+            log_message = f"[{timestamp}] {lvl.value}: {message}\n"
             with open(log_file, "a", encoding="utf-8") as f:
                 f.write(log_message)
 
@@ -292,7 +318,7 @@ def close_logs(
         ) from e
 
 
-def show_log_separator(log_file: str, level: str = "INFO") -> None:
+def show_log_separator(log_file: str, level: LogLevel | str = LogLevel.INFO) -> None:
     """Write a visual separator to ``log_file``."""
 
     write_log(

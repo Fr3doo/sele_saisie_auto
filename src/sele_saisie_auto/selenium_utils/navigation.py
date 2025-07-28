@@ -2,13 +2,13 @@
 """Browser navigation helpers."""
 
 from __future__ import annotations
-from typing_extensions import Literal
 
 import requests
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.options import Options as EdgeOptions
+from typing_extensions import Literal
 
 from sele_saisie_auto.logging_service import Logger
 
@@ -38,7 +38,9 @@ def verifier_accessibilite_url(url: str, logger: Logger | None = None) -> bool:
             logger.error(f"❌ URL inaccessible, sans vérification SSL : {e}")
             return False
         # Si la requête sans vérification SSL n’a pas renvoyé 200
-        logger.error(f"❌ URL inaccessible, même sans vérification SSL - statut : {response.status_code}")
+        logger.error(
+            f"❌ URL inaccessible, même sans vérification SSL - statut : {response.status_code}"
+        )
         return False
     except requests.exceptions.ConnectionError as conn_err:
         logger.error(f"❌ Erreur de connexion à l'URL : {conn_err}")
@@ -51,7 +53,9 @@ def verifier_accessibilite_url(url: str, logger: Logger | None = None) -> bool:
         return False
 
 
-def switch_to_frame_by_id(driver: webdriver.Edge, frame_id: str, logger: Logger | None = None) -> bool:
+def switch_to_frame_by_id(
+    driver: webdriver.Edge, frame_id: str, logger: Logger | None = None
+) -> bool:
     """Switch into a frame identified by its DOM id."""
     logger = logger or get_default_logger()
     driver.switch_to.frame(driver.find_element(By.ID, frame_id))
