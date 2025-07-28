@@ -16,10 +16,12 @@ def program_break_time(
     """Display a short countdown using logging instead of ``print``."""
 
     log_file = log_file or shared_utils.get_log_file()
-    write_log(f"{affichage_text} {memorization_time} secondes ", log_file, "DEBUG")
-    for _ in range(memorization_time):
-        time.sleep(1)
-        write_log(".", log_file, "DEBUG")
+    write_log(
+        f"{affichage_text} {memorization_time} secondes",
+        log_file,
+        "DEBUG",
+    )
+    time.sleep(memorization_time)
 
 
 def clear_screen() -> None:

@@ -15,7 +15,6 @@ def test_program_break_time_executes(monkeypatch, delay):
     logged: list[str] = []
 
     def fake_sleep(seconds: int) -> None:
-        assert seconds == 1
         calls.append(seconds)
 
     monkeypatch.setattr("sele_saisie_auto.utils.misc.time.sleep", fake_sleep)
@@ -28,6 +27,5 @@ def test_program_break_time_executes(monkeypatch, delay):
 
     program_break_time(delay, "Attente")
 
-    assert calls == [1] * delay
-    assert any(msg.startswith(f"Attente {delay} secondes") for msg in logged)
-    assert logged.count(".") == delay
+    assert calls == [delay]
+    assert logged == [f"Attente {delay} secondes"]
