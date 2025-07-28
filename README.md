@@ -153,6 +153,7 @@ Cette séparation facilite les tests et l'évolution du code.
 - **AdditionalInfoPage** : saisie des informations complémentaires.
 - **AlertHandler** : ferme les éventuelles pop‑ups.
 - **DescriptionProcessor** : prépare les descriptions de lignes.
+- **date_utils.get_next_saturday_if_not_saturday** : renvoie le prochain samedi si la date fournie n'en est pas un.
 
 Consultez [AGENT.md](AGENT.md) et la
 [documentation détaillée](docs/reference/architecture.md) pour plus d'informations.
@@ -164,6 +165,7 @@ Consultez [AGENT.md](AGENT.md) et la
 ├── saisie_automatiser_psatime.py
 ├── encryption_utils.py
 ├── remplir_jours_feuille_de_temps.py
+├── utils/date_utils.py
 ├── config.ini
 ├── tests/
 └── ...
