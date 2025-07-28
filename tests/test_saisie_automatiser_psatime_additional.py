@@ -179,7 +179,7 @@ def test_switch_to_iframe(monkeypatch, sample_config):
         "wait_for_dom",
         lambda *a, **k: calls.append("dom"),
     )
-    assert sap.switch_to_iframe_main_target_win0("drv") is True
+    assert sap._ORCHESTRATOR.switch_to_iframe_main_target_win0("drv") is True
     assert "sw" in calls
     assert "dom" in calls
 

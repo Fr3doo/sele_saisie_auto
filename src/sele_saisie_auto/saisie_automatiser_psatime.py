@@ -668,44 +668,5 @@ def initialize_shared_memory() -> EncryptionCredentials:
     )
 
 
-def setup_browser(
-    session: BrowserSession,
-    *,
-    headless: bool = False,
-    no_sandbox: bool = False,
-) -> WebDriver:
-    """Instancie le navigateur Selenium."""
-    if not _ORCHESTRATOR:
-        raise AutomationNotInitializedError("Automation non initialisée")
-    _ORCHESTRATOR.browser_session = session  # type: ignore[assignment]
-    return cast(
-        WebDriver,
-        _ORCHESTRATOR.browser_session.open(
-            _ORCHESTRATOR.config.url,
-            fullscreen=False,
-            headless=headless,
-            no_sandbox=no_sandbox,
-        ),
-    )
-
-
-def connect_to_psatime(
-    driver: WebDriver, cle_aes: bytes, login_c: bytes, pwd_c: bytes
-) -> Any:
-    """Ouvre la session PSA Time avec les identifiants fournis."""
-    if not _ORCHESTRATOR:
-        raise AutomationNotInitializedError("Automation non initialisée")
-    return _ORCHESTRATOR.login_handler.connect_to_psatime(
-        driver, cle_aes, login_c, pwd_c
-    )
-
-
-def switch_to_iframe_main_target_win0(driver: WebDriver) -> bool:
-    """Bascule vers l'iframe principale."""
-    if not _ORCHESTRATOR:
-        raise AutomationNotInitializedError("Automation non initialisée")
-    return cast(bool, _ORCHESTRATOR.switch_to_iframe_main_target_win0(driver))
-
-
 if __name__ == "__main__":  # pragma: no cover - manual invocation
     main()

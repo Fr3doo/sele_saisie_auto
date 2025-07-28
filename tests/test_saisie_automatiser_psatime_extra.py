@@ -115,7 +115,7 @@ def test_switch_to_iframe_main_target_win0_false(monkeypatch, sample_config):
     monkeypatch.setattr(
         sap.PSATimeAutomation, "wait_for_dom", lambda self, *a, **k: None
     )
-    assert sap.switch_to_iframe_main_target_win0("drv") is False
+    assert sap._ORCHESTRATOR.switch_to_iframe_main_target_win0("drv") is False
 
 
 def test_submit_date_cible_no_element(monkeypatch, sample_config):
