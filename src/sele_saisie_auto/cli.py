@@ -73,4 +73,24 @@ def main(argv: list[str] | None = None) -> None:
         orchestrator.run(headless=args.headless, no_sandbox=args.no_sandbox)
 
 
-__all__ = ["parse_args", "main"]
+def cli_main(
+    log_file: str | None = None,
+    *,
+    headless: bool = False,
+    no_sandbox: bool = False,
+) -> None:
+    """Entry point used by the ``psatime-auto`` console script."""
+
+    if log_file is None:
+        log_file = get_log_file()
+
+    with get_logger(log_file):
+        cfg = ConfigManager(log_file=log_file).load()
+        automation = PSATimeAutomation(log_file, cfg)
+        try:
+            automation.run(headless=headless, no_sandbox=no_sandbox)
+        finally:
+            automation.resource_manager.close()
+
+
+__all__ = ["parse_args", "main", "cli_main"]

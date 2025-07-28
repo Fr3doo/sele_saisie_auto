@@ -679,29 +679,15 @@ def main(
     headless: bool = False,
     no_sandbox: bool = False,
 ) -> None:  # pragma: no cover
-    """Point d'entrée principal du script.
+    """Point d'entrée principal du script."""
 
-    Parameters
-    ----------
-    log_file : str | None, optional
-        Chemin du fichier log. S'il vaut ``None``, il sera déterminé via
-        :func:`get_log_file`.
-    """
-    if log_file is None:
-        from sele_saisie_auto.shared_utils import get_log_file
+    from sele_saisie_auto.cli import cli_main
 
-        log_file = get_log_file()
-
-    with get_logger(log_file):
-        cfg = ConfigManager(log_file=log_file).load()
-        automation = PSATimeAutomation(log_file, cfg)
-        try:
-            automation.run(
-                headless=headless,
-                no_sandbox=no_sandbox,
-            )
-        finally:
-            automation.resource_manager.close()
+    cli_main(
+        log_file,
+        headless=headless,
+        no_sandbox=no_sandbox,
+    )
 
 
 # ----------------------------------------------------------------------------
