@@ -53,6 +53,7 @@ from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.plugins_utils import call_hook
 from sele_saisie_auto.remplir_jours_feuille_de_temps import ajouter_jour_a_jours_remplis
 from sele_saisie_auto.resources.resource_manager import ResourceManager
+from sele_saisie_auto.saisie_context import SaisieContext
 from sele_saisie_auto.selenium_utils import (
     click_element_without_wait,
     detecter_doublons_jours,
@@ -70,17 +71,6 @@ from sele_saisie_auto.utils.mission import est_en_mission
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
 # ----------------------------------------------------------------------------- #
-
-
-@dataclass
-class SaisieContext:
-    """Container for runtime configuration and services."""
-
-    config: "AppConfig"
-    encryption_service: EncryptionService
-    shared_memory_service: SharedMemoryService
-    project_mission_info: dict[str, str]
-    descriptions: list[dict[str, object]]
 
 
 @dataclass
@@ -107,7 +97,6 @@ class MemoryConfig:
 
 __all__ = [
     "PSATimeAutomation",
-    "SaisieContext",
     "Credentials",
     "MemoryConfig",
     "modifier_date_input",

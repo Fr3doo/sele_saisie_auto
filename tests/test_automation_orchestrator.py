@@ -11,7 +11,7 @@ from sele_saisie_auto.encryption_utils import Credentials  # noqa: E402
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.navigation import PageNavigator  # noqa: E402
 from sele_saisie_auto.orchestration import AutomationOrchestrator  # noqa: E402
-from sele_saisie_auto.saisie_automatiser_psatime import SaisieContext  # noqa: E402
+from sele_saisie_auto.saisie_context import SaisieContext  # noqa: E402
 from tests.conftest import (  # noqa: E402
     DummyAddPage,
     DummyBrowserSession,
