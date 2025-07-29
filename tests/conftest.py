@@ -86,7 +86,7 @@ class DummyBrowserSession:
         self.driver = "drv"
         self.waiter = types.SimpleNamespace(wait_for_element=lambda *a, **k: True)
 
-    def wait_for_dom(self, driver):
+    def wait_for_dom(self, driver, max_attempts: int = 3):
         self.wait_called = True
 
     def go_to_iframe(self, frame_id):

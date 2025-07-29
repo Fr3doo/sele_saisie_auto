@@ -151,10 +151,12 @@ class AutomationOrchestrator:
     # ------------------------------------------------------------------
     # DOM & iframe helpers
     # ------------------------------------------------------------------
-    def wait_for_dom(self, driver: Any) -> None:  # pragma: no cover
+    def wait_for_dom(
+        self, driver: Any, max_attempts: int | None = None
+    ) -> None:  # pragma: no cover
         """Delegate DOM wait to :class:`BrowserSession`."""
 
-        self.browser_session.wait_for_dom(driver)
+        self.browser_session.wait_for_dom(driver, max_attempts=max_attempts)
 
     @wait_for_dom_after  # type: ignore[misc]
     def switch_to_iframe_main_target_win0(self, driver: Any) -> bool:

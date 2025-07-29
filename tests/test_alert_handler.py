@@ -19,7 +19,7 @@ class DummyAutomation:
             config=types.SimpleNamespace(default_timeout=1, long_timeout=1)
         )
 
-    def wait_for_dom(self, driver):
+    def wait_for_dom(self, driver, max_attempts: int = 3):
         pass
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
+from sele_saisie_auto import messages
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.interfaces import WaiterProtocol
@@ -146,9 +147,14 @@ class BrowserSession:
     # ------------------------------------------------------------------
     # DOM helpers
     # ------------------------------------------------------------------
-    @handle_selenium_errors(default_return=None)
-    def wait_for_dom(self, driver: WebDriver) -> None:
-        """Wait until the DOM is stable and fully loaded."""
+    def wait_for_dom(self, driver: WebDriver, max_attempts: int | None = None) -> None:
+        """Wait until the DOM is stable and fully loaded.
+
+        Args:
+            driver: Selenium WebDriver.
+            max_attempts: Number of tries before raising ``RuntimeError`` if the
+                DOM never stabilizes.
+        """
         default_timeout = (
             self.app_config.default_timeout
             if self.app_config
@@ -159,7 +165,21 @@ class BrowserSession:
             if self.app_config
             else LONG_TIMEOUT  # pragma: no cover - fallback
         )
-        self.waiter.wait_until_dom_is_stable(driver, timeout=default_timeout)
+        attempt = 0
+        attempts_limit = max_attempts if max_attempts is not None else 1
+        raise_error = max_attempts is not None
+        while attempt < attempts_limit:
+            result = self.waiter.wait_until_dom_is_stable(
+                driver, timeout=default_timeout
+            )
+            if result is not False:
+                break
+            attempt += 1
+        else:
+            if raise_error:
+                write_log(messages.DOM_NOT_STABLE, self.log_file, "ERROR")
+                raise RuntimeError(messages.DOM_NOT_STABLE)
+
         self.waiter.wait_for_dom_ready(driver, long_timeout)
 
     # ------------------------------------------------------------------

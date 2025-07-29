@@ -18,7 +18,7 @@ class DummyAutomation:
             go_to_default_content=lambda *a, **k: None,
         )
 
-    def wait_for_dom(self, driver):
+    def wait_for_dom(self, driver, max_attempts: int = 3):
         pass
 
     def switch_to_iframe_main_target_win0(self, driver):
