@@ -8,6 +8,7 @@ import time
 from functools import wraps
 from typing import Any, Callable, Optional
 
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
@@ -68,13 +69,19 @@ class Waiter:
         timeout: Optional[int] = None,
     ) -> Optional[WebElement]:
         """Wait for an element to satisfy ``condition`` or return ``None``."""
-        return self.wrapper.wait_for_element(
-            driver,
-            by,
-            locator_value,
-            condition,
-            timeout,
-        )
+        try:
+            return self.wrapper.wait_for_element(
+                driver,
+                by,
+                locator_value,
+                condition,
+                timeout,
+            )
+        except TimeoutException:
+            self.logger.warning(
+                f"Élément avec {by}='{locator_value}' non trouvé après attente."
+            )
+            raise
 
     # Convenience wrappers -------------------------------------------------
     def find_clickable(

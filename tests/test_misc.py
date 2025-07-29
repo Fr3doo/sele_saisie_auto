@@ -5,7 +5,9 @@ from sele_saisie_auto.utils import misc as utils_misc
 
 def test_clear_screen_logs_error(monkeypatch):
     logs = []
-    monkeypatch.setattr(utils_misc, "os", types.SimpleNamespace(name="posix"), raising=False)
+    monkeypatch.setattr(
+        utils_misc, "os", types.SimpleNamespace(name="posix"), raising=False
+    )
     monkeypatch.setattr(
         utils_misc.subprocess,
         "run",
@@ -15,7 +17,9 @@ def test_clear_screen_logs_error(monkeypatch):
     monkeypatch.setattr(
         utils_misc,
         "write_log",
-        lambda msg, log_file, level="INFO", log_format="html", auto_close=False: logs.append((msg, level)),
+        lambda msg, log_file, level="INFO", log_format="html", auto_close=False: logs.append(
+            (msg, level)
+        ),
     )
     utils_misc.clear_screen()
     assert logs and logs[0][1] == "ERROR"
