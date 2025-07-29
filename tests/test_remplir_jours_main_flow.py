@@ -168,7 +168,7 @@ def test_main_invokes_helper(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.TimeSheetHelper", DummyHelper
     )
 
-    main(None, "file")
+    main(object(), "file")
     assert called == {"init": "file", "run": True}
 
 
@@ -247,7 +247,7 @@ def test_main_with_mission(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.TimeSheetHelper", DummyHelper
     )
 
-    main(None, "file")
+    main(object(), "file")
     assert seq == ["init", "run"]
 
 
@@ -298,5 +298,5 @@ def test_main_handles_exception(monkeypatch):
         lambda msg, *_: logs.append(msg),
     )
 
-    main(None, "file")
+    main(object(), "file")
     assert any("Temps d'attente" in m for m in logs)

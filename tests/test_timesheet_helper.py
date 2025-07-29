@@ -90,7 +90,7 @@ def test_timesheethelper_run_sequence(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
         lambda *a, **k: None,
     )
-    helper.run(None)
+    helper.run(object())
     assert seq == ["std", "work", "extra"]
 
 
@@ -113,7 +113,7 @@ def test_timesheethelper_run_early_exit(monkeypatch):
         lambda *a, **k: None,
     )
 
-    helper.run(None)
+    helper.run(object())
 
     assert seq == []
 
@@ -252,7 +252,7 @@ def test_run_logs_early_return(monkeypatch):
         lambda *_a, **_k: extra_called.__setitem__("called", True),
     )
 
-    helper.run(None)
+    helper.run(object())
 
     assert ("INFO", messages.TIMESHEET_ALREADY_COMPLETE) in logs
     assert not work_called["called"]

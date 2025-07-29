@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from sele_saisie_auto import console_ui
+from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.configuration import ServiceConfigurator
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.orchestration import AutomationOrchestrator
@@ -68,9 +69,11 @@ class DummyManager:
         self.close()
 
 
-class DummyBrowserSession:
+class DummyBrowserSession(BrowserSession):
     def __init__(self, log_file, app_config=None, waiter=None):
+        # Do not call super().__init__ to avoid heavy setup
         self.log_file = log_file
+        self.app_config = app_config
         self.open_calls = []
         self.driver = types.SimpleNamespace(page_source="")
         self.waiter = waiter
@@ -279,7 +282,7 @@ def test_initialize_sets_globals(monkeypatch, sample_config):
 def test_init_services(monkeypatch, sample_config):
     from sele_saisie_auto.configuration import Services
 
-    dummy = Services(None, None, None, None)
+    dummy = Services(None, DummyBrowserSession("log.html"), None, None)
     called = {}
 
     class DummyConfigurator:

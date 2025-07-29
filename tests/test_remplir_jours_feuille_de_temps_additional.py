@@ -391,7 +391,7 @@ def test_main_handles_other_exceptions(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.log_error",
         lambda msg, *_: logs.append(msg),
     )
-    main(None, "log")
+    main(object(), "log")
     assert any(messages.INTROUVABLE in m for m in logs)
 
 
@@ -410,7 +410,7 @@ def test_main_webdriver_exception(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.log_error",
         lambda msg, *_: logs.append(msg),
     )
-    main(None, "log")
+    main(object(), "log")
     assert any(messages.WEBDRIVER in m for m in logs)
 
 
@@ -429,7 +429,7 @@ def test_main_stale_exception(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.log_error",
         lambda msg, *_: logs.append(msg),
     )
-    main(None, "log")
+    main(object(), "log")
     assert any(messages.REFERENCE_OBSOLETE in m for m in logs)
 
 
@@ -446,5 +446,5 @@ def test_main_generic_exception(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.log_error",
         lambda msg, *_: logs.append(msg),
     )
-    main(None, "log")
+    main(object(), "log")
     assert any(messages.ERREUR_INATTENDUE in m for m in logs)

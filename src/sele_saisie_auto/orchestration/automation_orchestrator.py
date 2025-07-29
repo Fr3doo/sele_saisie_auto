@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 
 from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import ServiceConfigurator
 from sele_saisie_auto.decorators import handle_errors
@@ -64,6 +65,8 @@ class AutomationOrchestrator:
         cleanup_resources: Callable[[object, object, object], None] | None = None,
         resource_manager: ResourceManager | None = None,
     ) -> None:
+        if not isinstance(browser_session, BrowserSession):
+            raise TypeError("browser_session must be an instance of BrowserSession")
         self.config = config
         self.logger = logger
         self.browser_session = browser_session
