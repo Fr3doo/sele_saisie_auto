@@ -17,6 +17,7 @@ python = "^3.11"
 selenium = "4.25.0"
 cryptography = ">=45,<46"
 requests = "^2.32.4"
+types-requests = "^2.32"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4"
