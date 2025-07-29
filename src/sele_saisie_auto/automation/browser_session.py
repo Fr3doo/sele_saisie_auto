@@ -7,6 +7,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from sele_saisie_auto import messages
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.decorators import handle_selenium_errors
+from sele_saisie_auto.exceptions import DriverError
 from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import (
@@ -112,7 +113,6 @@ class BrowserSession:
     ) -> None:
         self.close()
 
-    @handle_selenium_errors(default_return=None)
     def open(
         self,
         url: str,
@@ -123,12 +123,20 @@ class BrowserSession:
     ) -> WebDriver | None:
         """Open the browser and navigate to ``url``."""
         write_log(format_message("BROWSER_OPEN", {}), self.log_file, "DEBUG")
-        self.driver = self._manager.open(
-            url,
-            fullscreen=fullscreen,
-            headless=headless,
-            no_sandbox=no_sandbox,
-        )
+        try:
+            self.driver = self._manager.open(
+                url,
+                fullscreen=fullscreen,
+                headless=headless,
+                no_sandbox=no_sandbox,
+            )
+        except Exception as exc:  # noqa: BLE001
+            write_log(
+                f"❌ {messages.WEBDRIVER} : {exc}",
+                self.log_file,
+                "ERROR",
+            )
+            raise DriverError(f"Failed to start WebDriver: {exc}") from exc
         if self.driver is not None:  # pragma: no cover - simple branch
             self.waiter.wait_for_dom_ready(
                 self.driver,
