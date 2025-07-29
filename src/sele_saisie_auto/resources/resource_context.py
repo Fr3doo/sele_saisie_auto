@@ -15,7 +15,7 @@ class ResourceContext:
     def __init__(
         self, log_file: str, encryption_service: EncryptionService | None = None
     ) -> None:
-        self.log_file: str = log_file
+        self.log_file = log_file
         self.encryption_service = encryption_service or EncryptionService(log_file)
         self._credentials: Credentials | None = None
 

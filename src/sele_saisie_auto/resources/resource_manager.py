@@ -32,7 +32,7 @@ class ResourceManager:
             log_file: Chemin du fichier de log.
         """
 
-        self.log_file: str = log_file
+        self.log_file = log_file
         self._config_manager = ConfigManager(log_file)
         self._encryption_service = encryption_service or EncryptionService(log_file)
         self._resource_context = ResourceContext(log_file, self._encryption_service)

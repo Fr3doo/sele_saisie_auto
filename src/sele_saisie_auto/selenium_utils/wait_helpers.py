@@ -6,7 +6,7 @@ from __future__ import annotations
 import inspect
 import time
 from functools import wraps
-from typing import Any, Callable, Optional, ParamSpec, TypeVar
+from typing import Any, Callable, Optional
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -211,15 +211,11 @@ def find_present(
     return w.find_present(driver, by, locator_value, timeout)
 
 
-P = ParamSpec("P")
-R = TypeVar("R")
-
-
-def wait_for_dom_after(func: Callable[P, R]) -> Callable[P, R]:
+def wait_for_dom_after(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator calling ``self.wait_for_dom`` after function execution."""
 
     @wraps(func)
-    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         """Exécute ``func`` puis attend que le DOM soit prêt."""
         result = func(*args, **kwargs)
         if args:

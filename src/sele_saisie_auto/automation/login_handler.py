@@ -13,7 +13,6 @@ from sele_saisie_auto.interfaces import BrowserSessionProtocol
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import send_keys_to_element, wait_for_dom_after
-from sele_saisie_auto.shared_utils import get_log_file
 
 if TYPE_CHECKING:  # pragma: no cover - for type checkers only
     from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
@@ -37,7 +36,7 @@ class LoginHandler:
         encryption_service: EncryptionService,
         browser_session: BrowserSessionProtocol,
     ) -> None:
-        self.log_file: str = log_file if log_file is not None else get_log_file()
+        self.log_file = log_file
         self.encryption_service = encryption_service
         self.browser_session = browser_session
 

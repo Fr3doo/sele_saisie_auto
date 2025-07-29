@@ -72,16 +72,16 @@ class ExtraInfoHelper:
         """Initialise l'assistant avec ``Logger`` et ``Waiter``."""
         if waiter is None:
             timeout = DEFAULT_TIMEOUT
-            if app_config is not None and hasattr(app_config, "default_timeout"):
+            if hasattr(app_config, "default_timeout"):
                 timeout = app_config.default_timeout
             self.waiter = create_waiter(timeout)
-            if app_config is not None and hasattr(app_config, "long_timeout"):
+            if hasattr(app_config, "long_timeout"):
                 self.waiter.wrapper.long_timeout = app_config.long_timeout
         else:
             self.waiter = waiter
         self.page = page
         self.logger = logger
-        self.log_file: str = logger.log_file
+        self.log_file = logger.log_file
         self.timesheet_helper = timesheet_helper
 
     def set_page(self, page: AdditionalInfoPage) -> None:

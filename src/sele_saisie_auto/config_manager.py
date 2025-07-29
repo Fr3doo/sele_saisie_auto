@@ -20,7 +20,7 @@ class ConfigManager:
 
     def __init__(self, log_file: str | None = None) -> None:
         """Initialise le gestionnaire avec un fichier log optionnel."""
-        self.log_file: str | None = log_file
+        self.log_file = log_file
         self._config: ConfigParser | None = None
 
     @property

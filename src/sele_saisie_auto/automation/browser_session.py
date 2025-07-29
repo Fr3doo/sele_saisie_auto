@@ -25,7 +25,7 @@ class SeleniumDriverManager:
     """Handle WebDriver lifecycle for the automation."""
 
     def __init__(self, log_file: str, app_config: AppConfig | None = None) -> None:
-        self.log_file: str = log_file
+        self.log_file = log_file
         self.app_config = app_config
         self.driver: WebDriver | None = None
 
@@ -85,7 +85,7 @@ class BrowserSession:
         app_config: AppConfig | None = None,
         waiter: WaiterProtocol | None = None,
     ) -> None:  # pragma: no cover - simple wiring
-        self.log_file: str = log_file
+        self.log_file = log_file
         self.app_config = app_config
         self.waiter: WaiterProtocol
         if waiter is None:
