@@ -293,7 +293,11 @@ class PSATimeAutomation:
             )  # pragma: no cover
 
         # Delegate detailed additional information logs to the page helper
-        self.additional_info_page.log_information_details()
+        if (
+            hasattr(self, "additional_info_page")
+            and self.additional_info_page is not None
+        ):
+            self.additional_info_page.log_information_details()
 
         write_log(
             "👉 Lieu de travail Matin:", self.log_file, "DEBUG"
@@ -534,13 +538,9 @@ class PSATimeAutomation:
             cast(LoggerProtocol, self.logger),
             waiter=self.waiter,
         )
-        self.page_navigator.timesheet_helper = helper
-        self.page_navigator.fill_timesheet(driver)
-        self.wait_for_dom(driver)
-        if self.switch_to_iframe_main_target_win0(driver):
-            detecter_doublons_jours(driver)
-            call_hook("before_submit", driver)
-            self.page_navigator.submit_timesheet(driver)
+        page_navigator = self.page_navigator
+        helper.run(driver)
+        page_navigator.finalize_timesheet(driver)
 
     def run(
         self,
