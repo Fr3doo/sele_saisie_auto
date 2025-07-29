@@ -453,7 +453,7 @@ class TimeSheetHelper:
         """Initialise l'assistant avec un ``Logger`` et un ``Waiter``."""
         self.context = context
         self.logger = logger
-        self.log_file = logger.log_file
+        self.log_file: str = logger.log_file
         self.waiter: WaiterProtocol
         if waiter is None:
             cfg = context.config
@@ -471,7 +471,7 @@ class TimeSheetHelper:
         self.additional_info_page = additional_info_page
         self.browser_session = browser_session
         global LOG_FILE
-        LOG_FILE = self.log_file  # type: ignore[assignment]
+        LOG_FILE = self.log_file
 
     def wait_for_dom(self, driver: WebDriver) -> None:
         """Attend que le DOM soit prêt via ``Waiter``."""
