@@ -81,6 +81,11 @@ font_size = 12px
 ```
 
 Ces options ajustent la largeur des colonnes, la hauteur des lignes et la taille de police dans le fichier HTML.
+Certaines fonctions utilitaires, comme `utils.misc.clear_screen()`,
+vérifient également le code retour des commandes système et ajoutent
+un message de niveau **ERROR** au journal en cas d'échec. Cela facilite
+le diagnostic sur les postes où l'appel à `clear` ou `cls` pourrait être
+interdit ou absent.
 ## Exceptions personnalisées
 | Exception | Raison de l'utilisation |
 | ------------------ | ---------------------------------------------------- |
