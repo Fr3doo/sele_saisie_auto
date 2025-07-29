@@ -4,7 +4,11 @@
 from __future__ import annotations
 
 from multiprocessing import shared_memory
+from typing import Any
 
+from selenium.webdriver.remote.webdriver import WebDriver
+
+from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation.browser_session import BrowserSession, create_session
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import Credentials, EncryptionService
@@ -34,8 +38,9 @@ class ResourceManager:
         self._resource_context = ResourceContext(log_file, self._encryption_service)
         self._credentials: Credentials | None = None
         self._session: BrowserSessionProtocol | None = None
-        self._driver = None
-        self._app_config = None
+        self._driver: WebDriver | None = None
+        self._app_config: AppConfig | None = None
+        self._res_ctx: ResourceContext | None = None
 
     # ------------------------------------------------------------------
     # Context manager protocol
@@ -48,9 +53,10 @@ class ResourceManager:
         """
 
         try:
-            self._app_config = self._config_manager.load()
+            app_config = self._config_manager.load()
+            self._app_config = app_config
             if self._session is None:
-                self._session = create_session(self._app_config)
+                self._session = create_session(app_config)
             if hasattr(self._resource_context, "__enter__"):
                 self._res_ctx = self._resource_context.__enter__()
             else:
@@ -59,14 +65,23 @@ class ResourceManager:
             raise ResourceManagerInitError(str(exc)) from exc
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: Any | None,
+    ) -> None:
         """Nettoie toutes les ressources ouvertes."""
 
         if self._driver is not None and self._session is not None:
             self._session.close()
 
         if hasattr(self._resource_context, "__exit__"):
-            self._resource_context.__exit__(exc_type, exc, tb)
+            self._resource_context.__exit__(
+                exc_type,
+                exc if isinstance(exc, Exception) else None,
+                tb,
+            )
         if self._credentials is not None:
             self._cleanup_shared_memory(
                 [
@@ -106,7 +121,7 @@ class ResourceManager:
     # Public API
     # ------------------------------------------------------------------
     @property
-    def app_config(self):  # pragma: no cover - simple accessor
+    def app_config(self) -> AppConfig | None:  # pragma: no cover - simple accessor
         return self._app_config
 
     @property
@@ -118,7 +133,9 @@ class ResourceManager:
         return self._session
 
     @property
-    def encryption_service(self):  # pragma: no cover - simple accessor
+    def encryption_service(
+        self,
+    ) -> EncryptionService:  # pragma: no cover - simple accessor
         return self._encryption_service
 
     def get_credentials(self) -> Credentials:
@@ -153,12 +170,19 @@ class ResourceManager:
             )
         return creds
 
-    def get_driver(self, *, headless: bool = False, no_sandbox: bool = False):
+    def get_driver(
+        self,
+        *,
+        headless: bool = False,
+        no_sandbox: bool = False,
+    ) -> WebDriver | None:
         """Ouvre le navigateur si besoin et retourne le ``WebDriver``."""
 
         if self._session is None:
             raise RuntimeError("Resource manager not initialized")
         if self._driver is None:
+            if self._app_config is None:
+                raise RuntimeError("Configuration application manquante")
             self._driver = self._session.open(
                 self._app_config.url,
                 headless=headless,
