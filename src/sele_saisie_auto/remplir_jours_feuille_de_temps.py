@@ -50,6 +50,7 @@ from sele_saisie_auto.selenium_utils import (
     wait_for_element,
     wait_until_dom_is_stable,
 )
+from sele_saisie_auto.selenium_utils.wait_helpers import Waiter
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
@@ -451,6 +452,7 @@ class TimeSheetHelper:
         self.context = context
         self.logger = logger
         self.log_file = logger.log_file
+        self.waiter: WaiterProtocol
         if waiter is None:
             cfg = context.config
             app_cfg = None
@@ -458,9 +460,10 @@ class TimeSheetHelper:
             if isinstance(cfg, ConfigParser):
                 app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
                 timeout = app_cfg.default_timeout
-            self.waiter = create_waiter(timeout)
+            w: Waiter = create_waiter(timeout)
             if app_cfg is not None:
-                self.waiter.wrapper.long_timeout = app_cfg.long_timeout
+                w.wrapper.long_timeout = app_cfg.long_timeout
+            self.waiter = w
         else:
             self.waiter = waiter
         self.additional_info_page = additional_info_page
