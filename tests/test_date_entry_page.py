@@ -16,6 +16,7 @@ class DummyAutomation:
         self.log_file = "log.html"
         self.browser_session = types.SimpleNamespace(
             go_to_default_content=lambda *a, **k: None,
+            go_to_iframe=lambda *a, **k: True,
         )
 
     def wait_for_dom(self, driver, max_attempts: int = 3):
@@ -25,9 +26,14 @@ class DummyAutomation:
         return True
 
 
+class DummyNavigator:
+    def __init__(self, session):
+        self.browser_session = session
+
+
 def test_navigate_from_home_to_date_entry_page(monkeypatch):
     dummy = DummyAutomation()
-    page = DateEntryPage(dummy)
+    page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
     seq = iter([True, True])
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: next(seq))
     clicks = []
@@ -42,7 +48,7 @@ def test_navigate_from_home_to_date_entry_page(monkeypatch):
 
 def test_handle_date_input(monkeypatch):
     dummy = DummyAutomation()
-    page = DateEntryPage(dummy)
+    page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
 
     class Input:
         def __init__(self):
@@ -65,7 +71,7 @@ def test_handle_date_input(monkeypatch):
 
 def test_handle_date_input_auto(monkeypatch):
     dummy = DummyAutomation()
-    page = DateEntryPage(dummy)
+    page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
 
     class Input:
         def __init__(self):
@@ -92,7 +98,7 @@ def test_handle_date_input_auto(monkeypatch):
 
 def test_handle_date_input_no_change(monkeypatch):
     dummy = DummyAutomation()
-    page = DateEntryPage(dummy)
+    page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
 
     class Input:
         def __init__(self):
@@ -116,6 +122,10 @@ def test_handle_date_input_no_change(monkeypatch):
         "sele_saisie_auto.logger_utils.write_log",
         lambda msg, f, level: logs.append(msg),
     )
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.date_entry_page.write_log",
+        lambda msg, f, level: logs.append(msg),
+    )
     monkeypatch.setattr(DateEntryPage, "wait_for_dom", lambda self, d: None)
     page.handle_date_input("drv", None)
     assert "Aucune modification" in logs[0]
@@ -123,7 +133,7 @@ def test_handle_date_input_no_change(monkeypatch):
 
 def test_submit_date_cible(monkeypatch):
     dummy = DummyAutomation()
-    page = DateEntryPage(dummy)
+    page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     actions = []
     monkeypatch.setattr(
@@ -137,7 +147,7 @@ def test_submit_date_cible(monkeypatch):
 
 def test_submit_date_cible_no_element(monkeypatch):
     dummy = DummyAutomation()
-    page = DateEntryPage(dummy)
+    page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: False)
     monkeypatch.setattr(DateEntryPage, "wait_for_dom", lambda self, d: None)
     assert page.submit_date_cible("drv") is False
@@ -145,7 +155,7 @@ def test_submit_date_cible_no_element(monkeypatch):
 
 def test_click_action_button(monkeypatch):
     dummy = DummyAutomation()
-    page = DateEntryPage(dummy)
+    page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     clicks = []
     monkeypatch.setattr(
@@ -158,7 +168,7 @@ def test_click_action_button(monkeypatch):
 
 def test_click_action_button_copy(monkeypatch):
     dummy = DummyAutomation()
-    page = DateEntryPage(dummy)
+    page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     clicks = []
     monkeypatch.setattr(
@@ -171,7 +181,7 @@ def test_click_action_button_copy(monkeypatch):
 
 def test_handle_date_alert(monkeypatch):
     dummy = DummyAutomation()
-    page = DateEntryPage(dummy)
+    page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
     calls = []
 
     def fake_handle(driver):
@@ -186,7 +196,7 @@ def test_handle_date_alert(monkeypatch):
 
 def test_process_date(monkeypatch):
     dummy = DummyAutomation()
-    page = DateEntryPage(dummy)
+    page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
 
     calls = []
     monkeypatch.setattr(
@@ -216,7 +226,7 @@ def test_process_date(monkeypatch):
 
 def test_process_date_no_submit(monkeypatch):
     dummy = DummyAutomation()
-    page = DateEntryPage(dummy)
+    page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
 
     calls = []
     monkeypatch.setattr(page, "handle_date_input", lambda *a: calls.append("input"))
