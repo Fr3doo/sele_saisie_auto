@@ -2,21 +2,26 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from .encryption_utils import Credentials
 from .encryption_utils import EncryptionService as _EncryptionService
+from .shared_memory_service import SharedMemoryService
 
 
 class DefaultEncryptionService:
     """Default implementation relying on :class:`EncryptionService`."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         self._service = _EncryptionService(*args, **kwargs)
 
     # ------------------------------------------------------------------
     # Expose EncryptionService API through delegation
     # ------------------------------------------------------------------
     @property
-    def shared_memory_service(self):  # pragma: no cover - simple proxy
+    def shared_memory_service(
+        self,
+    ) -> SharedMemoryService:  # pragma: no cover - simple proxy
         return self._service.shared_memory_service
 
     def generer_cle_aes(self, taille_cle: int = 32) -> bytes:
@@ -42,7 +47,12 @@ class DefaultEncryptionService:
         self._service.__enter__()
         return self
 
-    def __exit__(self, exc_type, exc, tb) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: object | None,
+    ) -> None:
         self._service.__exit__(exc_type, exc, tb)
 
 
