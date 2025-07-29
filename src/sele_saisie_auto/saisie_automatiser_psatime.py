@@ -548,7 +548,6 @@ def main(
 _AUTOMATION: PSATimeAutomation | None = None
 _ORCHESTRATOR: AutomationOrchestrator | None = None
 orchestrator: AutomationOrchestrator | None = None
-context: SaisieContext | None = None
 LOG_FILE: str | None = None
 
 
@@ -557,16 +556,15 @@ def initialize(
     app_config: AppConfig,
     choix_user: bool = True,
     memory_config: MemoryConfig | None = None,
-) -> None:
-    """Instancie l'automatisation."""
-    global _AUTOMATION, _ORCHESTRATOR, orchestrator, context, LOG_FILE
+) -> SaisieContext:
+    """Instancie l'automatisation and return the new context."""
+    global _AUTOMATION, _ORCHESTRATOR, orchestrator, LOG_FILE
     _AUTOMATION = PSATimeAutomation(
         log_file,
         app_config,
         choix_user=choix_user,
         memory_config=memory_config,
     )
-    context = _AUTOMATION.context
     LOG_FILE = log_file
     service_configurator = service_configurator_factory(_AUTOMATION.context.config)
     _ORCHESTRATOR = AutomationOrchestrator.from_components(
@@ -579,6 +577,7 @@ def initialize(
     )
     _AUTOMATION.orchestrator = _ORCHESTRATOR
     orchestrator = _ORCHESTRATOR
+    return _AUTOMATION.context
 
 
 def log_initialisation() -> None:
