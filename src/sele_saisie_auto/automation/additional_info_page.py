@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 
+from sele_saisie_auto.additional_info_locators import ADDITIONAL_INFO_LOCATORS
 from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.decorators import handle_selenium_errors
@@ -13,12 +14,80 @@ from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.remplir_informations_supp_utils import ExtraInfoHelper
+from sele_saisie_auto.saisie_context import SaisieContext
 from sele_saisie_auto.selenium_utils import Waiter, wait_for_dom_after
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 if TYPE_CHECKING:
     from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
+
+
+def ensure_descriptions(context: SaisieContext) -> None:
+    """Populate ``context.descriptions`` from ``context.config`` if empty."""
+
+    if getattr(context, "descriptions", None):
+        return
+
+    cfg = context.config
+    context.descriptions = [
+        {
+            "description_cible": "Temps de repos de 11h entre 2 jours travaillés respecté",
+            "id_value_ligne": ADDITIONAL_INFO_LOCATORS["ROW_DESCR100"],
+            "id_value_jours": ADDITIONAL_INFO_LOCATORS["DAY_UC_DAILYREST"],
+            "type_element": "select",
+            "valeurs_a_remplir": cfg.additional_information.get(
+                "periode_repos_respectee",
+                {},
+            ),
+        },
+        {
+            "description_cible": (
+                "Mon temps de travail effectif a débuté entre 8h00 et 10h00 et Mon temps de travail effectif a pris fin entre 16h30 et 19h00"
+            ),
+            "id_value_ligne": ADDITIONAL_INFO_LOCATORS["ROW_DESCR100"],
+            "id_value_jours": ADDITIONAL_INFO_LOCATORS["DAY_UC_DAILYREST"],
+            "type_element": "select",
+            "valeurs_a_remplir": cfg.additional_information.get(
+                "horaire_travail_effectif",
+                {},
+            ),
+        },
+        {
+            "description_cible": "J\u2019ai travaillé plus d\u2019une demi-journée",
+            "id_value_ligne": ADDITIONAL_INFO_LOCATORS["ROW_DESCR100"],
+            "id_value_jours": ADDITIONAL_INFO_LOCATORS["DAY_UC_DAILYREST"],
+            "type_element": "select",
+            "valeurs_a_remplir": cfg.additional_information.get(
+                "plus_demi_journee_travaillee",
+                {},
+            ),
+        },
+        {
+            "description_cible": "Durée de la pause déjeuner",
+            "id_value_ligne": ADDITIONAL_INFO_LOCATORS["ROW_DESCR200"],
+            "id_value_jours": ADDITIONAL_INFO_LOCATORS["DAY_UC_DAILYREST_SPECIAL"],
+            "type_element": "input",
+            "valeurs_a_remplir": cfg.additional_information.get(
+                "duree_pause_dejeuner",
+                {},
+            ),
+        },
+        {
+            "description_cible": "Matin",
+            "id_value_ligne": ADDITIONAL_INFO_LOCATORS["ROW_DESCR"],
+            "id_value_jours": ADDITIONAL_INFO_LOCATORS["DAY_UC_LOCATION_A"],
+            "type_element": "select",
+            "valeurs_a_remplir": cfg.work_location_am,
+        },
+        {
+            "description_cible": "Après-midi",
+            "id_value_ligne": ADDITIONAL_INFO_LOCATORS["ROW_DESCR"],
+            "id_value_jours": ADDITIONAL_INFO_LOCATORS["DAY_UC_LOCATION_A"],
+            "type_element": "select",
+            "valeurs_a_remplir": cfg.work_location_pm,
+        },
+    ]
 
 
 class AdditionalInfoPage:
@@ -65,6 +134,7 @@ class AdditionalInfoPage:
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
         sap.traiter_description = self.helper.traiter_description
+        ensure_descriptions(self.context)
 
     @property
     def log_file(self) -> str:

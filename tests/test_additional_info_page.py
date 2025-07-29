@@ -14,16 +14,21 @@ class DummyAutomation:
     def __init__(self):
         self.log_file = "log.html"
         self.logger = Logger(self.log_file)
+        cfg = types.SimpleNamespace(
+            additional_information={
+                "periode_repos_respectee": {},
+                "horaire_travail_effectif": {},
+                "plus_demi_journee_travaillee": {},
+                "duree_pause_dejeuner": {},
+            },
+            work_location_am={},
+            work_location_pm={},
+            default_timeout=1,
+            long_timeout=1,
+        )
         self.context = types.SimpleNamespace(
-            descriptions=[
-                {
-                    "description_cible": "d",
-                    "id_value_ligne": "x",
-                    "id_value_jours": "y",
-                    "type_element": "select",
-                    "valeurs_a_remplir": {"lundi": "1"},
-                }
-            ]
+            descriptions=[],
+            config=cfg,
         )
         self.browser_session = types.SimpleNamespace(
             go_to_iframe=lambda *a, **k: True,

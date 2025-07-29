@@ -21,9 +21,11 @@ from sele_saisie_auto import (
     remplir_jours_feuille_de_temps,
     shared_utils,
 )
-from sele_saisie_auto.additional_info_locators import ADDITIONAL_INFO_LOCATORS
 from sele_saisie_auto.app_config import AppConfig
-from sele_saisie_auto.automation.additional_info_page import AdditionalInfoPage
+from sele_saisie_auto.automation.additional_info_page import (
+    AdditionalInfoPage,
+    ensure_descriptions,
+)
 from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.automation.date_entry_page import DateEntryPage
 from sele_saisie_auto.automation.login_handler import LoginHandler
@@ -154,63 +156,9 @@ class PSATimeAutomation:
                 }.get(str(value).lower(), str(value))
                 for item_projet, value in app_config.project_information.items()
             },
-            descriptions=[
-                {
-                    "description_cible": "Temps de repos de 11h entre 2 jours travaillés respecté",
-                    "id_value_ligne": ADDITIONAL_INFO_LOCATORS["ROW_DESCR100"],
-                    "id_value_jours": ADDITIONAL_INFO_LOCATORS["DAY_UC_DAILYREST"],
-                    "type_element": "select",
-                    "valeurs_a_remplir": app_config.additional_information[
-                        "periode_repos_respectee"
-                    ],
-                },
-                {
-                    "description_cible": (
-                        "Mon temps de travail effectif a débuté entre 8h00 et 10h00 et Mon temps de travail effectif a pris fin entre 16h30 et 19h00"
-                    ),
-                    "id_value_ligne": ADDITIONAL_INFO_LOCATORS["ROW_DESCR100"],
-                    "id_value_jours": ADDITIONAL_INFO_LOCATORS["DAY_UC_DAILYREST"],
-                    "type_element": "select",
-                    "valeurs_a_remplir": app_config.additional_information[
-                        "horaire_travail_effectif"
-                    ],
-                },
-                {
-                    "description_cible": "J’ai travaillé plus d’une demi-journée",
-                    "id_value_ligne": ADDITIONAL_INFO_LOCATORS["ROW_DESCR100"],
-                    "id_value_jours": ADDITIONAL_INFO_LOCATORS["DAY_UC_DAILYREST"],
-                    "type_element": "select",
-                    "valeurs_a_remplir": app_config.additional_information[
-                        "plus_demi_journee_travaillee"
-                    ],
-                },
-                {
-                    "description_cible": "Durée de la pause déjeuner",
-                    "id_value_ligne": ADDITIONAL_INFO_LOCATORS["ROW_DESCR200"],
-                    "id_value_jours": ADDITIONAL_INFO_LOCATORS[
-                        "DAY_UC_DAILYREST_SPECIAL"
-                    ],
-                    "type_element": "input",
-                    "valeurs_a_remplir": app_config.additional_information[
-                        "duree_pause_dejeuner"
-                    ],
-                },
-                {
-                    "description_cible": "Matin",
-                    "id_value_ligne": ADDITIONAL_INFO_LOCATORS["ROW_DESCR"],
-                    "id_value_jours": ADDITIONAL_INFO_LOCATORS["DAY_UC_LOCATION_A"],
-                    "type_element": "select",
-                    "valeurs_a_remplir": app_config.work_location_am,
-                },
-                {
-                    "description_cible": "Après-midi",
-                    "id_value_ligne": ADDITIONAL_INFO_LOCATORS["ROW_DESCR"],
-                    "id_value_jours": ADDITIONAL_INFO_LOCATORS["DAY_UC_LOCATION_A"],
-                    "type_element": "select",
-                    "valeurs_a_remplir": app_config.work_location_pm,
-                },
-            ],
+            descriptions=[],
         )
+        ensure_descriptions(self.context)
 
         self._date_entry_page: DateEntryPage | None = None
         self._additional_info_page: AdditionalInfoPage | None = None
