@@ -90,65 +90,104 @@ class AdditionalInfoPage:
     # Public API
     # ------------------------------------------------------------------
     @wait_for_dom_after
-    @handle_selenium_errors(default_return=None)
+    @handle_selenium_errors(default_return=False)
     def navigate_from_work_schedule_to_additional_information_page(self, driver):
         """Open the modal to fill additional informations."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        self.wait_for_dom(driver)
-        element_present = self.waiter.wait_for_element(
-            driver,
-            By.ID,
-            Locators.ADDITIONAL_INFO_LINK.value,
-            ec.element_to_be_clickable,
-            timeout=self.config.default_timeout,
-        )
-        if element_present:
+        try:
+            self.wait_for_dom(driver)
+            element_present = self.waiter.wait_for_element(
+                driver,
+                By.ID,
+                Locators.ADDITIONAL_INFO_LINK.value,
+                ec.element_to_be_clickable,
+                timeout=self.config.default_timeout,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self.logger.error(f"❌ Error locating additional info link: {exc}")
+            return False
+
+        if not element_present:
+            return False
+
+        try:
             sap.click_element_without_wait(
                 driver, By.ID, Locators.ADDITIONAL_INFO_LINK.value
             )
+        except Exception as exc:  # noqa: BLE001
+            self.logger.error(f"❌ Error clicking additional info link: {exc}")
+            return False
+
         if self.browser_session is not None:
             self.browser_session.go_to_default_content()
         self.wait_for_dom(driver)
+        return True
 
     @wait_for_dom_after
-    @handle_selenium_errors(default_return=None)
+    @handle_selenium_errors(default_return=False)
     def submit_and_validate_additional_information(self, driver):
         """Fill all additional info fields and validate the modal."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        element_present = self.waiter.wait_for_element(
-            driver,
-            By.ID,
-            Locators.MODAL_FRAME.value,
-            timeout=self.config.default_timeout,
-        )
-        if element_present:
-            switched_to_iframe = None
-            if self.browser_session is not None:
+        try:
+            element_present = self.waiter.wait_for_element(
+                driver,
+                By.ID,
+                Locators.MODAL_FRAME.value,
+                timeout=self.config.default_timeout,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self.logger.error(f"❌ Error locating modal iframe: {exc}")
+            return False
+
+        switched_to_iframe = False
+        if element_present and self.browser_session is not None:
+            try:
                 switched_to_iframe = self.browser_session.go_to_iframe(
                     Locators.MODAL_FRAME.value
                 )
+            except Exception as exc:  # noqa: BLE001
+                self.logger.error(f"❌ Error switching to iframe: {exc}")
+                return False
 
         if switched_to_iframe:
             descriptions = getattr(self.context, "descriptions", [])
             for config in descriptions:
-                sap.traiter_description(driver, config)
+                try:
+                    sap.traiter_description(driver, config)
+                except Exception as exc:  # noqa: BLE001
+                    self.logger.error(
+                        f"❌ Error processing description '{config}': {exc}"
+                    )
+                    return False
             write_log(
                 format_message("ADDITIONAL_INFO_DONE", {}),
                 self.log_file,
                 "INFO",
             )
 
-        element_present = self.waiter.wait_for_element(
-            driver,
-            By.ID,
-            Locators.SAVE_ICON.value,
-            ec.element_to_be_clickable,
-            timeout=self.config.default_timeout,
-        )
-        if element_present:
+        try:
+            element_present = self.waiter.wait_for_element(
+                driver,
+                By.ID,
+                Locators.SAVE_ICON.value,
+                ec.element_to_be_clickable,
+                timeout=self.config.default_timeout,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self.logger.error(f"❌ Error locating save icon: {exc}")
+            return False
+
+        if not element_present:
+            return False
+
+        try:
             sap.click_element_without_wait(driver, By.ID, Locators.SAVE_ICON.value)
+        except Exception as exc:  # noqa: BLE001
+            self.logger.error(f"❌ Error clicking save icon: {exc}")
+            return False
+        return True
 
     @wait_for_dom_after
     @handle_selenium_errors(default_return=False)
@@ -156,20 +195,32 @@ class AdditionalInfoPage:
         """Click the save draft button and wait for completion."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        element_present = self.waiter.wait_for_element(
-            driver,
-            By.ID,
-            Locators.SAVE_DRAFT_BUTTON.value,
-            ec.element_to_be_clickable,
-            timeout=self.config.default_timeout,
-        )
-        if element_present:
+        try:
+            element_present = self.waiter.wait_for_element(
+                driver,
+                By.ID,
+                Locators.SAVE_DRAFT_BUTTON.value,
+                ec.element_to_be_clickable,
+                timeout=self.config.default_timeout,
+            )
+        except Exception as exc:  # noqa: BLE001
+            self.logger.error(f"❌ Error locating draft button: {exc}")
+            return False
+
+        if not element_present:
+            return False
+
+        try:
             sap.click_element_without_wait(
                 driver, By.ID, Locators.SAVE_DRAFT_BUTTON.value
             )
-            self.wait_for_dom(driver)
-            self._handle_save_alerts(driver)
-        return element_present
+        except Exception as exc:  # noqa: BLE001
+            self.logger.error(f"❌ Error clicking draft button: {exc}")
+            return False
+
+        self.wait_for_dom(driver)
+        self._handle_save_alerts(driver)
+        return True
 
     @handle_selenium_errors(default_return=None)
     def _handle_save_alerts(self, driver) -> None:

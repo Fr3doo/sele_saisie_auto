@@ -112,3 +112,44 @@ def test_handle_save_alerts(monkeypatch):
     monkeypatch.setattr(page.alert_handler, "handle_alerts", fake_handle)
     page._handle_save_alerts("drv")
     assert ("drv", "save_alerts") in calls
+
+
+def test_navigate_error(monkeypatch, dummy_logger):
+    dummy = DummyAutomation()
+    page = AdditionalInfoPage(dummy)
+    page.logger = dummy_logger
+    monkeypatch.setattr(
+        page.waiter,
+        "wait_for_element",
+        lambda *a, **k: (_ for _ in ()).throw(Exception("boom")),
+    )
+    assert (
+        page.navigate_from_work_schedule_to_additional_information_page("drv") is False
+    )
+    assert dummy_logger.records["error"]
+
+
+def test_submit_and_validate_error(monkeypatch, dummy_logger):
+    dummy = DummyAutomation()
+    page = AdditionalInfoPage(dummy)
+    page.logger = dummy_logger
+    monkeypatch.setattr(
+        page.waiter,
+        "wait_for_element",
+        lambda *a, **k: (_ for _ in ()).throw(Exception("boom")),
+    )
+    assert page.submit_and_validate_additional_information("drv") is False
+    assert dummy_logger.records["error"]
+
+
+def test_save_draft_error(monkeypatch, dummy_logger):
+    dummy = DummyAutomation()
+    page = AdditionalInfoPage(dummy)
+    page.logger = dummy_logger
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
+    monkeypatch.setattr(
+        "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
+        lambda *a, **k: (_ for _ in ()).throw(Exception("boom")),
+    )
+    assert page.save_draft_and_validate("drv") is False
+    assert dummy_logger.records["error"]
