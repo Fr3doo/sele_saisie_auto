@@ -161,7 +161,9 @@ class AdditionalInfoPage:
     # ------------------------------------------------------------------
     @wait_for_dom_after
     @handle_selenium_errors(default_return=False)
-    def navigate_from_work_schedule_to_additional_information_page(self, driver):
+    def navigate_from_work_schedule_to_additional_information_page(
+        self, driver
+    ) -> bool:
         """Open the modal to fill additional informations."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
@@ -196,7 +198,7 @@ class AdditionalInfoPage:
 
     @wait_for_dom_after
     @handle_selenium_errors(default_return=False)
-    def submit_and_validate_additional_information(self, driver):
+    def submit_and_validate_additional_information(self, driver) -> bool:
         """Fill all additional info fields and validate the modal."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
@@ -261,7 +263,7 @@ class AdditionalInfoPage:
 
     @wait_for_dom_after
     @handle_selenium_errors(default_return=False)
-    def save_draft_and_validate(self, driver):
+    def save_draft_and_validate(self, driver) -> bool:
         """Click the save draft button and wait for completion."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
