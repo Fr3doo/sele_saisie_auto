@@ -67,22 +67,24 @@ class AutomationOrchestrator:
     ) -> None:
         if not isinstance(browser_session, BrowserSession):
             raise TypeError("browser_session must be an instance of BrowserSession")
-        self.config = config
-        self.logger = logger
-        self.browser_session = browser_session
-        self.login_handler = login_handler
-        self.date_entry_page = date_entry_page
-        self.additional_info_page = additional_info_page
-        self.context = context
-        self.choix_user = choix_user
-        self.timesheet_helper_cls = timesheet_helper_cls
-        self._cleanup_callback = cleanup_resources
-        self.resource_manager = resource_manager or ResourceManager(
+        self.config: AppConfig = config
+        self.logger: LoggerProtocol = logger
+        self.browser_session: BrowserSessionProtocol = browser_session
+        self.login_handler: LoginHandlerProtocol = login_handler
+        self.date_entry_page: DateEntryPageProtocol = date_entry_page
+        self.additional_info_page: AdditionalInfoPageProtocol = additional_info_page
+        self.context: SaisieContext = context
+        self.choix_user: bool = choix_user
+        self.timesheet_helper_cls: type[TimeSheetHelperProtocol] = timesheet_helper_cls
+        self._cleanup_callback: Callable[[object, object, object], None] | None = (
+            cleanup_resources
+        )
+        self.resource_manager: ResourceManager = resource_manager or ResourceManager(
             cast(str, logger.log_file)  # logger.log_file peut être None
         )
         self.page_navigator: PageNavigator | None = None
         self.service_configurator: ServiceConfigurator | None = None
-        self.log_file = logger.log_file
+        self.log_file: str | None = logger.log_file
         self.waiter = getattr(browser_session, "waiter", None)
         # AlertHandler attend `PSATimeAutomation`; on force le type pour éviter
         # l’incompatibilité de type avec AlertHandlerProtocol.
@@ -159,13 +161,15 @@ class AutomationOrchestrator:
         self, driver: Any, max_attempts: int | None = None
     ) -> None:  # pragma: no cover
         """Delegate DOM wait to :class:`BrowserSession`."""
+        if not hasattr(driver, "page_source"):
+            return
 
         if max_attempts is None:
             self.browser_session.wait_for_dom(driver)
         else:
             self.browser_session.wait_for_dom(driver, max_attempts=max_attempts)
 
-    @wait_for_dom_after  # type: ignore[misc]
+    @wait_for_dom_after
     def switch_to_iframe_main_target_win0(self, driver: Any) -> bool:
         """Switch to the ``main_target_win0`` iframe."""
 
@@ -189,19 +193,18 @@ class AutomationOrchestrator:
     def _process_date_entry(self, driver: Any) -> None:
         """Renseigne la date cible dans l'interface."""
 
-        self.date_entry_page.process_date(driver, self.config.date_cible)
+        self.date_entry_page.process_date(driver, cast(str, self.config.date_cible))
 
     def navigate_from_home_to_date_entry_page(self, driver: Any) -> bool:
         """Navigate to the date entry page."""
 
         return self.date_entry_page.navigate_from_home_to_date_entry_page(driver)
 
-    def submit_date_cible(self, driver: Any) -> None:
+    def submit_date_cible(self, driver: Any) -> bool:
         """Submit the selected date."""
+        return bool(self.date_entry_page.submit_date_cible(driver))
 
-        self.date_entry_page.submit_date_cible(driver)
-
-    @wait_for_dom_after  # type: ignore[misc]
+    @wait_for_dom_after
     def navigate_from_work_schedule_to_additional_information_page(
         self, driver: Any
     ) -> bool:
@@ -211,19 +214,19 @@ class AutomationOrchestrator:
             driver
         )
 
-    @wait_for_dom_after  # type: ignore[misc]
-    def submit_and_validate_additional_information(self, driver: Any) -> None:
+    @wait_for_dom_after
+    def submit_and_validate_additional_information(self, driver: Any) -> bool:
         """Fill in and submit the additional information."""
+        return bool(
+            self.additional_info_page.submit_and_validate_additional_information(driver)
+        )
 
-        self.additional_info_page.submit_and_validate_additional_information(driver)
-
-    @wait_for_dom_after  # type: ignore[misc]
+    @wait_for_dom_after
     def save_draft_and_validate(
         self, driver: Any
-    ) -> None:  # pragma: no cover - simple wrapper
+    ) -> bool:  # pragma: no cover - simple wrapper
         """Save the current timesheet as draft."""
-
-        self.additional_info_page.save_draft_and_validate(driver)
+        return bool(self.additional_info_page.save_draft_and_validate(driver))
 
     @handle_errors()
     def _fill_and_save_timesheet(self, driver: Any) -> None:
@@ -271,6 +274,8 @@ class AutomationOrchestrator:
         with self.resource_manager as rm:
             creds = rm.initialize_shared_memory(None)
             driver = rm.get_driver(headless=headless, no_sandbox=no_sandbox)
+            if driver is None:
+                raise RuntimeError("driver missing")
             try:
                 if hasattr(self.page_navigator, "prepare") and hasattr(
                     self.page_navigator, "run"
