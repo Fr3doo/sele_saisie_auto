@@ -11,6 +11,7 @@ from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import ServiceConfigurator
+from sele_saisie_auto.decorators import handle_errors
 from sele_saisie_auto.interfaces import (
     AdditionalInfoPageProtocol,
     BrowserSessionProtocol,
@@ -156,7 +157,10 @@ class AutomationOrchestrator:
     ) -> None:  # pragma: no cover
         """Delegate DOM wait to :class:`BrowserSession`."""
 
-        self.browser_session.wait_for_dom(driver, max_attempts=max_attempts)
+        if max_attempts is None:
+            self.browser_session.wait_for_dom(driver)
+        else:
+            self.browser_session.wait_for_dom(driver, max_attempts=max_attempts)
 
     @wait_for_dom_after  # type: ignore[misc]
     def switch_to_iframe_main_target_win0(self, driver: Any) -> bool:
@@ -218,6 +222,7 @@ class AutomationOrchestrator:
 
         self.additional_info_page.save_draft_and_validate(driver)
 
+    @handle_errors()
     def _fill_and_save_timesheet(self, driver: Any) -> None:
         """Delegate the complete timesheet workflow to :class:`PageNavigator`."""
         assert self.page_navigator is not None  # nosec B101
@@ -244,6 +249,7 @@ class AutomationOrchestrator:
         self.page_navigator.fill_timesheet(driver)
         self.page_navigator.finalize_timesheet(driver)
 
+    @handle_errors()
     def run(  # pragma: no cover - integration tested via main automation
         self,
         *,
