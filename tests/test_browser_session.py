@@ -6,6 +6,7 @@ import pytest
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.automation.browser_session import BrowserSession  # noqa: E402
+from sele_saisie_auto.exceptions import DriverError  # noqa: E402
 from sele_saisie_auto.selenium_utils import Waiter  # noqa: E402
 
 
@@ -122,6 +123,35 @@ def test_open_and_close_log(monkeypatch):
     assert any("Ouverture du navigateur" in msg for msg in logs)
     assert any("Fermeture du navigateur" in msg for msg in logs)
     assert "closed" in logs
+
+
+def test_open_failure_logs_and_raises(monkeypatch):
+    records = []
+
+    class DummyManager:
+        def __init__(self, log_file: str) -> None:
+            pass
+
+        def open(self, *a, **k):
+            raise Exception("boom")
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.browser_session.SeleniumDriverManager",
+        DummyManager,
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.automation.browser_session.write_log",
+        lambda msg, lf, level: records.append(msg),
+    )
+    session = BrowserSession("log.html")
+
+    with pytest.raises(DriverError):
+        session.open("http://t")
+
+    assert any("boom" in msg for msg in records)
 
 
 def test_wait_for_dom(monkeypatch):
