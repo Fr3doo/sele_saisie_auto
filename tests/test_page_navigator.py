@@ -148,4 +148,4 @@ def test_from_automation_builds_navigator(sample_config):
     assert nav.login_handler is automation.login_handler
     assert nav.date_entry_page is automation.date_entry_page
     assert nav.additional_info_page is automation.additional_info_page
-    assert nav.timesheet_helper is not None
+    assert nav.get_timesheet_helper() is not None

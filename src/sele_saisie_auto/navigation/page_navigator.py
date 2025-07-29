@@ -68,13 +68,32 @@ class PageNavigator:
         self.login_handler = login_handler
         self.date_entry_page = date_entry_page
         self.additional_info_page = additional_info_page
-        self.timesheet_helper = timesheet_helper
-        if hasattr(self.timesheet_helper, "additional_info_page"):
-            setattr(self.timesheet_helper, "additional_info_page", additional_info_page)
-        if hasattr(self.timesheet_helper, "browser_session"):
-            setattr(self.timesheet_helper, "browser_session", browser_session)
+        self._timesheet_helper = timesheet_helper
+        if hasattr(self._timesheet_helper, "additional_info_page"):
+            setattr(
+                self._timesheet_helper, "additional_info_page", additional_info_page
+            )
+        if hasattr(self._timesheet_helper, "browser_session"):
+            setattr(self._timesheet_helper, "browser_session", browser_session)
         self.credentials: Credentials | None = None
         self.date_cible: str | None = None
+
+    # ------------------------------------------------------------------
+    # Accessors
+    # ------------------------------------------------------------------
+    def get_timesheet_helper(self) -> TimeSheetHelperProtocol:
+        """Return the currently configured :class:`TimeSheetHelper`."""
+
+        return self._timesheet_helper
+
+    def set_timesheet_helper(self, helper: TimeSheetHelperProtocol) -> None:
+        """Inject a new :class:`TimeSheetHelper` instance."""
+
+        self._timesheet_helper = helper
+        if hasattr(helper, "additional_info_page"):
+            setattr(helper, "additional_info_page", self.additional_info_page)
+        if hasattr(helper, "browser_session"):
+            setattr(helper, "browser_session", self.browser_session)
 
     def prepare(self, credentials: Credentials, date_cible: str) -> None:
         """Store ``credentials`` and ``date_cible`` for later use."""
@@ -109,7 +128,7 @@ class PageNavigator:
 
     def fill_timesheet(self, driver: WebDriver) -> None:
         """Delegate the entire filling process to :class:`TimeSheetHelper`."""
-        self.timesheet_helper.run(driver)
+        self._timesheet_helper.run(driver)
 
     def submit_timesheet(self, driver: WebDriver) -> None:
         """Enregistre le brouillon et lance la validation finale."""

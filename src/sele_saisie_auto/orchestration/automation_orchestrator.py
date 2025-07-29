@@ -244,11 +244,7 @@ class AutomationOrchestrator:
             ),
         )
         assert self.page_navigator is not None  # nosec B101
-        self.page_navigator.timesheet_helper = helper
-        if hasattr(helper, "additional_info_page"):
-            helper.additional_info_page = self.additional_info_page
-        if hasattr(helper, "browser_session"):
-            helper.browser_session = self.browser_session
+        self.page_navigator.set_timesheet_helper(helper)
         self.page_navigator.fill_timesheet(driver)
         self.page_navigator.finalize_timesheet(driver)
 
