@@ -41,6 +41,15 @@ def test_run_without_prepare_raises():
     assert not log
 
 
+def test_run_without_driver_raises():
+    log, nav = make_navigator()
+    creds = Credentials(b"k", None, b"u", None, b"p", None)
+    nav.prepare(creds, "2024")
+    with pytest.raises(RuntimeError, match="driver missing"):
+        nav.run(None)  # type: ignore[arg-type]
+    assert not log
+
+
 def test_run_calls_dependencies_in_order():
     log, nav = make_navigator()
     creds = Credentials(b"k", None, b"u", None, b"p", None)

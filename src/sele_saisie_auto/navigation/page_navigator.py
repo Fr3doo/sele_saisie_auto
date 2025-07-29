@@ -126,6 +126,9 @@ class PageNavigator:
     def run(self, driver: WebDriver) -> None:
         """Execute the complete navigation sequence."""
 
+        if driver is None:
+            raise RuntimeError("driver missing")
+
         if self.credentials is None or self.date_cible is None:
             raise RuntimeError("PageNavigator not prepared")
 
