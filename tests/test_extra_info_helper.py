@@ -96,11 +96,22 @@ class DummyPage:
         return "submit"
 
 
+class DummyTimeSheet:
+    pass
+
+
 def test_set_page_updates_helper(monkeypatch):
     helper = ExtraInfoHelper(Logger("log"))
     page = DummyPage()
     helper.set_page(page)
     assert helper.page is page
+
+
+def test_set_timesheet_helper(monkeypatch):
+    helper = ExtraInfoHelper(Logger("log"))
+    ts = DummyTimeSheet()
+    helper.set_timesheet_helper(ts)
+    assert helper.timesheet_helper is ts
 
 
 def test_navigation_delegates(monkeypatch):
@@ -131,17 +142,27 @@ def test_submit_without_page(monkeypatch):
         helper.submit_and_validate_additional_information("drv")
 
 
+def test_constructor_injects_timesheet_helper(monkeypatch):
+    ts = DummyTimeSheet()
+    helper = ExtraInfoHelper(Logger("log"), timesheet_helper=ts)
+    assert helper.timesheet_helper is ts
+
+
 def test_waiter_created_with_factory(monkeypatch):
     captured = {}
 
+    class DummyWaiter:
+        def __init__(self):
+            self.wrapper = types.SimpleNamespace()
+
     def fake_create_waiter(timeout):
         captured["timeout"] = timeout
-        return "w"
+        return DummyWaiter()
 
     monkeypatch.setattr(risu, "create_waiter", fake_create_waiter)
     helper = ExtraInfoHelper(
         Logger("log"),
         app_config=types.SimpleNamespace(default_timeout=3, long_timeout=6),
     )
-    assert helper.waiter == "w"
+    assert isinstance(helper.waiter, DummyWaiter)
     assert captured["timeout"] == 3

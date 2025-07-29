@@ -21,6 +21,7 @@ from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 
 if TYPE_CHECKING:
     from sele_saisie_auto.automation.additional_info_page import AdditionalInfoPage
+    from sele_saisie_auto.remplir_jours_feuille_de_temps import TimeSheetHelper
 
 
 # ------------------------------------------------------------------------------------------- #
@@ -66,6 +67,7 @@ class ExtraInfoHelper:
         waiter: Waiter | None = None,
         page: AdditionalInfoPage | None = None,
         app_config: AppConfig | None = None,
+        timesheet_helper: "TimeSheetHelper" | None = None,
     ) -> None:
         """Initialise l'assistant avec ``Logger`` et ``Waiter``."""
         if waiter is None:
@@ -80,10 +82,15 @@ class ExtraInfoHelper:
         self.page = page
         self.logger = logger
         self.log_file = logger.log_file
+        self.timesheet_helper = timesheet_helper
 
     def set_page(self, page: AdditionalInfoPage) -> None:
         """Définit la page d'informations supplémentaires."""
         self.page = page
+
+    def set_timesheet_helper(self, helper: "TimeSheetHelper") -> None:
+        """Injecte une instance de :class:`TimeSheetHelper`."""
+        self.timesheet_helper = helper
 
     def traiter_description(self, driver: WebDriver, config: dict[str, str]) -> None:
         """Applique :func:`traiter_description` en utilisant l'instance courante."""
