@@ -340,6 +340,8 @@ def _insert_value_with_retries(  # pragma: no cover
                     driver, field_id, value  # pragma: no cover
                 )
             )  # pragma: no cover
+            if input_field is None:
+                raise RuntimeError("detecter_et_verifier_contenu returned None")
             if is_correct_value:  # pragma: no cover
                 write_log(  # pragma: no cover
                     f"Valeur correcte déjà présente pour '{field_id}'.",  # pragma: no cover
