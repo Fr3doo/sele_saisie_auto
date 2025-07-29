@@ -83,8 +83,8 @@ class AdditionalInfoPage:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-    def wait_for_dom(self, driver) -> None:
-        self._automation.wait_for_dom(driver)
+    def wait_for_dom(self, driver, max_attempts: int | None = None) -> None:
+        self._automation.wait_for_dom(driver, max_attempts=max_attempts)
 
     # ------------------------------------------------------------------
     # Public API

@@ -74,9 +74,9 @@ class DateEntryPage:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-    def wait_for_dom(self, driver: WebDriver) -> None:
+    def wait_for_dom(self, driver: WebDriver, max_attempts: int | None = None) -> None:
         """Delegate DOM wait to the parent automation."""
-        self._automation.wait_for_dom(driver)
+        self._automation.wait_for_dom(driver, max_attempts=max_attempts)
 
     def switch_to_main_frame(self, driver: WebDriver) -> WebDriver | Any:
         """Switch to the main iframe using the parent automation."""

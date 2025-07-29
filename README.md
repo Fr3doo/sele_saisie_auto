@@ -111,6 +111,8 @@ from sele_saisie_auto.decorators import handle_selenium_errors
 def cliquer_bouton(driver):
     driver.find_element(...).click()
 ```
+- `BrowserSession.wait_for_dom` effectue trois tentatives maximum pour vérifier
+  la stabilité du DOM. Une `RuntimeError` est levée si le contenu reste instable.
 
 ## 📝 Formats d'entrée
 Les paramètres sont lus depuis `config.ini` (URL, planning, etc.). Les identifiants sont saisis au lancement et ne sont pas stockés sur le disque.

@@ -30,7 +30,7 @@ class DummyAutomation:
             go_to_default_content=lambda *a, **k: None,
         )
 
-    def wait_for_dom(self, driver):
+    def wait_for_dom(self, driver, max_attempts: int = 3):
         pass
 
 

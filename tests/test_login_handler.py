@@ -27,7 +27,7 @@ class DummySession:
     def __init__(self):
         self.wait_calls = []
 
-    def wait_for_dom(self, driver):
+    def wait_for_dom(self, driver, max_attempts: int = 3):
         self.wait_calls.append(driver)
 
 

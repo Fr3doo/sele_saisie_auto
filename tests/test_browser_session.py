@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.automation.browser_session import BrowserSession  # noqa: E402
@@ -126,7 +128,9 @@ def test_wait_for_dom(monkeypatch):
     calls = []
     dummy = Waiter()
     monkeypatch.setattr(
-        dummy, "wait_until_dom_is_stable", lambda d, timeout=10: calls.append("stable")
+        dummy,
+        "wait_until_dom_is_stable",
+        lambda d, timeout=10: (calls.append("stable") or True),
     )
     monkeypatch.setattr(
         dummy, "wait_for_dom_ready", lambda d, timeout: calls.append("ready")
@@ -135,6 +139,28 @@ def test_wait_for_dom(monkeypatch):
     session.wait_for_dom("drv")
 
     assert calls == ["stable", "ready"]
+
+
+def test_wait_for_dom_raises_after_attempts(monkeypatch):
+    calls = {"stable": 0, "ready": 0}
+    dummy = Waiter()
+    monkeypatch.setattr(
+        dummy,
+        "wait_until_dom_is_stable",
+        lambda d, timeout=10: (
+            calls.__setitem__("stable", calls["stable"] + 1) or False
+        ),
+    )
+    monkeypatch.setattr(
+        dummy,
+        "wait_for_dom_ready",
+        lambda d, timeout: calls.__setitem__("ready", calls["ready"] + 1),
+    )
+    session = BrowserSession("log.html", waiter=dummy)
+    with pytest.raises(RuntimeError):
+        session.wait_for_dom("drv", max_attempts=2)
+    assert calls["stable"] == 2
+    assert calls["ready"] == 0
 
 
 def test_go_to_iframe_and_default_content(monkeypatch):

@@ -40,9 +40,12 @@ class LoginHandler:
         self.encryption_service = encryption_service
         self.browser_session = browser_session
 
-    def wait_for_dom(self, driver: WebDriver) -> None:
+    def wait_for_dom(self, driver: WebDriver, max_attempts: int | None = None) -> None:
         """Delegate DOM wait to :class:`BrowserSession`."""
-        self.browser_session.wait_for_dom(driver)
+        if max_attempts is None:
+            self.browser_session.wait_for_dom(driver)
+        else:
+            self.browser_session.wait_for_dom(driver, max_attempts=max_attempts)
 
     def login(self, driver: WebDriver, credentials: Credentials) -> None:
         """Fill username and password fields using decrypted credentials."""
