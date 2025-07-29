@@ -164,7 +164,7 @@ def read_config_ini(log_file: str | None = None) -> configparser.ConfigParser:
             lf,
             DEFAULT_LOG_LEVEL,
         )
-        raise UnicodeDecodeError("utf-8", b"", 0, 0, str(e)) from e
+        raise TypeError(str(e)) from e
     except Exception as e:
         write_log(
             f"🔹 {messages.ERREUR_INATTENDUE} lors de la lecture du fichier '{config_file_ini}': {e}",
@@ -223,7 +223,7 @@ def write_config_ini(
             lf,
             DEFAULT_LOG_LEVEL,
         )
-        raise UnicodeDecodeError("utf-8", b"", 0, 0, str(e)) from e
+        raise TypeError(str(e)) from e
     except Exception as e:
         write_log(
             f"🔹 {messages.ERREUR_INATTENDUE} lors de la lecture du fichier '{config_file_ini}': {e}",

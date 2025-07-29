@@ -207,10 +207,18 @@ def test_fill_and_save_timesheet(monkeypatch, sample_config):
         sap, "program_break_time", lambda *a, **k: calls.append("break")
     )
     monkeypatch.setattr(auto, "_click_action_button", lambda d: calls.append("click"))
+
+    class DummyHelper:
+        def __init__(self, *a, **k):
+            pass
+
+        def run(self, driver):
+            calls.append("fill")
+
     monkeypatch.setattr(
-        auto.page_navigator,
-        "fill_timesheet",
-        lambda d: calls.append("fill"),
+        sap.remplir_jours_feuille_de_temps,
+        "TimeSheetHelper",
+        DummyHelper,
     )
     monkeypatch.setattr(
         auto.additional_info_page,
