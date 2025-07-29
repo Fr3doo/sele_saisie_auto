@@ -17,7 +17,7 @@ from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     context_from_app_config,
 )
 from sele_saisie_auto.resources import resource_manager  # noqa: E402
-from sele_saisie_auto.saisie_automatiser_psatime import SaisieContext  # noqa: E402
+from sele_saisie_auto.saisie_context import SaisieContext  # noqa: E402
 from tests.conftest import FakeEncryptionService  # noqa: E402
 
 

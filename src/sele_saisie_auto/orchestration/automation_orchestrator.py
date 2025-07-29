@@ -36,7 +36,7 @@ __all__ = ["AutomationOrchestrator", "detecter_doublons_jours"]
 # pragma: no cover
 
 if TYPE_CHECKING:
-    from sele_saisie_auto.saisie_automatiser_psatime import SaisieContext
+    from sele_saisie_auto.saisie_context import SaisieContext
 
 
 class AutomationOrchestrator:
