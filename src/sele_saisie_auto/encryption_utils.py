@@ -60,7 +60,7 @@ class DefaultEncryptionBackend:  # pragma: no cover - simple backend
             donnees_chiffrees = chiffreur.update(donnees_pad) + chiffreur.finalize()
             iv_bytes: bytes = bytes(chiffre.mode.initialization_vector)
             write_log("💀 Données chiffrées avec succès.", self.log_file, "CRITICAL")
-            return iv_bytes + donnees_chiffrees
+            return bytes(iv_bytes + donnees_chiffrees)
         except Exception as e:  # pragma: no cover - defensive
             write_log(
                 f"❌ Erreur lors du chiffrement des données : {e}",
@@ -81,7 +81,8 @@ class DefaultEncryptionBackend:  # pragma: no cover - simple backend
             unpadder = PKCS7(taille_bloc).unpadder()
             donnees = unpadder.update(donnees_pad) + unpadder.finalize()
             write_log("💀 Données déchiffrées avec succès.", self.log_file, "CRITICAL")
-            return donnees.decode()
+            decoded: str = donnees.decode()
+            return decoded
         except Exception as e:  # pragma: no cover - defensive
             write_log(
                 f"❌ Erreur lors du déchiffrement des données : {e}",
