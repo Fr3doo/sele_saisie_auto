@@ -27,10 +27,18 @@ def program_break_time(
 def clear_screen() -> None:
     """Clear console output."""
     cmd = "cls" if os.name == "nt" else "clear"
-    subprocess.run(
+    result = subprocess.run(
         cmd,
         shell=True,
         check=False,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )  # nosec B603 B607 B602
+    code = getattr(result, "returncode", 0)
+    if code != 0:
+        log_file = shared_utils.get_log_file()
+        write_log(
+            f"Commande '{cmd}' échouée avec le code {code}",
+            log_file,
+            "ERROR",
+        )
