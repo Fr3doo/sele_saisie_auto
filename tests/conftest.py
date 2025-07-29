@@ -4,6 +4,8 @@ from pathlib import Path
 
 import pytest
 
+from sele_saisie_auto.automation.browser_session import BrowserSession
+
 
 class DummyLogger:
     """Simple logger collecting messages."""
@@ -78,10 +80,13 @@ class FakeEncryptionService:
 # ----------------------------
 
 
-class DummyBrowserSession:
+class DummyBrowserSession(BrowserSession):
     """Lightweight browser session stub."""
 
     def __init__(self):
+        # Intentionally bypass BrowserSession.__init__ to avoid side effects
+        self.log_file = "log.html"
+        self.app_config = None
         self.open_calls = []
         self.driver = "drv"
         self.waiter = types.SimpleNamespace(wait_for_element=lambda *a, **k: True)

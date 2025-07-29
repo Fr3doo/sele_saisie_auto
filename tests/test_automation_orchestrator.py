@@ -331,7 +331,7 @@ def test_run_sequence_with_mocks(sample_config):
     rm.get_driver.side_effect = lambda *a, **k: (order.append("driver"), "drv")[1]
 
     pn = MagicMock()
-    pn.browser_session = Mock(waiter=None)
+    pn.browser_session = DummyBrowserSession()
     pn.prepare.side_effect = lambda *a, **k: order.append("prepare")
     pn.run.side_effect = lambda *a, **k: order.append("run")
 
