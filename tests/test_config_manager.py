@@ -76,15 +76,25 @@ key=value
 
 
 def test_load_missing_config(tmp_path, monkeypatch):
-    """Vérifie qu'une erreur explicite est levée si ``config.ini`` manque."""
+    """Crée un fichier par défaut si ``config.ini`` est absent."""
     monkeypatch.chdir(tmp_path)
+    logs: list[str] = []
     monkeypatch.setattr(
-        "sele_saisie_auto.read_or_write_file_config_ini_utils.messagebox.showinfo",
+        "sele_saisie_auto.config_manager.write_log",
+        lambda msg, lf, level="INFO", log_format="html", auto_close=False: logs.append(
+            msg
+        ),
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log",
         lambda *a, **k: None,
     )
+
     manager = ConfigManager(log_file=str(tmp_path / "log.html"))
-    with pytest.raises(FileNotFoundError):
-        manager.load()
+    cfg = manager.load()
+    assert (tmp_path / "config.ini").exists()
+    assert isinstance(cfg, AppConfig)
+    assert any("introuvable" in m.lower() for m in logs)
 
 
 def test_is_loaded_property(tmp_path, monkeypatch):
