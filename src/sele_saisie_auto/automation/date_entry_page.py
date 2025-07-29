@@ -164,7 +164,7 @@ class DateEntryPage:
 
     @wait_for_dom_after
     @handle_selenium_errors(default_return=False)
-    def submit_date_cible(self, driver: WebDriver) -> None:
+    def submit_date_cible(self, driver: WebDriver) -> bool:
         """Validate the chosen date."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
