@@ -21,9 +21,8 @@ from . import get_default_logger
 
 def is_document_complete(driver: WebDriver) -> bool:
     """Return ``True`` when the DOM is fully loaded."""
-    ready_state: str = cast(
-        str, driver.execute_script("return document.readyState")  # type: ignore[no-untyped-call]
-    )
+    execute_script = cast(Callable[[str], Any], driver.execute_script)
+    ready_state: str = cast(str, execute_script("return document.readyState"))
     return ready_state == "complete"
 
 
