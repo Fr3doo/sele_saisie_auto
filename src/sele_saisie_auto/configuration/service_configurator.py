@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation import LoginHandler
@@ -42,9 +42,28 @@ class ServiceConfigurator:
         encryption_backend: EncryptionBackend | None = None,
         login_handler_cls: type[LoginHandlerProtocol] | None = None,
     ) -> None:
+        self._validate_app_config(app_config)
         self.app_config = app_config
         self.encryption_backend = encryption_backend
         self.login_handler_cls = login_handler_cls or LoginHandler
+
+    # --------------------------------------------------------------
+    # Internal helpers
+    # --------------------------------------------------------------
+    @staticmethod
+    def _validate_app_config(cfg: AppConfig) -> None:
+        """Ensure all required fields of ``AppConfig`` are present."""
+
+        required = [
+            f.name
+            for f in fields(AppConfig)
+            if f.name not in {"encrypted_login", "encrypted_mdp", "date_cible", "raw"}
+        ]
+        missing = [name for name in required if not hasattr(cfg, name)]
+        if missing:
+            raise ValueError(
+                "Champs manquants dans AppConfig: " + ", ".join(sorted(missing))
+            )
 
     def create_encryption_service(self, log_file: str) -> EncryptionService:
         """Return a new :class:`EncryptionService`."""

@@ -87,7 +87,7 @@ def test_build_services_invalid_config(tmp_path):
     class Dummy:
         pass
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(ValueError):
         build_services(Dummy(), str(tmp_path / "log.html"))
 
 
