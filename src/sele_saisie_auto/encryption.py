@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from types import TracebackType
 from typing import Any
 
-from .encryption_utils import Credentials
+from .encryption_utils import Credentials, EncryptionBackend
 from .encryption_utils import EncryptionService as _EncryptionService
 from .shared_memory_service import SharedMemoryService
 
@@ -12,8 +13,18 @@ from .shared_memory_service import SharedMemoryService
 class DefaultEncryptionService:
     """Default implementation relying on :class:`EncryptionService`."""
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self._service = _EncryptionService(*args, **kwargs)
+    def __init__(
+        self,
+        log_file: str | None = None,
+        shared_memory_service: SharedMemoryService | None = None,
+        backend: EncryptionBackend | None = None,
+    ) -> None:
+        """Instantiate the underlying :class:`EncryptionService`."""
+        self._service = _EncryptionService(
+            log_file,
+            shared_memory_service=shared_memory_service,
+            backend=backend,
+        )
 
     # ------------------------------------------------------------------
     # Expose EncryptionService API through delegation
@@ -51,8 +62,9 @@ class DefaultEncryptionService:
         self,
         exc_type: type[BaseException] | None,
         exc: BaseException | None,
-        tb: object | None,
+        tb: TracebackType | None,
     ) -> None:
+        """Delegate cleanup to the underlying service."""
         self._service.__exit__(exc_type, exc, tb)
 
 
