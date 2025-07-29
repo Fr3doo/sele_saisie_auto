@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import argparse
+from typing import cast
 
 from sele_saisie_auto import __version__
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import service_configurator_factory
+from sele_saisie_auto.interfaces import LoggerProtocol
 from sele_saisie_auto.logger_utils import LOG_LEVELS
 from sele_saisie_auto.logging_service import LoggingConfigurator, get_logger
 from sele_saisie_auto.orchestration import AutomationOrchestrator
@@ -67,7 +69,7 @@ def main(argv: list[str] | None = None) -> None:
             automation.page_navigator,
             service_configurator,
             automation.context,
-            automation.logger,
+            cast(LoggerProtocol, automation.logger),
             choix_user=automation.choix_user,
         )
         orchestrator.run(headless=args.headless, no_sandbox=args.no_sandbox)
