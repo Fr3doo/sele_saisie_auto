@@ -22,6 +22,7 @@ from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
 
 if TYPE_CHECKING:  # pragma: no cover
+    from sele_saisie_auto.navigation import PageNavigator
     from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
 
 
@@ -30,15 +31,24 @@ class DateEntryPage:
 
     @classmethod
     def from_automation(
-        cls, automation: PSATimeAutomation, waiter: WaiterProtocol | None = None
-    ) -> DateEntryPage:
+        cls,
+        automation: PSATimeAutomation,
+        *,
+        page_navigator: "PageNavigator" | None = None,
+        waiter: WaiterProtocol | None = None,
+    ) -> "DateEntryPage":
         """Create a page instance from a :class:`PSATimeAutomation`."""
-        return cls(automation, waiter=waiter)
+        return cls(automation, page_navigator=page_navigator, waiter=waiter)
 
     def __init__(
-        self, automation: PSATimeAutomation, waiter: WaiterProtocol | None = None
+        self,
+        automation: PSATimeAutomation,
+        *,
+        page_navigator: "PageNavigator" | None = None,
+        waiter: WaiterProtocol | None = None,
     ) -> None:
         self._automation = automation
+        self.page_navigator = page_navigator
         if waiter is not None:
             self.waiter = waiter
         else:
