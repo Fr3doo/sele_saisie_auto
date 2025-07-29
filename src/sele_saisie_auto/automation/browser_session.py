@@ -87,13 +87,15 @@ class BrowserSession:
     ) -> None:  # pragma: no cover - simple wiring
         self.log_file = log_file
         self.app_config = app_config
+        self.waiter: WaiterProtocol
         if waiter is None:
             timeout = DEFAULT_TIMEOUT
             if app_config is not None and hasattr(app_config, "default_timeout"):
                 timeout = app_config.default_timeout
-            self.waiter = create_waiter(timeout)
+            internal_waiter: Waiter = create_waiter(timeout)
             if app_config is not None and hasattr(app_config, "long_timeout"):
-                self.waiter.wrapper.long_timeout = app_config.long_timeout
+                internal_waiter.wrapper.long_timeout = app_config.long_timeout
+            self.waiter = internal_waiter
         else:
             self.waiter = waiter
         if app_config is not None:
