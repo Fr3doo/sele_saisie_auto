@@ -137,7 +137,7 @@ class BrowserSession:
                 "ERROR",
             )
             raise DriverError(f"Failed to start WebDriver: {exc}") from exc
-        if self.driver is not None:  # pragma: no cover - simple branch
+        if self.driver is not None and hasattr(self.driver, "execute_script"):
             self.waiter.wait_for_dom_ready(
                 self.driver,
                 self.app_config.long_timeout if self.app_config else LONG_TIMEOUT,
