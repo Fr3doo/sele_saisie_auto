@@ -41,7 +41,7 @@ def verifier_accessibilite_url(url: str, logger: Logger | None = None) -> bool:
         logger.error(
             f"❌ URL inaccessible, même sans vérification SSL - statut : {response.status_code}"
         )
-        return None
+        return False
     except requests.exceptions.ConnectionError as conn_err:
         logger.error(f"❌ Erreur de connexion à l'URL : {conn_err}")
         return False

@@ -428,7 +428,7 @@ def test_verifier_accessibilite_url_ssl_branches(monkeypatch):
         return SimpleNamespace(status_code=500)
 
     monkeypatch.setattr(fsu.navigation.requests, "get", get_not200)
-    assert fsu.verifier_accessibilite_url("http://x", logger=logger) is None
+    assert fsu.verifier_accessibilite_url("http://x", logger=logger) is False
 
 
 def test_ouvrir_navigateur_sans_plein_ecran(monkeypatch):
