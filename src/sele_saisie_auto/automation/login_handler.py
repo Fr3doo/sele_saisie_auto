@@ -1,8 +1,8 @@
 # src\sele_saisie_auto\automation\login_handler.py
 from __future__ import annotations
 
-from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from multiprocessing import shared_memory
+from typing import TYPE_CHECKING, cast
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -49,7 +49,13 @@ class LoginHandler:
 
     def login(self, driver: WebDriver, credentials: Credentials) -> None:
         """Fill username and password fields using decrypted credentials."""
-        write_log(format_message("DECRYPT_CREDENTIALS", {}), self.log_file, "DEBUG")
+        if self.log_file is None:
+            raise ValueError("log_file is required")
+        write_log(
+            format_message("DECRYPT_CREDENTIALS", {}),
+            self.log_file,
+            "DEBUG",
+        )
         username = self.encryption_service.dechiffrer_donnees(
             credentials.login, credentials.aes_key
         )
@@ -57,9 +63,24 @@ class LoginHandler:
             credentials.password, credentials.aes_key
         )
         write_log(format_message("SEND_CREDENTIALS", {}), self.log_file, "DEBUG")
-        send_keys_to_element(driver, By.ID, Locators.USERNAME.value, username)
-        send_keys_to_element(driver, By.ID, Locators.PASSWORD.value, password)
-        send_keys_to_element(driver, By.ID, Locators.PASSWORD.value, Keys.RETURN)
+        send_keys_to_element(
+            driver,
+            cast(By, By.ID),
+            Locators.USERNAME.value,
+            username,
+        )
+        send_keys_to_element(
+            driver,
+            cast(By, By.ID),
+            Locators.PASSWORD.value,
+            password,
+        )
+        send_keys_to_element(
+            driver,
+            cast(By, By.ID),
+            Locators.PASSWORD.value,
+            Keys.RETURN,
+        )
 
     @wait_for_dom_after
     def connect_to_psatime(
@@ -70,9 +91,12 @@ class LoginHandler:
         mot_de_passe_chiffre: bytes,
     ) -> None:
         """Connecte l'utilisateur au portail PSATime."""
-        creds = SimpleNamespace(
+        creds = Credentials(
             aes_key=cle_aes,
+            mem_key=cast(shared_memory.SharedMemory, object()),
             login=nom_utilisateur_chiffre,
+            mem_login=cast(shared_memory.SharedMemory, object()),
             password=mot_de_passe_chiffre,
+            mem_password=cast(shared_memory.SharedMemory, object()),
         )
         self.login(driver, creds)
