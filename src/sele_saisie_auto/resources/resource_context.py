@@ -19,7 +19,7 @@ class ResourceContext:
         self.encryption_service = encryption_service or EncryptionService(log_file)
         self._credentials: Credentials | None = None
 
-    def __enter__(self) -> "ResourceContext":
+    def __enter__(self) -> ResourceContext:
         if hasattr(self.encryption_service, "__enter__"):
             self.encryption_service.__enter__()
         return self

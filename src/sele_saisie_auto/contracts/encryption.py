@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import Protocol, Tuple, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -24,9 +24,9 @@ class EncryptionService(Protocol):
 
     def store_credentials(self, login_data: bytes, password_data: bytes) -> None: ...
 
-    def retrieve_credentials(self) -> Tuple[bytes, bytes]: ...
+    def retrieve_credentials(self) -> tuple[bytes, bytes]: ...
 
-    def __enter__(self) -> "EncryptionService": ...
+    def __enter__(self) -> EncryptionService: ...
 
     def __exit__(
         self,

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from configparser import ConfigParser
-from typing import Callable, Literal, Protocol
+from typing import Literal, Protocol
 
 LogFormat = Literal["html", "txt"]
 
@@ -77,7 +77,7 @@ class Logger:
     # Context manager protocol
     # ------------------------------------------------------------------
 
-    def __enter__(self) -> "Logger":
+    def __enter__(self) -> Logger:
         """Prepare the log file when used as a context manager."""
         from sele_saisie_auto.logger_utils import initialize_html_log_file
 

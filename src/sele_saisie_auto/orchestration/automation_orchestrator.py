@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import types
-from typing import TYPE_CHECKING, Any, Callable, cast
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, cast
 
 from selenium.webdriver.common.by import By
 
@@ -95,7 +96,7 @@ class AutomationOrchestrator:
                 Any, types.SimpleNamespace(load=lambda: config)
             )
             self.resource_manager._session = browser_session
-            setattr(self.resource_manager, "_app_config", config)
+            self.resource_manager._app_config = config
         except Exception:  # nosec B110 - best effort configuration
             pass
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from types import TracebackType
-from typing import Any
 
 from .encryption_utils import Credentials, EncryptionBackend
 from .encryption_utils import EncryptionService as _EncryptionService
@@ -54,7 +53,7 @@ class DefaultEncryptionService:
     def retrieve_credentials(self) -> Credentials:
         return self._service.retrieve_credentials()
 
-    def __enter__(self) -> "DefaultEncryptionService":
+    def __enter__(self) -> DefaultEncryptionService:
         self._service.__enter__()
         return self
 

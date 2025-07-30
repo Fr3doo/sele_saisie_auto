@@ -1,7 +1,5 @@
 import builtins
 
-import sele_saisie_auto.logger_utils as logger_utils
-from sele_saisie_auto import console_ui
 from sele_saisie_auto.console_ui import ask_continue, show_separator
 
 

@@ -4,7 +4,8 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Callable, Optional, cast
+from collections.abc import Callable
+from typing import Any, cast
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -82,10 +83,10 @@ class Wrapper:
         self,
         driver: WebDriver,
         by: str = By.ID,
-        locator_value: Optional[str] = None,
+        locator_value: str | None = None,
         condition: Callable[[tuple[str, str]], Any] = ec.presence_of_element_located,
-        timeout: Optional[int] = None,
-    ) -> Optional[WebElement]:
+        timeout: int | None = None,
+    ) -> WebElement | None:
         """Wait for an element to satisfy ``condition`` or return ``None``."""
         if locator_value is None:
             self.logger.error(messages.LOCATOR_VALUE_REQUIRED)
@@ -112,9 +113,9 @@ class Wrapper:
         self,
         driver: WebDriver,
         by: str = By.ID,
-        locator_value: Optional[str] = None,
-        timeout: Optional[int] = None,
-    ) -> Optional[WebElement]:
+        locator_value: str | None = None,
+        timeout: int | None = None,
+    ) -> WebElement | None:
         """Return the element when it becomes clickable."""
         return self.wait_for_element(
             driver, by, locator_value, ec.element_to_be_clickable, timeout
@@ -124,9 +125,9 @@ class Wrapper:
         self,
         driver: WebDriver,
         by: str = By.ID,
-        locator_value: Optional[str] = None,
-        timeout: Optional[int] = None,
-    ) -> Optional[WebElement]:
+        locator_value: str | None = None,
+        timeout: int | None = None,
+    ) -> WebElement | None:
         """Return the element when it is visible."""
         return self.wait_for_element(
             driver, by, locator_value, ec.visibility_of_element_located, timeout
@@ -136,9 +137,9 @@ class Wrapper:
         self,
         driver: WebDriver,
         by: str = By.ID,
-        locator_value: Optional[str] = None,
-        timeout: Optional[int] = None,
-    ) -> Optional[WebElement]:
+        locator_value: str | None = None,
+        timeout: int | None = None,
+    ) -> WebElement | None:
         """Return the element once it is present in the DOM."""
         return self.wait_for_element(
             driver, by, locator_value, ec.presence_of_element_located, timeout

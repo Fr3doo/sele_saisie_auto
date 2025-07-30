@@ -27,7 +27,7 @@ def handle_errors(
                     log_file = getattr(inst, log_file_attr)
                 # Fallback to instance.logger.log_file
                 elif hasattr(inst, "logger") and hasattr(inst.logger, "log_file"):
-                    log_file = getattr(inst.logger, "log_file")
+                    log_file = inst.logger.log_file
             try:
                 return func(*args, **kwargs)
             except Exception as exc:  # noqa: BLE001

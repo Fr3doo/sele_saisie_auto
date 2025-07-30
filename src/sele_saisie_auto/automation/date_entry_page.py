@@ -17,7 +17,7 @@ from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
-from sele_saisie_auto.selenium_utils import Waiter, wait_for_dom_after
+from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
@@ -35,9 +35,9 @@ class DateEntryPage:
         cls,
         automation: PSATimeAutomation,
         *,
-        page_navigator: "PageNavigator" | None = None,
+        page_navigator: PageNavigator | None = None,
         waiter: WaiterProtocol | None = None,
-    ) -> "DateEntryPage":
+    ) -> DateEntryPage:
         """Create a page instance from a :class:`PSATimeAutomation`."""
         return cls(automation, page_navigator=page_navigator, waiter=waiter)
 
@@ -45,7 +45,7 @@ class DateEntryPage:
         self,
         automation: PSATimeAutomation,
         *,
-        page_navigator: "PageNavigator" | None = None,
+        page_navigator: PageNavigator | None = None,
         waiter: WaiterProtocol | None = None,
     ) -> None:
         self._automation = automation

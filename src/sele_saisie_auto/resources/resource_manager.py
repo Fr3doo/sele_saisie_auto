@@ -9,7 +9,7 @@ from typing import Any
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto.app_config import AppConfig
-from sele_saisie_auto.automation.browser_session import BrowserSession, create_session
+from sele_saisie_auto.automation.browser_session import create_session
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.encryption_utils import Credentials, EncryptionService
 from sele_saisie_auto.exceptions import AutomationExitError, ResourceManagerInitError
