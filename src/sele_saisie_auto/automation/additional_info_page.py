@@ -11,6 +11,7 @@ from sele_saisie_auto.additional_info_locators import ADDITIONAL_INFO_LOCATORS
 from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.decorators import handle_selenium_errors
+from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.remplir_informations_supp_utils import ExtraInfoHelper
@@ -95,13 +96,13 @@ class AdditionalInfoPage:
 
     @classmethod
     def from_automation(
-        cls, automation: PSATimeAutomation, waiter: Waiter | None = None
+        cls, automation: PSATimeAutomation, waiter: WaiterProtocol | None = None
     ) -> AdditionalInfoPage:
         """Create a page instance from a :class:`PSATimeAutomation`."""
         return cls(automation, waiter=waiter)
 
     def __init__(
-        self, automation: PSATimeAutomation, waiter: Waiter | None = None
+        self, automation: PSATimeAutomation, waiter: WaiterProtocol | None = None
     ) -> None:
         self._automation = automation
         self.context = getattr(automation, "context", None)
@@ -134,8 +135,8 @@ class AdditionalInfoPage:
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
         sap.traiter_description = self.helper.traiter_description
-        if isinstance(self.context, SaisieContext):
-            ensure_descriptions(self.context)
+        if self.context is not None:
+            ensure_descriptions(cast(SaisieContext, self.context))
 
     @property
     def log_file(self) -> str:
