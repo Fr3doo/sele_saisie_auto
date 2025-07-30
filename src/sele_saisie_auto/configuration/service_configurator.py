@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, fields
+from typing import Callable, cast
 
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation import LoginHandler
@@ -40,7 +41,13 @@ class ServiceConfigurator:
         self,
         app_config: AppConfig,
         encryption_backend: EncryptionBackend | None = None,
-        login_handler_cls: type[LoginHandlerProtocol] | None = None,
+        login_handler_cls: (
+            Callable[
+                [str | None, EncryptionService, BrowserSessionProtocol],
+                LoginHandlerProtocol,
+            ]
+            | None
+        ) = None,
     ) -> None:
         self._validate_app_config(app_config)
         self.app_config = app_config
@@ -82,7 +89,10 @@ class ServiceConfigurator:
     def create_browser_session(self, log_file: str) -> BrowserSessionProtocol:
         """Return a new :class:`BrowserSession`."""
 
-        return BrowserSession(log_file, self.app_config, waiter=self.create_waiter())
+        return cast(
+            BrowserSessionProtocol,
+            BrowserSession(log_file, self.app_config, waiter=self.create_waiter()),
+        )
 
     def create_login_handler(
         self,
@@ -92,7 +102,10 @@ class ServiceConfigurator:
     ) -> LoginHandlerProtocol:
         """Return a new :class:`LoginHandler`."""
 
-        return self.login_handler_cls(log_file, encryption_service, browser_session)
+        return cast(
+            LoginHandlerProtocol,
+            self.login_handler_cls(log_file, encryption_service, browser_session),
+        )
 
     def build_services(self, log_file: str) -> Services:
         """Convenient helper returning all core services."""
@@ -103,7 +116,12 @@ class ServiceConfigurator:
         login_handler = self.create_login_handler(
             log_file, encryption_service, browser_session
         )
-        return Services(encryption_service, browser_session, waiter, login_handler)
+        return Services(
+            encryption_service,
+            cast(BrowserSessionProtocol, browser_session),
+            waiter,
+            login_handler,
+        )
 
 
 def build_services(
