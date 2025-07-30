@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from configparser import ConfigParser
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -18,8 +18,8 @@ from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
 if TYPE_CHECKING:  # pragma: no cover
+    from sele_saisie_auto.interfaces import WaiterProtocol
     from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
-    from sele_saisie_auto.selenium_utils.wait_helpers import Waiter
 
 
 class AlertHandler:
@@ -36,12 +36,13 @@ class AlertHandler:
     }
 
     def __init__(
-        self, automation: PSATimeAutomation, waiter: "Waiter" | None = None
+        self, automation: PSATimeAutomation, waiter: "WaiterProtocol" | None = None
     ) -> None:
         self._automation = automation
         self.context = getattr(automation, "context", None)
         self.browser_session = getattr(automation, "browser_session", None)
         self._log_file = automation.log_file
+        self.waiter: WaiterProtocol
         if waiter is None:
             cfg = getattr(self.context, "config", None)
             app_cfg = (
@@ -92,7 +93,9 @@ class AlertHandler:
             if self.waiter.wait_for_element(
                 driver, By.ID, alerte, timeout=self.config.default_timeout
             ):
-                click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
+                click_element_without_wait(
+                    driver, cast(By, By.ID), Locators.CONFIRM_OK.value
+                )
                 write_log(
                     format_message("TIME_SHEET_EXISTS_ERROR", {}),
                     self.log_file,
@@ -116,7 +119,9 @@ class AlertHandler:
             if self.waiter.wait_for_element(
                 driver, By.ID, alerte, timeout=self.config.default_timeout
             ):
-                click_element_without_wait(driver, By.ID, Locators.CONFIRM_OK.value)
+                click_element_without_wait(
+                    driver, cast(By, By.ID), Locators.CONFIRM_OK.value
+                )
                 write_log(
                     format_message("SAVE_ALERT_WARNING", {}),
                     self.log_file,
