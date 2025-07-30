@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import configparser
 import multiprocessing
 import tkinter as tk
 from tkinter import messagebox, ttk
+from typing import Any, cast
 
 from sele_saisie_auto import cli, messages, saisie_automatiser_psatime
 from sele_saisie_auto.config_manager import ConfigManager
@@ -105,7 +107,13 @@ def start_configuration(
 ) -> None:
     """Minimal configuration window."""
 
-    config = read_config_ini(log_file)
+    raw_cfg = read_config_ini(log_file)
+    if isinstance(raw_cfg, configparser.ConfigParser):
+        config: dict[str, dict[str, str]] = {
+            section: dict(raw_cfg.items(section)) for section in raw_cfg.sections()
+        }
+    else:
+        config = raw_cfg
     for key, val in DEFAULT_SETTINGS.items():
         config.setdefault("settings", {}).setdefault(key, val)
 
@@ -117,19 +125,19 @@ def start_configuration(
     style.theme_use("clam")
 
     if hasattr(root, "tk"):
-        notebook = ttk.Notebook(root)  # pragma: no cover - UI init
+        notebook: Any = ttk.Notebook(root)  # pragma: no cover - UI init
         notebook.pack(fill="both", expand=True)  # pragma: no cover - UI init
     else:  # fallback for DummyRoot in tests
-        notebook = root
+        notebook: Any = root
     frame = create_tab(notebook, title="Paramètres")
     date_var = tk.StringVar(value=config["settings"].get("date_cible", ""))
     debug_var = tk.StringVar(value=config["settings"].get("debug_mode", "INFO"))
 
-    date_row = create_a_frame(frame, padding=(10, 10))
+    date_row = create_a_frame(frame, padding=(10, 10, 10, 10))
     create_modern_label_with_pack(date_row, "Date cible:", side="left")
     create_modern_entry_with_pack(date_row, date_var, side="left")
 
-    debug_row = create_a_frame(frame, padding=(10, 10))
+    debug_row = create_a_frame(frame, padding=(10, 10, 10, 10))
     create_modern_label_with_pack(debug_row, "Log Level:", side="left")
     create_combobox_with_pack(debug_row, debug_var, values=list(LOG_LEVELS.keys()))
 
@@ -137,7 +145,14 @@ def start_configuration(
         """Enregistre la configuration saisie."""
         config["settings"]["date_cible"] = date_var.get()
         config["settings"]["debug_mode"] = debug_var.get()
-        write_config_ini(config, log_file)
+        if isinstance(raw_cfg, configparser.ConfigParser):
+            if not raw_cfg.has_section("settings"):
+                raw_cfg.add_section("settings")
+            raw_cfg.set("settings", "date_cible", config["settings"]["date_cible"])
+            raw_cfg.set("settings", "debug_mode", config["settings"]["debug_mode"])
+            write_config_ini(raw_cfg, log_file)
+        else:
+            write_config_ini(config, log_file)
         messagebox.showinfo("Info", messages.CONFIGURATION_SAVED)
         root.destroy()
         from sele_saisie_auto.main_menu import main_menu
@@ -150,7 +165,7 @@ def start_configuration(
             no_sandbox=no_sandbox,
         )
 
-    btn_row = create_a_frame(frame, padding=(10, 10))
+    btn_row = create_a_frame(frame, padding=(10, 10, 10, 10))
     create_button_with_style(btn_row, "Sauvegarder", command=save)
 
     root.mainloop()
@@ -169,7 +184,7 @@ def main(argv: list[str] | None = None) -> None:
 
         multiprocessing.freeze_support()
         with EncryptionService(log_file) as encryption_service:
-            cle_aes = encryption_service.cle_aes
+            cle_aes = cast(bytes, encryption_service.cle_aes)
             from sele_saisie_auto.main_menu import main_menu
 
             main_menu(
