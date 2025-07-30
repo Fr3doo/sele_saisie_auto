@@ -109,6 +109,11 @@ __all__ = [
 ]
 
 
+def traiter_description(driver: WebDriver, config: dict[str, Any]) -> None:
+    """Placeholder patched by :class:`AdditionalInfoPage`."""
+    raise NotImplementedError
+
+
 # ----------------------------------------------------------------------------
 #
 # --------------------------- CLASSE PRINCIPALE ------------------------------
@@ -600,7 +605,7 @@ def initialize_shared_memory() -> EncryptionCredentials:
     """Récupère les identifiants chiffrés depuis la mémoire partagée."""
     if not _ORCHESTRATOR:
         raise AutomationNotInitializedError("Automation non initialisée")
-    return _ORCHESTRATOR.initialize_shared_memory()
+    return cast(EncryptionCredentials, _ORCHESTRATOR.initialize_shared_memory())
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation
