@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from tkinter import ttk
-from typing import Any
+from typing import Any, cast
 
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.gui_builder import (
@@ -46,7 +46,7 @@ def main_menu(
 
     tk.Label(menu, text="Program PSATime Auto", font=("Segoe UI", 14)).pack(pady=10)
     credentials = create_labeled_frame(
-        root_frame,
+        cast(ttk.Widget, root_frame),
         text="Identifiants",
         padx=20,
         pady=10,
@@ -75,7 +75,7 @@ def main_menu(
         )
 
     launch = create_button_without_style(
-        root_frame,
+        cast(ttk.Widget, root_frame),
         text="Lancer votre PSATime",
         command=launch_psatime,
     )
@@ -93,7 +93,7 @@ def main_menu(
         )
 
     config_btn = create_button_without_style(
-        root_frame,
+        cast(ttk.Widget, root_frame),
         text="Configurer le lancement",
         command=open_config,
     )
