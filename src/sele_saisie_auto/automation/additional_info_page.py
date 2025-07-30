@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as ec
 
 from sele_saisie_auto.additional_info_locators import ADDITIONAL_INFO_LOCATORS
 from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.decorators import handle_selenium_errors
-from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.remplir_informations_supp_utils import ExtraInfoHelper
@@ -95,20 +95,22 @@ class AdditionalInfoPage:
 
     @classmethod
     def from_automation(
-        cls, automation: PSATimeAutomation, waiter: WaiterProtocol | None = None
+        cls, automation: PSATimeAutomation, waiter: Waiter | None = None
     ) -> AdditionalInfoPage:
         """Create a page instance from a :class:`PSATimeAutomation`."""
         return cls(automation, waiter=waiter)
 
     def __init__(
-        self, automation: PSATimeAutomation, waiter: WaiterProtocol | None = None
+        self, automation: PSATimeAutomation, waiter: Waiter | None = None
     ) -> None:
         self._automation = automation
         self.context = getattr(automation, "context", None)
         self.browser_session = getattr(automation, "browser_session", None)
         self._log_file = automation.log_file
         self.logger = automation.logger
-        cfg = getattr(self.context, "config", None)
+        cfg = None
+        if isinstance(self.context, SaisieContext):
+            cfg = self.context.config
         if waiter is not None:
             self.waiter = waiter
         else:
@@ -116,33 +118,34 @@ class AdditionalInfoPage:
             if base_waiter is not None:
                 self.waiter = base_waiter
             else:
-                timeout = (
-                    cfg.default_timeout
-                    if hasattr(cfg, "default_timeout")
-                    else DEFAULT_TIMEOUT
-                )
+                timeout = DEFAULT_TIMEOUT
+                if cfg is not None and hasattr(cfg, "default_timeout"):
+                    timeout = cfg.default_timeout
                 self.waiter = create_waiter(timeout)
-                if hasattr(cfg, "long_timeout"):
+                if cfg is not None and hasattr(cfg, "long_timeout"):
                     self.waiter.wrapper.long_timeout = cfg.long_timeout
         self.alert_handler = AlertHandler(automation, waiter=self.waiter)
         self.helper = ExtraInfoHelper(
             logger=self.logger,
             waiter=self.waiter,
             page=self,
-            app_config=cfg if hasattr(cfg, "default_timeout") else None,
+            app_config=cfg if cfg is not None else None,
         )
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
         sap.traiter_description = self.helper.traiter_description
-        ensure_descriptions(self.context)
+        if isinstance(self.context, SaisieContext):
+            ensure_descriptions(self.context)
 
     @property
     def log_file(self) -> str:
         return self._log_file
 
     @property
-    def config(self) -> AppConfig:
-        cfg = getattr(self.context, "config", None)
+    def config(self) -> AppConfig | SimpleNamespace:
+        cfg = None
+        if isinstance(self.context, SaisieContext):
+            cfg = self.context.config
         if cfg is None or not hasattr(cfg, "default_timeout"):
             return SimpleNamespace(
                 default_timeout=DEFAULT_TIMEOUT,
@@ -153,7 +156,7 @@ class AdditionalInfoPage:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-    def wait_for_dom(self, driver, max_attempts: int | None = None) -> None:
+    def wait_for_dom(self, driver: WebDriver, max_attempts: int | None = None) -> None:
         self._automation.wait_for_dom(driver, max_attempts=max_attempts)
 
     # ------------------------------------------------------------------
@@ -162,7 +165,7 @@ class AdditionalInfoPage:
     @wait_for_dom_after
     @handle_selenium_errors(default_return=False)
     def navigate_from_work_schedule_to_additional_information_page(
-        self, driver
+        self, driver: WebDriver
     ) -> bool:
         """Open the modal to fill additional informations."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
@@ -185,7 +188,7 @@ class AdditionalInfoPage:
 
         try:
             sap.click_element_without_wait(
-                driver, By.ID, Locators.ADDITIONAL_INFO_LINK.value
+                driver, cast(By, By.ID), Locators.ADDITIONAL_INFO_LINK.value
             )
         except Exception as exc:  # noqa: BLE001
             self.logger.error(f"❌ Error clicking additional info link: {exc}")
@@ -198,7 +201,7 @@ class AdditionalInfoPage:
 
     @wait_for_dom_after
     @handle_selenium_errors(default_return=False)
-    def submit_and_validate_additional_information(self, driver) -> bool:
+    def submit_and_validate_additional_information(self, driver: WebDriver) -> bool:
         """Fill all additional info fields and validate the modal."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
@@ -255,7 +258,9 @@ class AdditionalInfoPage:
             return False
 
         try:
-            sap.click_element_without_wait(driver, By.ID, Locators.SAVE_ICON.value)
+            sap.click_element_without_wait(
+                driver, cast(By, By.ID), Locators.SAVE_ICON.value
+            )
         except Exception as exc:  # noqa: BLE001
             self.logger.error(f"❌ Error clicking save icon: {exc}")
             return False
@@ -263,7 +268,7 @@ class AdditionalInfoPage:
 
     @wait_for_dom_after
     @handle_selenium_errors(default_return=False)
-    def save_draft_and_validate(self, driver) -> bool:
+    def save_draft_and_validate(self, driver: WebDriver) -> bool:
         """Click the save draft button and wait for completion."""
         from sele_saisie_auto import saisie_automatiser_psatime as sap
 
@@ -284,7 +289,7 @@ class AdditionalInfoPage:
 
         try:
             sap.click_element_without_wait(
-                driver, By.ID, Locators.SAVE_DRAFT_BUTTON.value
+                driver, cast(By, By.ID), Locators.SAVE_DRAFT_BUTTON.value
             )
         except Exception as exc:  # noqa: BLE001
             self.logger.error(f"❌ Error clicking draft button: {exc}")
@@ -295,7 +300,7 @@ class AdditionalInfoPage:
         return True
 
     @handle_selenium_errors(default_return=None)
-    def _handle_save_alerts(self, driver) -> None:
+    def _handle_save_alerts(self, driver: WebDriver) -> None:
         """Dismiss any alert shown after saving."""
 
         self.alert_handler.handle_alerts(driver, "save_alerts")
@@ -303,6 +308,8 @@ class AdditionalInfoPage:
     def log_information_details(self) -> None:
         """Log the extra information configuration details."""
 
+        if not isinstance(self.context, SaisieContext):
+            return
         cfg = self.context.config
 
         sections = {
@@ -314,5 +321,6 @@ class AdditionalInfoPage:
 
         for key, title in sections.items():
             write_log(title, self.log_file, "DEBUG")
-            for day, status in cfg.additional_information.get(key, {}).items():
+            values = cast(dict[str, str], cfg.additional_information.get(key, {}))
+            for day, status in values.items():
                 write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
