@@ -126,7 +126,7 @@ def start_configuration(
 
     notebook: ttk.Notebook | tk.Tk
     if hasattr(root, "tk"):
-        notebook= ttk.Notebook(root)  # pragma: no cover - UI init
+        notebook = ttk.Notebook(root)  # pragma: no cover - UI init
         notebook.pack(fill="both", expand=True)  # pragma: no cover - UI init
     else:  # fallback for DummyRoot in tests
         notebook = root
