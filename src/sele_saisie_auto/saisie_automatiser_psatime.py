@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from multiprocessing import shared_memory
 from types import TracebackType
-from typing import Any, cast
+from typing import Any, Callable, cast
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -53,6 +53,9 @@ from sele_saisie_auto.logging_service import Logger, LoggingConfigurator, get_lo
 from sele_saisie_auto.navigation import PageNavigator
 from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.plugins_utils import call_hook
+from sele_saisie_auto.remplir_informations_supp_utils import (
+    traiter_description as _traiter_description,
+)
 from sele_saisie_auto.remplir_jours_feuille_de_temps import ajouter_jour_a_jours_remplis
 from sele_saisie_auto.resources.resource_manager import ResourceManager
 from sele_saisie_auto.saisie_context import SaisieContext
@@ -106,7 +109,11 @@ __all__ = [
     "click_element_without_wait",
     "AutomationExitError",
     "get_next_saturday_if_not_saturday",
+    "traiter_description",
 ]
+
+# Re-export with a simplified signature for monkeypatching in tests
+traiter_description: Callable[[WebDriver, dict[str, str]], None] = _traiter_description
 
 
 # ----------------------------------------------------------------------------
