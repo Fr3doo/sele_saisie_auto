@@ -73,9 +73,6 @@ def ouvrir_navigateur_sur_ecran_principal(
     """Open the Edge browser and navigate to the URL."""
     logger = logger or get_default_logger()
     edge_browser_options = EdgeOptions()
-    edge_browser_options = EdgeOptions()
-    # Active le moteur Chromium pour Edge (non typé dans les stubs Selenium)
-    edge_browser_options.use_chromium = True  # type: ignore[attr-defined]
 
     if headless:
         edge_browser_options.add_argument("--headless")
