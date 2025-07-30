@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -13,6 +13,7 @@ from sele_saisie_auto import messages
 from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.decorators import handle_selenium_errors
+from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
@@ -110,7 +111,7 @@ class DateEntryPage:
         )
         if element_present:
             sap.click_element_without_wait(
-                driver, By.ID, Locators.NAV_TO_DATE_ENTRY.value
+                driver, cast(By, By.ID), Locators.NAV_TO_DATE_ENTRY.value
             )
         self.wait_for_dom(driver)
 
@@ -123,7 +124,7 @@ class DateEntryPage:
         )
         if element_present:
             sap.click_element_without_wait(
-                driver, By.ID, Locators.SIDE_MENU_BUTTON.value
+                driver, cast(By, By.ID), Locators.SIDE_MENU_BUTTON.value
             )
         self.wait_for_dom(driver)
 
@@ -177,13 +178,13 @@ class DateEntryPage:
         )
         if element_present:
             sap.send_keys_to_element(
-                driver, By.ID, Locators.ADD_BUTTON.value, Keys.RETURN
+                driver, cast(By, By.ID), Locators.ADD_BUTTON.value, Keys.RETURN
             )
         self.wait_for_dom(driver)
-        return element_present
+        return bool(element_present)
 
     @handle_selenium_errors(default_return=None)
-    def process_date(self, driver: WebDriver, date_cible: str | None) -> Any | None:
+    def process_date(self, driver: WebDriver, date_cible: str | None) -> bool | None:
         """Orchestrate date selection and validation.
 
         Returns ``False`` if a conflicting date alert was detected,
@@ -197,7 +198,12 @@ class DateEntryPage:
         )
         write_log(format_message("DOM_STABLE", {}), self.log_file, "DEBUG")
         if self.submit_date_cible(driver):
-            self._handle_date_alert(driver)
+            try:
+                self._handle_date_alert(driver)
+            except AutomationExitError:
+                return False
+            return True
+        return None
 
     def _handle_date_alert(self, driver: WebDriver) -> None:
         """Delegate alert handling to :class:`AlertHandler`."""
@@ -220,4 +226,4 @@ class DateEntryPage:
             timeout=self.config.default_timeout,
         )
         if element_present:
-            sap.click_element_without_wait(driver, By.ID, elem_id)
+            sap.click_element_without_wait(driver, cast(By, By.ID), elem_id)
