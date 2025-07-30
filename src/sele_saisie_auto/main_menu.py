@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from tkinter import ttk
+from typing import Any
 
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.gui_builder import (
@@ -31,6 +32,7 @@ def main_menu(
     menu.geometry("400x300")
 
     # Conteneur ttk pour satisfaire les helpers typés « ttk.Widget »
+    root_frame: ttk.Frame | Any
     try:
         root_frame = ttk.Frame(menu)
         root_frame.pack(fill="both", expand=True)
