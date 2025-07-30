@@ -126,11 +126,12 @@ def start_configuration(
 
     notebook: ttk.Notebook | tk.Tk
     if hasattr(root, "tk"):
-        notebook = ttk.Notebook(root)  # pragma: no cover - UI init
+        notebook: Any = ttk.Notebook(root)  # pragma: no cover - UI init
         notebook.pack(fill="both", expand=True)  # pragma: no cover - UI init
     else:  # fallback for DummyRoot in tests
         notebook = root
     frame = create_tab(cast(ttk.Notebook, notebook), title="Paramètres")
+
     date_var = tk.StringVar(value=config["settings"].get("date_cible", ""))
     debug_var = tk.StringVar(value=config["settings"].get("debug_mode", "INFO"))
 
