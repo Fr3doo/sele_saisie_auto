@@ -124,12 +124,14 @@ def start_configuration(
     style = ttk.Style(root)
     style.theme_use("clam")
 
+    notebook: ttk.Notebook | tk.Tk
     if hasattr(root, "tk"):
         notebook: Any = ttk.Notebook(root)  # pragma: no cover - UI init
         notebook.pack(fill="both", expand=True)  # pragma: no cover - UI init
     else:  # fallback for DummyRoot in tests
-        notebook: Any = root
-    frame = create_tab(notebook, title="Paramètres")
+        notebook = root
+    frame = create_tab(cast(ttk.Notebook, notebook), title="Paramètres")
+
     date_var = tk.StringVar(value=config["settings"].get("date_cible", ""))
     debug_var = tk.StringVar(value=config["settings"].get("debug_mode", "INFO"))
 
