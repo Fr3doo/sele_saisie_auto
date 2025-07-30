@@ -27,7 +27,7 @@ from sele_saisie_auto.remplir_jours_feuille_de_temps import (
     TimeSheetHelper,
     context_from_app_config,
 )
-from sele_saisie_auto.resources.resource_manager import ResourceManager
+from sele_saisie_auto.resources.resource_manager import Credentials, ResourceManager
 from sele_saisie_auto.selenium_utils import detecter_doublons_jours, wait_for_dom_after
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 
@@ -82,7 +82,7 @@ class AutomationOrchestrator:
         )
         self.page_navigator: PageNavigator | None = None
         self.service_configurator: ServiceConfigurator | None = None
-        self.log_file = logger.log_file
+        self.log_file: str = logger.log_file
         self.waiter = getattr(browser_session, "waiter", None)
         # AlertHandler attend `PSATimeAutomation`; on force le type pour éviter
         # l’incompatibilité de type avec AlertHandlerProtocol.
@@ -135,7 +135,7 @@ class AutomationOrchestrator:
         inst.service_configurator = service_configurator
         return inst
 
-    def initialize_shared_memory(self) -> Any:
+    def initialize_shared_memory(self) -> Credentials:
         """Delegate credential retrieval to :class:`ResourceManager`."""
 
         # ResourceManager attend Logger | None ; on passe None pour éviter
@@ -165,7 +165,7 @@ class AutomationOrchestrator:
         else:
             self.browser_session.wait_for_dom(driver, max_attempts=max_attempts)
 
-    @wait_for_dom_after  # type: ignore[misc]
+    @wait_for_dom_after
     def switch_to_iframe_main_target_win0(self, driver: Any) -> bool:
         """Switch to the ``main_target_win0`` iframe."""
 
@@ -201,7 +201,7 @@ class AutomationOrchestrator:
 
         self.date_entry_page.submit_date_cible(driver)
 
-    @wait_for_dom_after  # type: ignore[misc]
+    @wait_for_dom_after
     def navigate_from_work_schedule_to_additional_information_page(
         self, driver: Any
     ) -> bool:
@@ -211,13 +211,13 @@ class AutomationOrchestrator:
             driver
         )
 
-    @wait_for_dom_after  # type: ignore[misc]
+    @wait_for_dom_after
     def submit_and_validate_additional_information(self, driver: Any) -> None:
         """Fill in and submit the additional information."""
 
         self.additional_info_page.submit_and_validate_additional_information(driver)
 
-    @wait_for_dom_after  # type: ignore[misc]
+    @wait_for_dom_after
     def save_draft_and_validate(
         self, driver: Any
     ) -> None:  # pragma: no cover - simple wrapper
@@ -232,7 +232,7 @@ class AutomationOrchestrator:
         # Initialize the timesheet helper with the context and logger
         helper = cast(
             TimeSheetHelper,
-            self.timesheet_helper_cls(  # type: ignore[call-arg]
+            cast(Any, self.timesheet_helper_cls)(
                 context_from_app_config(
                     self.config,
                     cast(str, self.logger.log_file),

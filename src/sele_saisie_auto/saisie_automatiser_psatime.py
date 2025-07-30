@@ -11,6 +11,12 @@ from multiprocessing import shared_memory
 from types import TracebackType
 from typing import Any, cast
 
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+    TimeoutException,
+    WebDriverException,
+)
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
@@ -132,7 +138,7 @@ class PSATimeAutomation:
     ) -> None:
         """Initialise la configuration et les dépendances."""
 
-        self.log_file = log_file
+        self.log_file: str = log_file
         self.choix_user = choix_user
         self.memory_config = memory_config or MemoryConfig()
         LoggingConfigurator.setup(log_file, app_config.debug_mode, app_config.raw)
@@ -334,7 +340,6 @@ class PSATimeAutomation:
         else:
             self.browser_session.wait_for_dom(driver, max_attempts=max_attempts)
 
-    @handle_selenium_errors(default_return=None)
     def setup_browser(
         self,
         session: BrowserSession | None = None,
@@ -343,21 +348,33 @@ class PSATimeAutomation:
         no_sandbox: bool = False,
     ) -> WebDriver | None:
         """Configure et démarre le navigateur via :class:`BrowserSession`."""
-        return cast(
-            WebDriver,
-            self.browser_session.open(
-                self.context.config.url,
-                fullscreen=False,
-                headless=headless,
-                no_sandbox=no_sandbox,
-            ),
-        )
+        try:
+            return cast(
+                WebDriver,
+                self.browser_session.open(
+                    self.context.config.url,
+                    fullscreen=False,
+                    headless=headless,
+                    no_sandbox=no_sandbox,
+                ),
+            )
+        except NoSuchElementException as exc:
+            self.logger.error(f"❌ Élément {messages.INTROUVABLE} : {exc}")
+        except TimeoutException as exc:
+            self.logger.error(f"❌ Temps d'attente dépassé : {exc}")
+        except StaleElementReferenceException as exc:
+            self.logger.error(f"❌ {messages.REFERENCE_OBSOLETE} détectée : {exc}")
+        except WebDriverException as exc:
+            self.logger.error(f"❌ Erreur {messages.WEBDRIVER} : {exc}")
+        except Exception as exc:  # noqa: BLE001
+            self.logger.error(f"❌ {messages.ERREUR_INATTENDUE} : {exc}")
+        return None
 
-    @wait_for_dom_after  # type: ignore[misc]
+    @wait_for_dom_after
     def switch_to_iframe_main_target_win0(self, driver: WebDriver) -> bool:
         """Bascule vers l'iframe principale ``main_target_win0``."""
         switched_to_iframe: bool | None = None
-        element_present = self.waiter.wait_for_element(  # type: ignore[no-untyped-call]
+        element_present = self.waiter.wait_for_element(
             driver, By.ID, Locators.MAIN_FRAME.value, timeout=DEFAULT_TIMEOUT
         )
         if element_present:
@@ -374,7 +391,7 @@ class PSATimeAutomation:
         """Delegate navigation to :class:`PageNavigator`."""
         return cast(
             bool,
-            self.page_navigator.navigate_from_home_to_date_entry_page(driver),  # type: ignore[no-untyped-call]
+            self.page_navigator.navigate_from_home_to_date_entry_page(driver),
         )
 
     @handle_selenium_errors(default_return=False)
@@ -382,38 +399,36 @@ class PSATimeAutomation:
         """Delegate submission to :class:`PageNavigator`."""
         return cast(
             bool,
-            self.page_navigator.submit_date_cible(driver),  # type: ignore[no-untyped-call]
+            self.page_navigator.submit_date_cible(driver),
         )
 
-    @wait_for_dom_after  # type: ignore[misc]
+    @wait_for_dom_after
     def navigate_from_work_schedule_to_additional_information_page(
         self, driver: WebDriver
     ) -> bool:
         """Delegate to :class:`PageNavigator`."""
         return cast(
             bool,
-            self.page_navigator.navigate_from_work_schedule_to_additional_information_page(  # type: ignore[no-untyped-call]
+            self.page_navigator.navigate_from_work_schedule_to_additional_information_page(
                 driver
             ),
         )
 
-    @wait_for_dom_after  # type: ignore[misc]
+    @wait_for_dom_after
     def submit_and_validate_additional_information(self, driver: WebDriver) -> bool:
         """Delegate to :class:`PageNavigator`."""
         return cast(
             bool,
-            self.page_navigator.submit_and_validate_additional_information(  # type: ignore[no-untyped-call]
-                driver
-            ),
+            self.page_navigator.submit_and_validate_additional_information(driver),
         )
 
-    @wait_for_dom_after  # type: ignore[misc]
+    @wait_for_dom_after
     @handle_selenium_errors(default_return=False)
     def save_draft_and_validate(self, driver: WebDriver) -> bool:
         """Delegate to :class:`PageNavigator`."""
         return cast(
             bool,
-            self.page_navigator.save_draft_and_validate(driver),  # type: ignore[no-untyped-call]
+            self.page_navigator.save_draft_and_validate(driver),
         )
 
     def cleanup_resources(
@@ -602,10 +617,7 @@ def initialize_shared_memory() -> EncryptionCredentials:
     """Récupère les identifiants chiffrés depuis la mémoire partagée."""
     if not _ORCHESTRATOR:
         raise AutomationNotInitializedError("Automation non initialisée")
-    return cast(
-        EncryptionCredentials,
-        _ORCHESTRATOR.initialize_shared_memory(),  # type: ignore[no-untyped-call]
-    )
+    return _ORCHESTRATOR.initialize_shared_memory()
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation
