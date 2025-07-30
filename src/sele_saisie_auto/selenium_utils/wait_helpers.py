@@ -5,8 +5,9 @@ from __future__ import annotations
 
 import inspect
 import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Optional
+from typing import Any
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -64,10 +65,10 @@ class Waiter:
         self,
         driver: WebDriver,
         by: str = By.ID,
-        locator_value: Optional[str] = None,
+        locator_value: str | None = None,
         condition: Callable[[tuple[str, str]], Any] = ec.presence_of_element_located,
-        timeout: Optional[int] = None,
-    ) -> Optional[WebElement]:
+        timeout: int | None = None,
+    ) -> WebElement | None:
         """Wait for an element to satisfy ``condition`` or return ``None``."""
         try:
             return self.wrapper.wait_for_element(
@@ -88,9 +89,9 @@ class Waiter:
         self,
         driver: WebDriver,
         by: str,
-        locator_value: Optional[str] = None,
-        timeout: Optional[int] = None,
-    ) -> Optional[WebElement]:
+        locator_value: str | None = None,
+        timeout: int | None = None,
+    ) -> WebElement | None:
         """Return element when it becomes clickable."""
         return self.wrapper.find_clickable(driver, by, locator_value, timeout)
 
@@ -98,9 +99,9 @@ class Waiter:
         self,
         driver: WebDriver,
         by: str,
-        locator_value: Optional[str] = None,
-        timeout: Optional[int] = None,
-    ) -> Optional[WebElement]:
+        locator_value: str | None = None,
+        timeout: int | None = None,
+    ) -> WebElement | None:
         """Return element when it is visible."""
         return self.wrapper.find_visible(driver, by, locator_value, timeout)
 
@@ -108,9 +109,9 @@ class Waiter:
         self,
         driver: WebDriver,
         by: str,
-        locator_value: Optional[str] = None,
-        timeout: Optional[int] = None,
-    ) -> Optional[WebElement]:
+        locator_value: str | None = None,
+        timeout: int | None = None,
+    ) -> WebElement | None:
         """Return element when it is present in the DOM."""
         return self.wrapper.find_present(driver, by, locator_value, timeout)
 
@@ -149,12 +150,12 @@ def wait_until_dom_is_stable(
 def wait_for_element(
     driver: WebDriver,
     by: str = By.ID,
-    locator_value: Optional[str] = None,
+    locator_value: str | None = None,
     condition: Callable[[tuple[str, str]], Any] = ec.presence_of_element_located,
     timeout: int | None = None,
     waiter: Waiter | None = None,
     logger: Logger | None = None,
-) -> Optional[WebElement]:
+) -> WebElement | None:
     """Attend qu'un élément réponde à ``condition``."""
     w = waiter or DEFAULT_WAITER
     if logger is not None:
@@ -166,11 +167,11 @@ def wait_for_element(
 def find_clickable(
     driver: WebDriver,
     by: str = By.ID,
-    locator_value: Optional[str] = None,
-    timeout: Optional[int] = None,
+    locator_value: str | None = None,
+    timeout: int | None = None,
     waiter: Waiter | None = None,
     logger: Logger | None = None,
-) -> Optional[WebElement]:
+) -> WebElement | None:
     """Retourne l'élément lorsqu'il devient cliquable."""
     w = waiter or DEFAULT_WAITER
     if logger is not None:
@@ -182,11 +183,11 @@ def find_clickable(
 def find_visible(
     driver: WebDriver,
     by: str = By.ID,
-    locator_value: Optional[str] = None,
-    timeout: Optional[int] = None,
+    locator_value: str | None = None,
+    timeout: int | None = None,
     waiter: Waiter | None = None,
     logger: Logger | None = None,
-) -> Optional[WebElement]:
+) -> WebElement | None:
     """Retourne l'élément lorsqu'il est visible."""
     w = waiter or DEFAULT_WAITER
     if logger is not None:
@@ -198,11 +199,11 @@ def find_visible(
 def find_present(
     driver: WebDriver,
     by: str = By.ID,
-    locator_value: Optional[str] = None,
-    timeout: Optional[int] = None,
+    locator_value: str | None = None,
+    timeout: int | None = None,
     waiter: Waiter | None = None,
     logger: Logger | None = None,
-) -> Optional[WebElement]:
+) -> WebElement | None:
     """Retourne l'élément dès qu'il est présent dans le DOM."""
     w = waiter or DEFAULT_WAITER
     if logger is not None:

@@ -36,7 +36,7 @@ class AlertHandler:
     }
 
     def __init__(
-        self, automation: PSATimeAutomation, waiter: "WaiterProtocol" | None = None
+        self, automation: PSATimeAutomation, waiter: WaiterProtocol | None = None
     ) -> None:
         self._automation = automation
         self.context = getattr(automation, "context", None)

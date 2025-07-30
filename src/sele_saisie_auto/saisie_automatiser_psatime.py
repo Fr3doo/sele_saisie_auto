@@ -4,9 +4,7 @@
 # ---------------- Import des bibliothèques nécessaires ----------------------- #
 # ----------------------------------------------------------------------------- #
 
-import sys
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 from multiprocessing import shared_memory
 from types import TracebackType
 from typing import Any, cast
@@ -15,9 +13,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto import (
-    console_ui,
     messages,
-    plugins,
     remplir_jours_feuille_de_temps,
     shared_utils,
 )
@@ -29,46 +25,33 @@ from sele_saisie_auto.automation.additional_info_page import (
 from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.automation.date_entry_page import DateEntryPage
 from sele_saisie_auto.automation.login_handler import LoginHandler
-from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import Services, service_configurator_factory
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.encryption_utils import Credentials as EncryptionCredentials
-from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.exceptions import (
     AutomationExitError,
     AutomationNotInitializedError,
 )
 from sele_saisie_auto.interfaces.protocols import (
-    AdditionalInfoPageProtocol,
-    BrowserSessionProtocol,
-    DateEntryPageProtocol,
     LoggerProtocol,
-    LoginHandlerProtocol,
-    TimeSheetHelperProtocol,
-    WaiterProtocol,
 )
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import show_log_separator, write_log
 from sele_saisie_auto.logging_service import Logger, LoggingConfigurator, get_logger
 from sele_saisie_auto.navigation import PageNavigator
 from sele_saisie_auto.orchestration import AutomationOrchestrator
-from sele_saisie_auto.plugins_utils import call_hook
-from sele_saisie_auto.remplir_jours_feuille_de_temps import ajouter_jour_a_jours_remplis
 from sele_saisie_auto.resources.resource_manager import ResourceManager
 from sele_saisie_auto.saisie_context import SaisieContext
 from sele_saisie_auto.selenium_utils import (
     click_element_without_wait,
-    detecter_doublons_jours,
     modifier_date_input,
     send_keys_to_element,
+    wait_for_dom_after,
 )
-from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
-from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.date_utils import get_next_saturday_if_not_saturday
 from sele_saisie_auto.utils.misc import program_break_time
-from sele_saisie_auto.utils.mission import est_en_mission
 
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #

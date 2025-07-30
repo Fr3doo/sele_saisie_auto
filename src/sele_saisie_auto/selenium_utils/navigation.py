@@ -8,7 +8,6 @@ from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.edge.options import Options as EdgeOptions
-from typing_extensions import Literal
 
 from sele_saisie_auto.logging_service import Logger
 

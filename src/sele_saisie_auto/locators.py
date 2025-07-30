@@ -1,10 +1,10 @@
 from enum import Enum, auto
-from typing import Any, Dict, List
+from typing import Any
 
 # --------------------------------------------------------------------------- #
 # Mapping brut id_logique ➜ id_HTML
 # --------------------------------------------------------------------------- #
-_LOCATOR_MAP: Dict[str, str] = {
+_LOCATOR_MAP: dict[str, str] = {
     "USERNAME": "userid",
     "PASSWORD": "pwd",  # nosec B105 - refers to field id, not credentials
     "MAIN_FRAME": "main_target_win0",
@@ -37,7 +37,7 @@ class Locators(str, Enum):
         name: str,
         start: int,
         count: int,
-        last_values: List[Any],
+        last_values: list[Any],
     ) -> str:
         return _LOCATOR_MAP[name]
 

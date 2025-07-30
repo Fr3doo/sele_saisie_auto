@@ -1,11 +1,10 @@
 # src\sele_saisie_auto\navigation\page_navigator.py
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from sele_saisie_auto import plugins
 from sele_saisie_auto.encryption_utils import Credentials
 from sele_saisie_auto.interfaces import (
     AdditionalInfoPageProtocol,
@@ -33,7 +32,7 @@ class PageNavigator:
     """
 
     @classmethod
-    def from_automation(cls, automation: "PSATimeAutomation") -> "PageNavigator":
+    def from_automation(cls, automation: PSATimeAutomation) -> PageNavigator:
         """Return a new :class:`PageNavigator` configured from ``automation``."""
         from sele_saisie_auto import remplir_jours_feuille_de_temps
 
@@ -70,9 +69,9 @@ class PageNavigator:
         self.additional_info_page = additional_info_page
         self.timesheet_helper = timesheet_helper
         if hasattr(self.timesheet_helper, "additional_info_page"):
-            setattr(self.timesheet_helper, "additional_info_page", additional_info_page)
+            self.timesheet_helper.additional_info_page = additional_info_page
         if hasattr(self.timesheet_helper, "browser_session"):
-            setattr(self.timesheet_helper, "browser_session", browser_session)
+            self.timesheet_helper.browser_session = browser_session
         self.credentials: Credentials | None = None
         self.date_cible: str | None = None
 
@@ -101,7 +100,7 @@ class PageNavigator:
         self,
         driver: WebDriver,
         date_cible: str,
-    ) -> Optional[Any]:
+    ) -> Any | None:
         """Ouvre la page de sélection de période et choisit ``date_cible``."""
         if self.date_entry_page.navigate_from_home_to_date_entry_page(driver):
             return self.date_entry_page.process_date(driver, date_cible)
@@ -148,7 +147,7 @@ class PageNavigator:
 
     def navigate_from_home_to_date_entry_page(
         self, driver: WebDriver
-    ) -> Optional[bool]:
+    ) -> bool | None:
         """Simple wrapper around :class:`DateEntryPage` navigation."""
         return self.date_entry_page.navigate_from_home_to_date_entry_page(driver)
 
@@ -158,7 +157,7 @@ class PageNavigator:
 
     def navigate_from_work_schedule_to_additional_information_page(
         self, driver: WebDriver
-    ) -> Optional[bool]:
+    ) -> bool | None:
         """Open the additional information dialog from the schedule grid."""
         return self.additional_info_page.navigate_from_work_schedule_to_additional_information_page(
             driver

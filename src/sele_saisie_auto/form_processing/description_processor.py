@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional, cast
+from typing import Any
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -26,7 +26,7 @@ from sele_saisie_auto.strategies import ElementFillingContext
 
 def _get_element(
     driver: WebDriver, waiter: Waiter | None, element_id: str
-) -> Optional[Any]:
+) -> Any | None:
     """Retrieve a Selenium element either via :class:`Waiter` or default wait."""
     if waiter:
         return waiter.wait_for_element(driver, By.ID, element_id)

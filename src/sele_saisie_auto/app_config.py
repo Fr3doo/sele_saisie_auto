@@ -6,7 +6,7 @@ import os
 from collections.abc import Callable
 from configparser import ConfigParser
 from dataclasses import dataclass
-from typing import Any, Literal, NotRequired, Optional, TypedDict, TypeVar, cast
+from typing import Any, NotRequired, TypedDict, TypeVar, cast
 
 from sele_saisie_auto.dropdown_options import (
     BillingActionOption,
@@ -120,8 +120,8 @@ class AppConfigRaw:
 class AppConfig:
     """Structured configuration loaded from ``config.ini``."""
 
-    encrypted_login: Optional[str]
-    encrypted_mdp: Optional[str]
+    encrypted_login: str | None
+    encrypted_mdp: str | None
     url: str
     date_cible: str | None
     debug_mode: str
@@ -143,7 +143,7 @@ class AppConfig:
     @staticmethod
     def _charger_credentials(
         parser: ConfigParser,
-    ) -> tuple[Optional[str], Optional[str]]:
+    ) -> tuple[str | None, str | None]:
         """Extrait les identifiants chiffrés depuis ``parser``."""
         encrypted_login = parser.get("credentials", "login", fallback="").strip()
         encrypted_mdp = parser.get("credentials", "mdp", fallback="").strip()

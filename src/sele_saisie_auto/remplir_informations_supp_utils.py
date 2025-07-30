@@ -68,7 +68,7 @@ class ExtraInfoHelper:
         waiter: WaiterProtocol | None = None,
         page: AdditionalInfoPage | None = None,
         app_config: AppConfig | None = None,
-        timesheet_helper: "TimeSheetHelper" | None = None,
+        timesheet_helper: TimeSheetHelper | None = None,
     ) -> None:
         """Initialise l'assistant avec ``Logger`` et ``Waiter``."""
         self.waiter: WaiterProtocol
@@ -92,7 +92,7 @@ class ExtraInfoHelper:
         """Définit la page d'informations supplémentaires."""
         self.page = page
 
-    def set_timesheet_helper(self, helper: "TimeSheetHelper") -> None:
+    def set_timesheet_helper(self, helper: TimeSheetHelper) -> None:
         """Injecte une instance de :class:`TimeSheetHelper`."""
         self.timesheet_helper = helper
 

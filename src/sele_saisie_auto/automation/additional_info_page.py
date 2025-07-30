@@ -16,7 +16,7 @@ from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.remplir_informations_supp_utils import ExtraInfoHelper
 from sele_saisie_auto.saisie_context import SaisieContext
-from sele_saisie_auto.selenium_utils import Waiter, wait_for_dom_after
+from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 

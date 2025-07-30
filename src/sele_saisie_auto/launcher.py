@@ -6,7 +6,7 @@ import configparser
 import multiprocessing
 import tkinter as tk
 from tkinter import messagebox, ttk
-from typing import Any, cast
+from typing import cast
 
 from sele_saisie_auto import cli, messages, saisie_automatiser_psatime
 from sele_saisie_auto.config_manager import ConfigManager

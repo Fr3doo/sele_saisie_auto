@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, fields
-from typing import Callable, cast
+from typing import cast
 
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation import LoginHandler
@@ -33,7 +34,7 @@ class ServiceConfigurator:
     """Configure core services based on :class:`AppConfig`."""
 
     @classmethod
-    def from_config(cls, app_config: AppConfig) -> "ServiceConfigurator":
+    def from_config(cls, app_config: AppConfig) -> ServiceConfigurator:
         """Return a configurator for ``app_config``."""
         return cls(app_config)
 
