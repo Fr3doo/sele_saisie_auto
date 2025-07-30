@@ -1,12 +1,13 @@
 # src\sele_saisie_auto\remplir_informations_supp_utils.py
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.form_processing.description_processor import process_description
+from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.selenium_utils import Waiter
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
@@ -64,19 +65,22 @@ class ExtraInfoHelper:
     def __init__(
         self,
         logger: Logger,
-        waiter: Waiter | None = None,
+        waiter: WaiterProtocol | None = None,
         page: AdditionalInfoPage | None = None,
         app_config: AppConfig | None = None,
         timesheet_helper: "TimeSheetHelper" | None = None,
     ) -> None:
         """Initialise l'assistant avec ``Logger`` et ``Waiter``."""
+        self.waiter: WaiterProtocol
         if waiter is None:
             timeout = DEFAULT_TIMEOUT
-            if hasattr(app_config, "default_timeout"):
+            long_timeout = DEFAULT_TIMEOUT * 2
+            if app_config is not None:
                 timeout = app_config.default_timeout
-            self.waiter = create_waiter(timeout)
-            if hasattr(app_config, "long_timeout"):
-                self.waiter.wrapper.long_timeout = app_config.long_timeout
+                long_timeout = app_config.long_timeout
+            created_waiter = create_waiter(timeout)
+            created_waiter.wrapper.long_timeout = long_timeout
+            self.waiter = created_waiter
         else:
             self.waiter = waiter
         self.page = page
@@ -98,7 +102,7 @@ class ExtraInfoHelper:
             driver,
             config,
             self.log_file,
-            waiter=self.waiter,
+            waiter=cast(Waiter, self.waiter),
             logger=self.logger,
         )
 
