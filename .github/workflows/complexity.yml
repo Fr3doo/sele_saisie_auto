@@ -1,0 +1,62 @@
+name: Complexity
+on: [push, pull_request]
+
+jobs:
+  complexity:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # néc. pour pouvoir pousser le README
+
+    steps:
+      # 1. Récupération du dépôt
+      - name: Checkout source
+        uses: actions/checkout@v4   # dernière release v4.x à ce jour
+        # ↑ penser à pinner sur un SHA long pour la prod
+
+      # 2. Environnement Python
+      - name: Install Radon
+        run: pip install --upgrade radon
+
+      # 3. Analyse de la complexité
+      - name: Run Radon only on 'src/'
+        id: radon
+        run: |
+          OUTPUT="$(radon cc src/ -a --total-average)"
+          echo "RAW=${OUTPUT}" >> "$GITHUB_ENV"
+          GRADE="$(echo "$OUTPUT" | grep -oP '(?<=Average complexity: )[A-F]')"
+          VAL="$(echo "$OUTPUT" | grep -oP '[0-9]+\.[0-9]+')"
+          echo "GRADE=${GRADE}" >> "$GITHUB_ENV"
+          echo "VAL=${VAL}" >> "$GITHUB_ENV"
+
+      # 4. Couleur du badge
+      - name: Determine badge color
+        id: badge-color
+        run: |
+          if [[ "$GRADE" =~ ^[AB]$ ]]; then
+            COLOR=brightgreen
+          elif [[ "$GRADE" == "C" ]]; then
+            COLOR=yellow
+          else
+            COLOR=red
+          fi
+          echo "COLOR=${COLOR}" >> "$GITHUB_ENV"
+
+      # 5. Génération du badge Markdown
+      - name: Generate badge snippet
+        run: |
+          BADGE="![Complexity](https://img.shields.io/badge/complexity-${GRADE}%20(${VAL})-${COLOR})"
+          echo "BADGE=${BADGE}" >> "$GITHUB_ENV"
+
+      # 6. Injection du badge dans le README
+      - name: Insert badge into README
+        run: |
+          sed -i "/<!-- BADGE_COMPLEXITY:start -->/,/<!-- BADGE_COMPLEXITY:end -->/c\\
+          <!-- BADGE_COMPLEXITY:start -->\\
+          ${BADGE}\\
+          <!-- BADGE_COMPLEXITY:end -->" README.md
+
+      # 7. Commit & push
+      - name: Commit changes
+        uses: ad-m/github-push-action@v0.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
