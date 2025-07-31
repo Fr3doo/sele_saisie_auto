@@ -1,6 +1,8 @@
 # src\sele_saisie_auto\automation\browser_session.py
 from __future__ import annotations
 
+from typing import cast
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
@@ -204,7 +206,7 @@ class BrowserSession:
         if self.driver is None:
             return False
 
-        click_element_without_wait(self.driver, By.ID, element_id)
+        click_element_without_wait(self.driver, cast(By, By.ID), element_id)
         return True
 
     @handle_selenium_errors(default_return=False)
@@ -214,7 +216,7 @@ class BrowserSession:
         if self.driver is None:
             return False
 
-        send_keys_to_element(self.driver, By.ID, element_id, value)
+        send_keys_to_element(self.driver, cast(By, By.ID), element_id, value)
         return True
 
     # ------------------------------------------------------------------
