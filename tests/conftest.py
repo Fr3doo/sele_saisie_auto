@@ -94,6 +94,8 @@ class DummyBrowserSession(BrowserSession):
         self.open_calls = []
         self.driver = "drv"
         self.waiter = types.SimpleNamespace(wait_for_element=lambda *a, **k: True)
+        self.clicked = []
+        self.filled = []
 
     def wait_for_dom(self, driver, max_attempts: int = 3):
         self.wait_called = True
@@ -108,6 +110,14 @@ class DummyBrowserSession(BrowserSession):
 
     def go_to_default_content(self):
         self.default_called = True
+
+    def click(self, element_id):
+        self.clicked.append(element_id)
+        return True
+
+    def fill_input(self, element_id, value):
+        self.filled.append((element_id, value))
+        return True
 
     def close(self):
         pass
@@ -124,6 +134,14 @@ class DummySession:
 
     def __init__(self):
         self.calls = []
+
+    def click(self, element_id):
+        self.calls.append(f"click:{element_id}")
+        return True
+
+    def fill_input(self, element_id, value):
+        self.calls.append(f"fill:{element_id}:{value}")
+        return True
 
     def go_to_default_content(self):
         self.calls.append("default")
@@ -247,8 +265,8 @@ class LoggedDummyTimeSheetHelper(DummyTimeSheetHelper):
         self.log = log
 
     def run(self, driver):
-        super().run(driver)
         self.log.append("fill")
+        super().run(driver)
 
 
 class LoggedDummySession(DummySession):
@@ -259,6 +277,16 @@ class LoggedDummySession(DummySession):
     def go_to_default_content(self):
         super().go_to_default_content()
         self.log.append("default")
+
+    def click(self, element_id):
+        super().click(element_id)
+        self.log.append(f"click:{element_id}")
+        return True
+
+    def fill_input(self, element_id, value):
+        super().fill_input(element_id, value)
+        self.log.append(f"fill:{element_id}:{value}")
+        return True
 
 
 # Backward compatibility aliases

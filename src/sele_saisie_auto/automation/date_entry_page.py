@@ -100,8 +100,6 @@ class DateEntryPage:
     @handle_selenium_errors(default_return=False)
     def navigate_from_home_to_date_entry_page(self, driver: WebDriver) -> Any:
         """Navigate from the home page to the date entry page."""
-        from sele_saisie_auto import saisie_automatiser_psatime as sap
-
         element_present = self.waiter.wait_for_element(
             driver,
             By.ID,
@@ -110,9 +108,9 @@ class DateEntryPage:
             timeout=self.config.default_timeout,
         )
         if element_present:
-            sap.click_element_without_wait(
-                driver, cast(By, By.ID), Locators.NAV_TO_DATE_ENTRY.value
-            )
+            session = getattr(self._automation, "browser_session", None)
+            if session is not None:
+                session.click(Locators.NAV_TO_DATE_ENTRY.value)
         self.wait_for_dom(driver)
 
         element_present = self.waiter.wait_for_element(
@@ -123,9 +121,9 @@ class DateEntryPage:
             timeout=self.config.default_timeout,
         )
         if element_present:
-            sap.click_element_without_wait(
-                driver, cast(By, By.ID), Locators.SIDE_MENU_BUTTON.value
-            )
+            session = getattr(self._automation, "browser_session", None)
+            if session is not None:
+                session.click(Locators.SIDE_MENU_BUTTON.value)
         self.wait_for_dom(driver)
 
         return self.switch_to_main_frame(driver)
@@ -167,8 +165,6 @@ class DateEntryPage:
     @handle_selenium_errors(default_return=False)
     def submit_date_cible(self, driver: WebDriver) -> bool:
         """Validate the chosen date."""
-        from sele_saisie_auto import saisie_automatiser_psatime as sap
-
         element_present = self.waiter.wait_for_element(
             driver,
             By.ID,
@@ -177,9 +173,9 @@ class DateEntryPage:
             timeout=self.config.default_timeout,
         )
         if element_present:
-            sap.send_keys_to_element(
-                driver, cast(By, By.ID), Locators.ADD_BUTTON.value, Keys.RETURN
-            )
+            session = getattr(self._automation, "browser_session", None)
+            if session is not None:
+                session.fill_input(Locators.ADD_BUTTON.value, Keys.RETURN)
         self.wait_for_dom(driver)
         return bool(element_present)
 
@@ -216,8 +212,6 @@ class DateEntryPage:
         elem_id = (
             Locators.OK_BUTTON.value if create_new else Locators.COPY_TIME_BUTTON.value
         )
-        from sele_saisie_auto import saisie_automatiser_psatime as sap
-
         element_present = self.waiter.wait_for_element(
             driver,
             By.ID,
@@ -226,4 +220,6 @@ class DateEntryPage:
             timeout=self.config.default_timeout,
         )
         if element_present:
-            sap.click_element_without_wait(driver, cast(By, By.ID), elem_id)
+            session = getattr(self._automation, "browser_session", None)
+            if session is not None:
+                session.click(elem_id)

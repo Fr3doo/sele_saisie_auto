@@ -188,9 +188,8 @@ class AdditionalInfoPage:
             return False
 
         try:
-            sap.click_element_without_wait(
-                driver, cast(By, By.ID), Locators.ADDITIONAL_INFO_LINK.value
-            )
+            if self.browser_session is not None:
+                self.browser_session.click(Locators.ADDITIONAL_INFO_LINK.value)
         except Exception as exc:  # noqa: BLE001
             self.logger.error(f"❌ Error clicking additional info link: {exc}")
             return False
@@ -259,9 +258,8 @@ class AdditionalInfoPage:
             return False
 
         try:
-            sap.click_element_without_wait(
-                driver, cast(By, By.ID), Locators.SAVE_ICON.value
-            )
+            if self.browser_session is not None:
+                self.browser_session.click(Locators.SAVE_ICON.value)
         except Exception as exc:  # noqa: BLE001
             self.logger.error(f"❌ Error clicking save icon: {exc}")
             return False
@@ -289,9 +287,8 @@ class AdditionalInfoPage:
             return False
 
         try:
-            sap.click_element_without_wait(
-                driver, cast(By, By.ID), Locators.SAVE_DRAFT_BUTTON.value
-            )
+            if self.browser_session is not None:
+                self.browser_session.click(Locators.SAVE_DRAFT_BUTTON.value)
         except Exception as exc:  # noqa: BLE001
             self.logger.error(f"❌ Error clicking draft button: {exc}")
             return False

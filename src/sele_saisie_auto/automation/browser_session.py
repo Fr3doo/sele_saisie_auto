@@ -1,6 +1,8 @@
 # src\sele_saisie_auto\automation\browser_session.py
 from __future__ import annotations
 
+from typing import cast
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
@@ -12,8 +14,10 @@ from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import (
     Waiter,
+    click_element_without_wait,
     definir_taille_navigateur,
     ouvrir_navigateur_sur_ecran_principal,
+    send_keys_to_element,
     wait_for_dom_ready,
 )
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter, get_waiter
@@ -191,6 +195,29 @@ class BrowserSession:
                 raise RuntimeError(messages.DOM_NOT_STABLE)
 
         self.waiter.wait_for_dom_ready(driver, long_timeout)
+
+    # ------------------------------------------------------------------
+    # Element helpers
+    # ------------------------------------------------------------------
+    @handle_selenium_errors(default_return=False)
+    def click(self, element_id: str) -> bool:
+        """Click the element identified by ``element_id``."""
+
+        if self.driver is None:
+            return False
+
+        click_element_without_wait(self.driver, cast(By, By.ID), element_id)
+        return True
+
+    @handle_selenium_errors(default_return=False)
+    def fill_input(self, element_id: str, value: str) -> bool:
+        """Send ``value`` to the input identified by ``element_id``."""
+
+        if self.driver is None:
+            return False
+
+        send_keys_to_element(self.driver, cast(By, By.ID), element_id, value)
+        return True
 
     # ------------------------------------------------------------------
     # Iframe helpers
