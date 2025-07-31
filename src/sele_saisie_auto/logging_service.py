@@ -100,7 +100,14 @@ class Logger:
 
 _LOGGERS: dict[str, Logger] = {}
 
+from sele_saisie_auto.logger_utils import DEFAULT_LOG_LEVEL, write_log  # noqa: E402
 from sele_saisie_auto.shared_utils import get_log_file  # noqa: E402
+
+
+def log_info(message: str, log_file: str | None = None) -> None:
+    """Write an ``INFO`` level log message to ``log_file``."""
+
+    write_log(message, log_file or get_log_file(), DEFAULT_LOG_LEVEL)
 
 
 def get_logger(log_file: str | None) -> Logger:

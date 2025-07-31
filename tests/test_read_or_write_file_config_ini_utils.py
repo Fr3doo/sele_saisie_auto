@@ -30,6 +30,9 @@ def test_get_runtime_config_path_meipass_copy(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
     )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
+    )
     path = get_runtime_config_path()
     assert Path(path).exists()
     assert Path(path).read_text(encoding="utf-8") == "data"
@@ -41,6 +44,9 @@ def test_get_runtime_config_path_no_meipass(tmp_path, monkeypatch):
     monkeypatch.delenv("_MEIPASS", raising=False)
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
     )
     path = get_runtime_config_path()
     assert path == str(tmp_path / "config.ini")
@@ -56,6 +62,9 @@ def test_get_runtime_resource_path_copy(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "_MEIPASS", str(embedded), raising=False)
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
     )
     path = get_runtime_resource_path("file.png")
     assert Path(path).exists()
@@ -73,6 +82,9 @@ def test_get_runtime_resource_path_not_found(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
     )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
+    )
     with pytest.raises(FileNotFoundError):
         get_runtime_resource_path("missing.png")
     monkeypatch.delattr(sys, "_MEIPASS", raising=False)
@@ -88,6 +100,9 @@ def test_get_runtime_resource_path_permission_error(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "_MEIPASS", str(embedded), raising=False)
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
     )
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.shutil.copy",
@@ -111,6 +126,9 @@ def test_get_runtime_config_path_meipass_exists(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
     )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
+    )
     path = get_runtime_config_path()
     assert Path(path).read_text(encoding="utf-8") == "orig"
     monkeypatch.delattr(sys, "_MEIPASS", raising=False)
@@ -129,6 +147,9 @@ def test_get_runtime_resource_path_exists(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
     )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
+    )
     path = get_runtime_resource_path("img.png")
     assert Path(path).read_text(encoding="utf-8") == "local"
     monkeypatch.delattr(sys, "_MEIPASS", raising=False)
@@ -139,6 +160,9 @@ def test_get_runtime_resource_path_no_meipass(tmp_path, monkeypatch):
     monkeypatch.delenv("_MEIPASS", raising=False)
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
     )
     path = get_runtime_resource_path("any.png")
     assert path == str(tmp_path / "any.png")
@@ -151,6 +175,9 @@ def test_read_config_ini_success(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
     )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
+    )
     config = read_config_ini()
     assert config.get("s", "a") == "b"
 
@@ -159,6 +186,9 @@ def test_read_config_ini_not_found(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
     )
     with pytest.raises(FileNotFoundError):
         read_config_ini()
@@ -170,6 +200,9 @@ def test_read_config_ini_unicode_error(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
     )
 
     def bad_open(*a, **k):
@@ -186,6 +219,9 @@ def test_read_config_ini_generic_error(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
     )
 
     def bad_open(*a, **k):
@@ -206,6 +242,9 @@ def test_write_config_ini_success(tmp_path, monkeypatch):
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
     )
     monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
+    )
+    monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.messagebox.showinfo", noop
     )
     write_config_ini(cp)
@@ -219,6 +258,9 @@ def test_write_config_ini_not_found(tmp_path, monkeypatch):
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
     )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
+    )
     with pytest.raises(FileNotFoundError):
         write_config_ini(cp)
 
@@ -231,6 +273,9 @@ def test_write_config_ini_unicode_error(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
     )
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.messagebox.showinfo", noop
@@ -254,6 +299,9 @@ def test_write_config_ini_generic_error(tmp_path, monkeypatch):
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
     )
     monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
+    )
+    monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.messagebox.showinfo", noop
     )
 
@@ -271,6 +319,10 @@ def test_read_config_ini_uses_cache(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log",
+        noop,
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info",
         noop,
     )
     opened: list[str] = []

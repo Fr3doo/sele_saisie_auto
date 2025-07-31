@@ -13,6 +13,7 @@ from sele_saisie_auto.enums import AlertType, LogLevel
 from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
+from sele_saisie_auto.logging_service import log_info
 from sele_saisie_auto.selenium_utils import click_element_without_wait
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
@@ -96,15 +97,13 @@ class AlertHandler:
                 click_element_without_wait(
                     driver, cast(By, By.ID), Locators.CONFIRM_OK.value
                 )
-                write_log(
+                log_info(
                     format_message("TIME_SHEET_EXISTS_ERROR", {}),
                     self.log_file,
-                    LogLevel.INFO,
                 )
-                write_log(
+                log_info(
                     format_message("MODIFY_DATE_MESSAGE", {}),
                     self.log_file,
-                    LogLevel.INFO,
                 )
                 raise AutomationExitError(format_message("TIME_SHEET_EXISTS_ERROR", {}))
 
@@ -122,10 +121,9 @@ class AlertHandler:
                 click_element_without_wait(
                     driver, cast(By, By.ID), Locators.CONFIRM_OK.value
                 )
-                write_log(
+                log_info(
                     format_message("SAVE_ALERT_WARNING", {}),
                     self.log_file,
-                    LogLevel.INFO,
                 )
                 break
 

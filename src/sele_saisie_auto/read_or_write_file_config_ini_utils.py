@@ -9,7 +9,8 @@ import sys
 from tkinter import messagebox
 
 from sele_saisie_auto import messages
-from sele_saisie_auto.logger_utils import DEFAULT_LOG_LEVEL, write_log
+from sele_saisie_auto.logger_utils import write_log
+from sele_saisie_auto.logging_service import log_info
 from sele_saisie_auto.shared_utils import get_log_file
 
 # Cache des configurations lues, indexé par chemin du fichier
@@ -30,30 +31,22 @@ def get_runtime_config_path(log_file: str | None = None) -> str:
 
     # Chemin du fichier `config.ini` dans le répertoire courant
     current_dir_config = os.path.join(os.getcwd(), "config.ini")
-    write_log(
-        f"🔹 Chemin du fichier courant : {current_dir_config}", lf, DEFAULT_LOG_LEVEL
-    )
+    log_info(f"🔹 Chemin du fichier courant : {current_dir_config}", lf)
 
     # Si PyInstaller est utilisé
     if hasattr(sys, "_MEIPASS"):
         # Chemin du fichier `config.ini` embarqué
         embedded_config = os.path.join(sys._MEIPASS, "config.ini")
-        write_log(
-            f"🔹 Exécution via PyInstaller. Fichier embarqué : {embedded_config}",
-            lf,
-            DEFAULT_LOG_LEVEL,
+        log_info(
+            f"🔹 Exécution via PyInstaller. Fichier embarqué : {embedded_config}", lf
         )
 
         # Copier le fichier embarqué vers le répertoire courant si nécessaire (si absent)
         if not os.path.exists(current_dir_config):
             shutil.copy(embedded_config, current_dir_config)
-            write_log(
-                f"🔹 Copie de {embedded_config} vers {current_dir_config}",
-                lf,
-                DEFAULT_LOG_LEVEL,
-            )
+            log_info(f"🔹 Copie de {embedded_config} vers {current_dir_config}", lf)
     else:
-        write_log("🔹 Exécution en mode script.", lf, DEFAULT_LOG_LEVEL)
+        log_info("🔹 Exécution en mode script.", lf)
 
     return current_dir_config
 
@@ -65,28 +58,24 @@ def get_runtime_resource_path(relative_path: str, log_file: str | None = None) -
     # Chemin de la ressource dans le répertoire courant
     lf: str = log_file or get_log_file()
     current_dir_resource = os.path.join(os.getcwd(), relative_path)
-    write_log(
-        f"🔹 Chemin du fichier courant : {current_dir_resource}", lf, DEFAULT_LOG_LEVEL
-    )
+    log_info(f"🔹 Chemin du fichier courant : {current_dir_resource}", lf)
 
     # Si PyInstaller est utilisé
     if hasattr(sys, "_MEIPASS"):
         # Chemin de la ressource embarquée
         embedded_resource = os.path.join(sys._MEIPASS, relative_path)
-        write_log(
+        log_info(
             f"🔹 Exécution via PyInstaller. Fichier embarqué : {embedded_resource}",
             lf,
-            DEFAULT_LOG_LEVEL,
         )
 
         # Copier le fichier embarqué vers le répertoire courant si nécessaire (si absent)
         if not os.path.exists(current_dir_resource):
             try:
                 shutil.copy(embedded_resource, current_dir_resource)
-                write_log(
+                log_info(
                     f"🔹 Copie de {embedded_resource} vers {current_dir_resource}",
                     lf,
-                    DEFAULT_LOG_LEVEL,
                 )
             except FileNotFoundError as e:
                 write_log(
@@ -107,7 +96,7 @@ def get_runtime_resource_path(relative_path: str, log_file: str | None = None) -
                     f"Permission refusée pour copier : {embedded_resource}"
                 ) from e
     else:
-        write_log("🔹 Exécution en mode script.", lf, DEFAULT_LOG_LEVEL)
+        log_info("🔹 Exécution en mode script.", lf)
 
     return current_dir_resource
 
@@ -122,28 +111,25 @@ def read_config_ini(log_file: str | None = None) -> configparser.ConfigParser:
     config_file_ini = get_runtime_config_path(log_file=lf)
 
     if not os.path.exists(config_file_ini):
-        write_log(
+        log_info(
             f"🔹 Le fichier '{config_file_ini}' est {messages.INTROUVABLE}.",
             lf,
-            DEFAULT_LOG_LEVEL,
         )
         raise FileNotFoundError(
             f"Le fichier de configuration '{config_file_ini}' est {messages.INTROUVABLE}."
         )
     else:
-        write_log(
+        log_info(
             f"🔹 Le fichier '{config_file_ini}' a été trouvé.",
             lf,
-            DEFAULT_LOG_LEVEL,
         )
 
     current_mtime = os.path.getmtime(config_file_ini)
     cached = _CACHE.get(config_file_ini)
     if cached and cached[0] == current_mtime:
-        write_log(
+        log_info(
             "🔹 Configuration chargée depuis le cache.",
             lf,
-            DEFAULT_LOG_LEVEL,
         )
         return cached[1]
 
@@ -153,30 +139,27 @@ def read_config_ini(log_file: str | None = None) -> configparser.ConfigParser:
         # Lire le fichier avec l'encodage UTF-8
         with open(config_file_ini, encoding="utf-8") as configfile:
             config.read_file(configfile)
-            write_log(
+            log_info(
                 f"🧐 Le fichier de configuration '{config_file_ini}' a été lu avec succès.",
                 lf,
-                DEFAULT_LOG_LEVEL,
             )
     except UnicodeDecodeError as e:  # noqa: BLE001
-        write_log(
+        log_info(
             f"🔹 Erreur d'encodage lors de la lecture du fichier '{config_file_ini}'.",
             lf,
-            DEFAULT_LOG_LEVEL,
         )
         raise TypeError(str(e)) from e
     except Exception as e:
-        write_log(
+        log_info(
             f"🔹 {messages.ERREUR_INATTENDUE} lors de la lecture du fichier '{config_file_ini}': {e}",
             lf,
-            DEFAULT_LOG_LEVEL,
         )
         raise RuntimeError(
             f"Erreur lors de la lecture du fichier '{config_file_ini}': {e}"
         ) from e
 
     _CACHE[config_file_ini] = (current_mtime, config)
-    write_log("🔹 Configuration initialisée avec succès.", lf, DEFAULT_LOG_LEVEL)
+    log_info("🔹 Configuration initialisée avec succès.", lf)
     return config
 
 
@@ -190,45 +173,40 @@ def write_config_ini(
 
     # Vérifier si le fichier existe
     if not os.path.exists(config_file_ini):
-        write_log(
+        log_info(
             f"🔹 Le fichier '{config_file_ini}' est {messages.INTROUVABLE}.",
             lf,
-            DEFAULT_LOG_LEVEL,
         )
         raise FileNotFoundError(
             f"Le fichier de configuration '{config_file_ini}' est {messages.INTROUVABLE}."
         )
     else:
-        write_log(
+        log_info(
             f"🔹 Le fichier '{config_file_ini}' a été trouvé.",
             lf,
-            DEFAULT_LOG_LEVEL,
         )
 
     try:
         # Écrire dans le fichier avec l'encodage UTF-8
         with open(config_file_ini, "w", encoding="utf-8") as configfile:
             configuration_personnel.write(configfile)
-            write_log(
+            log_info(
                 f"💾 Le fichier de configuration '{config_file_ini}' a été sauvegardé avec succès.",
                 lf,
-                DEFAULT_LOG_LEVEL,
             )
             messagebox.showinfo("Enregistré", "Configuration sauvegardée avec succès.")
         _CACHE.pop(config_file_ini, None)
     except UnicodeDecodeError as e:  # noqa: BLE001
         # Gérer les erreurs d'encodage
-        write_log(
+        log_info(
             f"🔹 Erreur d'encodage lors de la lecture du fichier '{config_file_ini}'.",
             lf,
-            DEFAULT_LOG_LEVEL,
         )
         raise TypeError(str(e)) from e
     except Exception as e:
-        write_log(
+        log_info(
             f"🔹 {messages.ERREUR_INATTENDUE} lors de la lecture du fichier '{config_file_ini}': {e}",
             lf,
-            DEFAULT_LOG_LEVEL,
         )
         raise RuntimeError(
             f"Erreur lors de la lecture du fichier '{config_file_ini}': {e}"
