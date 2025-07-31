@@ -14,6 +14,7 @@ from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
+from sele_saisie_auto.logging_service import log_info
 from sele_saisie_auto.remplir_informations_supp_utils import ExtraInfoHelper
 from sele_saisie_auto.saisie_context import SaisieContext
 from sele_saisie_auto.selenium_utils import wait_for_dom_after
@@ -236,10 +237,9 @@ class AdditionalInfoPage:
                         f"❌ Error processing description '{config}': {exc}"
                     )
                     return False
-            write_log(
+            log_info(
                 format_message("ADDITIONAL_INFO_DONE", {}),
                 self.log_file,
-                "INFO",
             )
 
         try:

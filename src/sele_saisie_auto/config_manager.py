@@ -7,7 +7,7 @@ from pathlib import Path
 
 from sele_saisie_auto import messages
 from sele_saisie_auto.app_config import AppConfig, load_config
-from sele_saisie_auto.logger_utils import DEFAULT_LOG_LEVEL, write_log
+from sele_saisie_auto.logging_service import log_info
 from sele_saisie_auto.read_or_write_file_config_ini_utils import (
     get_runtime_config_path,
     write_config_ini,
@@ -47,10 +47,9 @@ class ConfigManager:
                 cp["settings"] = {"url": "http://localhost"}
                 with open(cfg_path, "w", encoding="utf-8") as f:
                     cp.write(f)
-            write_log(
+            log_info(
                 f"Le fichier de configuration '{cfg_path}' est {messages.INTROUVABLE}. Un fichier par défaut a été créé.",
                 self.log_file or get_log_file(),
-                DEFAULT_LOG_LEVEL,
             )
         app_cfg = load_config(log_file=self.log_file)
         self._config = app_cfg.raw

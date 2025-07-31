@@ -80,10 +80,8 @@ def test_load_missing_config(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     logs: list[str] = []
     monkeypatch.setattr(
-        "sele_saisie_auto.config_manager.write_log",
-        lambda msg, lf, level="INFO", log_format="html", auto_close=False: logs.append(
-            msg
-        ),
+        "sele_saisie_auto.config_manager.log_info",
+        lambda msg, lf=None: logs.append(msg),
     )
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log",
