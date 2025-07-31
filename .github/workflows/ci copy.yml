@@ -73,7 +73,7 @@ jobs:
     needs: Setup environment
     runs-on: ${{ needs.setup.outputs.os }}
     strategy:
-      matrix:
+      with:
         python-version: ${{ needs.setup.outputs['python-version'] }}
     steps:
       - name: Checkout (from setup)
