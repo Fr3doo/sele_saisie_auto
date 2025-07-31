@@ -7,7 +7,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from configparser import ConfigParser
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any, Protocol, cast, runtime_checkable
 
 from selenium.common.exceptions import (
     NoSuchElementException,
@@ -67,6 +67,13 @@ class TimeSheetContext:
     work_days: dict[str, tuple[str, str]]
     project_mission_info: dict[str, str]
     config: ConfigParser | None = None
+
+
+@runtime_checkable
+class TimesheetHelperProtocol(Protocol):
+    """Minimal interface for :class:`TimeSheetHelper`."""
+
+    def run(self, driver: WebDriver) -> None: ...
 
 
 def context_from_app_config(

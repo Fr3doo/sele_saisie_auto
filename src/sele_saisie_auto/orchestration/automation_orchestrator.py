@@ -20,12 +20,12 @@ from sele_saisie_auto.interfaces import (
     DateEntryPageProtocol,
     LoggerProtocol,
     LoginHandlerProtocol,
-    TimeSheetHelperProtocol,
 )
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.navigation import PageNavigator
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (
     TimeSheetHelper,
+    TimesheetHelperProtocol,
     context_from_app_config,
 )
 from sele_saisie_auto.resources.resource_manager import ResourceManager
@@ -62,7 +62,7 @@ class AutomationOrchestrator:
         choix_user: bool = True,
         *,
         alert_handler: AlertHandler | None = None,
-        timesheet_helper_cls: type[TimeSheetHelperProtocol] = TimeSheetHelper,
+        timesheet_helper_cls: type[TimesheetHelperProtocol] = TimeSheetHelper,
         cleanup_resources: Callable[[object, object, object], None] | None = None,
         resource_manager: ResourceManager | None = None,
     ) -> None:
@@ -76,7 +76,7 @@ class AutomationOrchestrator:
         self.additional_info_page: AdditionalInfoPageProtocol = additional_info_page
         self.context: SaisieContext = context
         self.choix_user: bool = choix_user
-        self.timesheet_helper_cls: type[TimeSheetHelperProtocol] = timesheet_helper_cls
+        self.timesheet_helper_cls: type[TimesheetHelperProtocol] = timesheet_helper_cls
         self._cleanup_callback: Callable[[object, object, object], None] | None = (
             cleanup_resources
         )
@@ -114,7 +114,7 @@ class AutomationOrchestrator:
         choix_user: bool = True,
         *,
         alert_handler: AlertHandler | None = None,
-        timesheet_helper_cls: type[TimeSheetHelperProtocol] = TimeSheetHelper,
+        timesheet_helper_cls: type[TimesheetHelperProtocol] = TimeSheetHelper,
         cleanup_resources: Callable[[object, object, object], None] | None = None,
     ) -> AutomationOrchestrator:
         """Create an orchestrator from high level components."""
@@ -234,25 +234,18 @@ class AutomationOrchestrator:
         """Delegate the complete timesheet workflow to :class:`PageNavigator`."""
         assert self.page_navigator is not None  # nosec B101
         # Initialize the timesheet helper with the context and logger
-        helper = cast(
-            TimeSheetHelper,
-            self.timesheet_helper_cls(  # type: ignore[call-arg]
-                context_from_app_config(
-                    self.config,
-                    cast(str, self.logger.log_file),
-                ),
-                self.logger,
-                waiter=self.browser_session.waiter,
-                additional_info_page=self.additional_info_page,
-                browser_session=self.browser_session,
+        helper: TimesheetHelperProtocol = self.timesheet_helper_cls(  # type: ignore[call-arg]
+            context_from_app_config(
+                self.config,
+                cast(str, self.logger.log_file),
             ),
+            self.logger,
+            waiter=self.browser_session.waiter,
+            additional_info_page=self.additional_info_page,
+            browser_session=self.browser_session,
         )
         assert self.page_navigator is not None  # nosec B101
         self.page_navigator.timesheet_helper = helper
-        if hasattr(helper, "additional_info_page"):
-            helper.additional_info_page = self.additional_info_page
-        if hasattr(helper, "browser_session"):
-            helper.browser_session = self.browser_session
         self.page_navigator.submit_full_timesheet(driver)
 
     @handle_errors()
