@@ -70,3 +70,8 @@ class SharedMemoryService:
                 f"❌ Erreur lors de la récupération depuis la mémoire partagée : {e}"
             )
             raise
+
+    def remove_shared_memory(self, memoire: shared_memory.SharedMemory) -> None:
+        """Alias for :func:`supprimer_memoire_partagee_securisee`."""
+
+        self.supprimer_memoire_partagee_securisee(memoire)

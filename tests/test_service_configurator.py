@@ -1,6 +1,6 @@
 import pytest
 
-from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
+from sele_saisie_auto.app_config import AppConfig, AppConfigRaw, get_default_timeout
 from sele_saisie_auto.automation import LoginHandler
 from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.configuration import ServiceConfigurator, Services, build_services
@@ -26,7 +26,7 @@ def test_build_services_operational(monkeypatch, sample_config, tmp_path):
 
     # avoid file system writes
     monkeypatch.setattr(
-        "sele_saisie_auto.logger_utils.write_log",
+        "sele_saisie_auto.logging_service.write_log",
         lambda *a, **k: None,
     )
 
@@ -50,7 +50,7 @@ def test_build_services_operational(monkeypatch, sample_config, tmp_path):
 
     services = build_services(app_cfg, str(tmp_path / "log.html"))
 
-    assert services.waiter.wrapper.default_timeout == app_cfg.default_timeout
+    assert services.waiter.wrapper.default_timeout == get_default_timeout(app_cfg)
     assert services.waiter.wrapper.long_timeout == app_cfg.long_timeout
 
     wait_calls = {}
@@ -71,7 +71,7 @@ def test_build_services_operational(monkeypatch, sample_config, tmp_path):
 
     assert driver == "driver"
     assert calls.get("open")[0] == app_cfg.url
-    assert wait_calls["stable"] == ("driver", app_cfg.default_timeout)
+    assert wait_calls["stable"] == ("driver", get_default_timeout(app_cfg))
     assert wait_calls["ready"] == ("driver", app_cfg.long_timeout)
     assert calls.get("close") is True
 
@@ -99,7 +99,7 @@ def test_create_methods(sample_config):
 
     waiter = configurator.create_waiter()
     assert isinstance(waiter, Waiter)
-    assert waiter.wrapper.default_timeout == app_cfg.default_timeout
+    assert waiter.wrapper.default_timeout == get_default_timeout(app_cfg)
     assert waiter.wrapper.long_timeout == app_cfg.long_timeout
 
     browser_session = configurator.create_browser_session("log.html")
@@ -126,7 +126,7 @@ def test_service_configurator_build_services(sample_config):
     assert isinstance(services.login_handler, LoginHandler)
     assert services.browser_session.app_config is app_cfg
     assert services.browser_session.waiter is services.waiter
-    assert services.waiter.wrapper.default_timeout == app_cfg.default_timeout
+    assert services.waiter.wrapper.default_timeout == get_default_timeout(app_cfg)
     assert services.waiter.wrapper.long_timeout == app_cfg.long_timeout
 
 

@@ -29,6 +29,7 @@ from sele_saisie_auto.dropdown_options import (
     work_schedule_options as default_work_schedule_options,
 )
 from sele_saisie_auto.read_or_write_file_config_ini_utils import read_config_ini
+from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 
 T = TypeVar("T")
 
@@ -377,6 +378,12 @@ ENV_VAR_MAP: dict[tuple[str, str], str] = {
     ("settings", "default_timeout"): "PSATIME_DEFAULT_TIMEOUT",
     ("settings", "long_timeout"): "PSATIME_LONG_TIMEOUT",
 }
+
+
+def get_default_timeout(cfg: Any | None) -> int:
+    """Return ``cfg.default_timeout`` or :data:`DEFAULT_TIMEOUT`."""
+
+    return getattr(cfg, "default_timeout", DEFAULT_TIMEOUT)
 
 
 def load_config(log_file: str | None) -> AppConfig:

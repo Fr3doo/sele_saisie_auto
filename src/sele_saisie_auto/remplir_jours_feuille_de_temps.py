@@ -19,7 +19,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto import messages
-from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
+from sele_saisie_auto.app_config import AppConfig, AppConfigRaw, get_default_timeout
 from sele_saisie_auto.constants import (
     ID_TO_KEY_MAPPING,
     JOURS_SEMAINE,
@@ -42,13 +42,15 @@ from sele_saisie_auto.selenium_utils import (
     controle_insertion,
     detecter_et_verifier_contenu,
     effacer_et_entrer_valeur,
+)
+from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
+from sele_saisie_auto.selenium_utils import (
     trouver_ligne_par_description,
     verifier_champ_jour_rempli,
     wait_for_dom_ready,
     wait_for_element,
     wait_until_dom_is_stable,
 )
-from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.selenium_utils.wait_helpers import Waiter
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
@@ -460,7 +462,7 @@ class TimeSheetHelper:
             timeout = DEFAULT_TIMEOUT
             if isinstance(cfg, ConfigParser):
                 app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
-                timeout = app_cfg.default_timeout
+                timeout = get_default_timeout(app_cfg)
             w: Waiter = create_waiter(timeout)
             if app_cfg is not None:
                 w.wrapper.long_timeout = app_cfg.long_timeout

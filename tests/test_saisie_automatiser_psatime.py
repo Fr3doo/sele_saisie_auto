@@ -163,7 +163,7 @@ class DummyAdditionalInfoPage:
 
 
 def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
-    from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
+    from sele_saisie_auto.app_config import AppConfig, AppConfigRaw, get_default_timeout
 
     app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
@@ -183,7 +183,7 @@ def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
                 self.app_config = cfg_b
 
             def build_services(self, lf_b):
-                waiter = create_waiter(self.cfg.default_timeout)
+                waiter = create_waiter(get_default_timeout(self.cfg))
                 session = sap.BrowserSession(lf_b, self.cfg, waiter=waiter)
                 enc = FakeEncryptionService()
                 login = sap.LoginHandler(lf_b, enc, session)
@@ -192,7 +192,7 @@ def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
         monkeypatch.setattr(
             sap, "service_configurator_factory", lambda cfg_b: DummyConfigurator(cfg_b)
         )
-        waiter = create_waiter(app_cfg.default_timeout)
+        waiter = create_waiter(get_default_timeout(app_cfg))
         monkeypatch.setattr(
             rm,
             "ConfigManager",
@@ -241,7 +241,7 @@ def test_helpers(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
     logs = []
     monkeypatch.setattr(
-        "sele_saisie_auto.logger_utils.write_log",
+        "sele_saisie_auto.logging_service.write_log",
         lambda msg, f, level: logs.append(msg),
     )
     assert sap.get_next_saturday_if_not_saturday("01/07/2024") == "06/07/2024"
@@ -409,7 +409,7 @@ def test_main_flow(monkeypatch, sample_config):
 
 
 def test_run_delegates_to_orchestrator(monkeypatch, sample_config):
-    setup_init(monkeypatch, sample_config)
+    setup_init(monkeypatch, sample_config, patch_services=False)
     app_cfg = sap.context.config
 
     called = {}

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.app_config import AppConfig, get_default_timeout
 from sele_saisie_auto.form_processing.description_processor import process_description
 from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.logging_service import Logger
@@ -73,11 +73,12 @@ class ExtraInfoHelper:
         """Initialise l'assistant avec ``Logger`` et ``Waiter``."""
         self.waiter: WaiterProtocol
         if waiter is None:
-            timeout = DEFAULT_TIMEOUT
-            long_timeout = DEFAULT_TIMEOUT * 2
-            if app_config is not None:
-                timeout = app_config.default_timeout
-                long_timeout = app_config.long_timeout
+            timeout = get_default_timeout(app_config)
+            long_timeout = (
+                app_config.long_timeout
+                if app_config is not None
+                else DEFAULT_TIMEOUT * 2
+            )
             created_waiter = create_waiter(timeout)
             created_waiter.wrapper.long_timeout = long_timeout
             self.waiter = created_waiter
