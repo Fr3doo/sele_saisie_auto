@@ -37,9 +37,7 @@ class ResourceContext:
             ):
                 if mem is not None:
                     try:
-                        self.encryption_service.shared_memory_service.supprimer_memoire_partagee_securisee(
-                            mem
-                        )
+                        self.encryption_service.remove_shared_memory(mem)
                     except Exception:  # nosec B110 - cleanup best effort
                         pass
         self._credentials = None

@@ -299,6 +299,9 @@ def test_exit_uses_shared_memory_service(monkeypatch):
         def supprimer_memoire_partagee_securisee(self, mem):
             self.removed.append(mem)
 
+        def remove_shared_memory(self, mem):
+            self.supprimer_memoire_partagee_securisee(mem)
+
     class SpyCtx(DummyResourceContext):
         def __init__(self, log_file, encryption_service=None):
             super().__init__(log_file, encryption_service)
@@ -308,15 +311,9 @@ def test_exit_uses_shared_memory_service(monkeypatch):
             self.mem_password = object()
 
         def __exit__(self, exc_type, exc, tb):
-            self.shared_memory_service.supprimer_memoire_partagee_securisee(
-                self.mem_key
-            )
-            self.shared_memory_service.supprimer_memoire_partagee_securisee(
-                self.mem_login
-            )
-            self.shared_memory_service.supprimer_memoire_partagee_securisee(
-                self.mem_password
-            )
+            self.shared_memory_service.remove_shared_memory(self.mem_key)
+            self.shared_memory_service.remove_shared_memory(self.mem_login)
+            self.shared_memory_service.remove_shared_memory(self.mem_password)
 
         def get_credentials(self):
             return Credentials(
@@ -377,15 +374,9 @@ def test_close_removes_shared_memory_segments(monkeypatch):
             )
 
         def __exit__(self, exc_type, exc, tb):
-            self.shared_memory_service.supprimer_memoire_partagee_securisee(
-                self.mem_key
-            )
-            self.shared_memory_service.supprimer_memoire_partagee_securisee(
-                self.mem_login
-            )
-            self.shared_memory_service.supprimer_memoire_partagee_securisee(
-                self.mem_password
-            )
+            self.shared_memory_service.remove_shared_memory(self.mem_key)
+            self.shared_memory_service.remove_shared_memory(self.mem_login)
+            self.shared_memory_service.remove_shared_memory(self.mem_password)
 
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
     monkeypatch.setattr(

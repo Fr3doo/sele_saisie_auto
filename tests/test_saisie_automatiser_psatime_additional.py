@@ -51,6 +51,9 @@ class DummyEnc:
     def supprimer_memoire_partagee_securisee(self, mem):
         self.removed.append(mem)
 
+    def remove_shared_memory(self, mem):
+        self.supprimer_memoire_partagee_securisee(mem)
+
 
 class DummySHMService:
     def __init__(self):
@@ -61,6 +64,9 @@ class DummySHMService:
 
     def supprimer_memoire_partagee_securisee(self, mem):
         self.removed.append(mem)
+
+    def remove_shared_memory(self, mem):
+        self.supprimer_memoire_partagee_securisee(mem)
 
 
 class DummyManager:

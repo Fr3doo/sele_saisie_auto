@@ -126,6 +126,11 @@ class EncryptionService:
         self.cle_aes: bytes | None = None
         self._memoires: list[shared_memory.SharedMemory] = []
 
+    def remove_shared_memory(self, memoire: shared_memory.SharedMemory) -> None:
+        """Delegate secure removal of ``memoire`` to the underlying service."""
+
+        self.shared_memory_service.supprimer_memoire_partagee_securisee(memoire)
+
     def generer_cle_aes(self, taille_cle: int = 32) -> bytes:
         """Génère aléatoirement une clé AES."""
 
@@ -162,7 +167,7 @@ class EncryptionService:
         except Exception as exc:  # pragma: no cover - cleanup best effort
             if mem is not None:
                 try:
-                    self.shared_memory_service.supprimer_memoire_partagee_securisee(mem)
+                    self.remove_shared_memory(mem)
                 except Exception:  # nosec B110
                     pass
             self.cle_aes = None
@@ -196,7 +201,7 @@ class EncryptionService:
         """Securely remove all allocated shared memories."""
         for mem in self._memoires:
             try:
-                self.shared_memory_service.supprimer_memoire_partagee_securisee(mem)
+                self.remove_shared_memory(mem)
             except Exception:  # nosec B110
                 pass
         self._memoires.clear()
