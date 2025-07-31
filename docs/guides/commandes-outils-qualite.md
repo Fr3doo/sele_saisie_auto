@@ -9,7 +9,7 @@ Cette page récapitule les commandes utiles pour sept outils courants de formata
 ```bash
 `poetry run mypy --strict --no-incremental src\sele_saisie_auto\navigation\page_navigator.py`
 
-### Commandes rapides
+## Commandes rapides
 poetry run mypy --strict --no-incremental src\
 
 poetry run isort --check-only .
