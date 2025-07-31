@@ -2,11 +2,20 @@
 # pragma: no cover
 from __future__ import annotations
 
-from typing import Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto.app_config import AppConfig
+
+if TYPE_CHECKING:  # pragma: no cover - avoid runtime circular import
+    from sele_saisie_auto.remplir_jours_feuille_de_temps import (
+        TimesheetHelperProtocol as TimeSheetHelperProtocol,
+    )
+else:
+
+    class TimeSheetHelperProtocol(Protocol):
+        def run(self, driver: WebDriver) -> None: ...
 
 
 @runtime_checkable
@@ -92,11 +101,6 @@ class AdditionalInfoPageProtocol(Protocol):
     def submit_and_validate_additional_information(self, driver: WebDriver) -> bool: ...
     def save_draft_and_validate(self, driver: WebDriver) -> bool: ...
     def log_information_details(self) -> None: ...
-
-
-@runtime_checkable
-class TimeSheetHelperProtocol(Protocol):
-    def run(self, driver: WebDriver) -> None: ...
 
 
 __all__ = [
