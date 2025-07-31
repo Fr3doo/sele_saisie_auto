@@ -70,7 +70,7 @@ jobs:
   # 2) Pré-commit checks (format & lint basique)
   pre-commit:
     name: Pre-commit checks
-    needs: setup
+    needs: Setup environment
     runs-on: ${{ needs.setup.outputs.os }}
     strategy:
       matrix:
@@ -97,7 +97,7 @@ jobs:
 # 3) Lint avancé (Ruff, Mypy, Black, isort, Radon, Bandit, Safety)        
   lint-and-analysis:
     name: Lint & Static Analysis
-    needs: pre-commit
+    needs: Pre-commit checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -354,7 +354,7 @@ jobs:
   # 4) Tests unitaires (pytest)
   tests:
     name: Tests with coverage 
-    needs: lint-and-analysis
+    needs: Lint & Static Analysis
     runs-on: ubuntu-latest
     strategy:
       matrix:
