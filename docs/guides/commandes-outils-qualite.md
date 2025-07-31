@@ -2,8 +2,31 @@
 
 Cette page récapitule les commandes utiles pour sept outils courants de formatage, de linting et d'analyse de code. Chaque tableau sépare les commandes fréquemment utilisées des options avancées. Les liens vers PyPI permettent d'accéder rapidement à la documentation de chaque outil.
 
-Note : Pour ce projet, qui fonctionne avec Poetry, en prefixe ajouter : `poetry run `.
-Exemple : `poetry run mypy --strict --no-incremental src\sele_saisie_auto\navigation\page_navigator.py`.
+**Note :** Pour ce projet, qui fonctionne avec **Poetry**, ajouter le préfixe :  
+`poetry run` avant chaque commande.
+
+**Exemple :** Vérification lors d'un PR Brouillon  
+```bash
+`poetry run mypy --strict --no-incremental src\sele_saisie_auto\navigation\page_navigator.py`
+
+### Commandes rapides
+poetry run mypy --strict --no-incremental src\
+
+poetry run isort --check-only .
+poetry run isort --check-only . > reports/isort/isort_check.txt
+
+poetry run black --check . > reports/black/black_check.txt
+poetry run black --diff . > reports/black/black_diff.txt
+
+poetry run ruff check . > reports/ruff/ruff_check.txt
+poetry run ruff check . --output-format=json > reports/ruff/ruff_check.json
+
+poetry run flake8 .
+poetry run flake8 --output-file=reports/flake8/flake8_report.txt .
+poetry run flake8 . --max-complexity=10
+
+poetry run pylint src\
+
 
 ## Black - Formatage de code
 
