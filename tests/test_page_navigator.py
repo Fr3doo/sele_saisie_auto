@@ -94,6 +94,17 @@ def test_finalize_timesheet(monkeypatch):
     nav.submit_timesheet.assert_called_once_with(driver)
 
 
+def test_submit_full_timesheet():
+    _, _, _, _, _, nav = make_navigator()
+    nav.fill_timesheet = MagicMock()
+    nav.finalize_timesheet = MagicMock()
+
+    nav.submit_full_timesheet("drv")
+
+    nav.fill_timesheet.assert_called_once_with("drv")
+    nav.finalize_timesheet.assert_called_once_with("drv")
+
+
 def test_run_sequence(monkeypatch):
     _, _, _, _, _, nav = make_navigator()
     creds = Credentials(b"k", None, b"u", None, b"p", None)

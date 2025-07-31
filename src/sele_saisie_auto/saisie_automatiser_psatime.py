@@ -13,7 +13,12 @@ from typing import Any, cast
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from sele_saisie_auto import messages, remplir_jours_feuille_de_temps, shared_utils
+from sele_saisie_auto import (
+    messages,
+    plugins,
+    remplir_jours_feuille_de_temps,
+    shared_utils,
+)
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation.additional_info_page import (
     AdditionalInfoPage,
@@ -26,6 +31,7 @@ from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import Services, service_configurator_factory
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.encryption_utils import Credentials as EncryptionCredentials
+from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.exceptions import (
     AutomationExitError,
     AutomationNotInitializedError,
@@ -33,7 +39,12 @@ from sele_saisie_auto.exceptions import (
 from sele_saisie_auto.interfaces.protocols import LoggerProtocol
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import show_log_separator, write_log
-from sele_saisie_auto.logging_service import Logger, LoggingConfigurator, get_logger
+from sele_saisie_auto.logging_service import (
+    Logger,
+    LoggingConfigurator,
+    get_logger,
+    log_info,
+)
 from sele_saisie_auto.navigation import PageNavigator
 from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.remplir_jours_feuille_de_temps import ajouter_jour_a_jours_remplis
@@ -221,12 +232,19 @@ class PSATimeAutomation:
                 "DEBUG",
             )  # pragma: no cover
 
-        # Delegate detailed additional information logs to the page helper
-        if (
-            hasattr(self, "additional_info_page")
-            and self.additional_info_page is not None
-        ):
-            self.additional_info_page.log_information_details()
+        # Additional information sections
+        sections = {
+            "periode_repos_respectee": "👉 Infos_supp_cgi_periode_repos_respectee:",
+            "horaire_travail_effectif": "👉 Infos_supp_cgi_horaire_travail_effectif:",
+            "plus_demi_journee_travaillee": "👉 Planning de travail de la semaine:",
+            "duree_pause_dejeuner": "👉 Infos_supp_cgi_duree_pause_dejeuner:",
+        }
+        add_info = self.context.config.additional_information
+        for key, title in sections.items():
+            write_log(title, self.log_file, "DEBUG")
+            values = cast(dict[str, str], add_info.get(key, {}))
+            for day, status in values.items():
+                write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
 
         write_log(
             "👉 Lieu de travail Matin:", self.log_file, "DEBUG"
@@ -297,10 +315,9 @@ class PSATimeAutomation:
         """Initialise les logs et vérifie les configurations essentielles."""
         if not self.log_file:
             raise RuntimeError(f"Fichier de log {messages.INTROUVABLE}.")
-        write_log(
+        log_info(
             "📌 Démarrage de la fonction 'saisie_automatiser_psatime.run()'",
             self.log_file,
-            "INFO",
         )
         write_log(
             f"🔍 Chemin du fichier log : {self.log_file}",
@@ -428,10 +445,9 @@ class PSATimeAutomation:
             )
         if session is not None:
             session.close()
-        write_log(
+        log_info(
             "🏁 [FIN] Clé et données supprimées de manière sécurisée, des mémoires partagées du fichier saisie_automatiser_psatime.",
             self.log_file,
-            "INFO",
         )
 
     def _handle_date_alert(self, driver: WebDriver) -> None:
@@ -576,10 +592,9 @@ def log_initialisation() -> None:
         raise AutomationNotInitializedError("Automation non initialisée")
     if not orchestrator.log_file:
         raise RuntimeError(f"Fichier de log {messages.INTROUVABLE}.")
-    write_log(
+    log_info(
         "\ud83d\udccc D\u00e9marrage de la fonction 'saisie_automatiser_psatime.run()'",
         orchestrator.log_file,
-        "INFO",
     )
     write_log(
         f"\ud83d\udd0d Chemin du fichier log : {orchestrator.log_file}",
