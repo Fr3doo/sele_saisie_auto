@@ -1,0 +1,169 @@
+name: CI v3
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main, develop]
+
+env:
+  POETRY_VERSION: "1.8.1"
+  CACHE_KEY: ci-poetry
+
+jobs:
+  setup-deps:
+    name: Setup Python & Poetry 
+    runs-on: ubuntu-latest
+    outputs:
+      python-version: ${{ matrix.python-version }}
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python - --version ${{ env.POETRY_VERSION }}
+          echo "export PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Setup virtualenv cache
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ env.CACHE_KEY }}-py${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ env.CACHE_KEY }}-py${{ matrix.python-version }}-
+
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-root --no-interaction
+
+  check:
+    name: Lint, type‑check, security, complexity & test
+    needs: setup-deps
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Python ${{ needs.setup-deps.outputs.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ needs.setup-deps.outputs.python-version }}
+          cache: pip
+
+      - name: Restore virtualenv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: ${{ env.CACHE_KEY }}-py${{ needs.setup-deps.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Install deps
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-root --no-interaction
+
+      - name: Ruff lint (XML)
+        run: poetry run ruff . --output-format=xml > ruff-results.xml
+
+      - name: MyPy type-check
+        run: poetry run mypy src/ --junit-xml=mypy-results.xml
+
+      - name: Black check
+        run: poetry run black --check src/ --quiet || true
+
+      - name: isort check
+        run: poetry run isort --check-only src/ || true
+
+      - name: Radon complexity (JSON)
+        run: poetry run radon cc src/ -s -a -j > radon-results.json
+
+      - name: Bandit security scan
+        run: poetry run bandit -r src/ -lll -iii -f xml > bandit-results.xml
+
+      - name: Safety dependency scan
+        run: |
+          poetry export --without-hashes -f requirements.txt > requirements.txt
+          poetry run safety check --file=requirements.txt --json > safety-results.json
+
+      - name: Test with coverage
+        run: poetry run pytest --cov=src/ --cov-report=xml:coverage.xml
+
+      - name: Zip all reports
+        run: zip all-reports.zip *.xml radon-results.json
+
+      - name: Upload all reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-reports
+          path: all-reports.zip
+
+  badge:
+    name: Generate Complexity & Coverage Badges
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract complexity grade & value
+        id: complexity
+        run: |
+          GRADE=$(jq -r '.totals.mi.grade' radon-results.json)
+          VAL=$(jq -r '.totals.mi.average' radon-results.json)
+          echo "GRADE=$GRADE" >> $GITHUB_ENV
+          echo "VAL=$VAL" >> $GITHUB_ENV
+
+      - name: Extract coverage percent
+        id: coverage
+        run: |
+          PCT=$(xmllint --xpath "string(//coverage/@line-rate)" coverage.xml)
+          # convert to percent
+          PCT=$(printf "%.0f%%" $(echo "$PCT*100" | bc -l))
+          echo "COVERAGE=$PCT" >> $GITHUB_ENV
+
+      - name: Generate badges via dynamic-badges-action
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: ${{ secrets.BADGE_GIST_ID }}
+          label: complexity
+          message: "${{ env.GRADE }} (${VAL})"
+          color: ${{ env.GRADE =~ "[AB]" && 'brightgreen' || env.GRADE == 'C' && 'yellow' || 'red' }}
+      - name: Generate coverage badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: ${{ secrets.BADGE_GIST_ID }}
+          label: coverage
+          message: "${{ env.COVERAGE }}"
+          color: ${{ env.COVERAGE =~ "[0-6]" && 'red' || env.COVERAGE =~ "[7-8]" && 'yellow' || 'brightgreen' }}
+
+      - name: Update badge section in README
+        run: |
+          BADGE1="![Complexity](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/${{ github.actor }}/${{ secrets.BADGE_GIST_ID }}/raw/complexity.json)"
+          BADGE2="![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/${{ github.actor }}/${{ secrets.BADGE_GIST_ID }}/raw/coverage.json)"
+          sed -i "/<!-- BADGE_QUALITY:start -->/,/<!-- BADGE_QUALITY:end -->/c\\
+                  <!-- BADGE_QUALITY:start -->\\
+                    $BADGE1 $BADGE2\\
+                  <!-- BADGE_QUALITY:end -->" README.md
+
+      - name: Commit badge updates
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+

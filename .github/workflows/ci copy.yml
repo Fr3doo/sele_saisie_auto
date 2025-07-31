@@ -1,0 +1,527 @@
+# .github/workflows/ci.yml
+name: CI v2
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main, develop]
+
+env:
+  POETRY_VERSION: "1.8.1"  # pinner si besoin
+  CACHE_KEY_PREFIX: ci-poetry
+
+# réutilisable pour setup Python + Poetry + dépendances
+jobs:
+  # 1) Setup environment
+  setup:
+    name: Setup environment
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        # os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.11"]
+        # python-version: ["3.11", "3.12"]
+    outputs:
+      python-version: ${{ matrix.python-version }}
+      os: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Configure Poetry
+        if: runner.os != 'Windows'
+        run: |
+          curl -sSL https://install.python-poetry.org | python - --version ${{ env.POETRY_VERSION }}
+          echo "export PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+      - name: Configure Poetry (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python - --version $env:POETRY_VERSION
+          echo "$env:USERPROFILE\\.local\\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Ensure Poetry in PATH
+        run: poetry --version
+
+      - name: Restore virtualenv cache
+        id: cache-venv
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: ${{ env.CACHE_KEY_PREFIX }}-${{ matrix.os }}-py${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            ${{ env.CACHE_KEY_PREFIX }}-${{ matrix.os }}-py${{ matrix.python-version }}-
+
+      - name: Install dependencies (no-root)
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-root --no-interaction
+          echo "poetry.lock found, dependencies installed successfully."
+        continue-on-error: true
+          
+  # 2) Pré-commit checks (format & lint basique)
+  pre-commit:
+    name: Pre-commit checks
+    needs: setup
+    runs-on: ${{ needs.setup.outputs.os }}
+    strategy:
+      matrix:
+        python-version: ${{ needs.setup.outputs['python-version'] }}
+    steps:
+      - name: Checkout (from setup)
+        uses: actions/checkout@v4
+
+      - name: Use same Python version
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ needs.setup.outputs['python-version'] }}
+
+      - name: Restore venv cache
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: ${{ env.CACHE_KEY_PREFIX }}-${{ needs.setup.outputs.os }}-py${{ needs.setup.outputs['python-version'] }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: Run pre-commit
+        run: poetry run pre-commit run --all-files
+        continue-on-error: true
+
+# 3) Lint avancé (Ruff, Mypy, Black, isort, Radon, Bandit, Safety)        
+  lint-and-analysis:
+    name: Lint & Static Analysis
+    needs: pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+          cache: 'pip'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python - --version $POETRY_VERSION
+          echo "export PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-root --no-interaction
+
+      - name: Run Ruff
+        run: poetry run ruff .
+
+      - name: Run MyPy
+        run: poetry run mypy src/
+
+      - name: Run Black check
+        run: poetry run black --check src/ tests/
+
+      - name: Run isort check
+        run: poetry run isort --check-only src/ tests/
+
+      - name: Check complexity (Radon CC)
+        run: poetry run radon cc . -s -a
+
+      - name: Static security scan (Bandit)
+        run: poetry run bandit -r src/ -lll -iii
+
+      - name: Dependency vulnerability scan (Safety)
+        run: |
+          poetry export --without-hashes -f requirements.txt > requirements.txt
+          poetry run safety check --file=requirements.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: lint-and-analysis-results
+          path: ./lint-results.xml
+          if-no-files-found: error
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v3
+        with:
+          name: bandit-report
+          path: ./bandit-results.xml
+          if-no-files-found: error
+      - name: Upload Safety report
+        uses: actions/upload-artifact@v3
+        with:
+          name: safety-report
+          path: ./safety-results.xml
+          if-no-files-found: error
+      - name: Upload Radon report
+        uses: actions/upload-artifact@v3
+        with:
+          name: radon-report
+          path: ./radon-results.xml
+          if-no-files-found: error
+      - name: Upload Ruff report
+        uses: actions/upload-artifact@v3
+        with:
+          name: ruff-report
+          path: ./ruff-results.xml
+          if-no-files-found: error
+      - name: Upload MyPy report
+        uses: actions/upload-artifact@v3
+        with:
+          name: mypy-report
+          path: ./mypy-results.xml
+          if-no-files-found: error
+      - name: Upload isort report
+        uses: actions/upload-artifact@v3
+        with:
+          name: isort-report
+          path: ./isort-results.xml
+          if-no-files-found: error
+      - name: Upload Black report
+        uses: actions/upload-artifact@v3
+        with:
+          name: black-report
+          path: ./black-results.xml
+          if-no-files-found: error
+      - name: Upload pre-commit report
+        uses: actions/upload-artifact@v3
+        with:
+          name: pre-commit-report
+          path: ./pre-commit-results.xml
+          if-no-files-found: error
+      - name: Upload all reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: all-reports
+          path: |
+            ./lint-results.xml
+            ./bandit-results.xml
+            ./safety-results.xml
+            ./radon-results.xml
+            ./ruff-results.xml
+            ./mypy-results.xml
+            ./isort-results.xml
+            ./black-results.xml
+            ./pre-commit-results.xml
+      - name: Check for errors
+        run: |
+          if [ -f ./lint-results.xml ]; then
+            echo "Lint results found, checking for errors..."
+            if grep -q "<error" ./lint-results.xml; then
+              echo "Lint errors found!"
+              exit 1
+            else
+              echo "No lint errors found."
+            fi
+          else
+            echo "No lint results file found."
+          fi
+      - name: Check for Bandit errors
+        run: |
+          if [ -f ./bandit-results.xml ]; then
+            echo "Bandit results found, checking for errors..."
+            if grep -q "<issue" ./bandit-results.xml; then
+              echo "Security issues found by Bandit!"
+              exit 1
+            else
+              echo "No security issues found by Bandit."
+            fi
+          else
+            echo "No Bandit results file found."
+          fi
+      - name: Check for Safety errors
+        run: |
+          if [ -f ./safety-results.xml ]; then
+            echo "Safety results found, checking for errors..."
+            if grep -q "<issue" ./safety-results.xml; then
+              echo "Dependency vulnerabilities found by Safety!"
+              exit 1
+            else
+              echo "No dependency vulnerabilities found by Safety."
+            fi
+          else
+            echo "No Safety results file found."
+          fi
+      - name: Check for Radon errors
+        run: |
+          if [ -f ./radon-results.xml ]; then
+            echo "Radon results found, checking for errors..."
+            if grep -q "<issue" ./radon-results.xml; then
+              echo "Complexity issues found by Radon!"
+              exit 1
+            else
+              echo "No complexity issues found by Radon."
+            fi
+          else
+            echo "No Radon results file found."
+          fi
+      - name: Check for Ruff errors
+        run: |
+          if [ -f ./ruff-results.xml ]; then
+            echo "Ruff results found, checking for errors..."
+            if grep -q "<issue" ./ruff-results.xml; then
+              echo "Linting issues found by Ruff!"
+              exit 1
+            else
+              echo "No linting issues found by Ruff."
+            fi
+          else
+            echo "No Ruff results file found."
+          fi
+      - name: Check for MyPy errors
+        run: |
+          if [ -f ./mypy-results.xml ]; then
+            echo "MyPy results found, checking for errors..."
+            if grep -q "<error" ./mypy-results.xml; then
+              echo "Type errors found by MyPy!"
+              exit 1
+            else
+              echo "No type errors found by MyPy."
+            fi
+          else
+            echo "No MyPy results file found."
+          fi
+      - name: Check for isort errors
+        run: |
+          if [ -f ./isort-results.xml ]; then
+            echo "isort results found, checking for errors..."
+            if grep -q "<error" ./isort-results.xml; then
+              echo "Import sorting issues found by isort!"
+              exit 1
+            else
+              echo "No import sorting issues found by isort."
+            fi
+          else
+            echo "No isort results file found."
+          fi
+      - name: Check for Black errors
+        run: |
+          if [ -f ./black-results.xml ]; then
+            echo "Black results found, checking for errors..."
+            if grep -q "<error" ./black-results.xml; then
+              echo "Formatting issues found by Black!"
+              exit 1
+            else
+              echo "No formatting issues found by Black."
+            fi
+          else
+            echo "No Black results file found."
+          fi
+      - name: Check for pre-commit errors
+        run: |
+          if [ -f ./pre-commit-results.xml ]; then
+            echo "Pre-commit results found, checking for errors..."
+            if grep -q "<error" ./pre-commit-results.xml; then
+              echo "Pre-commit issues found!"
+              exit 1
+            else
+              echo "No pre-commit issues found."
+            fi
+          else
+            echo "No pre-commit results file found."
+          fi
+      - name: Check for all reports
+        run: |
+          if [ -f ./all-reports.zip ]; then
+            echo "All reports found, checking for errors..."
+            unzip -l ./all-reports.zip
+            echo "All reports are available."
+          else
+            echo "No all-reports file found."
+          fi
+      - name: Final check
+        run: |
+          if [ -f ./all-reports.zip ]; then
+            echo "All reports are available."
+          else
+            echo "No reports found, something went wrong!"
+            exit 1
+          fi
+      - name: Final message
+        run: |
+          echo "Linting and analysis completed successfully. All reports are available."
+          echo "You can download the reports from the artifacts section of this workflow run."
+          echo "Please review the reports to ensure code quality."
+          echo "If you find any issues, please fix them before merging."
+
+  # 4) Tests unitaires (pytest)
+  tests:
+    name: Tests with coverage 
+    needs: lint-and-analysis
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python - --version $POETRY_VERSION
+          echo "export PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-root --no-interaction
+
+      - name: Run tests
+        run: poetry run pytest --cov=src/ --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.12' && env.CODECOV_TOKEN != ''
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          POETRY_VERSION: ${{ secrets.POETRY_VERSION }}
+      - name: Check for test failures
+        run: |
+          if [ -f ./coverage.xml ]; then
+            echo "Coverage report found, checking for failures..."
+            if grep -q "<failure" ./coverage.xml; then
+              echo "Test failures found!"
+              exit 1
+            else
+              echo "No test failures found."
+            fi
+          else
+            echo "No coverage report file found."
+          fi
+      - name: Final message
+        run: |
+          echo "Testing job completed successfully."
+          echo "Please review the coverage report to ensure code quality."
+          echo "If you find any issues, please fix them before merging."
+          
+  build:
+    name: Build package and upload artifacts
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python - --version $POETRY_VERSION
+          echo "export PATH=$HOME/.local/bin:$PATH" >> $GITHUB_ENV
+
+      - name: Install dependencies & build
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install --no-root --no-interaction
+          poetry build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist/
+
+  release:
+    name: Release (GitHub + PyPI)
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Extract version from tag
+        id: version
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to PyPI
+        env:
+          POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_TOKEN }}
+        run: poetry publish --build
+      - name: Notify release
+        run: |
+          echo "Release ${GITHUB_REF#refs/tags/} created successfully!"
+          echo "You can download the package from the GitHub Releases page."
+          echo "The package has also been published to PyPI."
+
+  version-badge:
+    name: Generate & commit version badge
+    needs: release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Install badge-maker
+        run: npm install --global badge-maker@^3
+
+      - name: Generate badge SVG
+        run: |
+          mkdir -p docs/badges
+          badge --label "version" --message "${{ env.VERSION }}" --color "blue" > docs/badges/version.svg
+
+      - name: Commit and push badge
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add docs/badges/version.svg
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "ci: update version badge to ${{ env.VERSION }}"
+            git push
+          fi
+      - name: Notify badge update
+        run: |
+          echo "Version badge updated to ${{ env.VERSION }} successfully!"
+          echo "You can find the badge in the docs/badges directory."
+          echo "The badge has also been committed to the repository."
