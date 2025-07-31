@@ -122,6 +122,12 @@ class PageNavigator:
         call_hook("before_submit", driver)
         self.submit_timesheet(driver)
 
+    def submit_full_timesheet(self, driver: WebDriver) -> None:
+        """Fill the timesheet and submit it in one call."""
+
+        self.fill_timesheet(driver)
+        self.finalize_timesheet(driver)
+
     def run(self, driver: WebDriver) -> None:
         """Execute the complete navigation sequence."""
 
@@ -145,9 +151,7 @@ class PageNavigator:
     # Low level delegations used by legacy APIs
     # ------------------------------------------------------------------
 
-    def navigate_from_home_to_date_entry_page(
-        self, driver: WebDriver
-    ) -> bool | None:
+    def navigate_from_home_to_date_entry_page(self, driver: WebDriver) -> bool | None:
         """Simple wrapper around :class:`DateEntryPage` navigation."""
         return self.date_entry_page.navigate_from_home_to_date_entry_page(driver)
 
