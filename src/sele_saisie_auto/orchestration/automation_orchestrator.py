@@ -253,8 +253,7 @@ class AutomationOrchestrator:
             helper.additional_info_page = self.additional_info_page
         if hasattr(helper, "browser_session"):
             helper.browser_session = self.browser_session
-        self.page_navigator.fill_timesheet(driver)
-        self.page_navigator.finalize_timesheet(driver)
+        self.page_navigator.submit_full_timesheet(driver)
 
     @handle_errors()
     def run(  # pragma: no cover - integration tested via main automation
