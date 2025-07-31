@@ -50,7 +50,7 @@ def test_traiter_jour_paths(monkeypatch):
         lambda *a, **k: (object(), True),
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.logger_utils.afficher_message_insertion",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.afficher_message_insertion",
         lambda *a: calls.setdefault("afficher", []).append(a),
     )
     result = traiter_jour(None, "lundi", "desc", "8", [], ctx)
@@ -95,7 +95,7 @@ def test_remplir_mission_specifique(monkeypatch):
     calls = {}
     jours = []
     monkeypatch.setattr(
-        "sele_saisie_auto.logger_utils.afficher_message_insertion",
+        "sele_saisie_auto.remplir_jours_feuille_de_temps.afficher_message_insertion",
         lambda *a: calls.setdefault("afficher", True),
     )
     ctx = TimeSheetContext("log", [], {}, {})

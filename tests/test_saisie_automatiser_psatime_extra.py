@@ -32,6 +32,7 @@ def test_initialize_date_none(monkeypatch, sample_config):
         choix_user=True,
         memory_config=sap.MemoryConfig(),
     )
+    sap.context = sap._AUTOMATION.context
     monkeypatch.setattr(
         sap,
         "ConfigManager",
@@ -74,6 +75,8 @@ def test_afficher_message_insertion_other(monkeypatch):
 
 def test_log_initialisation_no_log():
     sap._AUTOMATION = None
+    sap._ORCHESTRATOR = None
+    sap.orchestrator = None
     with pytest.raises(sap.AutomationNotInitializedError):
         sap.log_initialisation()
 

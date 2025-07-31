@@ -8,7 +8,11 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 import pytest  # noqa: E402
 
 from sele_saisie_auto import plugins  # noqa: E402
-from sele_saisie_auto.app_config import AppConfig, AppConfigRaw  # noqa: E402
+from sele_saisie_auto.app_config import (  # noqa: E402
+    AppConfig,
+    AppConfigRaw,
+    get_default_timeout,
+)
 from sele_saisie_auto.encryption_utils import Credentials  # noqa: E402
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.navigation import page_navigator as pn_mod  # noqa: E402
@@ -145,7 +149,7 @@ def test_from_automation_builds_navigator(sample_config):
     automation = types.SimpleNamespace(
         log_file="log.html",
         logger=Logger("log.html"),
-        waiter=create_waiter(app_cfg.default_timeout),
+        waiter=create_waiter(get_default_timeout(app_cfg)),
         browser_session=DummyBrowserSession(),
         login_handler=DummyLoginHandler(),
         date_entry_page=DummyDateEntryPage(),

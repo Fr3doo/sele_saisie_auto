@@ -11,7 +11,7 @@ from selenium.webdriver.support import expected_conditions as ec
 
 from sele_saisie_auto import messages
 from sele_saisie_auto.alerts import AlertHandler
-from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.app_config import AppConfig, get_default_timeout
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.interfaces import WaiterProtocol
@@ -57,11 +57,7 @@ class DateEntryPage:
             if base_waiter is not None:
                 self.waiter = base_waiter
             else:
-                timeout = (
-                    self.config.default_timeout
-                    if hasattr(self.config, "default_timeout")
-                    else DEFAULT_TIMEOUT
-                )
+                timeout = get_default_timeout(self.config)
                 self.waiter = create_waiter(timeout)
                 if hasattr(self.config, "long_timeout"):
                     self.waiter.wrapper.long_timeout = self.config.long_timeout
@@ -105,7 +101,7 @@ class DateEntryPage:
             By.ID,
             Locators.NAV_TO_DATE_ENTRY.value,
             ec.element_to_be_clickable,
-            timeout=self.config.default_timeout,
+            timeout=get_default_timeout(self.config),
         )
         if element_present:
             session = getattr(self._automation, "browser_session", None)
@@ -118,7 +114,7 @@ class DateEntryPage:
             By.ID,
             Locators.SIDE_MENU_BUTTON.value,
             ec.element_to_be_clickable,
-            timeout=self.config.default_timeout,
+            timeout=get_default_timeout(self.config),
         )
         if element_present:
             session = getattr(self._automation, "browser_session", None)
@@ -137,7 +133,7 @@ class DateEntryPage:
             driver,
             By.ID,
             Locators.DATE_INPUT.value,
-            timeout=self.config.default_timeout,
+            timeout=get_default_timeout(self.config),
         )
         if date_input:
             current_date_value = date_input.get_attribute("value")
@@ -170,7 +166,7 @@ class DateEntryPage:
             By.ID,
             Locators.ADD_BUTTON.value,
             ec.element_to_be_clickable,
-            timeout=self.config.default_timeout,
+            timeout=get_default_timeout(self.config),
         )
         if element_present:
             session = getattr(self._automation, "browser_session", None)
@@ -217,7 +213,7 @@ class DateEntryPage:
             By.ID,
             elem_id,
             ec.element_to_be_clickable,
-            timeout=self.config.default_timeout,
+            timeout=get_default_timeout(self.config),
         )
         if element_present:
             session = getattr(self._automation, "browser_session", None)

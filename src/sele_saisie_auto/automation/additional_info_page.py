@@ -9,7 +9,7 @@ from selenium.webdriver.support import expected_conditions as ec
 
 from sele_saisie_auto.additional_info_locators import ADDITIONAL_INFO_LOCATORS
 from sele_saisie_auto.alerts import AlertHandler
-from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.app_config import AppConfig, get_default_timeout
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.interfaces import WaiterProtocol
 from sele_saisie_auto.locators import Locators
@@ -120,9 +120,7 @@ class AdditionalInfoPage:
             if base_waiter is not None:
                 self.waiter = base_waiter
             else:
-                timeout = DEFAULT_TIMEOUT
-                if cfg is not None and hasattr(cfg, "default_timeout"):
-                    timeout = cfg.default_timeout
+                timeout = get_default_timeout(cfg)
                 self.waiter = create_waiter(timeout)
                 if cfg is not None and hasattr(cfg, "long_timeout"):
                     self.waiter.wrapper.long_timeout = cfg.long_timeout
@@ -179,7 +177,7 @@ class AdditionalInfoPage:
                 By.ID,
                 Locators.ADDITIONAL_INFO_LINK.value,
                 ec.element_to_be_clickable,
-                timeout=self.config.default_timeout,
+                timeout=get_default_timeout(self.config),
             )
         except Exception as exc:  # noqa: BLE001
             self.logger.error(f"❌ Error locating additional info link: {exc}")
@@ -211,7 +209,7 @@ class AdditionalInfoPage:
                 driver,
                 By.ID,
                 Locators.MODAL_FRAME.value,
-                timeout=self.config.default_timeout,
+                timeout=get_default_timeout(self.config),
             )
         except Exception as exc:  # noqa: BLE001
             self.logger.error(f"❌ Error locating modal iframe: {exc}")
@@ -248,7 +246,7 @@ class AdditionalInfoPage:
                 By.ID,
                 Locators.SAVE_ICON.value,
                 ec.element_to_be_clickable,
-                timeout=self.config.default_timeout,
+                timeout=get_default_timeout(self.config),
             )
         except Exception as exc:  # noqa: BLE001
             self.logger.error(f"❌ Error locating save icon: {exc}")
@@ -277,7 +275,7 @@ class AdditionalInfoPage:
                 By.ID,
                 Locators.SAVE_DRAFT_BUTTON.value,
                 ec.element_to_be_clickable,
-                timeout=self.config.default_timeout,
+                timeout=get_default_timeout(self.config),
             )
         except Exception as exc:  # noqa: BLE001
             self.logger.error(f"❌ Error locating draft button: {exc}")

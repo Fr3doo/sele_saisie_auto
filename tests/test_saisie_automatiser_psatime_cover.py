@@ -1,3 +1,4 @@
+import configparser
 import sys
 import types
 from pathlib import Path
@@ -46,7 +47,8 @@ def test_wait_for_dom(monkeypatch, sample_config):
     )
     if sap._AUTOMATION:
         sap._AUTOMATION.browser_session.waiter = dummy
-    sap._ORCHESTRATOR.wait_for_dom("driver")
+    dummy_driver = types.SimpleNamespace(page_source="<html></html>")
+    sap._ORCHESTRATOR.wait_for_dom(dummy_driver)
     assert calls == ["stable", "ready"]
 
 
@@ -189,6 +191,7 @@ def test_submit_and_validate_additional_information_none(monkeypatch):
 
 
 def test_cleanup_resources_none(monkeypatch):
+    setup_init(monkeypatch, configparser.ConfigParser())
     mgr = DummyManager()
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
     sap.context.encryption_service = DummyManager()
