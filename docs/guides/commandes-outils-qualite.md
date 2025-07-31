@@ -10,7 +10,7 @@ Cette page récapitule les commandes utiles pour sept outils courants de formata
 poetry run mypy --strict --no-incremental src\sele_saisie_auto\navigation\page_navigator.py
 ````
 
-## Commandes rapides à faire pour Vérification lors d'un PR Brouillon
+## Commandes rapides à faire pour une vérification lors d'un PR Brouillon
 ```bash
 poetry run mypy --strict --no-incremental src\
 
