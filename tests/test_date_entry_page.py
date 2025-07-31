@@ -17,6 +17,8 @@ class DummyAutomation:
         self.browser_session = types.SimpleNamespace(
             go_to_default_content=lambda *a, **k: None,
             go_to_iframe=lambda *a, **k: True,
+            click=lambda *a, **k: None,
+            fill_input=lambda *a, **k: None,
         )
 
     def wait_for_dom(self, driver, max_attempts: int = 3):
@@ -38,8 +40,7 @@ def test_navigate_from_home_to_date_entry_page(monkeypatch):
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: next(seq))
     clicks = []
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
-        lambda *a, **k: clicks.append(True),
+        dummy.browser_session, "click", lambda *a, **k: clicks.append(True)
     )
     monkeypatch.setattr(DateEntryPage, "wait_for_dom", lambda self, d: None)
     assert page.navigate_from_home_to_date_entry_page("drv") is True
@@ -137,7 +138,8 @@ def test_submit_date_cible(monkeypatch):
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     actions = []
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.send_keys_to_element",
+        dummy.browser_session,
+        "fill_input",
         lambda *a, **k: actions.append(True),
     )
     monkeypatch.setattr(DateEntryPage, "wait_for_dom", lambda self, d: None)
@@ -159,8 +161,7 @@ def test_click_action_button(monkeypatch):
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     clicks = []
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
-        lambda *a, **k: clicks.append(True),
+        dummy.browser_session, "click", lambda *a, **k: clicks.append(True)
     )
     page._click_action_button("drv", True)
     assert clicks
@@ -172,8 +173,7 @@ def test_click_action_button_copy(monkeypatch):
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     clicks = []
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
-        lambda *a, **k: clicks.append(True),
+        dummy.browser_session, "click", lambda *a, **k: clicks.append(True)
     )
     page._click_action_button("drv", False)
     assert clicks

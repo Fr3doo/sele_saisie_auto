@@ -158,13 +158,12 @@ def create_modern_label_with_pack(
 ) -> ttk.Label:
     """Créer un label stylisé positionné avec ``pack``."""
     modern_label_pack = ttk.Label(frame, text=text, style=style)
-    pack_kwargs: dict[str, Any] = {}
-    if side is not None:
-        pack_kwargs["side"] = side
-    if padx:
-        pack_kwargs["padx"] = padx
-    if pady:
-        pack_kwargs["pady"] = pady
+    pack_kwargs: dict[str, Any] = {
+        "side": side,
+        "padx": padx,
+        "pady": pady,
+        "sticky": sticky,
+    }
     modern_label_pack.pack(**pack_kwargs)
     return modern_label_pack
 
@@ -180,13 +179,11 @@ def create_modern_entry_with_pack(
 ) -> ttk.Entry:
     """Créer une zone de saisie stylisée positionnée avec ``pack``."""
     modern_entry_pack = ttk.Entry(frame, textvariable=var, width=width, style=style)
-    pack_kwargs: dict[str, Any] = {}
-    if side is not None:
-        pack_kwargs["side"] = side
-    if padx:
-        pack_kwargs["padx"] = padx
-    if pady:
-        pack_kwargs["pady"] = pady
+    pack_kwargs: dict[str, Any] = {
+        "side": side,
+        "padx": padx,
+        "pady": pady,
+    }
     modern_entry_pack.pack(**pack_kwargs)
     return modern_entry_pack
 
@@ -201,13 +198,11 @@ def create_modern_checkbox_with_pack(
 ) -> ttk.Checkbutton:
     """Créer une case à cocher positionnée avec ``pack``."""
     checkbox = ttk.Checkbutton(parent, variable=var, style=style_checkbox)
-    pack_kwargs: dict[str, Any] = {}
-    if side is not None:
-        pack_kwargs["side"] = side
-    if padx:
-        pack_kwargs["padx"] = padx
-    if pady:
-        pack_kwargs["pady"] = pady
+    pack_kwargs: dict[str, Any] = {
+        "side": side,
+        "padx": padx,
+        "pady": pady,
+    }
     checkbox.pack(**pack_kwargs)
     return checkbox
 
@@ -286,11 +281,11 @@ def create_combobox_with_pack(
         style=style,
         state=state,
     )
-    pack_kwargs: dict[str, Any] = {"side": side}
-    if padx:
-        pack_kwargs["padx"] = padx
-    if pady:
-        pack_kwargs["pady"] = pady
+    pack_kwargs: dict[str, Any] = {
+        "side": side,
+        "padx": padx,
+        "pady": pady,
+    }
     modern_combobox_pack.pack(**pack_kwargs)
     return modern_combobox_pack
 
@@ -337,17 +332,13 @@ def create_button_with_style(
     else:
         button = ttk.Button(frame, text=text, command=command, style=style)
 
-    pack_kwargs: dict[str, Any] = {}
-    if side is not None:
-        pack_kwargs["side"] = side
-    if fill is not None:
-        pack_kwargs["fill"] = fill
-    if padx is not None:
-        pack_kwargs["padx"] = padx
-    if pady is not None:
-        pack_kwargs["pady"] = pady
-    if ipady is not None:
-        pack_kwargs["ipady"] = ipady
+    pack_kwargs: dict[str, Any] = {
+        "side": side,
+        "fill": fill,
+        "padx": padx,
+        "pady": pady,
+        "ipady": ipady,
+    }
 
     button.pack(**pack_kwargs)
     return button
@@ -369,17 +360,13 @@ def create_button_without_style(
     else:
         button = tk.Button(frame, text=text, command=command)
 
-    pack_kwargs: dict[str, Any] = {}
-    if side is not None:
-        pack_kwargs["side"] = side
-    if fill is not None:
-        pack_kwargs["fill"] = fill
-    if padx is not None:
-        pack_kwargs["padx"] = padx
-    if pady is not None:
-        pack_kwargs["pady"] = pady
-    if ipady is not None:
-        pack_kwargs["ipady"] = ipady
+    pack_kwargs: dict[str, Any] = {
+        "side": side,
+        "fill": fill,
+        "padx": padx,
+        "pady": pady,
+        "ipady": ipady,
+    }
 
     button.pack(**pack_kwargs)
     return button

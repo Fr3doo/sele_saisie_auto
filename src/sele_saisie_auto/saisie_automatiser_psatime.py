@@ -4,6 +4,7 @@
 # ---------------- Import des bibliothèques nécessaires ----------------------- #
 # ----------------------------------------------------------------------------- #
 
+import sys
 from dataclasses import dataclass
 from multiprocessing import shared_memory
 from types import TracebackType

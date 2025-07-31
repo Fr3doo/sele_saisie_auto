@@ -33,6 +33,7 @@ class DummyAutomation:
         self.browser_session = types.SimpleNamespace(
             go_to_iframe=lambda *a, **k: True,
             go_to_default_content=lambda *a, **k: None,
+            click=lambda *a, **k: None,
         )
 
     def wait_for_dom(self, driver, max_attempts: int = 3):
@@ -45,8 +46,7 @@ def test_navigate_from_work_schedule(monkeypatch):
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     clicks = []
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
-        lambda *a, **k: clicks.append(True),
+        dummy.browser_session, "click", lambda *a, **k: clicks.append(True)
     )
     monkeypatch.setattr(
         "sele_saisie_auto.automation.browser_session.BrowserSession.go_to_default_content",
@@ -76,7 +76,8 @@ def test_submit_and_validate_additional_information(monkeypatch):
         lambda msg, f, level: records.append("log"),
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
+        dummy.browser_session,
+        "click",
         lambda *a, **k: records.append("ok"),
     )
     monkeypatch.setattr(AdditionalInfoPage, "wait_for_dom", lambda self, d: None)
@@ -91,8 +92,7 @@ def test_save_draft_and_validate(monkeypatch):
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     clicks = []
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
-        lambda *a, **k: clicks.append(True),
+        dummy.browser_session, "click", lambda *a, **k: clicks.append(True)
     )
     monkeypatch.setattr(AdditionalInfoPage, "wait_for_dom", lambda self, d: None)
     calls = []
@@ -153,7 +153,8 @@ def test_save_draft_error(monkeypatch, dummy_logger):
     page.logger = dummy_logger
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
     monkeypatch.setattr(
-        "sele_saisie_auto.saisie_automatiser_psatime.click_element_without_wait",
+        dummy.browser_session,
+        "click",
         lambda *a, **k: (_ for _ in ()).throw(Exception("boom")),
     )
     assert page.save_draft_and_validate("drv") is False
