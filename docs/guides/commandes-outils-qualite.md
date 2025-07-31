@@ -2,6 +2,9 @@
 
 Cette page récapitule les commandes utiles pour sept outils courants de formatage, de linting et d'analyse de code. Chaque tableau sépare les commandes fréquemment utilisées des options avancées. Les liens vers PyPI permettent d'accéder rapidement à la documentation de chaque outil.
 
+---
+## Préfixe Poetry
+
 **Note :** Pour ce projet, qui fonctionne avec **Poetry**, ajouter le préfixe :  
 `poetry run` avant chaque commande.
 
@@ -30,7 +33,7 @@ poetry run flake8 . --max-complexity=10
 poetry run pylint src\
 ```
 
-
+---
 ## Black - Formatage de code
 
 **PyPI :** [https://pypi.org/project/black/](https://pypi.org/project/black/)
@@ -51,6 +54,7 @@ poetry run pylint src\
 | `black --line-length 100 .`       | Utilise 100 caractères par ligne        | N/A                                              |     |
 | `black --config pyproject.toml .` | Lit les options depuis `pyproject.toml` | N/A                                              |     |
 
+---
 ## isort - Tri des imports
 
 **PyPI :** [https://pypi.org/project/isort/](https://pypi.org/project/isort/)
@@ -71,6 +75,7 @@ poetry run pylint src\
 | `isort --atomic .`        | Applique les changements de manière atomique     | N/A              |
 | `isort --recursive .`     | Recherche récursivement tous les fichiers Python | N/A              |
 
+---
 ## Bandit - Analyse de sécurité
 
 **PyPI :** [https://pypi.org/project/bandit/](https://pypi.org/project/bandit/)
@@ -91,6 +96,7 @@ poetry run pylint src\
 | `bandit -r . -lll -iii`                                                             | Filtre sur la sévérité **Haute** et la confiance **Haute** | N/A                                         |
 | `bandit -r . -c bandit.yaml -f txt -o reports/bandit/bandit_custom.txt`             | Utilise un fichier de configuration personnalisé           | `reports/bandit/bandit_custom.txt`          |
 
+---
 ## Radon - Complexité cyclomatique
 
 **PyPI :** [https://pypi.org/project/radon/](https://pypi.org/project/radon/)
@@ -112,6 +118,7 @@ poetry run pylint src\
 | `radon raw src/ -j -O reports/radon/raw_report.json` | Rapport JSON des métriques brutes          | `reports/radon/raw_report.json` |
 | `radon hal src/ -j -O reports/radon/hal_report.json` | Rapport JSON des métriques de Halstead     | `reports/radon/hal_report.json` |
 
+---
 ## Ruff - Lint
 
 **PyPI :** [https://pypi.org/project/ruff/](https://pypi.org/project/ruff/)
@@ -134,6 +141,7 @@ poetry run pylint src\
 | `ruff clean`                | Vide le cache de Ruff                                 | N/A              |
 | `ruff check --select E,F .` | Ne lance que les règles commençant par **E** et **F** | N/A              |
 
+---
 ## Flake8 - Lint
 
 **PyPI :** [https://pypi.org/project/flake8/](https://pypi.org/project/flake8/)
@@ -155,6 +163,7 @@ poetry run pylint src\
 | `flake8 . --ignore=E501,W503`  | Ignore les règles `E501` et `W503`                   | N/A              |
 | `flake8 . --select=F,E`        | Ne rapporte que les catégories **F** et **E**        | N/A              |
 
+---
 ## MyPy - Type checking
 
 **PyPI :** [https://pypi.org/project/mypy/](https://pypi.org/project/mypy/)
@@ -180,7 +189,6 @@ poetry run pylint src\
 | `mypy . --junit-xml=reports/mypy/junit.xml`              | Produit un rapport au format JUnit                 | `reports/mypy/junit.xml`    |
 
 ---
-
 ## Pylint - Lint
 
 **PyPI :** [https://pypi.org/project/pylint/](https://pypi.org/project/pylint/)
