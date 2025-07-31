@@ -17,5 +17,10 @@ class SaisieContext:
     project_mission_info: dict[str, str]
     descriptions: list[dict[str, object]]
 
+    def remove_shared_memory(self, mem) -> None:
+        """Delegate cleanup to ``SharedMemoryService``."""
+
+        self.shared_memory_service.supprimer_memoire_partagee_securisee(mem)
+
 
 __all__ = ["SaisieContext"]

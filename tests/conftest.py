@@ -74,6 +74,10 @@ class FakeEncryptionService:
     def supprimer_memoire_partagee_securisee(self, mem):
         self.removed.append(mem)
 
+    # New helper mirroring production API
+    def remove_shared_memory(self, mem):
+        self.supprimer_memoire_partagee_securisee(mem)
+
 
 # ----------------------------
 # Common test stubs
