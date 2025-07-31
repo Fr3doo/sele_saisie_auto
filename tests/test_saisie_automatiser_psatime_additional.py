@@ -88,7 +88,7 @@ class DummyManager:
 
 
 def setup_init(monkeypatch, cfg):
-    from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
+    from sele_saisie_auto.app_config import AppConfig, AppConfigRaw, get_default_timeout
 
     app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
@@ -103,7 +103,7 @@ def setup_init(monkeypatch, cfg):
             self.app_config = cfg_b
 
         def build_services(self, lf_b):
-            waiter = create_waiter(self.cfg.default_timeout)
+            waiter = create_waiter(get_default_timeout(self.cfg))
             session = sap.BrowserSession(lf_b, self.cfg, waiter=waiter)
             enc = DummyEnc()
             login = sap.LoginHandler(lf_b, enc, session)
@@ -112,7 +112,7 @@ def setup_init(monkeypatch, cfg):
     monkeypatch.setattr(
         sap, "service_configurator_factory", lambda cfg_b: DummyConfigurator(cfg_b)
     )
-    waiter = create_waiter(app_cfg.default_timeout)
+    waiter = create_waiter(get_default_timeout(app_cfg))
     monkeypatch.setattr(
         rm,
         "ConfigManager",

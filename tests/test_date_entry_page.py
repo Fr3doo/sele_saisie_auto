@@ -120,7 +120,7 @@ def test_handle_date_input_no_change(monkeypatch):
     )
     logs = []
     monkeypatch.setattr(
-        "sele_saisie_auto.logger_utils.write_log",
+        "sele_saisie_auto.logging_service.write_log",
         lambda msg, f, level: logs.append(msg),
     )
     monkeypatch.setattr(

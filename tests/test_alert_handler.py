@@ -41,8 +41,8 @@ def test_handle_alerts_clicks_confirm_ok_and_logs(monkeypatch):
 
     logs = []
     monkeypatch.setattr(
-        "sele_saisie_auto.alerts.alert_handler.write_log",
-        lambda msg, f, level: logs.append((msg, level)),
+        "sele_saisie_auto.alerts.alert_handler.log_info",
+        lambda msg, lf=None: logs.append((msg, lf)),
     )
 
     handler.handle_alerts("drv")

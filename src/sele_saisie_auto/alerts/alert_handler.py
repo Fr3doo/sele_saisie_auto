@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, cast
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
+from sele_saisie_auto.app_config import AppConfig, AppConfigRaw, get_default_timeout
 from sele_saisie_auto.enums import AlertType, LogLevel
 from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.locators import Locators
@@ -51,9 +51,7 @@ class AlertHandler:
                 if isinstance(cfg, ConfigParser)
                 else None
             )
-            timeout = DEFAULT_TIMEOUT
-            if app_cfg is not None and hasattr(app_cfg, "default_timeout"):
-                timeout = app_cfg.default_timeout
+            timeout = get_default_timeout(app_cfg)
             self.waiter = create_waiter(timeout)
             if app_cfg is not None and hasattr(app_cfg, "long_timeout"):
                 self.waiter.wrapper.long_timeout = app_cfg.long_timeout
@@ -92,7 +90,7 @@ class AlertHandler:
             self.browser_session.go_to_default_content()
         for alerte in self.alert_configs.get("date_alerts", []):
             if self.waiter.wait_for_element(
-                driver, By.ID, alerte, timeout=self.config.default_timeout
+                driver, By.ID, alerte, timeout=get_default_timeout(self.config)
             ):
                 click_element_without_wait(
                     driver, cast(By, By.ID), Locators.CONFIRM_OK.value
@@ -116,7 +114,7 @@ class AlertHandler:
             self.browser_session.go_to_default_content()
         for alerte in alerts:
             if self.waiter.wait_for_element(
-                driver, By.ID, alerte, timeout=self.config.default_timeout
+                driver, By.ID, alerte, timeout=get_default_timeout(self.config)
             ):
                 click_element_without_wait(
                     driver, cast(By, By.ID), Locators.CONFIRM_OK.value

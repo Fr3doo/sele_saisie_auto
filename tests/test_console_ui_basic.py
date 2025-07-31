@@ -14,7 +14,8 @@ def test_console_ui_basic(monkeypatch):
 
     monkeypatch.setattr(builtins, "print", fake_print)
     monkeypatch.setattr(
-        "sele_saisie_auto.logger_utils.write_log", lambda msg, *a, **k: fake_print(msg)
+        "sele_saisie_auto.logger_utils.write_log",
+        lambda msg, *a, **k: fake_print(msg),
     )
 
     ask_continue("continue?")

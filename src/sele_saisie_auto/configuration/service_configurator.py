@@ -4,7 +4,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, fields
 from typing import cast
 
-from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.app_config import AppConfig, get_default_timeout
 from sele_saisie_auto.automation import LoginHandler
 from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.encryption_utils import (
@@ -83,7 +83,7 @@ class ServiceConfigurator:
         """Return a configured :class:`Waiter`."""
 
         return Waiter(
-            default_timeout=self.app_config.default_timeout,
+            default_timeout=get_default_timeout(self.app_config),
             long_timeout=self.app_config.long_timeout,
         )
 

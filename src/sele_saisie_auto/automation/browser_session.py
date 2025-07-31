@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto import messages
-from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.app_config import AppConfig, get_default_timeout
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.exceptions import DriverError
 from sele_saisie_auto.interfaces import WaiterProtocol
@@ -93,9 +93,7 @@ class BrowserSession:
         self.app_config = app_config
         self.waiter: WaiterProtocol
         if waiter is None:
-            timeout = DEFAULT_TIMEOUT
-            if app_config is not None and hasattr(app_config, "default_timeout"):
-                timeout = app_config.default_timeout
+            timeout = get_default_timeout(app_config)
             internal_waiter: Waiter = create_waiter(timeout)
             if app_config is not None and hasattr(app_config, "long_timeout"):
                 internal_waiter.wrapper.long_timeout = app_config.long_timeout
@@ -169,11 +167,7 @@ class BrowserSession:
             max_attempts: Number of tries before raising ``RuntimeError`` if the
                 DOM never stabilizes.
         """
-        default_timeout = (
-            self.app_config.default_timeout
-            if self.app_config
-            else DEFAULT_TIMEOUT  # pragma: no cover - fallback
-        )
+        default_timeout = get_default_timeout(self.app_config)
         long_timeout = (
             self.app_config.long_timeout
             if self.app_config
