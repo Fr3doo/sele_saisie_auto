@@ -21,7 +21,7 @@ from sele_saisie_auto.gui_builder import (
     create_tab,
 )
 from sele_saisie_auto.interfaces import LoggerProtocol
-from sele_saisie_auto.logger_utils import LOG_LEVELS
+from sele_saisie_auto.logger_utils import LOG_LEVEL_CHOICES
 from sele_saisie_auto.logging_service import Logger, LoggingConfigurator, get_logger
 from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.read_or_write_file_config_ini_utils import (
@@ -160,7 +160,7 @@ def start_configuration(
 
     debug_row = create_a_frame(frame, padding=(10, 10, 10, 10))
     create_modern_label_with_pack(debug_row, "Log Level:", side="left")
-    create_combobox_with_pack(debug_row, debug_var, values=list(LOG_LEVELS.keys()))
+    create_combobox_with_pack(debug_row, debug_var, values=LOG_LEVEL_CHOICES)
 
     def save() -> None:
         """Enregistre la configuration saisie."""
