@@ -21,15 +21,6 @@ if TYPE_CHECKING:
 class LoginHandler:
     """Handle login steps for PSA Time."""
 
-    @classmethod
-    def from_automation(cls, automation: PSATimeAutomation) -> LoginHandler:
-        """Create a new instance using an automation context."""
-        return cls(
-            automation.log_file,
-            automation.encryption_service,
-            automation.browser_session,
-        )
-
     def __init__(
         self,
         log_file: str | None,

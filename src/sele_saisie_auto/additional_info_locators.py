@@ -1,6 +1,5 @@
 """Definitions of HTML id prefixes used for the additional info modal."""
 
-
 # --------------------------------------------------------------------------- #
 # Mapping brut id_logique ➜ id_HTML
 # --------------------------------------------------------------------------- #

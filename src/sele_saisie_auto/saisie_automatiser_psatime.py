@@ -160,7 +160,7 @@ class PSATimeAutomation:
         self._additional_info_page: AdditionalInfoPage | None = None
 
         # Initialise orchestrator helpers
-        self.page_navigator = PageNavigator.from_automation(self)
+        self.page_navigator = self._create_page_navigator()
         self.resource_manager = ResourceManager(log_file)
         self.orchestrator: AutomationOrchestrator | None = None
 
@@ -247,6 +247,28 @@ class PSATimeAutomation:
         configurator = service_configurator_factory(app_config)
         return configurator.build_services(self.log_file)
 
+    def _create_page_navigator(self) -> PageNavigator:
+        """Instantiate a :class:`PageNavigator` with helper dependencies."""
+
+        timesheet_ctx = remplir_jours_feuille_de_temps.context_from_app_config(
+            self.context.config,
+            self.log_file,
+        )
+        helper = remplir_jours_feuille_de_temps.TimeSheetHelper(
+            timesheet_ctx,
+            cast(LoggerProtocol, self.logger),
+            waiter=self.waiter,
+            additional_info_page=self.additional_info_page,
+            browser_session=self.browser_session,
+        )
+        return PageNavigator(
+            self.browser_session,
+            self.login_handler,
+            self.date_entry_page,
+            self.additional_info_page,
+            helper,
+        )
+
     # ------------------------------------------------------------------
     # Lazy page/service instantiation
     # ------------------------------------------------------------------
@@ -257,37 +279,23 @@ class PSATimeAutomation:
             if handler is not None:
                 self._login_handler = handler
             else:
-                cls = LoginHandler
-                if hasattr(cls, "from_automation"):
-                    self._login_handler = cls.from_automation(self)
-                else:
-                    self._login_handler = cls(
-                        self.log_file,
-                        self.encryption_service,
-                        self.browser_session,
-                    )
+                self._login_handler = LoginHandler(
+                    self.log_file,
+                    self.encryption_service,
+                    self.browser_session,
+                )
         return self._login_handler
 
     @property
     def date_entry_page(self) -> DateEntryPage:
         if self._date_entry_page is None:
-            cls = DateEntryPage
-            if hasattr(cls, "from_automation"):
-                self._date_entry_page = cls.from_automation(self, waiter=self.waiter)
-            else:
-                self._date_entry_page = cls(self, waiter=self.waiter)
+            self._date_entry_page = DateEntryPage(self, waiter=self.waiter)
         return self._date_entry_page
 
     @property
     def additional_info_page(self) -> AdditionalInfoPage:
         if self._additional_info_page is None:
-            cls = AdditionalInfoPage
-            if hasattr(cls, "from_automation"):
-                self._additional_info_page = cls.from_automation(
-                    self, waiter=self.waiter
-                )
-            else:
-                self._additional_info_page = cls(self, waiter=self.waiter)
+            self._additional_info_page = AdditionalInfoPage(self, waiter=self.waiter)
         return self._additional_info_page
 
     def log_initialisation(self) -> None:
