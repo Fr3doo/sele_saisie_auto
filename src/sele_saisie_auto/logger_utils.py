@@ -29,6 +29,7 @@ LOG_LEVELS: dict[LogLevel, int] = {
     LogLevel.CRITICAL: 50,
     LogLevel.OFF: 0,
 }
+LOG_LEVEL_CHOICES: list[str] = [lvl.value for lvl in LogLevel]
 
 # Par défaut, on commence avec un niveau de log minimal (par ex., "INFO")
 DEFAULT_LOG_LEVEL: LogLevel = LogLevel.INFO
