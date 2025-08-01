@@ -40,6 +40,7 @@ from sele_saisie_auto.logging_service import (
     get_logger,
     log_info,
 )
+from sele_saisie_auto.memory_config import MemoryConfig
 from sele_saisie_auto.navigation import PageNavigator
 from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.remplir_jours_feuille_de_temps import ajouter_jour_a_jours_remplis
@@ -76,20 +77,9 @@ class Credentials:
     mem_password: shared_memory.SharedMemory
 
 
-@dataclass
-class MemoryConfig:
-    """Shared memory configuration constants."""
-
-    cle_name: str = "memoire_partagee_cle"
-    data_name: str = "memoire_partagee_donnees"
-    key_size: int = 32  # AES-256
-    block_size: int = 128  # padding block
-
-
 __all__ = [
     "PSATimeAutomation",
     "Credentials",
-    "MemoryConfig",
     "modifier_date_input",
     "send_keys_to_element",
     "click_element_without_wait",
