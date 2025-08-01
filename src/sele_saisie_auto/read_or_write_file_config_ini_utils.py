@@ -132,7 +132,7 @@ def read_config_ini(log_file: str | None = None) -> configparser.ConfigParser:
         )
         return cached[1]
 
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(interpolation=None)
 
     try:
         # Lire le fichier avec l'encodage UTF-8

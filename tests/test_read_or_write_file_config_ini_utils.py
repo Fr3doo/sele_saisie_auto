@@ -182,6 +182,28 @@ def test_read_config_ini_success(tmp_path, monkeypatch):
     assert config.get("s", "a") == "b"
 
 
+def test_read_config_ini_percent_in_log_style(tmp_path, monkeypatch):
+    cfg = tmp_path / "config.ini"
+    cfg.write_text(
+        """[log_style]
+column_widths = timestamp:50%, level:25%, message:25%
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
+    )
+    config = read_config_ini()
+    assert (
+        config.get("log_style", "column_widths")
+        == "timestamp:50%, level:25%, message:25%"
+    )
+
+
 def test_read_config_ini_not_found(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(
