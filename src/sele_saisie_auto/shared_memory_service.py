@@ -6,6 +6,30 @@ from multiprocessing import shared_memory
 from sele_saisie_auto.logging_service import Logger
 
 
+def ensure_clean_segment(name: str, size: int) -> shared_memory.SharedMemory:
+    """Return a new shared memory segment with ``name`` and ``size``.
+
+    If a segment with the same name already exists, it is closed and unlinked
+    before the new one is created. This helper avoids ``FileExistsError`` when
+    a previous run left behind a shared memory block.
+    """
+
+    try:
+        existing = shared_memory.SharedMemory(name=name)
+    except FileNotFoundError:
+        pass
+    else:
+        try:
+            existing.close()
+        finally:
+            try:
+                existing.unlink()
+            except FileNotFoundError:
+                pass
+
+    return shared_memory.SharedMemory(name=name, create=True, size=size)
+
+
 class SharedMemoryService:
     """Service to store and retrieve bytes in shared memory."""
 
@@ -18,9 +42,7 @@ class SharedMemoryService:
     ) -> shared_memory.SharedMemory:
         """Create a shared memory segment and write ``donnees`` into it."""
         try:
-            memoire = shared_memory.SharedMemory(
-                name=nom, create=True, size=len(donnees)
-            )
+            memoire = ensure_clean_segment(nom, len(donnees))
             memoire.buf[: len(donnees)] = donnees
             self.logger.critical(
                 f"💀 Données stockées en mémoire partagée avec le nom '{nom}'."
