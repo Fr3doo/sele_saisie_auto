@@ -86,13 +86,19 @@ def cli_main(
     if log_file is None:
         log_file = get_log_file()
 
-    with get_logger(log_file):
+    with get_logger(log_file) as logger:
         cfg = ConfigManager(log_file=log_file).load()
-        automation = PSATimeAutomation(log_file, cfg)
-        try:
-            automation.run(headless=headless, no_sandbox=no_sandbox)
-        finally:
-            automation.resource_manager.close()
+        service_configurator = service_configurator_factory(cfg)
+        automation = PSATimeAutomation(log_file, cfg, logger=logger)
+        orchestrator = AutomationOrchestrator.from_components(
+            automation.resource_manager,
+            automation.page_navigator,
+            service_configurator,
+            automation.context,
+            cast(LoggerProtocol, automation.logger),
+            choix_user=automation.choix_user,
+        )
+        orchestrator.run(headless=headless, no_sandbox=no_sandbox)
 
 
 __all__ = ["parse_args", "main", "cli_main"]
