@@ -12,6 +12,7 @@ from sele_saisie_auto import cli, messages, saisie_automatiser_psatime
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import service_configurator_factory
 from sele_saisie_auto.encryption_utils import EncryptionService
+from sele_saisie_auto.enums import LogLevel
 from sele_saisie_auto.gui_builder import (
     create_a_frame,
     create_button_with_style,
@@ -165,12 +166,15 @@ def start_configuration(
     def save() -> None:
         """Enregistre la configuration saisie."""
         config["settings"]["date_cible"] = date_var.get()
-        config["settings"]["debug_mode"] = debug_var.get()
+        debug_val: str | LogLevel = debug_var.get()
+        if isinstance(debug_val, LogLevel):
+            debug_val = debug_val.value
+        config["settings"]["debug_mode"] = debug_val
         if isinstance(raw_cfg, configparser.ConfigParser):
             if not raw_cfg.has_section("settings"):
                 raw_cfg.add_section("settings")
             raw_cfg.set("settings", "date_cible", config["settings"]["date_cible"])
-            raw_cfg.set("settings", "debug_mode", config["settings"]["debug_mode"])
+            raw_cfg.set("settings", "debug_mode", debug_val)
             write_config_ini(raw_cfg, log_file)
         else:
             write_config_ini(config, log_file)
