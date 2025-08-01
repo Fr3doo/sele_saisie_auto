@@ -122,5 +122,5 @@ with automation.resource_manager as manager:
         automation.context,
         automation.logger,
     )
-    orchestrator.run(headless=True)
+    orchestrator.run(headless=True, no_sandbox=True)
 ```
