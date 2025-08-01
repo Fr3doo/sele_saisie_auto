@@ -137,4 +137,8 @@ class LoggingConfigurator:
         set_log_file_selenium(log_file)
 
         if isinstance(config, ConfigParser):
-            initialize_logger(config, log_level_override=debug_mode)
+            initialize_logger(
+                config,
+                log_level_override=debug_mode,
+                log_file=log_file,
+            )

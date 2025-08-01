@@ -18,6 +18,7 @@ COLUMN_WIDTHS: dict[str, str] = {"timestamp": "10%", "level": "6%", "message": "
 ROW_HEIGHT: str = "20px"
 FONT_SIZE: str = "12px"
 PADDING: str = "2px"
+LOG_ENTRY_FORMAT: str = "{timestamp} [{level}] {message}"
 LOG_LEVELS: dict[LogLevel, int] = {
     LogLevel.INFO: 10,
     LogLevel.DEBUG: 20,
@@ -52,7 +53,9 @@ MESSAGE_TEMPLATES: dict[str, str] = {
 
 
 def initialize_logger(
-    config: ConfigParser, log_level_override: LogLevel | str | None = None
+    config: ConfigParser,
+    log_level_override: LogLevel | str | None = None,
+    log_file: str | None = None,
 ) -> None:
     """Initialise le niveau de log.
 
@@ -74,6 +77,13 @@ def initialize_logger(
     else:
         LOG_LEVEL_FILTER = LogLevel(
             config.get("settings", "debug_mode", fallback=LogLevel.INFO.value)
+        )
+
+    if log_file is not None:
+        write_log(
+            f"Niveau de log initialisé sur {LOG_LEVEL_FILTER.name}",
+            log_file,
+            LogLevel.DEBUG,
         )
 
 
@@ -266,6 +276,12 @@ def write_log(
         # Écriture dans le fichier
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        formatted = LOG_ENTRY_FORMAT.format(
+            timestamp=timestamp,
+            level=lvl.value,
+            message=message,
+        )
+
         if log_format.lower() == HTML_FORMAT:
             log_message = (
                 f"<tr><td>{timestamp}</td><td>{lvl.value}</td><td>{message}</td></tr>\n"
@@ -281,9 +297,8 @@ def write_log(
                 with open(log_file, "a", encoding="utf-8") as f:
                     f.write("</table></body></html>")
         else:  # Format texte brut
-            log_message = f"[{timestamp}] {lvl.value}: {message}\n"
             with open(log_file, "a", encoding="utf-8") as f:
-                f.write(log_message)
+                f.write(f"{formatted}\n")
 
     except OSError as e:
         raise RuntimeError(f"Erreur liée au système de fichiers : {e}") from e
