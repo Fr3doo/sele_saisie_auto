@@ -72,15 +72,36 @@ def initialize_logger(
 
     global LOG_LEVEL_FILTER
     if log_level_override:
-        LOG_LEVEL_FILTER = (
-            log_level_override
-            if isinstance(log_level_override, LogLevel)
-            else LogLevel(log_level_override)
-        )
+        try:
+            LOG_LEVEL_FILTER = (
+                log_level_override
+                if isinstance(log_level_override, LogLevel)
+                else LogLevel(log_level_override)
+            )
+        except ValueError:  # noqa: BLE001
+            LOG_LEVEL_FILTER = LogLevel.INFO
+            if log_file is not None:
+                write_log(
+                    f"Invalid log level '{log_level_override}', fallback to INFO",
+                    log_file,
+                    LogLevel.WARNING,
+                )
     else:
-        LOG_LEVEL_FILTER = LogLevel(
-            config.get("settings", "debug_mode", fallback=LogLevel.INFO.value)
+        raw_level = config.get(
+            "settings",
+            "debug_mode",
+            fallback=LogLevel.INFO.value,
         )
+        try:
+            LOG_LEVEL_FILTER = LogLevel(raw_level)
+        except ValueError:  # noqa: BLE001
+            LOG_LEVEL_FILTER = LogLevel.INFO
+            if log_file is not None:
+                write_log(
+                    f"Invalid log level '{raw_level}' in config, fallback to INFO",
+                    log_file,
+                    LogLevel.WARNING,
+                )
 
     if log_file is not None:
         write_log(
