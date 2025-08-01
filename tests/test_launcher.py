@@ -126,7 +126,6 @@ def test_run_psatime(monkeypatch, dummy_logger, sample_config):
             self.page_navigator = object()
             self.context = types.SimpleNamespace()
             self.logger = logger
-            self.choix_user = True
 
     class DummyOrchestrator:
         def __init__(self, *a, **k):
@@ -196,7 +195,6 @@ def test_run_psatime_flags(monkeypatch, dummy_logger, sample_config):
             self.page_navigator = object()
             self.context = types.SimpleNamespace()
             self.logger = logger
-            self.choix_user = True
 
     class DummyOrchestrator:
         def __init__(self):

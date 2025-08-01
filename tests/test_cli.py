@@ -67,7 +67,6 @@ def test_main_creates_services_and_passes_flags(monkeypatch):
             self.page_navigator = object()
             self.context = types.SimpleNamespace()
             self.logger = logger
-            self.choix_user = True
 
     class DummyOrchestrator:
         def __init__(self, *args, **kwargs):

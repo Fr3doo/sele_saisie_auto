@@ -56,7 +56,6 @@ class AutomationOrchestrator:
         date_entry_page: DateEntryPageProtocol,
         additional_info_page: AdditionalInfoPageProtocol,
         context: SaisieContext,
-        choix_user: bool = True,
         *,
         alert_handler: AlertHandler | None = None,
         timesheet_helper_cls: type[TimesheetHelperProtocol] = TimeSheetHelper,
@@ -72,7 +71,6 @@ class AutomationOrchestrator:
         self.date_entry_page: DateEntryPageProtocol = date_entry_page
         self.additional_info_page: AdditionalInfoPageProtocol = additional_info_page
         self.context: SaisieContext = context
-        self.choix_user: bool = choix_user
         self.timesheet_helper_cls: type[TimesheetHelperProtocol] = timesheet_helper_cls
         self._cleanup_callback: Callable[[object, object, object], None] | None = (
             cleanup_resources
@@ -108,7 +106,6 @@ class AutomationOrchestrator:
         service_configurator: ServiceConfigurator,
         context: SaisieContext,
         logger: LoggerProtocol,
-        choix_user: bool = True,
         *,
         alert_handler: AlertHandler | None = None,
         timesheet_helper_cls: type[TimesheetHelperProtocol] = TimeSheetHelper,
@@ -124,7 +121,6 @@ class AutomationOrchestrator:
             page_navigator.date_entry_page,
             page_navigator.additional_info_page,
             context,
-            choix_user,
             alert_handler=alert_handler,
             timesheet_helper_cls=timesheet_helper_cls,
             cleanup_resources=cleanup_resources,

@@ -59,7 +59,6 @@ def run_psatime(
                 service_configurator,
                 automation.context,
                 cast(LoggerProtocol, automation.logger),
-                choix_user=automation.choix_user,
             )
             orchestrator.run(headless=headless, no_sandbox=no_sandbox)
     else:
@@ -77,7 +76,6 @@ def run_psatime(
             service_configurator,
             automation.context,
             cast(LoggerProtocol, automation.logger),
-            choix_user=automation.choix_user,
         )
         orchestrator.run(headless=headless, no_sandbox=no_sandbox)
 
