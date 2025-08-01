@@ -13,12 +13,7 @@ from typing import Any, cast
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from sele_saisie_auto import (
-    messages,
-    plugins,
-    remplir_jours_feuille_de_temps,
-    shared_utils,
-)
+from sele_saisie_auto import messages, remplir_jours_feuille_de_temps, shared_utils
 from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation.additional_info_page import (
     AdditionalInfoPage,

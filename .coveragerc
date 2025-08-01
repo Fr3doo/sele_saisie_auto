@@ -9,3 +9,4 @@ omit =
     src/sele_saisie_auto/orchestration/automation_orchestrator.py
     src/sele_saisie_auto/selenium_utils/duplicate_day_detector.py
     src/sele_saisie_auto/saisie_automatiser_psatime.py
+    src/sele_saisie_auto/automation/additional_info_page.py

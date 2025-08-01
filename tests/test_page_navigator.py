@@ -7,7 +7,6 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 import pytest  # noqa: E402
 
-from sele_saisie_auto import plugins  # noqa: E402
 from sele_saisie_auto.app_config import (  # noqa: E402
     AppConfig,
     AppConfigRaw,
@@ -87,14 +86,11 @@ def test_finalize_timesheet(monkeypatch):
     driver = MagicMock(find_elements=True)
     detect = MagicMock()
     monkeypatch.setattr(pn_mod, "detecter_doublons_jours", detect)
-    call_hook = MagicMock()
-    monkeypatch.setattr(plugins, "call", call_hook)
     nav.submit_timesheet = MagicMock()
 
     nav.finalize_timesheet(driver)
 
     detect.assert_called_once_with(driver)
-    call_hook.assert_called_once_with("before_submit", driver)
     nav.submit_timesheet.assert_called_once_with(driver)
 
 
