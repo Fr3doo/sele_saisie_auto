@@ -254,6 +254,29 @@ def test_read_config_ini_generic_error(tmp_path, monkeypatch):
         read_config_ini()
 
 
+def test_read_config_ini_config_error(tmp_path, monkeypatch):
+    cfg = tmp_path / "config.ini"
+    cfg.write_text("[s]\na=b\n[s]\nc=d\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log",
+        noop,
+    )
+    messages: list[str] = []
+
+    def capture(msg: str, lf: str | None = None) -> None:
+        messages.append(msg)
+
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info",
+        capture,
+    )
+
+    with pytest.raises(configparser.Error):
+        read_config_ini()
+    assert any("s" in m for m in messages)
+
+
 def test_write_config_ini_success(tmp_path, monkeypatch):
     cfg_path = tmp_path / "config.ini"
     cfg_path.write_text("[s]\na=b\n", encoding="utf-8")
