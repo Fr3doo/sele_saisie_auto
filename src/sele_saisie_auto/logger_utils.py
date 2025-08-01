@@ -7,6 +7,7 @@ from typing import Literal
 
 from sele_saisie_auto import messages
 from sele_saisie_auto.enums import LogLevel
+from sele_saisie_auto.exceptions import InvalidConfigError
 
 # ----------------------------------------------------------------------------- #
 # ------------------------------- CONSTANTE ----------------------------------- #
@@ -19,6 +20,7 @@ ROW_HEIGHT: str = "20px"
 FONT_SIZE: str = "12px"
 PADDING: str = "2px"
 LOG_ENTRY_FORMAT: str = "{timestamp} [{level}] {message}"
+LOG_STYLE_ALLOWED_KEYS: set[str] = {"column_widths", "row_height", "font_size"}
 LOG_LEVELS: dict[LogLevel, int] = {
     LogLevel.INFO: 10,
     LogLevel.DEBUG: 20,
@@ -140,6 +142,30 @@ def _parse_column_widths(value: str) -> dict[str, str]:
     return widths
 
 
+def validate_log_style(parser: ConfigParser) -> None:
+    """Validate the ``[log_style]`` section.
+
+    Raises :class:`InvalidConfigError` if an unknown key is present or if
+    ``column_widths`` contains malformed entries.
+    """
+
+    if not parser.has_section("log_style"):
+        return
+
+    section = parser["log_style"]
+    for key in section.keys():
+        if key not in LOG_STYLE_ALLOWED_KEYS:
+            raise InvalidConfigError(f"Clé inconnue dans [log_style]: {key}")
+
+    raw_widths = section.get("column_widths", "")
+    for item in raw_widths.split(","):
+        item = item.strip()
+        if item and ":" not in item:
+            raise InvalidConfigError(
+                "column_widths doit utiliser le format 'nom:valeur'"
+            )
+
+
 def get_html_style() -> str:
     """
     Retourne le style HTML/CSS utilisé pour les fichiers de log.
@@ -157,12 +183,15 @@ def get_html_style() -> str:
         try:
             with open(config_file, encoding="utf-8") as cfg:
                 parser.read_file(cfg)
+            validate_log_style(parser)
             if parser.has_section("log_style"):
                 raw_widths = parser.get("log_style", "column_widths", fallback="")
                 if raw_widths:
                     column_widths.update(_parse_column_widths(raw_widths))
                 row_height = parser.get("log_style", "row_height", fallback=row_height)
                 font_size = parser.get("log_style", "font_size", fallback=font_size)
+        except InvalidConfigError:
+            raise
         except Exception as e:  # noqa: BLE001
             print(f"Erreur lors de la lecture du style de log : {e}")
 
