@@ -148,6 +148,13 @@ def read_config_ini(log_file: str | None = None) -> configparser.ConfigParser:
             lf,
         )
         raise TypeError(str(e)) from e
+    except configparser.Error as e:  # noqa: BLE001
+        section = getattr(e, "section", "inconnue")
+        log_info(
+            f"🔹 Erreur de configuration dans la section '{section}' du fichier '{config_file_ini}': {e}",
+            lf,
+        )
+        raise
     except Exception as e:
         log_info(
             f"🔹 {messages.ERREUR_INATTENDUE} lors de la lecture du fichier '{config_file_ini}': {e}",
