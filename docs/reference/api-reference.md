@@ -153,7 +153,12 @@ s'appuyant directement sur ``EncryptionService`` et ``BrowserSession``.
 from sele_saisie_auto.resources.accessors import get_credentials, get_driver
 
 creds = get_credentials(encryption_service)
-driver = get_driver(browser_session, "https://example.com", headless=True)
+driver = get_driver(
+    browser_session,
+    "https://example.com",
+    headless=True,
+    no_sandbox=True,
+)
 ```
 
 ## PageNavigator
