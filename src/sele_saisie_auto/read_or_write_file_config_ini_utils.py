@@ -1,4 +1,3 @@
-# pragma: no cover
 # read_or_write_file_config_ini_utils.py
 from __future__ import annotations
 

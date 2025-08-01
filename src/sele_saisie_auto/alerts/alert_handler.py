@@ -18,7 +18,7 @@ from sele_saisie_auto.selenium_utils import click_element_without_wait
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from sele_saisie_auto.interfaces import WaiterProtocol
     from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
 
@@ -62,17 +62,17 @@ class AlertHandler:
     # Common properties
     # ------------------------------------------------------------------
     @property
-    def log_file(self) -> str:  # pragma: no cover - passthrough
+    def log_file(self) -> str:
         return self._log_file
 
     @property
-    def config(self) -> AppConfig | Any:  # pragma: no cover - accessor
+    def config(self) -> AppConfig | Any:
         cfg = getattr(self.context, "config", None)
         if cfg is None or not hasattr(cfg, "default_timeout"):
             return SimpleNamespace(
                 default_timeout=DEFAULT_TIMEOUT,
                 long_timeout=LONG_TIMEOUT,
-            )  # pragma: no cover - fallback
+            )
         return cfg
 
     # ------------------------------------------------------------------

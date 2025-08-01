@@ -1,5 +1,4 @@
 # src\sele_saisie_auto\orchestration\automation_orchestrator.py
-# pragma: no cover
 from __future__ import annotations
 
 import types
@@ -33,8 +32,6 @@ from sele_saisie_auto.selenium_utils import detecter_doublons_jours, wait_for_do
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 
 __all__ = ["AutomationOrchestrator", "detecter_doublons_jours"]
-
-# pragma: no cover
 
 if TYPE_CHECKING:
     from sele_saisie_auto.saisie_context import SaisieContext
@@ -158,9 +155,7 @@ class AutomationOrchestrator:
     # ------------------------------------------------------------------
     # DOM & iframe helpers
     # ------------------------------------------------------------------
-    def wait_for_dom(
-        self, driver: Any, max_attempts: int | None = None
-    ) -> None:  # pragma: no cover
+    def wait_for_dom(self, driver: Any, max_attempts: int | None = None) -> None:
         """Delegate DOM wait to :class:`BrowserSession`."""
         if not hasattr(driver, "page_source"):
             return
@@ -223,9 +218,7 @@ class AutomationOrchestrator:
         )
 
     @wait_for_dom_after
-    def save_draft_and_validate(
-        self, driver: Any
-    ) -> bool:  # pragma: no cover - simple wrapper
+    def save_draft_and_validate(self, driver: Any) -> bool:
         """Save the current timesheet as draft."""
         return bool(self.additional_info_page.save_draft_and_validate(driver))
 
@@ -249,7 +242,7 @@ class AutomationOrchestrator:
         self.page_navigator.submit_full_timesheet(driver)
 
     @handle_errors()
-    def run(  # pragma: no cover - integration tested via main automation
+    def run(
         self,
         *,
         headless: bool = False,

@@ -1,4 +1,3 @@
-# pragma: no cover
 """Messages communs utilisés à travers plusieurs modules."""
 
 # Messages de log ou d'erreur

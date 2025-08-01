@@ -1,4 +1,3 @@
-# pragma: no cover
 # dropdown_options.py
 
 import json

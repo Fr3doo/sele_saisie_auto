@@ -15,7 +15,7 @@ from sele_saisie_auto.shared_utils import get_log_file
 
 
 @runtime_checkable
-class EncryptionBackend(Protocol):  # pragma: no cover - interface
+class EncryptionBackend(Protocol):
     """Interface minimale pour chiffrer et déchiffrer."""
 
     def generer_cle_aes(self, taille_cle: int = 32) -> bytes: ...
@@ -29,19 +29,19 @@ class EncryptionBackend(Protocol):  # pragma: no cover - interface
     ) -> str: ...
 
 
-class DefaultEncryptionBackend:  # pragma: no cover - simple backend
+class DefaultEncryptionBackend:
     """Backend concret reposant sur ``cryptography``."""
 
-    def __init__(self, log_file: str | None = None) -> None:  # pragma: no cover
+    def __init__(self, log_file: str | None = None) -> None:
         # Garantit que ``write_log`` reçoit toujours une *str*
         self.log_file: str = log_file if log_file is not None else get_log_file()
 
-    def generer_cle_aes(self, taille_cle: int = 32) -> bytes:  # pragma: no cover
+    def generer_cle_aes(self, taille_cle: int = 32) -> bytes:
         try:
             key = os.urandom(taille_cle)
             write_log("💀 Clé AES générée avec succès.", self.log_file, "CRITICAL")
             return key
-        except Exception as e:  # pragma: no cover - defensive
+        except Exception as e:
             write_log(
                 f"❌ Erreur lors de la génération de la clé AES : {e}",
                 self.log_file,
@@ -51,7 +51,7 @@ class DefaultEncryptionBackend:  # pragma: no cover - simple backend
 
     def chiffrer_donnees(
         self, donnees: str, cle: bytes, taille_bloc: int = 128
-    ) -> bytes:  # pragma: no cover
+    ) -> bytes:
         try:
             chiffre = Cipher(algorithms.AES(cle), modes.CBC(os.urandom(16)))
             chiffreur = chiffre.encryptor()
@@ -61,7 +61,7 @@ class DefaultEncryptionBackend:  # pragma: no cover - simple backend
             iv_bytes: bytes = bytes(chiffre.mode.initialization_vector)
             write_log("💀 Données chiffrées avec succès.", self.log_file, "CRITICAL")
             return bytes(iv_bytes + donnees_chiffrees)
-        except Exception as e:  # pragma: no cover - defensive
+        except Exception as e:
             write_log(
                 f"❌ Erreur lors du chiffrement des données : {e}",
                 self.log_file,
@@ -71,7 +71,7 @@ class DefaultEncryptionBackend:  # pragma: no cover - simple backend
 
     def dechiffrer_donnees(
         self, donnees_chiffrees: bytes, cle: bytes, taille_bloc: int = 128
-    ) -> str:  # pragma: no cover
+    ) -> str:
         try:
             iv = donnees_chiffrees[:16]
             message_chiffre = donnees_chiffrees[16:]
@@ -83,7 +83,7 @@ class DefaultEncryptionBackend:  # pragma: no cover - simple backend
             write_log("💀 Données déchiffrées avec succès.", self.log_file, "CRITICAL")
             decoded: str = donnees.decode()
             return decoded
-        except Exception as e:  # pragma: no cover - defensive
+        except Exception as e:
             write_log(
                 f"❌ Erreur lors du déchiffrement des données : {e}",
                 self.log_file,
@@ -164,7 +164,7 @@ class EncryptionService:
                 self.cle_aes,
             )
             self._memoires.append(mem)
-        except Exception as exc:  # pragma: no cover - cleanup best effort
+        except Exception as exc:
             if mem is not None:
                 try:
                     self.remove_shared_memory(mem)

@@ -63,11 +63,7 @@ class SeleniumDriverManager:
         )
         if self.driver is not None:
             self.driver = definir_taille_navigateur(self.driver, 1260, 800)
-            timeout = (
-                self.app_config.long_timeout
-                if self.app_config
-                else LONG_TIMEOUT  # pragma: no cover - fallback
-            )
+            timeout = self.app_config.long_timeout if self.app_config else LONG_TIMEOUT
             wait_for_dom_ready(self.driver, timeout)
         return self.driver
 
@@ -88,7 +84,7 @@ class BrowserSession:
         log_file: str,
         app_config: AppConfig | None = None,
         waiter: WaiterProtocol | None = None,
-    ) -> None:  # pragma: no cover - simple wiring
+    ) -> None:
         self.log_file = log_file
         self.app_config = app_config
         self.waiter: WaiterProtocol
@@ -102,7 +98,7 @@ class BrowserSession:
             self.waiter = waiter
         if app_config is not None:
             self._manager = SeleniumDriverManager(log_file, app_config)
-        else:  # pragma: no cover - legacy path
+        else:
             self._manager = SeleniumDriverManager(log_file)
         self.driver: WebDriver | None = None
 
@@ -151,7 +147,7 @@ class BrowserSession:
     @handle_selenium_errors(default_return=None)
     def close(self) -> None:
         """Close the browser if it was opened."""
-        if self.driver is not None:  # pragma: no cover - simple branch
+        if self.driver is not None:
             write_log(format_message("BROWSER_CLOSE", {}), self.log_file, "DEBUG")
         self._manager.close()
         self.driver = None
@@ -168,11 +164,7 @@ class BrowserSession:
                 DOM never stabilizes.
         """
         default_timeout = get_default_timeout(self.app_config)
-        long_timeout = (
-            self.app_config.long_timeout
-            if self.app_config
-            else LONG_TIMEOUT  # pragma: no cover - fallback
-        )
+        long_timeout = self.app_config.long_timeout if self.app_config else LONG_TIMEOUT
         attempt = 0
         attempts_limit = max_attempts if max_attempts is not None else 1
         raise_error = max_attempts is not None

@@ -16,7 +16,7 @@ from sele_saisie_auto.interfaces import (
 )
 from sele_saisie_auto.selenium_utils import detecter_doublons_jours
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
 
 __all__ = ["PageNavigator"]

@@ -14,7 +14,7 @@ from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.selenium_utils import send_keys_to_element, wait_for_dom_after
 
-if TYPE_CHECKING:  # pragma: no cover - for type checkers only
+if TYPE_CHECKING:
     from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
 
 
