@@ -58,6 +58,22 @@ def test_initialize_logger_config_value(tmp_path):
     assert mod.LOG_LEVEL_FILTER == LogLevel.WARNING
 
 
+def test_initialize_logger_invalid_string(tmp_path):
+    mod = importlib.reload(logger_utils)
+    cfg = configparser.ConfigParser()
+    cfg["settings"] = {"debug_mode": "INFO"}
+    mod.initialize_logger(cfg, log_level_override="BOGUS")
+    assert mod.LOG_LEVEL_FILTER == LogLevel.INFO
+
+
+def test_initialize_logger_invalid_config(tmp_path):
+    mod = importlib.reload(logger_utils)
+    cfg = configparser.ConfigParser()
+    cfg["settings"] = {"debug_mode": "BAD"}
+    mod.initialize_logger(cfg, log_file=str(tmp_path / "log.html"))
+    assert mod.LOG_LEVEL_FILTER == LogLevel.INFO
+
+
 def test_initialize_html_log_file_cleanup(tmp_path):
     log_file = tmp_path / "log.html"
     log_file.write_text("</table></body></html>", encoding="utf-8")
