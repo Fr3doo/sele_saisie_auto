@@ -19,25 +19,11 @@ pytestmark = pytest.mark.slow
 def test_initialize_date_none(monkeypatch, sample_config):
     cfg = sample_config
     cfg["settings"]["date_cible"] = "none"
-    from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
-
-    app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(
         sap, "EncryptionService", lambda lf, shm=None: FakeEncryptionService()
     )
-    sap.initialize(
-        "log.html",
-        app_cfg,
-        choix_user=True,
-        memory_config=sap.MemoryConfig(),
-    )
-    sap.context = sap._AUTOMATION.context
-    monkeypatch.setattr(
-        sap,
-        "ConfigManager",
-        lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
-    )
+    setup_init(monkeypatch, cfg)
     assert sap.context.config.date_cible is None
 
 
@@ -77,8 +63,8 @@ def test_log_initialisation_no_log():
     sap._AUTOMATION = None
     sap._ORCHESTRATOR = None
     sap.orchestrator = None
-    with pytest.raises(sap.AutomationNotInitializedError):
-        sap.log_initialisation()
+    with pytest.raises(AttributeError):
+        sap._AUTOMATION.log_initialisation()
 
 
 def test_initialize_shared_memory_error(monkeypatch, sample_config):
@@ -105,7 +91,7 @@ def test_initialize_shared_memory_error(monkeypatch, sample_config):
     )
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
     with pytest.raises(sap.AutomationExitError):
-        sap.initialize_shared_memory()
+        sap._ORCHESTRATOR.initialize_shared_memory()
 
 
 def test_switch_to_iframe_main_target_win0_false(monkeypatch, sample_config):

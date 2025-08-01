@@ -133,12 +133,8 @@ def test_initialize_debug_mode_off(monkeypatch, sample_config, tmp_path):
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "EncryptionService", lambda lf, shm=None: DummyManager())
     app_cfg.debug_mode = "OFF"
-    sap.initialize(
-        str(log_path),
-        app_cfg,
-        choix_user=True,
-        memory_config=sap.MemoryConfig(),
-    )
+    cfg["settings"]["debug_mode"] = "OFF"
+    setup_init(monkeypatch, cfg)
     monkeypatch.setattr(
         sap,
         "ConfigManager",
@@ -148,6 +144,7 @@ def test_initialize_debug_mode_off(monkeypatch, sample_config, tmp_path):
 
 
 def test_switch_to_iframe_main_target_win0_no_element(monkeypatch):
+    setup_init(monkeypatch, configparser.ConfigParser())
     monkeypatch.setattr(
         sap._AUTOMATION.waiter, "wait_for_element", lambda *a, **k: False
     )
@@ -181,6 +178,7 @@ def test_handle_date_input_no_element(monkeypatch, sample_config):
 
 
 def test_submit_and_validate_additional_information_none(monkeypatch):
+    setup_init(monkeypatch, configparser.ConfigParser())
     monkeypatch.setattr(
         sap._AUTOMATION.additional_info_page,
         "submit_and_validate_additional_information",

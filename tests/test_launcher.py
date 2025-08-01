@@ -112,16 +112,31 @@ def test_parse_args_basic(monkeypatch):
     assert args.log_level == "DEBUG"
 
 
-def test_run_psatime(monkeypatch, dummy_logger):
+def test_run_psatime(monkeypatch, dummy_logger, sample_config):
     launcher = import_launcher(monkeypatch)
     menu = DummyMenu()
-    cfg = object()
+    from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
+
+    app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
 
     class DummyAutomation:
         def __init__(self, log_file, cfg_loaded, logger=None):
             self.called = (log_file, cfg_loaded, logger)
+            self.resource_manager = object()
+            self.page_navigator = object()
+            self.context = types.SimpleNamespace()
+            self.logger = logger
+            self.choix_user = True
+
+    class DummyOrchestrator:
+        def __init__(self, *a, **k):
             self.run_called = False
             self.run_args = None
+
+        @classmethod
+        def from_components(cls, *a, **k):
+            inst = cls(*a, **k)
+            return inst
 
         def run(self, headless=False, no_sandbox=False):
             self.run_called = True
@@ -130,7 +145,12 @@ def test_run_psatime(monkeypatch, dummy_logger):
     monkeypatch.setattr(
         launcher,
         "ConfigManager",
-        lambda log_file=None: types.SimpleNamespace(load=lambda: cfg),
+        lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
+    )
+    monkeypatch.setattr(
+        launcher,
+        "service_configurator_factory",
+        lambda conf: types.SimpleNamespace(build_services=lambda lf: None),
     )
     automation_instance = {}
 
@@ -144,23 +164,47 @@ def test_run_psatime(monkeypatch, dummy_logger):
         "PSATimeAutomation",
         dummy_automation_factory,
     )
+    orch_instance = {}
+    monkeypatch.setattr(
+        launcher,
+        "AutomationOrchestrator",
+        types.SimpleNamespace(
+            from_components=lambda *a, **k: orch_instance.setdefault(
+                "inst", DummyOrchestrator()
+            )
+        ),
+    )
 
     launcher.run_psatime("file.html", menu, logger=dummy_logger)
 
     assert menu.destroy_called
     assert dummy_logger.records["info"][0].startswith("Launching")
-    assert automation_instance["inst"].run_called
-    assert automation_instance["inst"].run_args == (False, False)
+    assert orch_instance["inst"].run_called
+    assert orch_instance["inst"].run_args == (False, False)
 
 
-def test_run_psatime_flags(monkeypatch, dummy_logger):
+def test_run_psatime_flags(monkeypatch, dummy_logger, sample_config):
     launcher = import_launcher(monkeypatch)
     menu = DummyMenu()
-    cfg = object()
+    from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
+
+    app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
 
     class DummyAutomation:
         def __init__(self, log_file, cfg_loaded, logger=None):
+            self.resource_manager = object()
+            self.page_navigator = object()
+            self.context = types.SimpleNamespace()
+            self.logger = logger
+            self.choix_user = True
+
+    class DummyOrchestrator:
+        def __init__(self):
             self.run_args = None
+
+        @classmethod
+        def from_components(cls, *a, **k):
+            return cls()
 
         def run(self, headless=False, no_sandbox=False):
             self.run_args = (headless, no_sandbox)
@@ -168,14 +212,25 @@ def test_run_psatime_flags(monkeypatch, dummy_logger):
     monkeypatch.setattr(
         launcher,
         "ConfigManager",
-        lambda log_file=None: types.SimpleNamespace(load=lambda: cfg),
+        lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
+    )
+    monkeypatch.setattr(
+        launcher,
+        "service_configurator_factory",
+        lambda conf: types.SimpleNamespace(build_services=lambda lf: None),
     )
 
-    inst = DummyAutomation("file.html", cfg, logger=dummy_logger)
+    inst = DummyAutomation("file.html", app_cfg, logger=dummy_logger)
     monkeypatch.setattr(
         launcher.saisie_automatiser_psatime,
         "PSATimeAutomation",
         lambda *a, **k: inst,
+    )
+    orch = DummyOrchestrator()
+    monkeypatch.setattr(
+        launcher,
+        "AutomationOrchestrator",
+        types.SimpleNamespace(from_components=lambda *a, **k: orch),
     )
 
     launcher.run_psatime(
@@ -186,7 +241,7 @@ def test_run_psatime_flags(monkeypatch, dummy_logger):
         no_sandbox=True,
     )
 
-    assert inst.run_args == (True, True)
+    assert orch.run_args == (True, True)
 
 
 def test_run_psatime_with_credentials(monkeypatch):

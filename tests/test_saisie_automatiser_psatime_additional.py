@@ -272,7 +272,7 @@ EXCEPTIONS = [
 def test_main_exceptions(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
     sap._AUTOMATION.choix_user = True
-    monkeypatch.setattr(sap, "log_initialisation", lambda: None)
+    monkeypatch.setattr(sap._AUTOMATION, "log_initialisation", lambda: None)
     monkeypatch.setattr(
         sap.PSATimeAutomation,
         "initialize_shared_memory",
@@ -329,7 +329,7 @@ def test_main_exceptions(monkeypatch, sample_config):
         lambda self: cleanup.setdefault("done", True),
     )
     monkeypatch.setattr(
-        sap.PSATimeAutomation,
+        sap.AutomationOrchestrator,
         "run",
         lambda self, headless=False, no_sandbox=False: cleanup.setdefault("done", True),
     )

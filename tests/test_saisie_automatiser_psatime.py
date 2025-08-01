@@ -269,7 +269,7 @@ def test_helpers(monkeypatch, sample_config):
             logger_utils, "show_log_separator", lambda *a, **k: called.append(True)
         )
         sap.seprateur_menu_affichage_console()
-    sap.log_initialisation()
+    sap._AUTOMATION.log_initialisation()
     assert messages
 
 
@@ -314,7 +314,7 @@ def test_initialize_shared_memory(monkeypatch, sample_config):
     sap.context.encryption_service = FakeEncryptionService()
     sap.context.shared_memory_service = DummySHMService()
     monkeypatch.setattr(sap, "write_log", lambda *a, **k: None)
-    result = sap.initialize_shared_memory()
+    result = sap._ORCHESTRATOR.initialize_shared_memory()
     assert result.login == b"user"
     assert result.password == b"pass"
 
@@ -325,7 +325,7 @@ def test_main_flow(monkeypatch, sample_config):
     sap.context.config.date_cible = "06/07/2024"
     sap.orchestrator.choix_user = True
 
-    monkeypatch.setattr(sap, "log_initialisation", lambda: None)
+    monkeypatch.setattr(sap._AUTOMATION, "log_initialisation", lambda: None)
     monkeypatch.setattr(
         sap.PSATimeAutomation,
         "initialize_shared_memory",

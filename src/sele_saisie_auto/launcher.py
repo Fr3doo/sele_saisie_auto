@@ -10,6 +10,7 @@ from typing import cast
 
 from sele_saisie_auto import cli, messages, saisie_automatiser_psatime
 from sele_saisie_auto.config_manager import ConfigManager
+from sele_saisie_auto.configuration import service_configurator_factory
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.gui_builder import (
     create_a_frame,
@@ -19,8 +20,10 @@ from sele_saisie_auto.gui_builder import (
     create_modern_label_with_pack,
     create_tab,
 )
+from sele_saisie_auto.interfaces import LoggerProtocol
 from sele_saisie_auto.logger_utils import LOG_LEVELS
 from sele_saisie_auto.logging_service import Logger, LoggingConfigurator, get_logger
+from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.read_or_write_file_config_ini_utils import (
     read_config_ini,
     write_config_ini,
@@ -44,21 +47,39 @@ def run_psatime(
         with get_logger(log_file) as log:
             log.info("Launching PSA time")
             cfg = ConfigManager(log_file=log_file).load()
+            service_configurator = service_configurator_factory(cfg)
             automation = saisie_automatiser_psatime.PSATimeAutomation(
                 log_file,
                 cfg,
                 logger=log,
             )
-            automation.run(headless=headless, no_sandbox=no_sandbox)
+            orchestrator = AutomationOrchestrator.from_components(
+                automation.resource_manager,
+                automation.page_navigator,
+                service_configurator,
+                automation.context,
+                cast(LoggerProtocol, automation.logger),
+                choix_user=automation.choix_user,
+            )
+            orchestrator.run(headless=headless, no_sandbox=no_sandbox)
     else:
         logger.info("Launching PSA time")
         cfg = ConfigManager(log_file=log_file).load()
+        service_configurator = service_configurator_factory(cfg)
         automation = saisie_automatiser_psatime.PSATimeAutomation(
             log_file,
             cfg,
             logger=logger,
         )
-        automation.run(headless=headless, no_sandbox=no_sandbox)
+        orchestrator = AutomationOrchestrator.from_components(
+            automation.resource_manager,
+            automation.page_navigator,
+            service_configurator,
+            automation.context,
+            cast(LoggerProtocol, automation.logger),
+            choix_user=automation.choix_user,
+        )
+        orchestrator.run(headless=headless, no_sandbox=no_sandbox)
 
 
 def run_psatime_with_credentials(

@@ -552,58 +552,5 @@ orchestrator: AutomationOrchestrator | None = None
 LOG_FILE: str | None = None
 
 
-def initialize(
-    log_file: str,
-    app_config: AppConfig,
-    choix_user: bool = True,
-    memory_config: MemoryConfig | None = None,
-) -> SaisieContext:
-    """Instancie l'automatisation and return the new context."""
-    global _AUTOMATION, _ORCHESTRATOR, orchestrator, LOG_FILE
-    _AUTOMATION = PSATimeAutomation(
-        log_file,
-        app_config,
-        choix_user=choix_user,
-        memory_config=memory_config,
-    )
-    LOG_FILE = log_file
-    service_configurator = service_configurator_factory(_AUTOMATION.context.config)
-    _ORCHESTRATOR = AutomationOrchestrator.from_components(
-        _AUTOMATION.resource_manager,
-        _AUTOMATION.page_navigator,
-        service_configurator,
-        _AUTOMATION.context,
-        cast(LoggerProtocol, _AUTOMATION.logger),
-        choix_user=_AUTOMATION.choix_user,
-    )
-    _AUTOMATION.orchestrator = _ORCHESTRATOR
-    orchestrator = _ORCHESTRATOR
-    return _AUTOMATION.context
-
-
-def log_initialisation() -> None:
-    """Enregistre les informations initiales dans les logs."""
-    if not orchestrator:
-        raise AutomationNotInitializedError("Automation non initialisée")
-    if not orchestrator.log_file:
-        raise RuntimeError(f"Fichier de log {messages.INTROUVABLE}.")
-    log_info(
-        "\ud83d\udccc D\u00e9marrage de la fonction 'saisie_automatiser_psatime.run()'",
-        orchestrator.log_file,
-    )
-    write_log(
-        f"\ud83d\udd0d Chemin du fichier log : {orchestrator.log_file}",
-        orchestrator.log_file,
-        "DEBUG",
-    )
-
-
-def initialize_shared_memory() -> EncryptionCredentials:
-    """Récupère les identifiants chiffrés depuis la mémoire partagée."""
-    if not _ORCHESTRATOR:
-        raise AutomationNotInitializedError("Automation non initialisée")
-    return cast(EncryptionCredentials, _ORCHESTRATOR.initialize_shared_memory())
-
-
 if __name__ == "__main__":  # pragma: no cover - manual invocation
     main()
