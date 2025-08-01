@@ -121,7 +121,6 @@ class PSATimeAutomation:
         self,
         log_file: str,
         app_config: AppConfig,
-        choix_user: bool = True,
         memory_config: MemoryConfig | None = None,
         *,
         logger: Logger | None = None,
@@ -131,7 +130,6 @@ class PSATimeAutomation:
         """Initialise la configuration et les dépendances."""
 
         self.log_file: str = log_file
-        self.choix_user = choix_user
         self.memory_config = memory_config or MemoryConfig()
         LoggingConfigurator.setup(log_file, app_config.debug_mode, app_config.raw)
         self.logger = logger or get_logger(log_file)
@@ -437,7 +435,7 @@ class PSATimeAutomation:
 
     def _click_action_button(self, driver: WebDriver) -> None:
         """Clique sur le bouton d'action principal."""
-        self.date_entry_page._click_action_button(driver, self.choix_user)
+        self.date_entry_page._click_action_button(driver)
 
     def _process_date_entry(self, driver: WebDriver) -> None:
         """Renseigne la date cible dans l'interface."""
@@ -481,7 +479,6 @@ class PSATimeAutomation:
             service_configurator,
             self.context,
             cast(LoggerProtocol, self.logger),
-            choix_user=self.choix_user,
         )
         self.orchestrator.run(headless=headless, no_sandbox=no_sandbox)
 

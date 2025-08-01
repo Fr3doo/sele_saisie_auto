@@ -139,7 +139,6 @@ def test_full_automation(monkeypatch, sample_config):
             types.SimpleNamespace(app_config=APP_CFG),
             ctx,
             logger,
-            choix_user=True,
             timesheet_helper_cls=DummyHelper,
         )
 

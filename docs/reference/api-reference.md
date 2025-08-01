@@ -14,7 +14,6 @@ class PSATimeAutomation:
         self,
         log_file: str,
         app_config: AppConfig,
-        choix_user: bool = True,
         memory_config: MemoryConfig | None = None,
     ) -> None:
         """Prépare la configuration et les services nécessaires."""

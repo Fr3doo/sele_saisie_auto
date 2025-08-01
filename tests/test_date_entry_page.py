@@ -163,7 +163,7 @@ def test_click_action_button(monkeypatch):
     monkeypatch.setattr(
         dummy.browser_session, "click", lambda *a, **k: clicks.append(True)
     )
-    page._click_action_button("drv", True)
+    page._click_action_button("drv")
     assert clicks
 
 
@@ -175,7 +175,7 @@ def test_click_action_button_copy(monkeypatch):
     monkeypatch.setattr(
         dummy.browser_session, "click", lambda *a, **k: clicks.append(True)
     )
-    page._click_action_button("drv", False)
+    page._click_action_button("drv")
     assert clicks
 
 

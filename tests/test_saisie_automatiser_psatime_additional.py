@@ -136,7 +136,6 @@ def setup_init(monkeypatch, cfg):
         service_configurator,
         auto.context,
         auto.logger,
-        choix_user=True,
     )
     auto.orchestrator = orch
     monkeypatch.setattr(sap, "_AUTOMATION", auto, raising=False)
@@ -271,7 +270,6 @@ EXCEPTIONS = [
 
 def test_main_exceptions(monkeypatch, sample_config):
     setup_init(monkeypatch, sample_config)
-    sap._AUTOMATION.choix_user = True
     monkeypatch.setattr(sap._AUTOMATION, "log_initialisation", lambda: None)
     monkeypatch.setattr(
         sap.PSATimeAutomation,

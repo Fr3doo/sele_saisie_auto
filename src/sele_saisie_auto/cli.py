@@ -70,7 +70,6 @@ def main(argv: list[str] | None = None) -> None:
             service_configurator,
             automation.context,
             cast(LoggerProtocol, automation.logger),
-            choix_user=automation.choix_user,
         )
         orchestrator.run(headless=args.headless, no_sandbox=args.no_sandbox)
 
@@ -96,7 +95,6 @@ def cli_main(
             service_configurator,
             automation.context,
             cast(LoggerProtocol, automation.logger),
-            choix_user=automation.choix_user,
         )
         orchestrator.run(headless=headless, no_sandbox=no_sandbox)
 

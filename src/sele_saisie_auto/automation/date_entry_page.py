@@ -203,11 +203,9 @@ class DateEntryPage:
         self.alert_handler.handle_date_alert(driver)
 
     @handle_selenium_errors(default_return=None)
-    def _click_action_button(self, driver: WebDriver, create_new: bool) -> None:
-        """Click the appropriate action button on the page."""
-        elem_id = (
-            Locators.OK_BUTTON.value if create_new else Locators.COPY_TIME_BUTTON.value
-        )
+    def _click_action_button(self, driver: WebDriver) -> None:
+        """Click the default action button on the page."""
+        elem_id = Locators.OK_BUTTON.value
         element_present = self.waiter.wait_for_element(
             driver,
             By.ID,
