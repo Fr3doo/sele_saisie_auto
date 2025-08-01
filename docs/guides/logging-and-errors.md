@@ -70,6 +70,13 @@ def cliquer_bouton(driver):
 ## Fichier de log
 Les messages sont enregistres dans le dossier `logs/` sous forme de fichier HTML. Chaque execution ajoute de nouvelles entrees au meme fichier afin de conserver l'historique complet.
 
+Le texte de chaque ligne suit le modèle défini par `LOG_ENTRY_FORMAT` dans
+`logger_utils.py` :
+
+```
+{timestamp} [{level}] {message}
+```
+
 ### Personnaliser l'apparence
 Ajoutez la section `[log_style]` dans `config.ini` :
 
