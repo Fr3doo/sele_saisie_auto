@@ -31,7 +31,7 @@ class DefaultEncryptionService:
     @property
     def shared_memory_service(
         self,
-    ) -> SharedMemoryService:  # pragma: no cover - simple proxy
+    ) -> SharedMemoryService:
         return self._service.shared_memory_service
 
     def generer_cle_aes(self, taille_cle: int = 32) -> bytes:

@@ -61,7 +61,7 @@ class ResourceManager:
                 self._res_ctx = self._resource_context.__enter__()
             else:
                 self._res_ctx = None
-        except Exception as exc:  # pragma: no cover - error handling
+        except Exception as exc:
             raise ResourceManagerInitError(str(exc)) from exc
         return self
 
@@ -121,13 +121,13 @@ class ResourceManager:
     # Public API
     # ------------------------------------------------------------------
     @property
-    def app_config(self) -> AppConfig | None:  # pragma: no cover - simple accessor
+    def app_config(self) -> AppConfig | None:
         return self._app_config
 
     @property
     def browser_session(
         self,
-    ) -> BrowserSessionProtocol:  # pragma: no cover - simple accessor
+    ) -> BrowserSessionProtocol:
         if self._session is None:
             raise RuntimeError("Resource manager not initialized")
         return self._session
@@ -135,7 +135,7 @@ class ResourceManager:
     @property
     def encryption_service(
         self,
-    ) -> EncryptionService:  # pragma: no cover - simple accessor
+    ) -> EncryptionService:
         return self._encryption_service
 
     def get_credentials(self) -> Credentials:
@@ -158,9 +158,7 @@ class ResourceManager:
         """Retrieve credentials and ensure shared memory is initialized."""
 
         creds = self.get_credentials()
-        if not all(
-            [creds.mem_key, creds.mem_login, creds.mem_password]
-        ):  # pragma: no cover - sanity check
+        if not all([creds.mem_key, creds.mem_login, creds.mem_password]):
             if logger:
                 logger.error(
                     "🚨 La mémoire partagée n'a pas été initialisée correctement. Assurez-vous que les identifiants ont été chiffrés"

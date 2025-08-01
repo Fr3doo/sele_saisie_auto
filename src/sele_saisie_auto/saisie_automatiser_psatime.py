@@ -162,8 +162,8 @@ class PSATimeAutomation:
         self._additional_info_page: AdditionalInfoPage | None = None
 
         # Initialise orchestrator helpers
-        self.page_navigator = PageNavigator.from_automation(self)  # pragma: no cover
-        self.resource_manager = ResourceManager(log_file)  # pragma: no cover
+        self.page_navigator = PageNavigator.from_automation(self)
+        self.resource_manager = ResourceManager(log_file)
         self.orchestrator: AutomationOrchestrator | None = None
 
         self.log_configuration_details()
@@ -190,31 +190,25 @@ class PSATimeAutomation:
     def log_configuration_details(self) -> None:
         """Enregistre les détails de la configuration dans les logs."""
 
-        write_log(
-            "📌 Chargement des configurations...", self.log_file, "DEBUG"
-        )  # pragma: no cover
+        write_log("📌 Chargement des configurations...", self.log_file, "DEBUG")
         write_log(
             f"👉 Login : {self.context.config.encrypted_login} - pas visible, normal",
             self.log_file,
             "DEBUG",
-        )  # pragma: no cover
+        )
         write_log(
             f"👉 Password : {self.context.config.encrypted_mdp} - pas visible, normal",
             self.log_file,
             "DEBUG",
-        )  # pragma: no cover
-        write_log(
-            f"👉 URL : {self.context.config.url}", self.log_file, "DEBUG"
-        )  # pragma: no cover
+        )
+        write_log(f"👉 URL : {self.context.config.url}", self.log_file, "DEBUG")
         write_log(
             f"👉 Date cible : {self.context.config.date_cible}",
             self.log_file,
             "DEBUG",
-        )  # pragma: no cover
+        )
 
-        write_log(
-            "👉 Planning de travail de la semaine:", self.log_file, "DEBUG"
-        )  # pragma: no cover
+        write_log("👉 Planning de travail de la semaine:", self.log_file, "DEBUG")
         # Log work schedule details
         work_schedule: dict[str, tuple[str, str]] = cast(
             dict[str, tuple[str, str]],
@@ -225,7 +219,7 @@ class PSATimeAutomation:
                 f"🔹 '{day}': ('{activity}', '{hours}')",
                 self.log_file,
                 "DEBUG",
-            )  # pragma: no cover
+            )
 
         # Additional information sections
         sections = {
@@ -241,21 +235,13 @@ class PSATimeAutomation:
             for day, status in values.items():
                 write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
 
-        write_log(
-            "👉 Lieu de travail Matin:", self.log_file, "DEBUG"
-        )  # pragma: no cover
+        write_log("👉 Lieu de travail Matin:", self.log_file, "DEBUG")
         for day, location in self.context.config.work_location_am.items():
-            write_log(
-                f"🔹 '{day}': '{location}'", self.log_file, "DEBUG"
-            )  # pragma: no cover
+            write_log(f"🔹 '{day}': '{location}'", self.log_file, "DEBUG")
 
-        write_log(
-            "👉 Lieu de travail Apres-midi:", self.log_file, "DEBUG"
-        )  # pragma: no cover
+        write_log("👉 Lieu de travail Apres-midi:", self.log_file, "DEBUG")
         for day, location in self.context.config.work_location_pm.items():
-            write_log(
-                f"🔹 '{day}': '{location}'", self.log_file, "DEBUG"
-            )  # pragma: no cover
+            write_log(f"🔹 '{day}': '{location}'", self.log_file, "DEBUG")
 
     def _init_services(self, app_config: AppConfig) -> Services:
         """Initialise les services principaux via :class:`ServiceConfigurator`."""
@@ -276,7 +262,7 @@ class PSATimeAutomation:
                 cls = LoginHandler
                 if hasattr(cls, "from_automation"):
                     self._login_handler = cls.from_automation(self)
-                else:  # pragma: no cover - fallback for patched classes
+                else:
                     self._login_handler = cls(
                         self.log_file,
                         self.encryption_service,
@@ -290,7 +276,7 @@ class PSATimeAutomation:
             cls = DateEntryPage
             if hasattr(cls, "from_automation"):
                 self._date_entry_page = cls.from_automation(self, waiter=self.waiter)
-            else:  # pragma: no cover - fallback for patched classes
+            else:
                 self._date_entry_page = cls(self, waiter=self.waiter)
         return self._date_entry_page
 
@@ -302,7 +288,7 @@ class PSATimeAutomation:
                 self._additional_info_page = cls.from_automation(
                     self, waiter=self.waiter
                 )
-            else:  # pragma: no cover - fallback for patched classes
+            else:
                 self._additional_info_page = cls(self, waiter=self.waiter)
         return self._additional_info_page
 
@@ -485,7 +471,7 @@ class PSATimeAutomation:
         *,
         headless: bool = False,
         no_sandbox: bool = False,
-    ) -> None:  # pragma: no cover
+    ) -> None:
         """Point d'entrée principal de l'automatisation."""
 
         service_configurator = service_configurator_factory(self.context.config)
@@ -530,7 +516,7 @@ def main(
     *,
     headless: bool = False,
     no_sandbox: bool = False,
-) -> None:  # pragma: no cover
+) -> None:
     """Point d'entrée principal du script."""
 
     from sele_saisie_auto.cli import cli_main
@@ -552,5 +538,5 @@ orchestrator: AutomationOrchestrator | None = None
 LOG_FILE: str | None = None
 
 
-if __name__ == "__main__":  # pragma: no cover - manual invocation
+if __name__ == "__main__":
     main()

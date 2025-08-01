@@ -13,8 +13,6 @@ from sele_saisie_auto.logging_service import Logger
 
 from . import get_default_logger
 
-# pragma: no cover
-
 
 class DuplicateDayDetector:
     """Detect if a weekday is filled on multiple lines of the time sheet."""
@@ -47,12 +45,12 @@ class DuplicateDayDetector:
                     By.ID, f"POL_DESCR${row_index}"
                 )
             except NoSuchElementException:
-                if max_rows is None:  # pragma: no cover - rare branch
+                if max_rows is None:
                     self.logger.debug(
                         f"Fin de l'analyse des lignes à l'index {row_index}"
                     )
                     break
-                continue  # pragma: no cover - rare branch
+                continue
 
             description = current_line_description.text.strip()
             self.logger.debug(
@@ -68,7 +66,7 @@ class DuplicateDayDetector:
                     day_content: str | None = day_field.get_attribute("value")
                     if day_content and day_content.strip():
                         self._update_tracker(filled_days, day_counter, description)
-                except NoSuchElementException:  # pragma: no cover - best effort
+                except NoSuchElementException:
                     self.logger.warning(
                         f"{messages.IMPOSSIBLE_DE_TROUVER} l'élément pour le jour '{JOURS_SEMAINE[day_counter]}' avec l'ID '{day_input_id}'"
                     )

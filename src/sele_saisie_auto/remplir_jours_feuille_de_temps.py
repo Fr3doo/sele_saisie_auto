@@ -76,9 +76,7 @@ class TimesheetHelperProtocol(Protocol):
     def run(self, driver: WebDriver) -> None: ...
 
 
-def context_from_app_config(
-    app_config: AppConfig, log_file: str
-) -> TimeSheetContext:  # pragma: no cover - simple mapper
+def context_from_app_config(app_config: AppConfig, log_file: str) -> TimeSheetContext:
     """Create a :class:`TimeSheetContext` from :class:`AppConfig`."""
 
     billing_map = {
@@ -314,83 +312,70 @@ def remplir_mission_specifique(
         )
 
 
-def _insert_value_with_retries(  # pragma: no cover
+def _insert_value_with_retries(
     driver: WebDriver,
     field_id: str,
     value: str,
     max_attempts: int,
-    waiter: WaiterProtocol | None,  # pragma: no cover
-) -> bool:  # pragma: no cover
+    waiter: WaiterProtocol | None,
+) -> bool:
     """Essaye d'insérer la valeur plusieurs fois si nécessaire."""
-    if waiter is not None:  # pragma: no cover
-        # pragma: no cover
-        wait_for_dom(driver, waiter=waiter)  # pragma: no cover
-    else:  # pragma: no cover
-        wait_for_dom(driver)  # pragma: no cover
-    # pragma: no cover
-    element = (  # pragma: no cover
+    if waiter is not None:
+        wait_for_dom(driver, waiter=waiter)
+    else:
+        wait_for_dom(driver)
+    element = (
         cast(Any, waiter.wait_for_element)(
             driver, By.ID, field_id, timeout=DEFAULT_TIMEOUT
-        )  # pragma: no cover
-        if waiter  # pragma: no cover
+        )
+        if waiter
         else cast(Any, wait_for_element)(
             driver, By.ID, field_id, timeout=DEFAULT_TIMEOUT
-        )  # pragma: no cover
-    )  # pragma: no cover
-    if not element:  # pragma: no cover
-        return False  # pragma: no cover
-    # pragma: no cover
-    attempt = 0  # pragma: no cover
-    while attempt < max_attempts:  # pragma: no cover
-        try:  # pragma: no cover
-            input_field, is_correct_value = (
-                detecter_et_verifier_contenu(  # pragma: no cover
-                    driver, field_id, value  # pragma: no cover
-                )
-            )  # pragma: no cover
+        )
+    )
+    if not element:
+        return False
+    attempt = 0
+    while attempt < max_attempts:
+        try:
+            input_field, is_correct_value = detecter_et_verifier_contenu(
+                driver, field_id, value
+            )
             if input_field is None:
                 raise RuntimeError("detecter_et_verifier_contenu returned None")
-            if is_correct_value:  # pragma: no cover
-                write_log(  # pragma: no cover
-                    f"Valeur correcte déjà présente pour '{field_id}'.",  # pragma: no cover
-                    LOG_FILE,  # pragma: no cover
-                    "DEBUG",  # pragma: no cover
-                )  # pragma: no cover
-                return True  # pragma: no cover
-            # pragma: no cover
-            effacer_et_entrer_valeur(input_field, value)  # pragma: no cover
-            program_break_time(
-                1, "Stabilisation du DOM après insertion."
-            )  # pragma: no cover
-            write_log(messages.DOM_STABLE, LOG_FILE, "DEBUG")  # pragma: no cover
-            # pragma: no cover
-            if cast(Callable[[Any, str], bool], controle_insertion)(
-                input_field, value  # pragma: no cover
-            ):  # pragma: no cover
-                write_log(  # pragma: no cover
-                    f"Valeur '{value}' insérée avec succès pour '{field_id}'.",  # pragma: no cover
-                    LOG_FILE,  # pragma: no cover
-                    "DEBUG",  # pragma: no cover
-                )  # pragma: no cover
-                return True  # pragma: no cover
-        except StaleElementReferenceException:  # pragma: no cover
-            write_log(  # pragma: no cover
-                f"{messages.REFERENCE_OBSOLETE} pour '{field_id}', tentative {attempt + 1}.",  # pragma: no cover
-                LOG_FILE,  # pragma: no cover
-                "ERROR",  # pragma: no cover
-            )  # pragma: no cover
-        # pragma: no cover
-        attempt += 1  # pragma: no cover
-    # pragma: no cover
-    write_log(  # pragma: no cover
-        f"{messages.ECHEC_INSERTION} pour '{field_id}' après {max_attempts} tentatives.",  # pragma: no cover
-        LOG_FILE,  # pragma: no cover
-        "ERROR",  # pragma: no cover  # pragma: no cover
-    )  # pragma: no cover - log branch
+            if is_correct_value:
+                write_log(
+                    f"Valeur correcte déjà présente pour '{field_id}'.",
+                    LOG_FILE,
+                    "DEBUG",
+                )
+                return True
+            effacer_et_entrer_valeur(input_field, value)
+            program_break_time(1, "Stabilisation du DOM après insertion.")
+            write_log(messages.DOM_STABLE, LOG_FILE, "DEBUG")
+            if cast(Callable[[Any, str], bool], controle_insertion)(input_field, value):
+                write_log(
+                    f"Valeur '{value}' insérée avec succès pour '{field_id}'.",
+                    LOG_FILE,
+                    "DEBUG",
+                )
+                return True
+        except StaleElementReferenceException:
+            write_log(
+                f"{messages.REFERENCE_OBSOLETE} pour '{field_id}', tentative {attempt + 1}.",
+                LOG_FILE,
+                "ERROR",
+            )
+        attempt += 1
+    write_log(
+        f"{messages.ECHEC_INSERTION} pour '{field_id}' après {max_attempts} tentatives.",
+        LOG_FILE,
+        "ERROR",
+    )
     return False
 
 
-def insert_with_retries(  # pragma: no cover
+def insert_with_retries(
     driver: WebDriver,
     field_id: str,
     value: str,
@@ -398,12 +383,10 @@ def insert_with_retries(  # pragma: no cover
 ) -> bool:
     """Generic helper using :func:`_insert_value_with_retries` with default attempts."""
 
-    return _insert_value_with_retries(
-        driver, field_id, value, MAX_ATTEMPTS, waiter
-    )  # pragma: no cover
+    return _insert_value_with_retries(driver, field_id, value, MAX_ATTEMPTS, waiter)
 
 
-def traiter_champs_mission(  # pragma: no cover
+def traiter_champs_mission(
     driver: WebDriver,
     listes_id_informations_mission: list[str],
     id_to_key_mapping: dict[str, str],
@@ -527,11 +510,11 @@ class TimeSheetHelper:
 
     def run(self, driver: WebDriver | None) -> None:
         """Orchestre toutes les étapes de remplissage."""
-        if self.context is None:  # pragma: no cover - guard clause
+        if self.context is None:
             raise RuntimeError("TimeSheetContext not provided")
-        if driver is None:  # pragma: no cover - guard clause
+        if driver is None:
             raise ValueError("WebDriver instance is required for filling the timesheet")
-        if driver is None:  # pragma: no cover - extra safety
+        if driver is None:
             raise RuntimeError("WebDriver not supplied")
         assert (
             driver is not None
@@ -578,13 +561,13 @@ class TimeSheetHelper:
 def main(driver: WebDriver | None, log_file: str) -> None:
     """Minimal orchestrator creating the helper and launching the process."""
     ctx = initialize(log_file)
-    if ctx is None:  # pragma: no cover - fallback path
+    if ctx is None:
         ctx = TimeSheetContext(log_file, [], {}, {})
     logger = Logger(log_file)
     TimeSheetHelper(ctx, cast(LoggerProtocol, logger)).run(driver)
 
 
-if __name__ == "__main__":  # pragma: no cover - manual invocation
+if __name__ == "__main__":
     from sele_saisie_auto.shared_utils import get_log_file
 
     main(None, get_log_file())

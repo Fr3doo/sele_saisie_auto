@@ -42,7 +42,7 @@ class Waiter:
         long_timeout: int = LONG_TIMEOUT,
         wrapper: Wrapper | None = None,
         logger: Logger | None = None,
-    ) -> None:  # pragma: no cover - simple initializer
+    ) -> None:
         """Configure les délais d'attente par défaut."""
         self.logger = logger or get_default_logger()
         self.wrapper: Wrapper = wrapper or Wrapper(

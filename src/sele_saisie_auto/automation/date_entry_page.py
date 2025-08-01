@@ -22,7 +22,7 @@ from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from sele_saisie_auto.navigation import PageNavigator
     from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
 
@@ -68,14 +68,14 @@ class DateEntryPage:
         return self._automation.log_file
 
     @property
-    def config(self) -> AppConfig | Any:  # pragma: no cover - accessor
+    def config(self) -> AppConfig | Any:
         ctx = getattr(self._automation, "context", None)
         cfg = getattr(ctx, "config", None)
         if cfg is None or not hasattr(cfg, "default_timeout"):
             return SimpleNamespace(
                 default_timeout=DEFAULT_TIMEOUT,
                 long_timeout=LONG_TIMEOUT,
-            )  # pragma: no cover - fallback
+            )
         return cfg
 
     # ------------------------------------------------------------------

@@ -56,9 +56,7 @@ def create_tab(
     """
 
     if not hasattr(notebook, "add"):
-        raise AttributeError(
-            "Notebook object must implement an 'add' method"
-        )  # pragma: no cover - defensive programming
+        raise AttributeError("Notebook object must implement an 'add' method")
 
     tab_frame = ttk.Frame(notebook, style=style, padding=padding)
     notebook.add(tab_frame, text=title)

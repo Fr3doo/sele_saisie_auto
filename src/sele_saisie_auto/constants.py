@@ -1,4 +1,3 @@
-# pragma: no cover
 """Module contenant les constantes partagées."""
 
 # Mapping numerique -> nom du jour

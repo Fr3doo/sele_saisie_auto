@@ -36,7 +36,7 @@ def main_menu(
     try:
         root_frame = ttk.Frame(menu)
         root_frame.pack(fill="both", expand=True)
-    except AttributeError:  # pragma: no cover - dummy objects in tests
+    except AttributeError:
         from types import SimpleNamespace
 
         root_frame = SimpleNamespace(pack=lambda *a, **k: None)

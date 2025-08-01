@@ -147,8 +147,8 @@ def start_configuration(
 
     notebook: ttk.Notebook | tk.Tk
     if hasattr(root, "tk"):
-        notebook = ttk.Notebook(root)  # pragma: no cover - UI init
-        notebook.pack(fill="both", expand=True)  # pragma: no cover - UI init
+        notebook = ttk.Notebook(root)
+        notebook.pack(fill="both", expand=True)
     else:  # fallback for DummyRoot in tests
         notebook = root
     frame = create_tab(cast(ttk.Notebook, notebook), title="Paramètres")
@@ -219,5 +219,5 @@ def main(argv: list[str] | None = None) -> None:
             )
 
 
-if __name__ == "__main__":  # pragma: no cover - manual invocation
+if __name__ == "__main__":
     main()

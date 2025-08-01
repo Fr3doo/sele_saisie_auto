@@ -26,7 +26,7 @@ class SharedMemoryService:
                 f"💀 Données stockées en mémoire partagée avec le nom '{nom}'."
             )
             return memoire
-        except Exception as e:  # pragma: no cover - defensive
+        except Exception as e:
             self.logger.error(f"❌ Erreur lors du stockage en mémoire partagée : {e}")
             raise
 
@@ -40,7 +40,7 @@ class SharedMemoryService:
             memoire.close()
             memoire.unlink()
             self.logger.critical("💀 Mémoire partagée supprimée de manière sécurisée.")
-        except Exception as e:  # pragma: no cover - defensive
+        except Exception as e:
             self.logger.error(
                 f"❌ Erreur lors de la suppression sécurisée de la mémoire partagée : {e}"
             )
@@ -65,7 +65,7 @@ class SharedMemoryService:
         except FileNotFoundError:
             self.logger.warning(f"Shared memory segment '{nom}' is not accessible.")
             raise
-        except Exception as e:  # pragma: no cover - defensive
+        except Exception as e:
             self.logger.error(
                 f"❌ Erreur lors de la récupération depuis la mémoire partagée : {e}"
             )
