@@ -161,7 +161,7 @@ graph TD
 * [x] Lier `AGENT.md` depuis le `README.md`.
 * [x] Créer un workflow GitHub Actions pour les tests (`ci.yml`) *(déjà présent)*.
 * [x] Documenter la procédure d’export en binaire via PyInstaller (voir `README.md`).
-* [ ] Ajouter des tests unitaires pour chaque agent.
+* [x] Ajouter des tests unitaires pour chaque agent.
 
 ## 9. Interfaces détaillées des agents
 
