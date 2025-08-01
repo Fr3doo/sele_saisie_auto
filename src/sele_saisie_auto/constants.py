@@ -11,27 +11,6 @@ JOURS_SEMAINE = {
     7: "samedi",
 }
 
-# Dictionnaire de jours initialisé vide pour la configuration
-JOURS_SEMAINE__DICT = {
-    "lundi": "",
-    "mardi": "",
-    "mercredi": "",
-    "jeudi": "",
-    "vendredi": "",
-    "samedi": "",
-    "dimanche": "",
-}
-
-# Liste ordonnee des jours de la semaine
-JOURS_SEMAINE__LIST = [
-    "dimanche",
-    "lundi",
-    "mardi",
-    "mercredi",
-    "jeudi",
-    "vendredi",
-    "samedi",
-]
 
 # Liste des IDs associés aux informations du projet
 LISTES_ID_INFORMATIONS_MISSION = [
