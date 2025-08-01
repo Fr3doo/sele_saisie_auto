@@ -30,17 +30,6 @@ if TYPE_CHECKING:
 class DateEntryPage:
     """Handle the timesheet date selection page."""
 
-    @classmethod
-    def from_automation(
-        cls,
-        automation: PSATimeAutomation,
-        *,
-        page_navigator: PageNavigator | None = None,
-        waiter: WaiterProtocol | None = None,
-    ) -> DateEntryPage:
-        """Create a page instance from a :class:`PSATimeAutomation`."""
-        return cls(automation, page_navigator=page_navigator, waiter=waiter)
-
     def __init__(
         self,
         automation: PSATimeAutomation,

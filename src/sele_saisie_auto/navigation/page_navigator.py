@@ -30,30 +30,6 @@ class PageNavigator:
     those pages.
     """
 
-    @classmethod
-    def from_automation(cls, automation: PSATimeAutomation) -> PageNavigator:
-        """Return a new :class:`PageNavigator` configured from ``automation``."""
-        from sele_saisie_auto import remplir_jours_feuille_de_temps
-
-        timesheet_ctx = remplir_jours_feuille_de_temps.context_from_app_config(
-            automation.context.config,
-            automation.log_file,
-        )
-        helper = remplir_jours_feuille_de_temps.TimeSheetHelper(
-            timesheet_ctx,
-            cast(LoggerProtocol, automation.logger),
-            waiter=automation.waiter,
-            additional_info_page=automation.additional_info_page,
-            browser_session=automation.browser_session,
-        )
-        return cls(
-            automation.browser_session,
-            automation.login_handler,
-            automation.date_entry_page,
-            automation.additional_info_page,
-            helper,
-        )
-
     def __init__(
         self,
         browser_session: BrowserSessionProtocol,
