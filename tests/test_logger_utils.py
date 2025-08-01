@@ -9,6 +9,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto import logger_utils  # noqa: E402
 from sele_saisie_auto.enums import LogLevel  # noqa: E402
+from sele_saisie_auto.exceptions import InvalidConfigError  # noqa: E402
 
 
 def test_initialize_logger_override(tmp_path):
@@ -199,3 +200,29 @@ def test_get_html_style_default(tmp_path, monkeypatch):
 def test_parse_column_widths():
     widths = logger_utils._parse_column_widths("timestamp:11%, level:22%, message:33%")
     assert widths["level"] == "22%"
+
+
+def test_validate_log_style_unknown_key(tmp_path, monkeypatch):
+    cfg = tmp_path / "config.ini"
+    cfg.write_text(
+        """[log_style]
+bogus = 1
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(InvalidConfigError):
+        logger_utils.get_html_style()
+
+
+def test_validate_log_style_bad_width(tmp_path, monkeypatch):
+    cfg = tmp_path / "config.ini"
+    cfg.write_text(
+        """[log_style]
+column_widths = timestamp10%
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(InvalidConfigError):
+        logger_utils.get_html_style()

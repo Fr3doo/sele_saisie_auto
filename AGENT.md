@@ -178,6 +178,9 @@ Service chargé du chiffrement et de la mémoire partagée.
 ### `ConfigManager` (`config_manager.py`)
 Gestion centralisée du fichier `config.ini`.
 
+> ℹ️ La lecture utilise `ConfigParser(interpolation=None)` pour que les `%`
+> présents dans `[log_style]` ne soient pas interprétés.
+
 - `load() -> ConfigParser` : charge la configuration depuis le disque.
 - `save() -> str` : sauvegarde l'instance courante.
 - `config` : propriété retournant l'objet `ConfigParser` actif.

@@ -195,9 +195,12 @@ l'installation des dépendances hors de l'environnement Poetry.
 3. L'exécutable se trouve dans le dossier `dist/`. Copiez `config.ini` à côté si besoin pour conserver la configuration.
 
 ## 🛠️ Fichiers de configuration
-- `config.ini` : paramètres de connexion et de planning
+- `config.ini` : paramètres de connexion et de planning. Le fichier est lu avec
+  `ConfigParser(interpolation=None)` afin de permettre l'utilisation du caractère
+  `%` sans interpolation.
 - `examples/config_minimal.ini` : configuration minimale à copier pour démarrer rapidement
 - `examples/config_example.ini` : modèle listant toutes les sections nécessaires
+- `docs/guides/log_style-example.ini` : exemple d'utilisation de `[log_style]`
 - `examples/dropdown_defaults.json` : valeurs par défaut des menus déroulants si
   les sections correspondantes sont absentes de `config.ini`
 - `pytest.ini` : options de tests

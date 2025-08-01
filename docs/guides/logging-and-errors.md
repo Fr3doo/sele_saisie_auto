@@ -79,6 +79,8 @@ Le texte de chaque ligne suit le modèle défini par `LOG_ENTRY_FORMAT` dans
 
 ### Personnaliser l'apparence
 Ajoutez la section `[log_style]` dans `config.ini` :
+L'outil lit ce fichier avec `ConfigParser(interpolation=None)`,
+ainsi les pourcentages ne sont pas interprétés.
 
 ```ini
 [log_style]
