@@ -17,6 +17,7 @@ import sele_saisie_auto.logger_utils as logger_utils  # noqa: E402
 from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
 from sele_saisie_auto.logger_utils import afficher_message_insertion  # noqa: E402
+from sele_saisie_auto.memory_config import MemoryConfig  # noqa: E402
 from tests.conftest import FakeEncryptionService  # noqa: E402
 
 # Les tests de ce module s'appuient sur l'orchestrateur refactorisé
@@ -277,7 +278,7 @@ def test_initialize_sets_globals(monkeypatch, sample_config):
     assert sap.context.config.url == "http://test"
     assert sap.context.config.work_schedule["lundi"] == ("En mission", "8")
     assert sap.context.project_mission_info["billing_action"] == "B"
-    assert isinstance(sap._AUTOMATION.memory_config, sap.MemoryConfig)
+    assert isinstance(sap._AUTOMATION.memory_config, MemoryConfig)
 
 
 def test_init_services(monkeypatch, sample_config):
