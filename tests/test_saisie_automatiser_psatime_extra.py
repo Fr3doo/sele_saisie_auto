@@ -240,7 +240,6 @@ def test_fill_and_save_timesheet(monkeypatch, sample_config):
         lambda d, alert_type="save_alerts": calls.append((d, alert_type))
     )
     monkeypatch.setattr(sap, "detecter_doublons_jours", lambda d: calls.append("dup"))
-    monkeypatch.setattr(sap.plugins, "call", lambda name, d: calls.append(name))
 
     auto._fill_and_save_timesheet("drv")
 

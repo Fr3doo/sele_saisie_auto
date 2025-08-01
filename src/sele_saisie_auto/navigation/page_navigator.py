@@ -14,7 +14,6 @@ from sele_saisie_auto.interfaces import (
     LoginHandlerProtocol,
     TimeSheetHelperProtocol,
 )
-from sele_saisie_auto.plugins_utils import call_hook
 from sele_saisie_auto.selenium_utils import detecter_doublons_jours
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -119,7 +118,6 @@ class PageNavigator:
 
         if hasattr(driver, "find_elements"):
             detecter_doublons_jours(driver)
-        call_hook("before_submit", driver)
         self.submit_timesheet(driver)
 
     def submit_full_timesheet(self, driver: WebDriver) -> None:

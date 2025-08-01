@@ -108,11 +108,9 @@ def test_run_calls_services(monkeypatch, sample_config):
     )
     orch.date_entry_page._click_action_button = lambda d, c: None
     orch.additional_info_page._handle_save_alerts = lambda d: None
-    from sele_saisie_auto import plugins
     from sele_saisie_auto.orchestration import automation_orchestrator as orch_mod
 
     monkeypatch.setattr(orch_mod, "detecter_doublons_jours", lambda *a, **k: None)
-    monkeypatch.setattr(plugins, "call", lambda *a, **k: None)
 
     cleanup_args = {}
 
@@ -296,11 +294,9 @@ def test_run_uses_passed_cleanup_function(monkeypatch, sample_config):
     )
     orch.date_entry_page._click_action_button = lambda d, c: None
     orch.additional_info_page._handle_save_alerts = lambda d: None
-    from sele_saisie_auto import plugins
     from sele_saisie_auto.orchestration import automation_orchestrator as orch_mod
 
     monkeypatch.setattr(orch_mod, "detecter_doublons_jours", lambda *a, **k: None)
-    monkeypatch.setattr(plugins, "call", lambda *a, **k: None)
     from sele_saisie_auto import console_ui
 
     monkeypatch.setattr(console_ui, "ask_continue", lambda *a, **k: None)
