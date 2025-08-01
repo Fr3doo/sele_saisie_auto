@@ -78,6 +78,8 @@ chaque plugin.
 ## Extensions via hooks
 
 Le projet fournit un petit système de hooks pour étendre l'automatisation.
+Le module `plugins` expose les fonctions `register`, `unregister`, `hook` et
+`call`.
 Créez simplement un fichier Python contenant des fonctions décorées avec
 `@hook` :
 
