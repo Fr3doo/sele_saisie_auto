@@ -42,13 +42,15 @@ from sele_saisie_auto.selenium_utils import (
     controle_insertion,
     detecter_et_verifier_contenu,
     effacer_et_entrer_valeur,
+)
+from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
+from sele_saisie_auto.selenium_utils import (
     trouver_ligne_par_description,
     verifier_champ_jour_rempli,
     wait_for_dom_ready,
     wait_for_element,
     wait_until_dom_is_stable,
 )
-from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.selenium_utils.wait_helpers import Waiter
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
@@ -511,49 +513,55 @@ class TimeSheetHelper:
         if self.context is None:
             raise RuntimeError("TimeSheetContext not provided")
         if driver is None:
-            raise ValueError("WebDriver instance is required for filling the timesheet")
-        if driver is None:
             raise RuntimeError("WebDriver not supplied")
-        assert (
-            driver is not None
-        )  # garantit à mypy que driver est bien un WebDriver  # nosec B101
         try:
-            filled_days: list[str] = []
+            self._run_steps(driver)
+        except (
+            NoSuchElementException,
+            TimeoutException,
+            StaleElementReferenceException,
+            WebDriverException,
+        ) as exc:
+            self._log_selenium_error(exc)
+        except Exception as exc:  # pragma: no cover - sauvegarde générale
+            log_error(f"{messages.ERREUR_INATTENDUE} : {exc}.", LOG_FILE)
 
-            self.logger.debug("Initialisation du processus de remplissage...")
+    def _run_steps(self, driver: WebDriver) -> None:
+        """Exécute les étapes principales de remplissage."""
+        filled_days: list[str] = []
 
-            filled_days = self.fill_standard_days(driver, filled_days)
-            self.logger.debug(f"Jours déjà remplis : {filled_days}")
+        self.logger.debug("Initialisation du processus de remplissage...")
 
-            if len(set(filled_days)) == len(JOURS_SEMAINE):
-                self.logger.info(messages.TIMESHEET_ALREADY_COMPLETE)
-                return
+        filled_days = self.fill_standard_days(driver, filled_days)
+        self.logger.debug(f"Jours déjà remplis : {filled_days}")
 
-            filled_days = self.fill_work_missions(driver, filled_days)
-            self.logger.debug(f"Finalisation des jours remplis : {filled_days}")
+        if len(set(filled_days)) == len(JOURS_SEMAINE):
+            self.logger.info(messages.TIMESHEET_ALREADY_COMPLETE)
+            return
 
-            self.handle_additional_fields(driver)
-            if self.additional_info_page is not None:
-                self.additional_info_page.navigate_from_work_schedule_to_additional_information_page(
-                    driver
-                )
-                self.additional_info_page.submit_and_validate_additional_information(
-                    driver
-                )
-            if self.browser_session is not None:
-                self.browser_session.go_to_default_content()
-            self.logger.debug("Tous les jours et missions ont été traités avec succès.")
+        filled_days = self.fill_work_missions(driver, filled_days)
+        self.logger.debug(f"Finalisation des jours remplis : {filled_days}")
 
-        except NoSuchElementException as e:
-            log_error(f"Élément {messages.INTROUVABLE} : {str(e)}.", LOG_FILE)
-        except TimeoutException as e:
-            log_error(f"Temps d'attente dépassé pour un élément : {str(e)}.", LOG_FILE)
-        except StaleElementReferenceException as e:
-            log_error(f"{messages.REFERENCE_OBSOLETE} détectée : {str(e)}.", LOG_FILE)
-        except WebDriverException as e:
-            log_error(f"Erreur {messages.WEBDRIVER} : {str(e)}.", LOG_FILE)
-        except Exception as e:
-            log_error(f"{messages.ERREUR_INATTENDUE} : {str(e)}.", LOG_FILE)
+        self.handle_additional_fields(driver)
+        if self.additional_info_page is not None:
+            self.additional_info_page.navigate_from_work_schedule_to_additional_information_page(
+                driver
+            )
+            self.additional_info_page.submit_and_validate_additional_information(driver)
+        if self.browser_session is not None:
+            self.browser_session.go_to_default_content()
+        self.logger.debug("Tous les jours et missions ont été traités avec succès.")
+
+    def _log_selenium_error(self, error: Exception) -> None:
+        """Journalise les erreurs Selenium courantes."""
+        mapping: dict[type[Exception], str] = {
+            NoSuchElementException: f"Élément {messages.INTROUVABLE}",
+            TimeoutException: "Temps d'attente dépassé pour un élément",
+            StaleElementReferenceException: f"{messages.REFERENCE_OBSOLETE} détectée",
+            WebDriverException: f"Erreur {messages.WEBDRIVER}",
+        }
+        message = mapping.get(type(error), messages.ERREUR_INATTENDUE)
+        log_error(f"{message} : {error}.", LOG_FILE)
 
 
 def main(driver: WebDriver | None, log_file: str) -> None:
