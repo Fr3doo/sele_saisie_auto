@@ -68,6 +68,20 @@ poetry run psatime-launcher
 Une interface graphique Tkinter demande vos identifiants, les chiffre en mémoire et déclenche ensuite l'automatisation Selenium.
 Lors du démarrage, une clé AES temporaire est générée pour chiffrer ces informations dans la mémoire partagée. Aucun identifiant n'est sauvegardé sur disque.
 
+Les segments de mémoire partagée restés après une exécution précédente sont supprimés automatiquement au lancement. Pour effectuer uniquement ce nettoyage sans démarrer l'automatisation, utilisez l'option `--cleanup-mem` :
+
+```bash
+poetry run psatime-auto --cleanup-mem
+```
+
+Les noms des segments peuvent être personnalisés via `MemoryConfig` si plusieurs sessions doivent coexister :
+
+```python
+from sele_saisie_auto.memory_config import MemoryConfig
+mem_cfg = MemoryConfig.with_pid()  # ou MemoryConfig(suffix="demo")
+```
+
+
 ## ⚙️ Utilisation avancée
 - Configuration dans `config.ini`
 - Logs générés dans le dossier `logs/`

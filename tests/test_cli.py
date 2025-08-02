@@ -1,5 +1,6 @@
 import sys
 import types
+from multiprocessing import shared_memory
 from pathlib import Path
 
 import pytest
@@ -7,6 +8,7 @@ import pytest
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))
 
 from sele_saisie_auto import __version__, cli  # noqa: E402
+from sele_saisie_auto.memory_config import MemoryConfig  # noqa: E402
 
 
 def test_help_displays_new_options(capsys):
@@ -137,3 +139,40 @@ def test_main_cleanup_flag(monkeypatch):
     cli.main([])
 
     assert called["clean"] is True
+
+
+def test_cleanup_mem_flag_removes_segments(monkeypatch):
+    dummy_args = types.SimpleNamespace(
+        log_level=None,
+        headless=False,
+        no_sandbox=False,
+        cleanup_mem=True,
+    )
+    monkeypatch.setattr(cli, "parse_args", lambda argv: dummy_args)
+    import sele_saisie_auto.launcher as launcher
+
+    mem_cfg = MemoryConfig.with_uuid()
+    leftovers = []
+    for name in (
+        mem_cfg.cle_name,
+        mem_cfg.data_name,
+        mem_cfg.login_name,
+        mem_cfg.password_name,
+    ):
+        seg = shared_memory.SharedMemory(create=True, size=1, name=name)
+        seg.buf[:1] = b"x"
+        seg.close()
+        leftovers.append(name)
+
+    orig_cleanup = launcher.cleanup_memory_segments
+    monkeypatch.setattr(
+        launcher,
+        "cleanup_memory_segments",
+        lambda: orig_cleanup(mem_cfg),
+    )
+
+    cli.main([])
+
+    for name in leftovers:
+        with pytest.raises(FileNotFoundError):
+            shared_memory.SharedMemory(name=name)
