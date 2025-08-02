@@ -38,6 +38,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Disable the browser sandbox",
     )
     parser.add_argument(
+        "--cleanup-mem",
+        action="store_true",
+        help="Remove leftover shared memory segments and exit",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
@@ -50,6 +55,11 @@ def main(argv: list[str] | None = None) -> None:
     """Run the automation from the command line."""
 
     args = parse_args(argv)
+    if args.cleanup_mem:
+        from sele_saisie_auto.launcher import cleanup_memory_segments
+
+        cleanup_memory_segments()
+        return
     log_file = get_log_file()
     with get_logger(log_file) as logger:
         cfg = ConfigManager(log_file=log_file).load()

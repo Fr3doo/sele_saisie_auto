@@ -5,6 +5,7 @@ from __future__ import annotations
 import configparser
 import multiprocessing
 import tkinter as tk
+from multiprocessing import shared_memory
 from tkinter import messagebox, ttk
 from typing import cast
 
@@ -24,6 +25,7 @@ from sele_saisie_auto.gui_builder import (
 from sele_saisie_auto.interfaces import LoggerProtocol
 from sele_saisie_auto.logger_utils import LOG_LEVEL_CHOICES
 from sele_saisie_auto.logging_service import Logger, LoggingConfigurator, get_logger
+from sele_saisie_auto.memory_config import MemoryConfig
 from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.read_or_write_file_config_ini_utils import (
     read_config_ini,
@@ -32,6 +34,36 @@ from sele_saisie_auto.read_or_write_file_config_ini_utils import (
 from sele_saisie_auto.shared_utils import get_log_file
 
 DEFAULT_SETTINGS = {"date_cible": "", "debug_mode": "INFO"}
+
+
+def cleanup_memory_segments(memory_config: MemoryConfig | None = None) -> None:
+    """Remove leftover shared memory segments.
+
+    Parameters
+    ----------
+    memory_config:
+        Names of the segments to remove. Defaults to :class:`MemoryConfig`.
+    """
+
+    cfg = memory_config or MemoryConfig()
+    for name in (
+        cfg.cle_name,
+        cfg.data_name,
+        cfg.login_name,
+        cfg.password_name,
+    ):
+        try:
+            mem = shared_memory.SharedMemory(name=name)
+        except FileNotFoundError:
+            continue
+        else:
+            try:
+                mem.close()
+            finally:
+                try:
+                    mem.unlink()
+                except FileNotFoundError:
+                    pass
 
 
 def run_psatime(
@@ -208,6 +240,7 @@ def main(argv: list[str] | None = None) -> None:
         LoggingConfigurator.setup(log_file, args.log_level, config)
 
         multiprocessing.freeze_support()
+        cleanup_memory_segments()
         with EncryptionService(log_file) as encryption_service:
             cle_aes = cast(bytes, encryption_service.cle_aes)
             from sele_saisie_auto.main_menu import main_menu

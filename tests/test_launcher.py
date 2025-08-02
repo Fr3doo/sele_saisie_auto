@@ -1,10 +1,12 @@
 import importlib
 import sys
 import types
+from multiprocessing import shared_memory
 from pathlib import Path
 
 import pytest
 
+from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.memory_config import MemoryConfig
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
@@ -110,9 +112,13 @@ def test_parse_args_basic(monkeypatch):
     assert args.log_level is None
     assert args.headless is False
     assert args.no_sandbox is False
+    assert args.cleanup_mem is False
 
     args = mod.parse_args(["-l", "DEBUG"])
     assert args.log_level == "DEBUG"
+
+    args = mod.parse_args(["--cleanup-mem"])
+    assert args.cleanup_mem is True
 
 
 def test_run_psatime(monkeypatch, dummy_logger, sample_config):
@@ -441,3 +447,44 @@ def test_main(monkeypatch):
     assert init["menu"][1] == "log.html"
     assert init["kwargs"] == {"headless": True, "no_sandbox": True}
     assert dummy_logger.entered and dummy_logger.exited
+
+
+def test_main_twice_cleanup(monkeypatch):
+    launcher = import_launcher(monkeypatch)
+
+    dummy_args = types.SimpleNamespace(
+        log_level=None,
+        headless=False,
+        no_sandbox=False,
+    )
+    monkeypatch.setattr(launcher.cli, "parse_args", lambda argv: dummy_args)
+    monkeypatch.setattr(launcher, "get_log_file", lambda: "log.html")
+    monkeypatch.setattr(launcher, "read_config_ini", lambda lf: {"settings": {}})
+    monkeypatch.setattr(launcher.LoggingConfigurator, "setup", lambda *a, **k: None)
+    monkeypatch.setattr(launcher.multiprocessing, "freeze_support", lambda: None)
+
+    mem_cfg = MemoryConfig.with_uuid()
+    leftovers = []
+    for name in (mem_cfg.cle_name, mem_cfg.login_name, mem_cfg.password_name):
+        seg = shared_memory.SharedMemory(create=True, size=1, name=name)
+        seg.buf[:1] = b"x"
+        seg.close()
+        leftovers.append(name)
+
+    def enc_factory(log_file):
+        return EncryptionService(log_file, memory_config=mem_cfg)
+
+    monkeypatch.setattr(launcher, "EncryptionService", enc_factory)
+    orig_cleanup = launcher.cleanup_memory_segments
+    monkeypatch.setattr(
+        launcher,
+        "cleanup_memory_segments",
+        lambda: orig_cleanup(mem_cfg),
+    )
+
+    launcher.main([])
+    for name in leftovers:
+        with pytest.raises(FileNotFoundError):
+            shared_memory.SharedMemory(name=name)
+
+    launcher.main([])  # second run should also succeed without errors
