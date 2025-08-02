@@ -13,6 +13,7 @@ from sele_saisie_auto.utils import misc as utils_misc
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+import sele_saisie_auto.cli as cli  # noqa: E402
 import sele_saisie_auto.logger_utils as logger_utils  # noqa: E402
 from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
@@ -172,6 +173,13 @@ def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
     monkeypatch.setattr(sap, "LoginHandler", DummyLoginHandler)
     monkeypatch.setattr(sap, "DateEntryPage", DummyDateEntryPage)
     monkeypatch.setattr(sap, "AdditionalInfoPage", DummyAdditionalInfoPage)
+    monkeypatch.setattr(
+        cli,
+        "ConfigManager",
+        lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
+    )
+    monkeypatch.setattr("builtins.input", lambda prompt="": "user")
+    monkeypatch.setattr(cli.getpass, "getpass", lambda prompt="": "pass")
     from sele_saisie_auto.resources import resource_manager as rm
 
     if patch_services:

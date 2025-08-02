@@ -18,6 +18,7 @@ from selenium.common.exceptions import (  # noqa: E402
     WebDriverException,
 )
 
+import sele_saisie_auto.cli as cli  # noqa: E402
 from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
 
 pytestmark = pytest.mark.slow
@@ -93,6 +94,13 @@ def setup_init(monkeypatch, cfg):
     app_cfg = AppConfig.from_raw(AppConfigRaw(cfg))
     monkeypatch.setattr(sap, "set_log_file_selenium", lambda lf: None)
     monkeypatch.setattr(sap, "SharedMemoryService", lambda logger: DummySHMService())
+    monkeypatch.setattr(
+        cli,
+        "ConfigManager",
+        lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
+    )
+    monkeypatch.setattr("builtins.input", lambda prompt="": "user")
+    monkeypatch.setattr(cli.getpass, "getpass", lambda prompt="": "pass")
     from sele_saisie_auto.configuration import Services
     from sele_saisie_auto.resources import resource_manager as rm
     from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 from typing import cast
 
 import sele_saisie_auto.shared_utils as shared_utils
@@ -68,6 +69,22 @@ def main(argv: list[str] | None = None) -> None:
 
         service_configurator = service_configurator_factory(cfg)
         services = service_configurator.build_services(log_file)
+
+        enc = services.encryption_service
+        if not getattr(cfg, "encrypted_login", None) or not getattr(
+            cfg, "encrypted_mdp", None
+        ):
+            login = input("Login: ")
+            password = getpass.getpass("Password: ")
+            cle_aes = getattr(enc, "cle_aes", None)
+            if cle_aes is None:
+                enc.__enter__()
+                cle_aes = enc.cle_aes
+            if cle_aes is None:  # pragma: no cover - defensive
+                raise RuntimeError("AES key not initialized")
+            data_login = enc.chiffrer_donnees(login, cle_aes)
+            data_pwd = enc.chiffrer_donnees(password, cle_aes)
+            enc.store_credentials(data_login, data_pwd)
 
         automation = PSATimeAutomation(
             log_file,
