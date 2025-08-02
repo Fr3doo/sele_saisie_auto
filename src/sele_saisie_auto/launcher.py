@@ -7,11 +7,13 @@ import multiprocessing
 import tkinter as tk
 from multiprocessing import shared_memory
 from tkinter import messagebox, ttk
-from typing import cast
+from typing import Callable, cast
 
 from sele_saisie_auto import cli, messages, saisie_automatiser_psatime
+from sele_saisie_auto.app_config import AppConfig
+from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.config_manager import ConfigManager
-from sele_saisie_auto.configuration import service_configurator_factory
+from sele_saisie_auto.configuration import Services, service_configurator_factory
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.enums import LogLevel
 from sele_saisie_auto.gui_builder import (
@@ -31,6 +33,7 @@ from sele_saisie_auto.read_or_write_file_config_ini_utils import (
     read_config_ini,
     write_config_ini,
 )
+from sele_saisie_auto.resources.resource_manager import ResourceManager
 from sele_saisie_auto.shared_utils import get_log_file
 
 DEFAULT_SETTINGS = {"date_cible": "", "debug_mode": "INFO"}
@@ -71,6 +74,7 @@ def run_psatime(
     menu: tk.Tk,
     logger: Logger | None = None,
     *,
+    encryption_service: EncryptionService | Services | None = None,
     headless: bool = False,
     no_sandbox: bool = False,
 ) -> None:
@@ -78,39 +82,84 @@ def run_psatime(
     menu.destroy()
     if logger is None:
         with get_logger(log_file) as log:
-            log.info("Launching PSA time")
-            cfg = ConfigManager(log_file=log_file).load()
-            service_configurator = service_configurator_factory(cfg)
-            automation = saisie_automatiser_psatime.PSATimeAutomation(
+            _run_psa_time(
                 log_file,
-                cfg,
+                cfg_loader=lambda: ConfigManager(log_file=log_file).load(),
                 logger=log,
+                encryption_service=encryption_service,
+                headless=headless,
+                no_sandbox=no_sandbox,
             )
-            orchestrator = AutomationOrchestrator.from_components(
-                automation.resource_manager,
-                automation.page_navigator,
-                service_configurator,
-                automation.context,
-                cast(LoggerProtocol, automation.logger),
-            )
-            orchestrator.run(headless=headless, no_sandbox=no_sandbox)
     else:
-        logger.info("Launching PSA time")
-        cfg = ConfigManager(log_file=log_file).load()
-        service_configurator = service_configurator_factory(cfg)
-        automation = saisie_automatiser_psatime.PSATimeAutomation(
+        _run_psa_time(
             log_file,
-            cfg,
+            cfg_loader=lambda: ConfigManager(log_file=log_file).load(),
             logger=logger,
+            encryption_service=encryption_service,
+            headless=headless,
+            no_sandbox=no_sandbox,
         )
-        orchestrator = AutomationOrchestrator.from_components(
-            automation.resource_manager,
-            automation.page_navigator,
-            service_configurator,
-            automation.context,
-            cast(LoggerProtocol, automation.logger),
+
+
+def _run_psa_time(
+    log_file: str,
+    *,
+    cfg_loader: Callable[[], AppConfig],
+    logger: Logger,
+    encryption_service: EncryptionService | Services | None,
+    headless: bool,
+    no_sandbox: bool,
+) -> None:
+    """Internal helper to initialize automation."""
+    logger.info("Launching PSA time")
+    cfg: AppConfig = cfg_loader()
+    services: Services | None = None
+    memory_config = None
+    if isinstance(encryption_service, Services):
+        services = encryption_service
+        memory_config = services.encryption_service.memory_config
+        service_configurator = service_configurator_factory(
+            cfg, memory_config=memory_config
         )
-        orchestrator.run(headless=headless, no_sandbox=no_sandbox)
+    elif encryption_service is not None:
+        memory_config = encryption_service.memory_config  # type: ignore[attr-defined]
+        service_configurator = service_configurator_factory(
+            cfg, memory_config=memory_config
+        )
+        waiter = service_configurator.create_waiter()
+        browser_session = BrowserSession(log_file, cfg, waiter=waiter)
+        login_handler = service_configurator.create_login_handler(
+            log_file, encryption_service, browser_session  # type: ignore[arg-type]
+        )
+        services = Services(
+            encryption_service,  # type: ignore[arg-type]
+            browser_session,
+            waiter,
+            login_handler,
+        )
+    else:
+        service_configurator = service_configurator_factory(cfg)
+
+    automation = saisie_automatiser_psatime.PSATimeAutomation(
+        log_file,
+        cfg,
+        logger=logger,
+        services=services,
+    )
+    if services is not None:
+        automation.resource_manager = ResourceManager(
+            log_file,
+            services.encryption_service,
+            memory_config=services.encryption_service.memory_config,
+        )
+    orchestrator = AutomationOrchestrator.from_components(
+        automation.resource_manager,
+        automation.page_navigator,
+        service_configurator,
+        automation.context,
+        cast(LoggerProtocol, automation.logger),
+    )
+    orchestrator.run(headless=headless, no_sandbox=no_sandbox)
 
 
 def run_psatime_with_credentials(
@@ -144,6 +193,7 @@ def run_psatime_with_credentials(
         log_file,
         menu,
         logger=logger,
+        encryption_service=encryption_service,
         headless=headless,
         no_sandbox=no_sandbox,
     )
