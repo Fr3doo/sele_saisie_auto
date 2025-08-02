@@ -37,6 +37,13 @@ class SharedMemoryService:
         """Initialise le service avec un ``Logger`` déjà créé."""
         self.logger = logger
 
+    def ensure_clean_segment(self, name: str, size: int) -> None:
+        """Remove any existing segment named ``name`` and create a fresh one."""
+
+        seg = ensure_clean_segment(name, size)
+        seg.close()
+        seg.unlink()
+
     def stocker_en_memoire_partagee(
         self, nom: str, donnees: bytes
     ) -> shared_memory.SharedMemory:
