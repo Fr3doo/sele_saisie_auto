@@ -28,7 +28,9 @@ class ResourceContext:
         self._credentials: Credentials | None = None
 
     def __enter__(self) -> ResourceContext:
-        if hasattr(self.encryption_service, "__enter__"):
+        if getattr(self.encryption_service, "cle_aes", None) is None and hasattr(
+            self.encryption_service, "__enter__"
+        ):
             self.encryption_service.__enter__()
         return self
 

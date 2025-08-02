@@ -146,12 +146,6 @@ def _run_psa_time(
         logger=logger,
         services=services,
     )
-    if services is not None:
-        automation.resource_manager = ResourceManager(
-            log_file,
-            services.encryption_service,
-            memory_config=services.encryption_service.memory_config,
-        )
     orchestrator = AutomationOrchestrator.from_components(
         automation.resource_manager,
         automation.page_navigator,
