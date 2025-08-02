@@ -167,6 +167,31 @@ class EncryptionService:
                 self.cle_aes,
             )
             self._memoires.append(mem)
+        except FileExistsError:
+            self.logger.info(
+                "⚠️ Segment déjà présent, nettoyage puis nouvelle tentative"
+            )
+            try:
+                self.shared_memory_service.ensure_clean_segment(
+                    self.memory_config.cle_name,
+                    len(self.cle_aes),
+                )
+                mem = self.shared_memory_service.stocker_en_memoire_partagee(
+                    self.memory_config.cle_name,
+                    self.cle_aes,
+                )
+                self._memoires.append(mem)
+            except Exception as retry_exc:
+                if mem is not None:
+                    try:
+                        self.remove_shared_memory(mem)
+                    except Exception:  # nosec B110
+                        pass
+                self.cle_aes = None
+                self.logger.error(
+                    f"❌ Impossible d'initialiser la mémoire partagée : {retry_exc}"
+                )
+                raise
         except Exception as exc:
             if mem is not None:
                 try:
