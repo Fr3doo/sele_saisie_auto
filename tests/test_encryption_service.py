@@ -8,6 +8,7 @@ import pytest
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.encryption_utils import EncryptionService  # noqa: E402
+from sele_saisie_auto.exceptions import AutomationExitError  # noqa: E402
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.memory_config import MemoryConfig  # noqa: E402
 from sele_saisie_auto.shared_memory_service import SharedMemoryService  # noqa: E402
@@ -222,6 +223,17 @@ def test_retrieve_after_exit_fails():
 
     with pytest.raises(FileNotFoundError):
         service.retrieve_credentials()
+
+
+@pytest.mark.parametrize("missing", ["login", "password"])
+def test_retrieve_credentials_missing_segment(missing):
+    service = EncryptionService()
+    with service as enc:
+        enc.store_credentials(b"user", b"pass")
+        mem = enc._memoires[1 if missing == "login" else 2]
+        enc.remove_shared_memory(mem)
+        with pytest.raises(AutomationExitError, match="identifiants non trouvés"):
+            enc.retrieve_credentials()
 
 
 def test_enter_cleans_on_failure(monkeypatch):
