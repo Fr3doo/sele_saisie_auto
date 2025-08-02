@@ -9,6 +9,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.encryption_utils import EncryptionService  # noqa: E402
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
+from sele_saisie_auto.memory_config import MemoryConfig  # noqa: E402
 from sele_saisie_auto.shared_memory_service import SharedMemoryService  # noqa: E402
 
 
@@ -198,6 +199,22 @@ def test_full_encryption_shared_memory_flow():
             creds.mem_password.close()
 
 
+def test_custom_memory_config_names():
+    cfg = MemoryConfig(suffix="xyz")
+    service = EncryptionService(memory_config=cfg)
+
+    with service as enc:
+        enc.store_credentials(b"user", b"pass")
+        creds = enc.retrieve_credentials()
+        try:
+            assert creds.mem_login.name == cfg.login_name
+            assert creds.mem_password.name == cfg.password_name
+        finally:
+            creds.mem_key.close()
+            creds.mem_login.close()
+            creds.mem_password.close()
+
+
 def test_retrieve_after_exit_fails():
     service = EncryptionService()
     with service as enc:
@@ -232,4 +249,4 @@ def test_enter_cleans_on_failure(monkeypatch):
         with service:
             pass
     with pytest.raises(FileNotFoundError):
-        shared_memory.SharedMemory(name="memoire_partagee_cle")
+        shared_memory.SharedMemory(name=MemoryConfig().cle_name)

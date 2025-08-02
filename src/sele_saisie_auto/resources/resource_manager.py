@@ -15,6 +15,7 @@ from sele_saisie_auto.encryption_utils import Credentials, EncryptionService
 from sele_saisie_auto.exceptions import AutomationExitError, ResourceManagerInitError
 from sele_saisie_auto.interfaces import BrowserSessionProtocol
 from sele_saisie_auto.logging_service import Logger
+from sele_saisie_auto.memory_config import MemoryConfig
 from sele_saisie_auto.resources.resource_context import ResourceContext
 
 __all__ = ["ResourceManager"]
@@ -24,7 +25,11 @@ class ResourceManager:
     """Prépare et nettoie navigateur et mémoire pour l'automatisation."""
 
     def __init__(
-        self, log_file: str, encryption_service: EncryptionService | None = None
+        self,
+        log_file: str,
+        encryption_service: EncryptionService | None = None,
+        *,
+        memory_config: MemoryConfig | None = None,
     ) -> None:
         """Initialise le gestionnaire.
 
@@ -34,8 +39,12 @@ class ResourceManager:
 
         self.log_file = log_file
         self._config_manager = ConfigManager(log_file)
-        self._encryption_service = encryption_service or EncryptionService(log_file)
-        self._resource_context = ResourceContext(log_file, self._encryption_service)
+        self._encryption_service = encryption_service or EncryptionService(
+            log_file, memory_config=memory_config
+        )
+        self._resource_context = ResourceContext(
+            log_file, self._encryption_service, memory_config=memory_config
+        )
         self._credentials: Credentials | None = None
         self._session: BrowserSessionProtocol | None = None
         self._driver: WebDriver | None = None

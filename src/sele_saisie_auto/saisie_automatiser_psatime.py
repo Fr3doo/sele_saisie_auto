@@ -151,7 +151,9 @@ class PSATimeAutomation:
 
         # Initialise orchestrator helpers
         self.page_navigator = self._create_page_navigator()
-        self.resource_manager = ResourceManager(log_file)
+        self.resource_manager = ResourceManager(
+            log_file, memory_config=self.memory_config
+        )
         self.orchestrator: AutomationOrchestrator | None = None
 
         self.log_configuration_details()
@@ -234,7 +236,9 @@ class PSATimeAutomation:
     def _init_services(self, app_config: AppConfig) -> Services:
         """Initialise les services principaux via :class:`ServiceConfigurator`."""
 
-        configurator = service_configurator_factory(app_config)
+        configurator = service_configurator_factory(
+            app_config, memory_config=self.memory_config
+        )
         return configurator.build_services(self.log_file)
 
     def _create_page_navigator(self) -> PageNavigator:
@@ -470,7 +474,9 @@ class PSATimeAutomation:
     ) -> None:
         """Point d'entrée principal de l'automatisation."""
 
-        service_configurator = service_configurator_factory(self.context.config)
+        service_configurator = service_configurator_factory(
+            self.context.config, memory_config=self.memory_config
+        )
         self.orchestrator = AutomationOrchestrator.from_components(
             self.resource_manager,
             self.page_navigator,

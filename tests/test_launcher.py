@@ -5,6 +5,8 @@ from pathlib import Path
 
 import pytest
 
+from sele_saisie_auto.memory_config import MemoryConfig
+
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 pytestmark = pytest.mark.slow
@@ -36,9 +38,10 @@ class DummyVar:
 
 
 class DummyEncryption:
-    def __init__(self):
+    def __init__(self, memory_config=None):
         self.encrypted = []
         self.stored = []
+        self.memory_config = memory_config or MemoryConfig()
         self.shared_memory_service = types.SimpleNamespace(
             stocker_en_memoire_partagee=lambda name, data: self.stored.append(
                 (name, data)
@@ -60,8 +63,8 @@ class DummyEncryption:
         return b"k" * size
 
     def store_credentials(self, login, pwd):
-        self.stored.append(("memoire_nom", login))
-        self.stored.append(("memoire_mdp", pwd))
+        self.stored.append((self.memory_config.login_name, login))
+        self.stored.append((self.memory_config.password_name, pwd))
 
 
 class DummyRoot:
@@ -149,7 +152,7 @@ def test_run_psatime(monkeypatch, dummy_logger, sample_config):
     monkeypatch.setattr(
         launcher,
         "service_configurator_factory",
-        lambda conf: types.SimpleNamespace(build_services=lambda lf: None),
+        lambda conf, **kw: types.SimpleNamespace(build_services=lambda lf: None),
     )
     automation_instance = {}
 
@@ -215,7 +218,7 @@ def test_run_psatime_flags(monkeypatch, dummy_logger, sample_config):
     monkeypatch.setattr(
         launcher,
         "service_configurator_factory",
-        lambda conf: types.SimpleNamespace(build_services=lambda lf: None),
+        lambda conf, **kw: types.SimpleNamespace(build_services=lambda lf: None),
     )
 
     inst = DummyAutomation("file.html", app_cfg, logger=dummy_logger)
