@@ -68,8 +68,23 @@ poetry run psatime-launcher
 Une interface graphique Tkinter demande vos identifiants, les chiffre en mémoire et déclenche ensuite l'automatisation Selenium.
 Lors du démarrage, une clé AES temporaire est générée pour chiffrer ces informations dans la mémoire partagée. Aucun identifiant n'est sauvegardé sur disque.
 
-Les segments de mémoire partagée restés après une exécution précédente sont supprimés automatiquement au lancement. Pour effectuer uniquement ce nettoyage sans démarrer l'automatisation, utilisez l'option `--cleanup-mem` :
 
+## ⚙️ Utilisation avancée
+- Configuration dans `config.ini`
+- Logs générés dans le dossier `logs/`
+
+- Exécution sans interface :
+  ```bash
+  poetry run psatime-auto
+  ```
+  Cette commande crée automatiquement un fichier de log dans le répertoire `logs/` si aucun chemin n'est spécifié.
+  Pour ajuster le lancement du navigateur, les commandes `psatime-auto` et `psatime-launcher` acceptent aussi : 
+  - `--headless`
+  - `--no-sandbox`
+  - `--cleanup-mem`
+
+Au démarrage, l'outil supprime automatiquement les segments de mémoire partagée restés d'une exécution précédente. 
+Si un plantage laisse des segments orphelins, il est possible de les effacer manuellement :
 ```bash
 poetry run psatime-auto --cleanup-mem
 ```
@@ -81,18 +96,6 @@ from sele_saisie_auto.memory_config import MemoryConfig
 mem_cfg = MemoryConfig.with_pid()  # ou MemoryConfig(suffix="demo")
 ```
 
-
-## ⚙️ Utilisation avancée
-- Configuration dans `config.ini`
-- Logs générés dans le dossier `logs/`
-- Exécution sans interface :
-  ```bash
-  poetry run psatime-auto
-  ```
-  Cette commande crée automatiquement un fichier de log dans le répertoire
-  `logs/` si aucun chemin n'est spécifié.
-  Les commandes `psatime-auto` et `psatime-launcher` acceptent aussi
-  `--headless` et `--no-sandbox` pour ajuster le lancement du navigateur.
 Exemple minimal en Python :
 ```python
 from sele_saisie_auto.navigation import PageNavigator
