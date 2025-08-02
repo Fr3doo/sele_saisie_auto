@@ -8,6 +8,7 @@ from typing import Protocol, runtime_checkable
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
 
+from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.logging_service import get_logger
 from sele_saisie_auto.memory_config import MemoryConfig
@@ -243,23 +244,29 @@ class EncryptionService:
         )
         write_log(f"💀 Clé AES récupérée : {aes_key.hex()}", self.log_file, "CRITICAL")
 
-        mem_login = shared_memory.SharedMemory(name=self.memory_config.login_name)
-        taille_nom = len(bytes(mem_login.buf).rstrip(b"\x00"))
-        login = bytes(mem_login.buf[:taille_nom])
-        write_log(
-            f"💀 Taille du login chiffré : {len(login)}",
-            self.log_file,
-            "CRITICAL",
-        )
+        try:
+            mem_login = shared_memory.SharedMemory(name=self.memory_config.login_name)
+            taille_nom = len(bytes(mem_login.buf).rstrip(b"\x00"))
+            login = bytes(mem_login.buf[:taille_nom])
+            write_log(
+                f"💀 Taille du login chiffré : {len(login)}",
+                self.log_file,
+                "CRITICAL",
+            )
 
-        mem_pwd = shared_memory.SharedMemory(name=self.memory_config.password_name)
-        taille_pwd = len(bytes(mem_pwd.buf).rstrip(b"\x00"))
-        password = bytes(mem_pwd.buf[:taille_pwd])
-        write_log(
-            f"💀 Taille du mot de passe chiffré : {len(password)}",
-            self.log_file,
-            "CRITICAL",
-        )
+            mem_pwd = shared_memory.SharedMemory(name=self.memory_config.password_name)
+            taille_pwd = len(bytes(mem_pwd.buf).rstrip(b"\x00"))
+            password = bytes(mem_pwd.buf[:taille_pwd])
+            write_log(
+                f"💀 Taille du mot de passe chiffré : {len(password)}",
+                self.log_file,
+                "CRITICAL",
+            )
+        except FileNotFoundError as exc:
+            msg = "identifiants non trouvés : lancez d'abord psatime-launcher"
+            self.logger.error(msg)
+            self.remove_shared_memory(mem_key)
+            raise AutomationExitError(msg) from exc
 
         return Credentials(
             aes_key=aes_key,
