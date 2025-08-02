@@ -1,7 +1,7 @@
 # src\sele_saisie_auto\navigation\page_navigator.py
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
@@ -10,14 +10,13 @@ from sele_saisie_auto.interfaces import (
     AdditionalInfoPageProtocol,
     BrowserSessionProtocol,
     DateEntryPageProtocol,
-    LoggerProtocol,
     LoginHandlerProtocol,
     TimeSheetHelperProtocol,
 )
 from sele_saisie_auto.selenium_utils import detecter_doublons_jours
 
 if TYPE_CHECKING:
-    from sele_saisie_auto.saisie_automatiser_psatime import PSATimeAutomation
+    pass
 
 __all__ = ["PageNavigator"]
 

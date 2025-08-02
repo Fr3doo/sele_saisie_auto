@@ -6,7 +6,6 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 import pytest  # noqa: E402
 
-from sele_saisie_auto.app_config import AppConfig, AppConfigRaw  # noqa: E402
 from sele_saisie_auto.encryption_utils import Credentials  # noqa: E402
 from sele_saisie_auto.navigation import page_navigator as pn_mod  # noqa: E402
 from sele_saisie_auto.navigation.page_navigator import PageNavigator  # noqa: E402

@@ -22,7 +22,7 @@ from sele_saisie_auto.selenium_utils import (
 )
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter, get_waiter
 from sele_saisie_auto.shared_utils import get_log_file
-from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
+from sele_saisie_auto.timeouts import LONG_TIMEOUT
 
 
 class SeleniumDriverManager:

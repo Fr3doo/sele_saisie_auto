@@ -24,13 +24,13 @@ class MemoryConfig:
                 setattr(self, field, f"{value}_{self.suffix}")
 
     @classmethod
-    def with_pid(cls, pid: int | None = None) -> "MemoryConfig":
+    def with_pid(cls, pid: int | None = None) -> MemoryConfig:
         """Return a config using the given process id as suffix."""
 
         return cls(suffix=str(pid or os.getpid()))
 
     @classmethod
-    def with_uuid(cls) -> "MemoryConfig":
+    def with_uuid(cls) -> MemoryConfig:
         """Return a config using a random UUID as suffix."""
 
         return cls(suffix=uuid4().hex)

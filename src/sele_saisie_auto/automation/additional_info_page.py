@@ -161,7 +161,6 @@ class AdditionalInfoPage:
         self, driver: WebDriver
     ) -> bool:
         """Open the modal to fill additional informations."""
-        from sele_saisie_auto import saisie_automatiser_psatime as sap
 
         try:
             self.wait_for_dom(driver)
@@ -260,7 +259,6 @@ class AdditionalInfoPage:
     @handle_selenium_errors(default_return=False)
     def save_draft_and_validate(self, driver: WebDriver) -> bool:
         """Click the save draft button and wait for completion."""
-        from sele_saisie_auto import saisie_automatiser_psatime as sap
 
         try:
             element_present = self.waiter.wait_for_element(
