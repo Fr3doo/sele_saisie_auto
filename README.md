@@ -77,8 +77,8 @@ Lors du démarrage, une clé AES temporaire est générée pour chiffrer ces inf
   ```bash
   poetry run psatime-auto
   ```
-  Cette commande crée automatiquement un fichier de log dans le répertoire `logs/` si aucun chemin n'est spécifié.
-  Pour ajuster le lancement du navigateur, les commandes `psatime-auto` et `psatime-launcher` acceptent aussi : 
+  Cette commande utilise le point d'entrée Python `sele_saisie_auto.cli.main` et crée automatiquement un fichier de log dans le répertoire `logs/` si aucun chemin n'est spécifié.
+  Pour ajuster le lancement du navigateur, les commandes `psatime-auto` et `psatime-launcher` acceptent aussi :
   - `--headless`
   - `--no-sandbox`
   - `--cleanup-mem`

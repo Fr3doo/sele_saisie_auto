@@ -54,7 +54,7 @@ strict = true
 
 [tool.poetry.scripts]
 psatime-launcher = "sele_saisie_auto.launcher:main"
-psatime-auto = "sele_saisie_auto.cli:cli_main"
+psatime-auto = "sele_saisie_auto.cli:main"
 
 [tool.ruff]
 line-length = 88

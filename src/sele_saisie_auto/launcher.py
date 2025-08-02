@@ -122,17 +122,17 @@ def _run_psa_time(
             cfg, memory_config=memory_config
         )
     elif encryption_service is not None:
-        memory_config = encryption_service.memory_config  # type: ignore[attr-defined]
+        memory_config = encryption_service.memory_config
         service_configurator = service_configurator_factory(
             cfg, memory_config=memory_config
         )
         waiter = service_configurator.create_waiter()
         browser_session = BrowserSession(log_file, cfg, waiter=waiter)
         login_handler = service_configurator.create_login_handler(
-            log_file, encryption_service, browser_session  # type: ignore[arg-type]
+            log_file, encryption_service, browser_session
         )
         services = Services(
-            encryption_service,  # type: ignore[arg-type]
+            encryption_service,
             browser_session,
             waiter,
             login_handler,
