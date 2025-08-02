@@ -151,8 +151,8 @@ def test_run_psatime(monkeypatch, dummy_logger, sample_config):
     app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
 
     class DummyAutomation:
-        def __init__(self, log_file, cfg_loaded, logger=None):
-            self.called = (log_file, cfg_loaded, logger)
+        def __init__(self, log_file, cfg_loaded, logger=None, services=None):
+            self.called = (log_file, cfg_loaded, logger, services)
             self.resource_manager = object()
             self.page_navigator = object()
             self.context = types.SimpleNamespace()
@@ -221,7 +221,7 @@ def test_run_psatime_flags(monkeypatch, dummy_logger, sample_config):
     app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
 
     class DummyAutomation:
-        def __init__(self, log_file, cfg_loaded, logger=None):
+        def __init__(self, log_file, cfg_loaded, logger=None, services=None):
             self.resource_manager = object()
             self.page_navigator = object()
             self.context = types.SimpleNamespace()
@@ -273,6 +273,87 @@ def test_run_psatime_flags(monkeypatch, dummy_logger, sample_config):
     assert orch.run_args == (True, True)
 
 
+def test_run_psatime_reuses_encryption_service(
+    monkeypatch, dummy_logger, sample_config
+):
+    launcher = import_launcher(monkeypatch)
+    menu = DummyMenu()
+    from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
+
+    app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
+    enc = DummyEncryption()
+    enc.cle_aes = b"k" * 32
+
+    class DummyConfigurator:
+        def __init__(self, cfg, **kw):
+            self.cfg = cfg
+
+        def create_encryption_service(
+            self, *a, **k
+        ):  # pragma: no cover - should not be called
+            raise AssertionError("should not create new encryption service")
+
+        def create_waiter(self):
+            return object()
+
+        def create_login_handler(self, *a, **k):
+            return object()
+
+        def __getattr__(self, name):
+            if name == "create_browser_session":
+                return lambda log_file: object()
+            raise AttributeError(name)
+
+    monkeypatch.setattr(
+        launcher,
+        "ConfigManager",
+        lambda log_file=None: types.SimpleNamespace(load=lambda: app_cfg),
+    )
+    monkeypatch.setattr(
+        launcher,
+        "service_configurator_factory",
+        lambda conf, **kw: DummyConfigurator(conf),
+    )
+
+    services_used = {}
+
+    class DummyAutomation:
+        def __init__(self, log_file, cfg_loaded, logger=None, services=None):
+            services_used["svc"] = services
+            self.resource_manager = launcher.ResourceManager(
+                log_file, encryption_service=services.encryption_service
+            )
+            self.page_navigator = object()
+            self.context = types.SimpleNamespace()
+            self.logger = logger
+
+    class DummyOrchestrator:
+        def __init__(self):
+            pass
+
+        @classmethod
+        def from_components(cls, *a, **k):
+            return cls()
+
+        def run(self, headless=False, no_sandbox=False):
+            return None
+
+    monkeypatch.setattr(
+        launcher.saisie_automatiser_psatime,
+        "PSATimeAutomation",
+        DummyAutomation,
+    )
+    monkeypatch.setattr(
+        launcher,
+        "AutomationOrchestrator",
+        types.SimpleNamespace(from_components=lambda *a, **k: DummyOrchestrator()),
+    )
+
+    launcher.run_psatime("file.html", menu, logger=dummy_logger, encryption_service=enc)
+
+    assert services_used["svc"].encryption_service is enc
+
+
 def test_run_psatime_with_credentials(monkeypatch):
     launcher = import_launcher(monkeypatch)
     enc = DummyEncryption()
@@ -285,13 +366,19 @@ def test_run_psatime_with_credentials(monkeypatch):
     monkeypatch.setattr(
         launcher,
         "run_psatime",
-        lambda lf, m, logger=None, **kw: run_called.setdefault("run", (lf, kw)),
+        lambda lf, m, logger=None, encryption_service=None, **kw: run_called.setdefault(
+            "run", (lf, kw, encryption_service)
+        ),
     )
     launcher.run_psatime_with_credentials(enc, login, pwd, "log", menu, logger=None)
 
     assert ("memoire_nom", b"user") in enc.stored
     assert ("memoire_mdp", b"pass") in enc.stored
-    assert run_called["run"] == ("log", {"headless": False, "no_sandbox": False})
+    assert run_called["run"] == (
+        "log",
+        {"headless": False, "no_sandbox": False},
+        enc,
+    )
 
 
 def test_run_psatime_with_credentials_flags(monkeypatch):
@@ -303,8 +390,8 @@ def test_run_psatime_with_credentials_flags(monkeypatch):
     menu = DummyMenu()
     run_called = {}
 
-    def fake_run(lf, m, logger=None, **kw):
-        run_called["call"] = (lf, kw)
+    def fake_run(lf, m, logger=None, encryption_service=None, **kw):
+        run_called["call"] = (lf, kw, encryption_service)
 
     monkeypatch.setattr(launcher, "run_psatime", fake_run)
     launcher.run_psatime_with_credentials(
@@ -317,7 +404,11 @@ def test_run_psatime_with_credentials_flags(monkeypatch):
         no_sandbox=True,
     )
 
-    assert run_called["call"] == ("log", {"headless": True, "no_sandbox": True})
+    assert run_called["call"] == (
+        "log",
+        {"headless": True, "no_sandbox": True},
+        enc,
+    )
 
 
 def test_run_psatime_with_credentials_missing(monkeypatch):
