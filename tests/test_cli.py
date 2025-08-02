@@ -17,6 +17,7 @@ def test_help_displays_new_options(capsys):
     assert "Automate PSA Time" in out
     assert "--headless" in out
     assert "--no-sandbox" in out
+    assert "--cleanup-mem" in out
 
 
 def test_version_option(capsys):
@@ -31,9 +32,17 @@ def test_parse_flags():
     assert args.headless is True
     assert args.no_sandbox is True
 
+    args = cli.parse_args(["--cleanup-mem"])
+    assert args.cleanup_mem is True
+
 
 def test_main_creates_services_and_passes_flags(monkeypatch):
-    dummy_args = types.SimpleNamespace(log_level=None, headless=True, no_sandbox=True)
+    dummy_args = types.SimpleNamespace(
+        log_level=None,
+        headless=True,
+        no_sandbox=True,
+        cleanup_mem=False,
+    )
     monkeypatch.setattr(cli, "parse_args", lambda argv: dummy_args)
     monkeypatch.setattr(cli, "get_log_file", lambda: "log.html")
 
@@ -106,3 +115,25 @@ def test_main_creates_services_and_passes_flags(monkeypatch):
     assert "from_components" in auto_data
     assert auto_data["run"] == (True, True)
     assert auto_data["enter"] and auto_data["exit"]
+
+
+def test_main_cleanup_flag(monkeypatch):
+    dummy_args = types.SimpleNamespace(
+        log_level=None,
+        headless=False,
+        no_sandbox=False,
+        cleanup_mem=True,
+    )
+    monkeypatch.setattr(cli, "parse_args", lambda argv: dummy_args)
+    called = {}
+    import sele_saisie_auto.launcher as launcher
+
+    monkeypatch.setattr(
+        launcher,
+        "cleanup_memory_segments",
+        lambda: called.setdefault("clean", True),
+    )
+
+    cli.main([])
+
+    assert called["clean"] is True
