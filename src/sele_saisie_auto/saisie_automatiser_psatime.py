@@ -117,7 +117,10 @@ class PSATimeAutomation:
         """Initialise la configuration et les dépendances."""
 
         self.log_file: str = log_file
-        self.memory_config = memory_config or MemoryConfig()
+        mem_cfg = memory_config
+        if mem_cfg is None and services is not None:
+            mem_cfg = services.encryption_service.memory_config
+        self.memory_config = mem_cfg or MemoryConfig()
         LoggingConfigurator.setup(log_file, app_config.debug_mode, app_config.raw)
         self.logger = logger or get_logger(log_file)
         self.shared_memory_service = shared_memory_service or SharedMemoryService(
@@ -149,7 +152,9 @@ class PSATimeAutomation:
         # Initialise orchestrator helpers
         self.page_navigator = self._create_page_navigator()
         self.resource_manager = ResourceManager(
-            log_file, memory_config=self.memory_config
+            log_file,
+            encryption_service=self.encryption_service,
+            memory_config=self.memory_config,
         )
         self.orchestrator: AutomationOrchestrator | None = None
 
