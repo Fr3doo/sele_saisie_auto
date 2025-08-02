@@ -141,7 +141,7 @@ def test_main_cleanup_flag(monkeypatch):
     assert called["clean"] is True
 
 
-def test_cleanup_mem_flag_removes_segments(monkeypatch):
+def test_cleanup_mem_flag_removes_segments_and_skips_automation(monkeypatch):
     dummy_args = types.SimpleNamespace(
         log_level=None,
         headless=False,
@@ -170,9 +170,16 @@ def test_cleanup_mem_flag_removes_segments(monkeypatch):
         "cleanup_memory_segments",
         lambda: orig_cleanup(mem_cfg),
     )
+    called: dict[str, bool] = {}
+    monkeypatch.setattr(
+        cli,
+        "PSATimeAutomation",
+        lambda *a, **k: called.setdefault("automation", True),
+    )
 
     cli.main([])
 
+    assert "automation" not in called
     for name in leftovers:
         with pytest.raises(FileNotFoundError):
             shared_memory.SharedMemory(name=name)

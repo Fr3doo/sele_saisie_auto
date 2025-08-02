@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from typing import cast
 
+import sele_saisie_auto.shared_utils as shared_utils
 from sele_saisie_auto import __version__
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import service_configurator_factory
@@ -92,21 +93,15 @@ def cli_main(
 ) -> None:
     """Entry point used by the ``psatime-auto`` console script."""
 
-    if log_file is None:
-        log_file = get_log_file()
+    if log_file is not None:
+        shared_utils._log_file = log_file
 
-    with get_logger(log_file) as logger:
-        cfg = ConfigManager(log_file=log_file).load()
-        service_configurator = service_configurator_factory(cfg)
-        automation = PSATimeAutomation(log_file, cfg, logger=logger)
-        orchestrator = AutomationOrchestrator.from_components(
-            automation.resource_manager,
-            automation.page_navigator,
-            service_configurator,
-            automation.context,
-            cast(LoggerProtocol, automation.logger),
-        )
-        orchestrator.run(headless=headless, no_sandbox=no_sandbox)
+    argv: list[str] = []
+    if headless:
+        argv.append("--headless")
+    if no_sandbox:
+        argv.append("--no-sandbox")
+    main(argv)
 
 
 __all__ = ["parse_args", "main", "cli_main"]
