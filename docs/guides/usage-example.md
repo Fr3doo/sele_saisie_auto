@@ -67,3 +67,19 @@ Vous pouvez aussi prédéfinir la variable d'environnement ``PSATIME_AES_KEY``
 pour fournir votre propre clé (format hexadécimal ou Base64). Si cette variable
 est absente, la clé est créée à chaque exécution puis effacée à la fermeture
 du programme.
+
+### Nettoyage automatique et segments personnalisés
+
+Au démarrage, l'outil supprime les segments de mémoire partagée laissés par une exécution précédente afin de garantir l'absence de données sensibles. Pour lancer uniquement cette opération de nettoyage :
+
+```bash
+poetry run psatime-auto --cleanup-mem
+```
+
+Les noms des segments peuvent être adaptés avec ``MemoryConfig`` si plusieurs sessions coexistent :
+
+```python
+from sele_saisie_auto.memory_config import MemoryConfig
+mem_cfg = MemoryConfig.with_pid()  # ou MemoryConfig.with_uuid()
+```
+

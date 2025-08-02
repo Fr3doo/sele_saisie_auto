@@ -39,6 +39,28 @@ class DummyVar:
         self.value = val
 
 
+def test_cleanup_memory_segments(monkeypatch):
+    launcher = import_launcher(monkeypatch)
+    mem_cfg = MemoryConfig.with_uuid()
+    leftovers = []
+    for name in (
+        mem_cfg.cle_name,
+        mem_cfg.data_name,
+        mem_cfg.login_name,
+        mem_cfg.password_name,
+    ):
+        seg = shared_memory.SharedMemory(create=True, size=1, name=name)
+        seg.buf[:1] = b"x"
+        seg.close()
+        leftovers.append(name)
+
+    launcher.cleanup_memory_segments(mem_cfg)
+
+    for name in leftovers:
+        with pytest.raises(FileNotFoundError):
+            shared_memory.SharedMemory(name=name)
+
+
 class DummyEncryption:
     def __init__(self, memory_config=None):
         self.encrypted = []
