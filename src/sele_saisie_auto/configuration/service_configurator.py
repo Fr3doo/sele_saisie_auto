@@ -17,6 +17,7 @@ from sele_saisie_auto.interfaces import (
     LoginHandlerProtocol,
     WaiterProtocol,
 )
+from sele_saisie_auto.memory_config import MemoryConfig
 from sele_saisie_auto.selenium_utils import Waiter
 
 
@@ -34,9 +35,12 @@ class ServiceConfigurator:
     """Configure core services based on :class:`AppConfig`."""
 
     @classmethod
-    def from_config(cls, app_config: AppConfig) -> ServiceConfigurator:
+    def from_config(
+        cls, app_config: AppConfig, *, memory_config: MemoryConfig | None = None
+    ) -> ServiceConfigurator:
         """Return a configurator for ``app_config``."""
-        return cls(app_config)
+
+        return cls(app_config, memory_config=memory_config)
 
     def __init__(
         self,
@@ -49,11 +53,13 @@ class ServiceConfigurator:
             ]
             | None
         ) = None,
+        memory_config: MemoryConfig | None = None,
     ) -> None:
         self._validate_app_config(app_config)
         self.app_config = app_config
         self.encryption_backend = encryption_backend
         self.login_handler_cls = login_handler_cls or LoginHandler
+        self.memory_config = memory_config or MemoryConfig()
 
     # --------------------------------------------------------------
     # Internal helpers
@@ -77,7 +83,11 @@ class ServiceConfigurator:
         """Return a new :class:`EncryptionService`."""
 
         backend = self.encryption_backend or DefaultEncryptionBackend(log_file)
-        return EncryptionService(log_file, backend=backend)
+        return EncryptionService(
+            log_file,
+            backend=backend,
+            memory_config=self.memory_config,
+        )
 
     def create_waiter(self) -> Waiter:
         """Return a configured :class:`Waiter`."""
@@ -129,6 +139,7 @@ def build_services(
     app_config: AppConfig,
     log_file: str,
     encryption_backend: EncryptionBackend | None = None,
+    memory_config: MemoryConfig | None = None,
 ) -> Services:
     """Instancier et retourner les services principaux de l'application.
 
@@ -152,7 +163,9 @@ def build_services(
         Instance de :class:`Services` regroupant ``encryption_service``,
         ``browser_session``, ``waiter`` et ``login_handler`` prêts à être utilisés.
     """
-    configurator = ServiceConfigurator(app_config, encryption_backend)
+    configurator = ServiceConfigurator(
+        app_config, encryption_backend, memory_config=memory_config
+    )
     return configurator.build_services(log_file)
 
 

@@ -191,7 +191,9 @@ def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
                 return Services(enc, session, waiter, login)
 
         monkeypatch.setattr(
-            sap, "service_configurator_factory", lambda cfg_b: DummyConfigurator(cfg_b)
+            sap,
+            "service_configurator_factory",
+            lambda cfg_b, **kw: DummyConfigurator(cfg_b),
         )
         waiter = create_waiter(get_default_timeout(app_cfg))
         monkeypatch.setattr(
@@ -207,13 +209,17 @@ def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
         monkeypatch.setattr(
             sap,
             "ResourceManager",
-            lambda log_file: rm.ResourceManager(log_file, FakeEncryptionService()),
+            lambda log_file, **kw: rm.ResourceManager(
+                log_file, FakeEncryptionService()
+            ),
         )
     else:
         monkeypatch.setattr(
             sap,
             "ResourceManager",
-            lambda log_file: rm.ResourceManager(log_file, FakeEncryptionService()),
+            lambda log_file, **kw: rm.ResourceManager(
+                log_file, FakeEncryptionService()
+            ),
         )
     auto = sap.PSATimeAutomation("log.html", app_cfg)
     service_configurator = ServiceConfigurator(app_cfg)
@@ -281,6 +287,15 @@ def test_initialize_sets_globals(monkeypatch, sample_config):
     assert isinstance(sap._AUTOMATION.memory_config, MemoryConfig)
 
 
+def test_custom_memory_config_injection(monkeypatch, sample_config):
+    from sele_saisie_auto.app_config import AppConfig, AppConfigRaw
+
+    app_cfg = AppConfig.from_raw(AppConfigRaw(sample_config))
+    mem_cfg = MemoryConfig(suffix="test")
+    auto = sap.PSATimeAutomation("log.html", app_cfg, memory_config=mem_cfg)
+    assert auto.encryption_service.memory_config is mem_cfg
+
+
 def test_init_services(monkeypatch, sample_config):
     from sele_saisie_auto.configuration import Services
 
@@ -296,7 +311,7 @@ def test_init_services(monkeypatch, sample_config):
             return dummy
 
     monkeypatch.setattr(
-        sap, "service_configurator_factory", lambda cfg: DummyConfigurator(cfg)
+        sap, "service_configurator_factory", lambda cfg, **kw: DummyConfigurator(cfg)
     )
 
     setup_init(monkeypatch, sample_config, patch_services=False)

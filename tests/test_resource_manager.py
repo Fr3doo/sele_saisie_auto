@@ -44,7 +44,7 @@ class DummyBrowserSession:
 
 
 class DummyResourceContext:
-    def __init__(self, log_file, encryption_service=None):
+    def __init__(self, log_file, encryption_service=None, **kwargs):
         self.log_file = log_file
         self.encryption_service = encryption_service
         self.ctx_entered = False
@@ -337,7 +337,7 @@ def test_exit_uses_shared_memory_service(monkeypatch):
     monkeypatch.setattr(
         resource_manager,
         "ResourceContext",
-        lambda log_file, encryption_service=None: enc,
+        lambda log_file, encryption_service=None, **kw: enc,
     )
 
     with resource_manager.ResourceManager(
@@ -350,8 +350,8 @@ def test_exit_uses_shared_memory_service(monkeypatch):
 
 def test_close_removes_shared_memory_segments(monkeypatch):
     class CleanResourceContext(DummyResourceContext):
-        def __init__(self, log_file, encryption_service=None):
-            super().__init__(log_file, encryption_service)
+        def __init__(self, log_file, encryption_service=None, **kwargs):
+            super().__init__(log_file, encryption_service, **kwargs)
             self.shared_memory_service = SharedMemoryService(Logger(None))
 
         def __enter__(self):

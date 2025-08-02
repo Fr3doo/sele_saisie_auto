@@ -110,7 +110,9 @@ def setup_init(monkeypatch, cfg):
             return Services(enc, session, waiter, login)
 
     monkeypatch.setattr(
-        sap, "service_configurator_factory", lambda cfg_b: DummyConfigurator(cfg_b)
+        sap,
+        "service_configurator_factory",
+        lambda cfg_b, **kw: DummyConfigurator(cfg_b),
     )
     waiter = create_waiter(get_default_timeout(app_cfg))
     monkeypatch.setattr(
@@ -126,7 +128,7 @@ def setup_init(monkeypatch, cfg):
     monkeypatch.setattr(
         sap,
         "ResourceManager",
-        lambda log_file: rm.ResourceManager(log_file, DummyEnc()),
+        lambda log_file, **kw: rm.ResourceManager(log_file, DummyEnc()),
     )
     auto = sap.PSATimeAutomation("log.html", app_cfg)
     service_configurator = ServiceConfigurator(app_cfg)

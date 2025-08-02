@@ -10,6 +10,7 @@ from cryptography.hazmat.primitives.padding import PKCS7
 
 from sele_saisie_auto.logger_utils import write_log
 from sele_saisie_auto.logging_service import get_logger
+from sele_saisie_auto.memory_config import MemoryConfig
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.shared_utils import get_log_file
 
@@ -112,11 +113,13 @@ class EncryptionService:
         log_file: str | None = None,
         shared_memory_service: SharedMemoryService | None = None,
         backend: EncryptionBackend | None = None,
+        memory_config: MemoryConfig | None = None,
     ) -> None:
         """Prépare le service de chiffrement."""
         # Toujours fournir un chemin de fichier valide à ``write_log``
         self.log_file: str = log_file if log_file is not None else get_log_file()
         self.backend = backend or DefaultEncryptionBackend(log_file)
+        self.memory_config = memory_config or MemoryConfig()
         if shared_memory_service is None:
             logger = get_logger(log_file)
             self.shared_memory_service = SharedMemoryService(logger)
@@ -156,11 +159,11 @@ class EncryptionService:
 
     def __enter__(self) -> "EncryptionService":
         """Generate and store the AES key in shared memory."""
-        self.cle_aes = self.generer_cle_aes()
+        self.cle_aes = self.generer_cle_aes(self.memory_config.key_size)
         mem = None
         try:
             mem = self.shared_memory_service.stocker_en_memoire_partagee(
-                "memoire_partagee_cle",
+                self.memory_config.cle_name,
                 self.cle_aes,
             )
             self._memoires.append(mem)
@@ -183,11 +186,11 @@ class EncryptionService:
     def store_credentials(self, login_data: bytes, password_data: bytes) -> None:
         """Save encrypted credentials in shared memory."""
         mem_login = self.shared_memory_service.stocker_en_memoire_partagee(
-            "memoire_nom",
+            self.memory_config.login_name,
             login_data,
         )
         mem_pwd = self.shared_memory_service.stocker_en_memoire_partagee(
-            "memoire_mdp",
+            self.memory_config.password_name,
             password_data,
         )
         self._memoires.extend([mem_login, mem_pwd])
@@ -210,12 +213,12 @@ class EncryptionService:
     def retrieve_credentials(self) -> Credentials:
         """Retrieve encrypted credentials from shared memory."""
         mem_key, aes_key = self.shared_memory_service.recuperer_de_memoire_partagee(
-            "memoire_partagee_cle",
-            32,
+            self.memory_config.cle_name,
+            self.memory_config.key_size,
         )
         write_log(f"💀 Clé AES récupérée : {aes_key.hex()}", self.log_file, "CRITICAL")
 
-        mem_login = shared_memory.SharedMemory(name="memoire_nom")
+        mem_login = shared_memory.SharedMemory(name=self.memory_config.login_name)
         taille_nom = len(bytes(mem_login.buf).rstrip(b"\x00"))
         login = bytes(mem_login.buf[:taille_nom])
         write_log(
@@ -224,7 +227,7 @@ class EncryptionService:
             "CRITICAL",
         )
 
-        mem_pwd = shared_memory.SharedMemory(name="memoire_mdp")
+        mem_pwd = shared_memory.SharedMemory(name=self.memory_config.password_name)
         taille_pwd = len(bytes(mem_pwd.buf).rstrip(b"\x00"))
         password = bytes(mem_pwd.buf[:taille_pwd])
         write_log(

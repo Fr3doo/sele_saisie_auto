@@ -55,7 +55,7 @@ def test_run_calls_services(monkeypatch, sample_config):
     monkeypatch.setattr(
         orch_mod,
         "ResourceManager",
-        lambda log_file: rm.ResourceManager(log_file, enc_service),
+        lambda log_file, **kw: rm.ResourceManager(log_file, enc_service),
     )
 
     orch = AutomationOrchestrator(
@@ -182,7 +182,7 @@ def test_run_order(monkeypatch, sample_config):
     monkeypatch.setattr(
         orch_mod,
         "ResourceManager",
-        lambda log_file: rm.ResourceManager(log_file, DummyEncService()),
+        lambda log_file, **kw: rm.ResourceManager(log_file, DummyEncService()),
     )
     orch = AutomationOrchestrator(
         app_cfg,
@@ -254,7 +254,7 @@ def test_run_uses_passed_cleanup_function(monkeypatch, sample_config):
     monkeypatch.setattr(
         orch_mod,
         "ResourceManager",
-        lambda log_file: rm.ResourceManager(log_file, enc_service),
+        lambda log_file, **kw: rm.ResourceManager(log_file, enc_service),
     )
 
     cleanup_args = {}

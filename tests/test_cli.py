@@ -55,7 +55,9 @@ def test_main_creates_services_and_passes_flags(monkeypatch):
             return "services"
 
     monkeypatch.setattr(
-        cli, "service_configurator_factory", lambda cfg: DummyConfigurator(cfg)
+        cli,
+        "service_configurator_factory",
+        lambda cfg, **kw: DummyConfigurator(cfg),
     )
 
     auto_data = {}

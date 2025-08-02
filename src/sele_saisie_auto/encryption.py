@@ -6,6 +6,7 @@ from types import TracebackType
 
 from .encryption_utils import Credentials, EncryptionBackend
 from .encryption_utils import EncryptionService as _EncryptionService
+from .memory_config import MemoryConfig
 from .shared_memory_service import SharedMemoryService
 
 
@@ -17,12 +18,14 @@ class DefaultEncryptionService:
         log_file: str | None = None,
         shared_memory_service: SharedMemoryService | None = None,
         backend: EncryptionBackend | None = None,
+        memory_config: MemoryConfig | None = None,
     ) -> None:
         """Instantiate the underlying :class:`EncryptionService`."""
         self._service = _EncryptionService(
             log_file,
             shared_memory_service=shared_memory_service,
             backend=backend,
+            memory_config=memory_config,
         )
 
     # ------------------------------------------------------------------
