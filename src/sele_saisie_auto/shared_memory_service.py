@@ -1,5 +1,6 @@
 """Utilities to manage data in shared memory."""
 
+import contextlib
 import os
 from multiprocessing import shared_memory
 
@@ -9,25 +10,30 @@ from sele_saisie_auto.logging_service import Logger
 def ensure_clean_segment(name: str, size: int) -> shared_memory.SharedMemory:
     """Return a new shared memory segment with ``name`` and ``size``.
 
-    If a segment with the same name already exists, it is closed and unlinked
-    before the new one is created. This helper avoids ``FileExistsError`` when
-    a previous run left behind a shared memory block.
+    The function tolerates a leftover segment with the same ``name`` by
+    removing it before creating a fresh one.  This mirrors the behaviour of
+    ``unlink`` on POSIX and avoids ``FileExistsError`` on Windows when a
+    previous process crashed without cleaning up.
     """
 
     try:
-        existing = shared_memory.SharedMemory(name=name)
-    except FileNotFoundError:
-        pass
-    else:
+        # First try to create the segment directly – this is the fast path
+        # when no leftover exists.
+        return shared_memory.SharedMemory(name=name, create=True, size=size)
+    except FileExistsError:
+        # A segment already exists: detach and remove it, then retry.
         try:
-            existing.close()
-        finally:
-            try:
+            existing = shared_memory.SharedMemory(name=name)
+        except FileNotFoundError:
+            # Segment disappeared between attempts; retry creation.
+            pass
+        else:
+            with contextlib.suppress(FileNotFoundError):
+                existing.close()
                 existing.unlink()
-            except FileNotFoundError:
-                pass
-
-    return shared_memory.SharedMemory(name=name, create=True, size=size)
+        # Second attempt; propagate any further ``FileExistsError`` to the
+        # caller because something external keeps the segment alive.
+        return shared_memory.SharedMemory(name=name, create=True, size=size)
 
 
 class SharedMemoryService:
