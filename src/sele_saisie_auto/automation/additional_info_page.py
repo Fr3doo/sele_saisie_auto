@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Callable, cast
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -11,7 +11,7 @@ from sele_saisie_auto.additional_info_locators import ADDITIONAL_INFO_LOCATORS
 from sele_saisie_auto.alerts import AlertHandler
 from sele_saisie_auto.app_config import AppConfig, get_default_timeout
 from sele_saisie_auto.decorators import handle_selenium_errors
-from sele_saisie_auto.interfaces import WaiterProtocol
+from sele_saisie_auto.interfaces import BrowserSessionProtocol, WaiterProtocol
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
 from sele_saisie_auto.logging_service import log_info
@@ -100,7 +100,9 @@ class AdditionalInfoPage:
     ) -> None:
         self._automation = automation
         self.context = getattr(automation, "context", None)
-        self.browser_session = getattr(automation, "browser_session", None)
+        self.browser_session = cast(
+            BrowserSessionProtocol | None, getattr(automation, "browser_session", None)
+        )
         self._log_file = automation.log_file
         self.logger = automation.logger
         cfg = None
@@ -152,6 +154,46 @@ class AdditionalInfoPage:
     def wait_for_dom(self, driver: WebDriver, max_attempts: int | None = None) -> None:
         self._automation.wait_for_dom(driver, max_attempts=max_attempts)
 
+    def _execute_step(self, func: Callable[[], bool], error_msg: str) -> bool:
+        try:
+            return func()
+        except Exception as exc:  # noqa: BLE001
+            self.logger.error(f"{error_msg}: {exc}")
+            return False
+
+    def _switch_to_iframe(self, driver: WebDriver) -> bool:
+        element_present = self.waiter.wait_for_element(
+            driver,
+            By.ID,
+            Locators.MODAL_FRAME.value,
+            timeout=get_default_timeout(self.config),
+        )
+        if not element_present or self.browser_session is None:
+            return False
+        return self.browser_session.go_to_iframe(Locators.MODAL_FRAME.value)
+
+    def _process_descriptions(self, driver: WebDriver) -> bool:
+        from sele_saisie_auto import saisie_automatiser_psatime as sap
+
+        descriptions = getattr(self.context, "descriptions", [])
+        for config in descriptions:
+            sap.traiter_description(driver, config)
+        log_info(format_message("ADDITIONAL_INFO_DONE", {}), self.log_file)
+        return True
+
+    def _click_save_icon(self, driver: WebDriver) -> bool:
+        element_present = self.waiter.wait_for_element(
+            driver,
+            By.ID,
+            Locators.SAVE_ICON.value,
+            ec.element_to_be_clickable,
+            timeout=get_default_timeout(self.config),
+        )
+        if not element_present or self.browser_session is None:
+            return False
+        self.browser_session.click(Locators.SAVE_ICON.value)
+        return True
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -194,66 +236,19 @@ class AdditionalInfoPage:
     @handle_selenium_errors(default_return=False)
     def submit_and_validate_additional_information(self, driver: WebDriver) -> bool:
         """Fill all additional info fields and validate the modal."""
-        from sele_saisie_auto import saisie_automatiser_psatime as sap
 
-        try:
-            element_present = self.waiter.wait_for_element(
-                driver,
-                By.ID,
-                Locators.MODAL_FRAME.value,
-                timeout=get_default_timeout(self.config),
-            )
-        except Exception as exc:  # noqa: BLE001
-            self.logger.error(f"❌ Error locating modal iframe: {exc}")
+        if not self._execute_step(
+            lambda: self._switch_to_iframe(driver), "❌ Error switching to iframe"
+        ):
             return False
-
-        switched_to_iframe = False
-        if element_present and self.browser_session is not None:
-            try:
-                switched_to_iframe = self.browser_session.go_to_iframe(
-                    Locators.MODAL_FRAME.value
-                )
-            except Exception as exc:  # noqa: BLE001
-                self.logger.error(f"❌ Error switching to iframe: {exc}")
-                return False
-
-        if switched_to_iframe:
-            descriptions = getattr(self.context, "descriptions", [])
-            for config in descriptions:
-                try:
-                    sap.traiter_description(driver, config)
-                except Exception as exc:  # noqa: BLE001
-                    self.logger.error(
-                        f"❌ Error processing description '{config}': {exc}"
-                    )
-                    return False
-            log_info(
-                format_message("ADDITIONAL_INFO_DONE", {}),
-                self.log_file,
-            )
-
-        try:
-            element_present = self.waiter.wait_for_element(
-                driver,
-                By.ID,
-                Locators.SAVE_ICON.value,
-                ec.element_to_be_clickable,
-                timeout=get_default_timeout(self.config),
-            )
-        except Exception as exc:  # noqa: BLE001
-            self.logger.error(f"❌ Error locating save icon: {exc}")
+        if not self._execute_step(
+            lambda: self._process_descriptions(driver),
+            "❌ Error processing descriptions",
+        ):
             return False
-
-        if not element_present:
-            return False
-
-        try:
-            if self.browser_session is not None:
-                self.browser_session.click(Locators.SAVE_ICON.value)
-        except Exception as exc:  # noqa: BLE001
-            self.logger.error(f"❌ Error clicking save icon: {exc}")
-            return False
-        return True
+        return self._execute_step(
+            lambda: self._click_save_icon(driver), "❌ Error clicking save icon"
+        )
 
     @wait_for_dom_after
     @handle_selenium_errors(default_return=False)
