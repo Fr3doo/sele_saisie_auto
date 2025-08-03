@@ -5,9 +5,10 @@ from __future__ import annotations
 import configparser
 import multiprocessing
 import tkinter as tk
+from collections.abc import Callable
 from multiprocessing import shared_memory
 from tkinter import messagebox, ttk
-from typing import Callable, cast
+from typing import cast
 
 from sele_saisie_auto import cli, messages, saisie_automatiser_psatime
 from sele_saisie_auto.app_config import AppConfig
@@ -33,7 +34,6 @@ from sele_saisie_auto.read_or_write_file_config_ini_utils import (
     read_config_ini,
     write_config_ini,
 )
-from sele_saisie_auto.resources.resource_manager import ResourceManager
 from sele_saisie_auto.shared_utils import get_log_file
 
 DEFAULT_SETTINGS = {"date_cible": "", "debug_mode": "INFO"}
