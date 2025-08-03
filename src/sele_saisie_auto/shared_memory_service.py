@@ -7,27 +7,36 @@ from sele_saisie_auto.logging_service import Logger
 
 
 def ensure_clean_segment(name: str, size: int) -> shared_memory.SharedMemory:
-    """Return a new shared memory segment with ``name`` and ``size``.
+    """Return a freshly created shared memory segment.
 
-    If a segment with the same name already exists, it is closed and unlinked
-    before the new one is created. This helper avoids ``FileExistsError`` when
-    a previous run left behind a shared memory block.
+    ``FileExistsError`` can occur when a previous execution crashes and leaves
+    behind a shared memory block with the same ``name``.  The function first
+    tries to create the segment directly.  If it already exists, it is opened,
+    closed and unlinked before attempting the creation again.  This mirrors the
+    behaviour expected by the tests where successive calls should always return
+    a new segment without raising ``FileExistsError``.
     """
 
     try:
-        existing = shared_memory.SharedMemory(name=name)
-    except FileNotFoundError:
-        pass
-    else:
+        return shared_memory.SharedMemory(name=name, create=True, size=size)
+    except FileExistsError:
+        # A leftover segment exists. Try to remove it and create a clean one.
         try:
-            existing.close()
-        finally:
+            existing = shared_memory.SharedMemory(name=name)
+        except FileNotFoundError:
+            # The segment disappeared between the create and open attempts.
+            pass
+        else:
             try:
-                existing.unlink()
-            except FileNotFoundError:
-                pass
+                existing.close()
+            finally:
+                try:
+                    existing.unlink()
+                except FileNotFoundError:
+                    pass
 
-    return shared_memory.SharedMemory(name=name, create=True, size=size)
+        # Retry creation after cleanup (will raise again if it still fails).
+        return shared_memory.SharedMemory(name=name, create=True, size=size)
 
 
 class SharedMemoryService:
