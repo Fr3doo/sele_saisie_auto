@@ -31,6 +31,10 @@ poetry run flake8 --output-file=reports/flake8/flake8_report.txt .
 poetry run flake8 . --max-complexity=10
 
 poetry run pylint src\
+
+poetry run radon cc . -s -a
+poetry run radon mi .
+poetry run radon cc src/sele_saisie_auto/remplir_jours_feuille_de_temps.py -s -a
 ```
 
 ---
