@@ -4,6 +4,7 @@
 # ---------------- Import des bibliothèques nécessaires ----------------------- #
 # ----------------------------------------------------------------------------- #
 
+import sys
 from dataclasses import dataclass
 from multiprocessing import shared_memory
 from types import TracebackType
@@ -21,9 +22,11 @@ from sele_saisie_auto.automation.additional_info_page import (
 from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.automation.date_entry_page import DateEntryPage
 from sele_saisie_auto.automation.login_handler import LoginHandler
+from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import Services, service_configurator_factory
 from sele_saisie_auto.decorators import handle_selenium_errors
 from sele_saisie_auto.encryption_utils import Credentials as EncryptionCredentials
+from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.interfaces.protocols import LoggerProtocol
 from sele_saisie_auto.locators import Locators
@@ -45,9 +48,9 @@ from sele_saisie_auto.selenium_utils import (
     detecter_doublons_jours,
     modifier_date_input,
     send_keys_to_element,
-    wait_for_dom_after,
 )
 from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
+from sele_saisie_auto.selenium_utils import wait_for_dom_after
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.date_utils import get_next_saturday_if_not_saturday

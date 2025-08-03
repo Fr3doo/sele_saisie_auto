@@ -231,20 +231,23 @@ class AdditionalInfoPage:
         return self._safe_execute(action, "❌ Error clicking save icon", False)
 
     def _open_additional_info_modal(self, driver: WebDriver) -> bool:
-        return self._safe_execute(
-            lambda: (self.wait_for_dom(driver) or True)
-            and self.waiter.wait_for_element(
+        def action() -> bool:
+            self.wait_for_dom(driver)
+            element_present = self.waiter.wait_for_element(
                 driver,
                 By.ID,
                 Locators.ADDITIONAL_INFO_LINK.value,
                 ec.element_to_be_clickable,
                 timeout=get_default_timeout(self.config),
             )
-            and (
+            if not element_present:
+                return False
+            if self.browser_session is not None:
                 self.browser_session.click(Locators.ADDITIONAL_INFO_LINK.value)
-                if self.browser_session
-                else True
-            ),
+            return True
+
+        return self._safe_execute(
+            action,
             "❌ Error opening additional info modal",
             False,
         )
