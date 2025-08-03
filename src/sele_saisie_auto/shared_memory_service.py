@@ -27,7 +27,20 @@ def ensure_clean_segment(name: str, size: int) -> shared_memory.SharedMemory:
             except FileNotFoundError:
                 pass
 
-    return shared_memory.SharedMemory(name=name, create=True, size=size)
+    try:
+        return shared_memory.SharedMemory(name=name, create=True, size=size)
+    except FileExistsError:
+        # Segment persists even though we attempted to remove it above.
+        # This occurs on some platforms (e.g. Windows) when a previous
+        # process crashed before cleaning up and the segment cannot be
+        # opened initially. Retry after forcibly unlinking.
+        try:
+            existing = shared_memory.SharedMemory(name=name)
+            existing.close()
+            existing.unlink()
+        except FileNotFoundError:
+            pass
+        return shared_memory.SharedMemory(name=name, create=True, size=size)
 
 
 class SharedMemoryService:
