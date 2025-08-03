@@ -106,32 +106,11 @@ class AdditionalInfoPage:
         self.browser_session = getattr(automation, "browser_session", None)
         self._log_file = automation.log_file
         self.logger = automation.logger
-        cfg = None
-        if isinstance(self.context, SaisieContext):
-            cfg = self.context.config
-        if waiter is not None:
-            self.waiter = waiter
-        else:
-            base_waiter = getattr(automation, "waiter", None)
-            if base_waiter is not None:
-                self.waiter = base_waiter
-            else:
-                timeout = get_default_timeout(cfg)
-                self.waiter = create_waiter(timeout)
-                if cfg is not None and hasattr(cfg, "long_timeout"):
-                    self.waiter.wrapper.long_timeout = cfg.long_timeout
-        self.alert_handler = AlertHandler(automation, waiter=self.waiter)
-        self.helper = ExtraInfoHelper(
-            logger=self.logger,
-            waiter=self.waiter,
-            page=self,
-            app_config=cfg if cfg is not None else None,
-        )
-        from sele_saisie_auto import saisie_automatiser_psatime as sap
-
-        sap.traiter_description = self.helper.traiter_description
-        if self.context is not None:
-            ensure_descriptions(cast(SaisieContext, self.context))
+        cfg = self.context.config if isinstance(self.context, SaisieContext) else None
+        self._build_waiter(automation, waiter, cfg)
+        self._setup_helper()
+        self._monkey_patch_traiter_description()
+        self._ensure_context_descriptions()
 
     @property
     def log_file(self) -> str:
@@ -152,6 +131,43 @@ class AdditionalInfoPage:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
+    def _build_waiter(
+        self,
+        automation: PSATimeAutomation,
+        waiter: WaiterProtocol | None,
+        cfg: AppConfig | None,
+    ) -> None:
+        if waiter is not None:
+            self.waiter = waiter
+            return
+        base_waiter = getattr(automation, "waiter", None)
+        if base_waiter is not None:
+            self.waiter = base_waiter
+            return
+        timeout = get_default_timeout(cfg)
+        self.waiter = create_waiter(timeout)
+        if cfg is not None and hasattr(cfg, "long_timeout"):
+            self.waiter.wrapper.long_timeout = cfg.long_timeout
+
+    def _setup_helper(self) -> None:
+        cfg = self.context.config if isinstance(self.context, SaisieContext) else None
+        self.alert_handler = AlertHandler(self._automation, waiter=self.waiter)
+        self.helper = ExtraInfoHelper(
+            logger=self.logger,
+            waiter=self.waiter,
+            page=self,
+            app_config=cfg,
+        )
+
+    def _monkey_patch_traiter_description(self) -> None:
+        from sele_saisie_auto import saisie_automatiser_psatime as sap
+
+        sap.traiter_description = self.helper.traiter_description
+
+    def _ensure_context_descriptions(self) -> None:
+        if self.context is not None:
+            ensure_descriptions(cast(SaisieContext, self.context))
+
     def wait_for_dom(self, driver: WebDriver, max_attempts: int | None = None) -> None:
         self._automation.wait_for_dom(driver, max_attempts=max_attempts)
 
@@ -213,6 +229,25 @@ class AdditionalInfoPage:
 
         return self._safe_execute(action, "❌ Error clicking save icon", False)
 
+    def _open_additional_info_modal(self, driver: WebDriver) -> bool:
+        return self._safe_execute(
+            lambda: (self.wait_for_dom(driver) or True)
+            and self.waiter.wait_for_element(
+                driver,
+                By.ID,
+                Locators.ADDITIONAL_INFO_LINK.value,
+                ec.element_to_be_clickable,
+                timeout=get_default_timeout(self.config),
+            )
+            and (
+                self.browser_session.click(Locators.ADDITIONAL_INFO_LINK.value)
+                if self.browser_session
+                else True
+            ),
+            "❌ Error opening additional info modal",
+            False,
+        )
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
@@ -223,30 +258,9 @@ class AdditionalInfoPage:
     ) -> bool:
         """Open the modal to fill additional informations."""
 
-        try:
-            self.wait_for_dom(driver)
-            element_present = self.waiter.wait_for_element(
-                driver,
-                By.ID,
-                Locators.ADDITIONAL_INFO_LINK.value,
-                ec.element_to_be_clickable,
-                timeout=get_default_timeout(self.config),
-            )
-        except Exception as exc:  # noqa: BLE001
-            self.logger.error(f"❌ Error locating additional info link: {exc}")
+        if not self._open_additional_info_modal(driver):
             return False
-
-        if not element_present:
-            return False
-
-        try:
-            if self.browser_session is not None:
-                self.browser_session.click(Locators.ADDITIONAL_INFO_LINK.value)
-        except Exception as exc:  # noqa: BLE001
-            self.logger.error(f"❌ Error clicking additional info link: {exc}")
-            return False
-
-        if self.browser_session is not None:
+        if self.browser_session:
             self.browser_session.go_to_default_content()
         self.wait_for_dom(driver)
         return True
