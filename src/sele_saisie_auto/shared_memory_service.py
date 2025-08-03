@@ -47,17 +47,38 @@ class SharedMemoryService:
     def stocker_en_memoire_partagee(
         self, nom: str, donnees: bytes
     ) -> shared_memory.SharedMemory:
-        """Create a shared memory segment and write ``donnees`` into it."""
+        """Create a shared memory segment and write ``donnees`` into it.
+
+        If a segment with the same name already exists (e.g. left behind by a
+        previous run that crashed), the service attempts to reuse it instead of
+        raising ``FileExistsError``. On Windows an open handle can make unlink
+        operations fail, so reusing the segment is the safest cross-platform
+        option.
+        """
+
+        size = len(donnees)
         try:
-            memoire = ensure_clean_segment(nom, len(donnees))
-            memoire.buf[: len(donnees)] = donnees
-            self.logger.critical(
-                f"💀 Données stockées en mémoire partagée avec le nom '{nom}'."
-            )
-            return memoire
-        except Exception as e:
-            self.logger.error(f"❌ Erreur lors du stockage en mémoire partagée : {e}")
-            raise
+            memoire = ensure_clean_segment(nom, size)
+        except FileExistsError:
+            # The segment could not be removed (commonly on Windows when an
+            # handle is still open). Fallback to reusing the existing block.
+            self.logger.info(f"⚠️ Segment '{nom}' déjà présent, réutilisation en cours")
+            memoire = shared_memory.SharedMemory(name=nom)
+            if memoire.size < size:
+                # Segment too small: try to remove and recreate it with the
+                # expected size. Any failure will propagate to help debugging.
+                try:
+                    memoire.close()
+                    memoire.unlink()
+                except FileNotFoundError:
+                    pass
+                memoire = shared_memory.SharedMemory(name=nom, create=True, size=size)
+
+        memoire.buf[:size] = donnees
+        self.logger.critical(
+            f"💀 Données stockées en mémoire partagée avec le nom '{nom}'."
+        )
+        return memoire
 
     def supprimer_memoire_partagee_securisee(
         self, memoire: shared_memory.SharedMemory

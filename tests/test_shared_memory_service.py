@@ -29,6 +29,24 @@ def test_stocker_removes_existing_segment():
         shared_memory.SharedMemory(name=name)
 
 
+def test_stocker_reuses_open_segment():
+    service = SharedMemoryService(Logger(None))
+    name = f"seg_{uuid4().hex}"
+
+    leftover = shared_memory.SharedMemory(create=True, size=1, name=name)
+    leftover.buf[:1] = b"x"  # segment left open on purpose
+
+    mem = service.stocker_en_memoire_partagee(name, b"yz")
+    try:
+        assert bytes(mem.buf[:2]) == b"yz"
+    finally:
+        service.supprimer_memoire_partagee_securisee(mem)
+
+    leftover.close()
+    with pytest.raises(FileNotFoundError):
+        shared_memory.SharedMemory(name=name)
+
+
 def test_ensure_clean_segment_method():
     service = SharedMemoryService(Logger(None))
     name = f"seg_{uuid4().hex}"
