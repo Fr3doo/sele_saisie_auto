@@ -165,67 +165,79 @@ def test_click_and_send(monkeypatch):
     assert clicked == {"c": True, "s": "hi"}
 
 
-def test_field_helpers(monkeypatch):
-    messages = []
-    logger = Logger(None, writer=lambda msg, *a, **k: messages.append(msg))
-
+@pytest.fixture()
+def field_cls():
     class Field:
-        def __init__(self, val=""):
+        def __init__(self, val: str = ""):
             self._v = val
-            self.cleared = False
-            self.sent = None
+            self.sent: str | None = None
 
-        def get_attribute(self, name):
+        def get_attribute(self, _):
             return self._v
 
         def clear(self):
-            self.cleared = True
             self._v = ""
 
         def send_keys(self, val):
-            self.sent = val
             self._v = val
+            self.sent = val
 
-    field = Field()
-    assert fsu.verifier_champ_jour_rempli(field, "lun", logger=logger) is None
-    field2 = Field("8")
-    assert fsu.verifier_champ_jour_rempli(field2, "lun", logger=logger) == "lun"
+    return Field
 
-    fsu.remplir_champ_texte(field, "lun", "5", logger=logger)
-    assert field.sent == "5"
 
-    field3 = Field("7")
-    fsu.remplir_champ_texte(field3, "lun", "5", logger=logger)
-    assert field3.sent is None
+@pytest.fixture()
+def silent_logger():
+    return Logger(None, writer=lambda msg, *a, **k: None)
 
-    f, ok = fsu.detecter_et_verifier_contenu(
-        SimpleNamespace(find_element=lambda b, i: field2), "id1", "8", logger=logger
+
+# ──────────────────────────── tests paramétrés ──────────────────────────────
+@pytest.mark.parametrize(
+    "initial,expected",
+    [("", None), ("8", "lun")],
+)
+def test_verifier_champ_jour_rempli_cases(field_cls, silent_logger, initial, expected):
+    field = field_cls(initial)
+    assert (
+        fsu.verifier_champ_jour_rempli(field, "lun", logger=silent_logger) == expected
     )
-    assert ok is True
 
-    bad_driver = SimpleNamespace(
-        find_element=lambda b, i: (_ for _ in ()).throw(fsu.NoSuchElementException("x"))
-    )
-    with pytest.raises(fsu.NoSuchElementException):
-        fsu.detecter_et_verifier_contenu(bad_driver, "id1", "8", logger=logger)
 
-    stale_driver = SimpleNamespace(
-        find_element=lambda b, i: (_ for _ in ()).throw(
-            fsu.StaleElementReferenceException("stale")
-        )
-    )
-    with pytest.raises(fsu.StaleElementReferenceException):
-        fsu.detecter_et_verifier_contenu(stale_driver, "id1", "8", logger=logger)
+@pytest.mark.parametrize(
+    "initial,target,should_send",
+    [("", "5", True), ("7", "5", False)],
+)
+def test_remplir_champ_texte_cases(
+    field_cls, silent_logger, initial, target, should_send
+):
+    field = field_cls(initial)
+    fsu.remplir_champ_texte(field, "lun", target, logger=silent_logger)
+    assert (field.sent == target) is should_send
 
-    error_driver = SimpleNamespace(
-        find_element=lambda b, i: (_ for _ in ()).throw(Exception("boom"))
-    )
-    with pytest.raises(RuntimeError):
-        fsu.detecter_et_verifier_contenu(error_driver, "id1", "8", logger=logger)
 
-    fsu.effacer_et_entrer_valeur(field2, "9", logger=logger)
-    assert field2.sent == "9"
-    assert fsu.controle_insertion(field2, "9")
+def test_detecter_et_verifier_contenu_success(field_cls, silent_logger):
+    field = field_cls("8")
+    driver = SimpleNamespace(find_element=lambda *_: field)
+    _, ok = fsu.detecter_et_verifier_contenu(driver, "id", "8", logger=silent_logger)
+    assert ok
+
+
+def test_detecter_et_verifier_contenu_errors(silent_logger):
+    exc_map = {
+        fsu.NoSuchElementException("x"): fsu.NoSuchElementException,
+        fsu.StaleElementReferenceException("stale"): fsu.StaleElementReferenceException,
+        Exception("boom"): RuntimeError,
+    }
+    for thrown, expected in exc_map.items():
+        driver = SimpleNamespace(find_element=lambda *_: (_ for _ in ()).throw(thrown))
+        with pytest.raises(expected):
+            fsu.detecter_et_verifier_contenu(driver, "id", "8", logger=silent_logger)
+
+
+def test_effacer_et_entrer_valeur_and_controle(field_cls, silent_logger):
+    field = field_cls("8")
+    fsu.effacer_et_entrer_valeur(field, "9", logger=silent_logger)
+    assert field.sent == "9"
+    assert fsu.controle_insertion(field, "9")
 
 
 def test_select_and_find_row(monkeypatch):

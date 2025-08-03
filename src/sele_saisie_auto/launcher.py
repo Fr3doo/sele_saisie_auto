@@ -34,6 +34,7 @@ from sele_saisie_auto.read_or_write_file_config_ini_utils import (
     read_config_ini,
     write_config_ini,
 )
+from sele_saisie_auto.resources.resource_manager import ResourceManager
 from sele_saisie_auto.shared_utils import get_log_file
 
 DEFAULT_SETTINGS = {"date_cible": "", "debug_mode": "INFO"}
