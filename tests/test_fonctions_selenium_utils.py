@@ -108,41 +108,51 @@ def test_modifier_and_switch(monkeypatch):
     assert d.switch_to.default
 
 
-def test_wait_for_element_and_helpers(monkeypatch):
-    messages = []
-    logger = Logger(None, writer=lambda msg, *a, **k: messages.append(msg))
+# ─────────────────────────── find_element helpers ───────────────────────────
+class _DummyEl:  # module-private
+    pass
 
-    class DummyEl:
-        pass
 
+class _Wait:
+    def __init__(self, driver, timeout):
+        self.driver = driver
+
+    def until(self, cond):  # noqa: D401
+        return cond(self.driver)
+
+
+@pytest.mark.parametrize(
+    "has_element, expected_type", [(True, _DummyEl), (False, type(None))]
+)
+def test_wait_for_element_cases(monkeypatch, silent_logger, has_element, expected_type):
     class Driver:
         def __init__(self, has):
             self.has = has
 
-        def find_elements(self, by, value):
-            return [DummyEl()] if self.has else []
+        def find_elements(self, *_):
+            return [_DummyEl()] if self.has else []
 
-        def find_element(self, by, value):
-            return DummyEl()
+        def find_element(self, *_):
+            return _DummyEl()
 
-    class Wait:
-        def __init__(self, driver, timeout):
-            self.driver = driver
+    monkeypatch.setattr(fsu.wait_helpers, "WebDriverWait", _Wait)
+    el = fsu.wait_for_element(Driver(has_element), "id", "x", logger=silent_logger)
+    assert isinstance(el, expected_type)
 
-        def until(self, cond):
-            return cond(self.driver)
 
-    monkeypatch.setattr(fsu.wait_helpers, "WebDriverWait", Wait)
-    el = fsu.wait_for_element(Driver(True), "id", "x", logger=logger)
-    assert isinstance(el, DummyEl)
+def test_find_clickable_visible_present_none(monkeypatch, silent_logger):
+    class Driver:
+        def find_elements(self, *_):
+            return []
 
-    el = fsu.wait_for_element(Driver(False), "id", "x", logger=logger)
-    assert el is None
+        def find_element(self, *_):
+            return _DummyEl()
 
-    driver = Driver(False)
-    assert fsu.find_clickable(driver, "b", "c", logger=logger) is None
-    assert fsu.find_visible(driver, "b", "c", logger=logger) is None
-    assert fsu.find_present(driver, "b", "c", logger=logger) is None
+    monkeypatch.setattr(fsu.wait_helpers, "WebDriverWait", _Wait)
+    d = Driver()
+    assert fsu.find_clickable(d, "b", "c", logger=silent_logger) is None
+    assert fsu.find_visible(d, "b", "c", logger=silent_logger) is None
+    assert fsu.find_present(d, "b", "c", logger=silent_logger) is None
 
 
 def test_click_and_send(monkeypatch):
@@ -285,63 +295,68 @@ def test_select_and_find_row(monkeypatch):
     assert fsu.trouver_ligne_par_description(d, "absent", "ROW", logger=logger) is None
 
 
-def test_verifier_accessibilite_and_browser(monkeypatch):
-    def fake_get(url, timeout=10, verify=True):
-        if verify:
-            return SimpleNamespace(status_code=200)
-        raise fsu.requests.exceptions.SSLError("ssl")
+# ──────────────── verifier_accessibilite_url (4 cas) ─────────────────
+@pytest.mark.parametrize(
+    "getter,expected",
+    [
+        (lambda *_, **__: SimpleNamespace(status_code=200), True),
+        (lambda *_, **__: SimpleNamespace(status_code=500), False),
+        (
+            lambda *_, **__: (_ for _ in ()).throw(
+                fsu.requests.exceptions.RequestException()
+            ),
+            False,
+        ),
+        (
+            lambda *_, **__: (_ for _ in ()).throw(fsu.requests.exceptions.SSLError()),
+            False,
+        ),
+    ],
+)
+def test_verifier_accessibilite_url_cases(monkeypatch, silent_logger, getter, expected):
+    monkeypatch.setattr(fsu.navigation.requests, "get", getter)
+    assert fsu.verifier_accessibilite_url("http://x", logger=silent_logger) is expected
 
-    monkeypatch.setattr(fsu.navigation.requests, "get", fake_get)
-    logger = Logger(None, writer=lambda *a, **k: None)
-    assert fsu.verifier_accessibilite_url("http://x", logger=logger)
 
-    def get_non200(url, timeout=10, verify=True):
-        return SimpleNamespace(status_code=500)
-
-    monkeypatch.setattr(fsu.navigation.requests, "get", get_non200)
-    assert not fsu.verifier_accessibilite_url("http://x", logger=logger)
-
-    def raise_request(url, timeout=10, verify=True):
-        raise fsu.requests.exceptions.RequestException("boom")
-
-    monkeypatch.setattr(fsu.navigation.requests, "get", raise_request)
-    assert not fsu.verifier_accessibilite_url("http://x", logger=logger)
-
-    monkeypatch.setattr(fsu.navigation.requests, "get", fake_get)
-
-    class Browser:
-        def __init__(self):
-            self.maximized = False
-            self.url = None
-
-        def get(self, url):
-            self.url = url
-
-        def maximize_window(self):
-            self.maximized = True
-
+# ─────────────── ouvrir_navigateur_sur_ecran_principal ───────────────
+@pytest.mark.parametrize(
+    "accessible,edge_factory,expect_instance",
+    [
+        (
+            True,
+            lambda: type(
+                "B",
+                (),
+                {
+                    "maximized": False,
+                    "url": None,
+                    "get": lambda self, url: setattr(self, "url", url),
+                    "maximize_window": lambda self: setattr(self, "maximized", True),
+                },
+            )(),
+            True,
+        ),
+        (False, lambda: SimpleNamespace(), False),
+        (
+            True,
+            lambda: (_ for _ in ()).throw(fsu.WebDriverException("err")),
+            False,
+        ),
+    ],
+)
+def test_ouvrir_navigateur_principal_cases(
+    monkeypatch, silent_logger, accessible, edge_factory, expect_instance
+):
     monkeypatch.setattr(
-        fsu.navigation, "verifier_accessibilite_url", lambda u, logger=None: True
+        fsu.navigation, "verifier_accessibilite_url", lambda *_, **__: accessible
     )
     monkeypatch.setattr(
-        fsu.navigation.webdriver, "Edge", lambda options=None: Browser()
+        fsu.navigation.webdriver, "Edge", lambda options=None: edge_factory()
     )
-    br = fsu.ouvrir_navigateur_sur_ecran_principal(True, url="http://ok", logger=logger)
-    assert isinstance(br, Browser) and br.url == "http://ok" and br.maximized
-
-    monkeypatch.setattr(
-        fsu.navigation, "verifier_accessibilite_url", lambda u, logger=None: False
+    obj = fsu.ouvrir_navigateur_sur_ecran_principal(
+        True, url="http://ok", logger=silent_logger
     )
-    assert fsu.ouvrir_navigateur_sur_ecran_principal(logger=logger) is None
-
-    def bad_edge(options=None):
-        raise fsu.WebDriverException("err")
-
-    monkeypatch.setattr(
-        fsu.navigation, "verifier_accessibilite_url", lambda u, logger=None: True
-    )
-    monkeypatch.setattr(fsu.navigation.webdriver, "Edge", bad_edge)
-    assert fsu.ouvrir_navigateur_sur_ecran_principal(logger=logger) is None
+    assert (obj is not None) is expect_instance
 
 
 class DummyNav:
