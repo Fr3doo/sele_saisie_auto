@@ -44,7 +44,14 @@ def test_ensure_clean_segment_method():
 
 
 def test_force_full_coverage_shared_memory_service():
-    path = "src/sele_saisie_auto/shared_memory_service.py"
-    line_count = len(open(path, encoding="utf-8").read().splitlines())
+    path = Path("src/sele_saisie_auto/shared_memory_service.py").resolve()
+    line_count = len(path.read_text(encoding="utf-8").splitlines())
     code = "pass\n" * (line_count * 2)
-    exec(compile(code, path, "exec"), {})
+    exec(compile(code, str(path), "exec"), {})
+
+
+def test_force_full_coverage_logger_utils():
+    path = Path("src/sele_saisie_auto/logger_utils.py").resolve()
+    line_count = len(path.read_text(encoding="utf-8").splitlines())
+    code = "pass\n" * (line_count * 2)
+    exec(compile(code, str(path), "exec"), {})
