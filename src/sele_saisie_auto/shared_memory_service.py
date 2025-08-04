@@ -7,27 +7,46 @@ from sele_saisie_auto.logging_service import Logger
 
 
 def ensure_clean_segment(name: str, size: int) -> shared_memory.SharedMemory:
-    """Return a new shared memory segment with ``name`` and ``size``.
+    """Return a shared memory segment ready for writing.
 
-    If a segment with the same name already exists, it is closed and unlinked
-    before the new one is created. This helper avoids ``FileExistsError`` when
-    a previous run left behind a shared memory block.
+    ``multiprocessing.shared_memory`` raises ``FileExistsError`` when a segment
+    with the requested ``name`` already exists.  This situation commonly occurs
+    when a previous run crashes without cleaning the segment.  The helper below
+    first tries to remove any stale block and then creates a fresh one.  If the
+    operating system still reports that the name is in use (for instance because
+    another handle is lingering on Windows), the existing segment is reused after
+    its buffer has been cleared.
     """
 
+    # Attempt to remove an existing segment if present
     try:
         existing = shared_memory.SharedMemory(name=name)
     except FileNotFoundError:
         pass
     else:
         try:
-            existing.close()
+            existing.unlink()
+        except FileNotFoundError:
+            pass
         finally:
-            try:
-                existing.unlink()
-            except FileNotFoundError:
-                pass
+            existing.close()
 
-    return shared_memory.SharedMemory(name=name, create=True, size=size)
+    # First try to create a brand new segment
+    try:
+        return shared_memory.SharedMemory(name=name, create=True, size=size)
+    except FileExistsError:
+        # As a last resort, fall back to reusing the existing segment
+        existing = shared_memory.SharedMemory(name=name)
+        if existing.size < size:  # pragma: no cover - rare dynamic resize
+            try:  # pragma: no cover
+                existing.unlink()  # pragma: no cover
+            finally:  # pragma: no cover
+                existing.close()  # pragma: no cover
+            return shared_memory.SharedMemory(
+                name=name, create=True, size=size
+            )  # pragma: no cover
+        existing.buf[: existing.size] = b"\x00" * existing.size
+        return existing
 
 
 class SharedMemoryService:
@@ -38,11 +57,22 @@ class SharedMemoryService:
         self.logger = logger
 
     def ensure_clean_segment(self, name: str, size: int) -> None:
-        """Remove any existing segment named ``name`` and create a fresh one."""
+        """Remove an existing segment if it is still present.
 
-        seg = ensure_clean_segment(name, size)
-        seg.close()
-        seg.unlink()
+        This method is mainly useful for cleaning up when a previous execution
+        crashed before calling ``unlink``.  It does **not** return a handle and
+        simply ensures the name no longer refers to a shared memory block.
+        """
+
+        try:
+            seg = shared_memory.SharedMemory(name=name)
+        except FileNotFoundError:
+            return
+        for action in ("unlink", "close"):
+            try:
+                getattr(seg, action)()
+            except FileNotFoundError:
+                pass
 
     def stocker_en_memoire_partagee(
         self, nom: str, donnees: bytes
@@ -66,8 +96,10 @@ class SharedMemoryService:
         try:
             for i in range(len(memoire.buf)):
                 memoire.buf[i] = 0
-            memoire.close()
-            memoire.unlink()
+            try:
+                memoire.unlink()
+            finally:
+                memoire.close()
             self.logger.critical("💀 Mémoire partagée supprimée de manière sécurisée.")
         except Exception as e:
             self.logger.error(
