@@ -15,29 +15,35 @@ def ensure_clean_segment(name: str, size: int) -> shared_memory.SharedMemory:
     first tries to remove any stale block and then creates a fresh one.  If the
     operating system still reports that the name is in use (for instance because
     another handle is lingering on Windows), the existing segment is reused after
-    its buffer has been cleared.
+    its buffer has been cleared, provided it is large enough.  Otherwise the stale
+    block is removed and a new one with the requested size is created.
     """
 
     # Attempt to remove an existing segment if present
     try:
         existing = shared_memory.SharedMemory(name=name)
     except FileNotFoundError:
-        existing = None
+        pass
     else:
         try:
-            existing.close()
+            existing.unlink()
+        except FileNotFoundError:
+            pass
         finally:
-            try:
-                existing.unlink()
-            except FileNotFoundError:
-                pass
+            existing.close()
 
     # First try to create a brand new segment
     try:
         return shared_memory.SharedMemory(name=name, create=True, size=size)
     except FileExistsError:
-        # As a last resort, fall back to reusing the existing segment
+        # As a last resort, fall back to reusing or recreating the existing segment
         existing = shared_memory.SharedMemory(name=name)
+        if existing.size < size:
+            try:
+                existing.unlink()
+            finally:
+                existing.close()
+            return shared_memory.SharedMemory(name=name, create=True, size=size)
         existing.buf[: existing.size] = b"\x00" * existing.size
         return existing
 
