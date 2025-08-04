@@ -8,7 +8,10 @@ import pytest
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
-from sele_saisie_auto.shared_memory_service import SharedMemoryService  # noqa: E402
+from sele_saisie_auto.shared_memory_service import (  # noqa: E402
+    SharedMemoryService,
+    ensure_clean_segment,
+)
 
 
 def test_stocker_removes_existing_segment():
@@ -48,3 +51,32 @@ def test_force_full_coverage_shared_memory_service():
     line_count = len(open(path, encoding="utf-8").read().splitlines())
     code = "pass\n" * (line_count * 2)
     exec(compile(code, path, "exec"), {})
+
+
+def test_ensure_clean_segment_recreates_when_existing_smaller(monkeypatch):
+    name = f"seg_{uuid4().hex}"
+    real_sm = shared_memory.SharedMemory
+    leftover = real_sm(create=True, size=1, name=name)
+
+    call_state = {"lookup": 0, "create": 0}
+
+    def fake_sm(*args, **kwargs):
+        if kwargs.get("create"):
+            call_state["create"] += 1
+            if call_state["create"] == 1:
+                raise FileExistsError
+        else:
+            call_state["lookup"] += 1
+            if call_state["lookup"] == 1:
+                raise FileNotFoundError
+        return real_sm(*args, **kwargs)
+
+    monkeypatch.setattr(shared_memory, "SharedMemory", fake_sm)
+
+    mem = ensure_clean_segment(name, 2)
+    try:
+        assert mem.size >= 2
+    finally:
+        mem.unlink()
+        mem.close()
+        leftover.close()
