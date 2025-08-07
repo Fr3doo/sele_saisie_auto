@@ -251,40 +251,55 @@ def setup_init(monkeypatch, cfg, *, patch_services: bool = True):
     )
 
 
-def test_helpers(monkeypatch, sample_config):
+# ───────────────────────────── helpers unitaires ─────────────────────────────
+def _common_setup(monkeypatch, sample_config):
+    """Ré-utilise `setup_init` et neutralise l’écriture de log dans une liste."""
     setup_init(monkeypatch, sample_config)
-    logs = []
+    captured: list[str] = []
     monkeypatch.setattr(
         "sele_saisie_auto.logging_service.write_log",
-        lambda msg, f, level: logs.append(msg),
+        lambda msg, *_a, **_k: captured.append(msg),
     )
+    return captured
+
+
+def test_get_next_saturday(monkeypatch, sample_config):
+    _common_setup(monkeypatch, sample_config)
     assert sap.get_next_saturday_if_not_saturday("01/07/2024") == "06/07/2024"
     assert sap.get_next_saturday_if_not_saturday("06/07/2024") == "06/07/2024"
+
+
+def test_est_en_mission(monkeypatch, sample_config):
+    _common_setup(monkeypatch, sample_config)
     assert sap.est_en_mission("En mission") is True
-    filled_days = []
-    assert sap.ajouter_jour_a_jours_remplis("lundi", filled_days) == ["lundi"]
-    afficher_message_insertion(
-        "lundi",
-        "8",
-        0,
-        messages.TENTATIVE_INSERTION,
-        "log.html",
-    )
+
+
+def test_ajouter_jour(monkeypatch, sample_config):
+    _common_setup(monkeypatch, sample_config)
+    assert sap.ajouter_jour_a_jours_remplis("lundi", []) == ["lundi"]
+
+
+def test_console_helpers(monkeypatch, sample_config):
+    logs = _common_setup(monkeypatch, sample_config)
+    # Stub subprocess & console separator to avoid real side-effects
     monkeypatch.setattr(
-        utils_misc.subprocess,
-        "run",
-        lambda cmd, *a, **k: logs.append(cmd),
+        utils_misc.subprocess, "run", lambda *a, **k: logs.append("cmd")
     )
     utils_misc.clear_screen()
     sap.seprateur_menu_affichage_log("log.html")
     with monkeypatch.context() as m:
-        called = []
-        m.setattr(
-            logger_utils, "show_log_separator", lambda *a, **k: called.append(True)
-        )
+        m.setattr(sap, "show_log_separator", lambda *a, **k: logs.append("sep"))
         sap.seprateur_menu_affichage_console()
-    sap._AUTOMATION.log_initialisation()
-    assert messages
+    # simple présence de traces
+    assert "cmd" in logs and "sep" in logs
+
+
+def test_afficher_message_insertion(monkeypatch, sample_config):
+    _common_setup(monkeypatch, sample_config)
+    # pas d'assertion complexe : on vérifie que l’appel ne lève pas
+    afficher_message_insertion(
+        "lundi", "8", 0, messages.TENTATIVE_INSERTION, "log.html"
+    )
 
 
 def test_initialize_sets_globals(monkeypatch, sample_config):
@@ -480,10 +495,12 @@ def test_from_components_params(monkeypatch, sample_config, patched_orchestrator
     auto, app_cfg = _build_automation(monkeypatch, sample_config)
     _, calls = patched_orchestrator
     auto.run()
-    args = calls["from_components"][0]
-    assert args[0] is auto.resource_manager
-    assert args[1] is auto.page_navigator
-    assert isinstance(args[2], ServiceConfigurator)
-    assert args[2].app_config is app_cfg
-    assert args[3] is auto.context
-    assert args[4] is auto.logger
+
+    rm, nav, svc_cfg, ctx, log = calls["from_components"][0][:5]
+    assert (rm, nav, ctx, log) == (
+        auto.resource_manager,
+        auto.page_navigator,
+        auto.context,
+        auto.logger,
+    )
+    assert isinstance(svc_cfg, ServiceConfigurator) and svc_cfg.app_config is app_cfg
