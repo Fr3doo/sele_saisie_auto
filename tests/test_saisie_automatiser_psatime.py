@@ -429,43 +429,61 @@ def test_main_flow(monkeypatch, sample_config):
     assert close_called["done"] is True
 
 
-def test_run_delegates_to_orchestrator(monkeypatch, sample_config):
-    setup_init(monkeypatch, sample_config, patch_services=False)
-    app_cfg = sap.context.config
-
-    called = {}
+@pytest.fixture
+def patched_orchestrator(monkeypatch):
+    calls = {}
 
     class DummyOrchestrator:
         def __init__(self, *args, **kwargs):
-            called["init"] = (args, kwargs)
-            self.browser_session = DummyBrowserSession("log.html")
-            self.run_called = 0
-            self.run_args = None
+            calls["init"] = (args, kwargs)
+            self.run_calls: list[tuple[bool, bool]] = []
 
         @classmethod
-        def from_components(cls, *a, **k):
-            called["from_components"] = (a, k)
-            return cls(*a, **k)
+        def from_components(cls, *args, **kwargs):
+            calls["from_components"] = (args, kwargs)
+            return cls(*args, **kwargs)
 
-        def run(self, headless=False, no_sandbox=False):
-            called["run"] = (headless, no_sandbox)
-            self.run_called += 1
-            self.run_args = (headless, no_sandbox)
+        def run(self, headless: bool = False, no_sandbox: bool = False) -> None:
+            calls["run"] = (headless, no_sandbox)
+            self.run_calls.append((headless, no_sandbox))
 
     monkeypatch.setattr(sap, "AutomationOrchestrator", DummyOrchestrator)
+    return DummyOrchestrator, calls
 
+
+def _build_automation(monkeypatch, sample_config):
+    setup_init(monkeypatch, sample_config, patch_services=False)
+    app_cfg = sap.context.config
     auto = sap.PSATimeAutomation("log.html", app_cfg)
     monkeypatch.setattr(auto, "cleanup_resources", lambda *a, **k: None)
+    return auto, app_cfg
 
-    auto.run(headless=True, no_sandbox=True)
 
-    assert isinstance(auto.orchestrator, DummyOrchestrator)
-    assert auto.orchestrator.run_called == 1
-    assert auto.orchestrator.run_args == (True, True)
-    assert called["from_components"][0][0] is auto.resource_manager
-    assert called["from_components"][0][1] is auto.page_navigator
-    assert isinstance(called["from_components"][0][2], ServiceConfigurator)
-    assert called["from_components"][0][2].app_config is app_cfg
-    assert called["from_components"][0][3] is auto.context
-    assert called["from_components"][0][4] is auto.logger
-    assert called["run"] == (True, True)
+def test_orchestrator_installed(monkeypatch, sample_config, patched_orchestrator):
+    auto, _ = _build_automation(monkeypatch, sample_config)
+    Dummy, _ = patched_orchestrator
+    auto.run()
+    assert isinstance(auto.orchestrator, Dummy)
+
+
+@pytest.mark.parametrize("headless,no_sandbox", [(True, True), (False, False)])
+def test_run_propagates_flags(
+    monkeypatch, sample_config, patched_orchestrator, headless, no_sandbox
+):
+    auto, _ = _build_automation(monkeypatch, sample_config)
+    _, calls = patched_orchestrator
+    auto.run(headless=headless, no_sandbox=no_sandbox)
+    assert calls["run"] == (headless, no_sandbox)
+
+
+def test_from_components_params(monkeypatch, sample_config, patched_orchestrator):
+    auto, app_cfg = _build_automation(monkeypatch, sample_config)
+    _, calls = patched_orchestrator
+    auto.run()
+    args = calls["from_components"][0]
+    assert args[0] is auto.resource_manager
+    assert args[1] is auto.page_navigator
+    assert isinstance(args[2], ServiceConfigurator)
+    assert args[2].app_config is app_cfg
+    assert args[3] is auto.context
+    assert args[4] is auto.logger
