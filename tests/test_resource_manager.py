@@ -82,43 +82,46 @@ def test_resource_manager_basic(monkeypatch):
     assert creds.login == b"u"
 
 
-def test_resource_manager_cleanup(monkeypatch):
-    sessions = []
+class CleanBrowserSession(DummyBrowserSession):
+    sessions: list[DummyBrowserSession] = []
 
-    class CleanBrowserSession(DummyBrowserSession):
-        def __init__(self, log_file, app_config):
-            super().__init__(log_file, app_config)
-            sessions.append(self)
+    def __init__(self, log_file, app_config):
+        super().__init__(log_file, app_config)
+        self.__class__.sessions.append(self)
 
-    class CleanResourceContext(DummyResourceContext):
-        def __enter__(self):
-            self.mem_key = shared_memory.SharedMemory(create=True, size=1)
-            self.mem_login = shared_memory.SharedMemory(create=True, size=1)
-            self.mem_pwd = shared_memory.SharedMemory(create=True, size=1)
-            self.mem_key.buf[:1] = b"k"
-            self.mem_login.buf[:1] = b"u"
-            self.mem_pwd.buf[:1] = b"p"
-            self._mems = [self.mem_key, self.mem_login, self.mem_pwd]
-            return self
 
-        def __exit__(self, exc_type, exc, tb):
-            for mem in self._mems:
-                try:
-                    mem.close()
-                    mem.unlink()
-                except FileNotFoundError:
-                    pass
+class CleanResourceContext(DummyResourceContext):
+    def __enter__(self):
+        self.mem_key = shared_memory.SharedMemory(create=True, size=1)
+        self.mem_login = shared_memory.SharedMemory(create=True, size=1)
+        self.mem_password = shared_memory.SharedMemory(create=True, size=1)
+        self.mem_key.buf[:1] = b"k"
+        self.mem_login.buf[:1] = b"u"
+        self.mem_password.buf[:1] = b"p"
+        self._mems = [self.mem_key, self.mem_login, self.mem_password]
+        return self
 
-        def get_credentials(self):
-            return Credentials(
-                b"k",
-                self.mem_key,
-                b"u",
-                self.mem_login,
-                b"p",
-                self.mem_pwd,
-            )
+    def __exit__(self, exc_type, exc, tb):
+        for mem in self._mems:
+            try:
+                mem.close()
+                mem.unlink()
+            except FileNotFoundError:
+                pass
 
+    def get_credentials(self):
+        return Credentials(
+            b"k",
+            self.mem_key,
+            b"u",
+            self.mem_login,
+            b"p",
+            self.mem_password,
+        )
+
+
+def run_cleanup(monkeypatch, open_driver: bool):
+    CleanBrowserSession.sessions = []
     monkeypatch.setattr(resource_manager, "ConfigManager", DummyConfigManager)
     monkeypatch.setattr(
         resource_manager,
@@ -131,23 +134,49 @@ def test_resource_manager_cleanup(monkeypatch):
         "log.html", FakeEncryptionService("log.html")
     ) as rm:
         creds = rm.get_credentials()
-        driver = rm.get_driver()
+        driver = rm.get_driver() if open_driver else None
         names = [
             creds.mem_key.name,
             creds.mem_login.name,
             creds.mem_password.name,
         ]
+    return CleanBrowserSession.sessions, rm, driver, creds, names
 
-    assert driver == "driver"
+
+@pytest.mark.parametrize("open_driver, expected", [(True, "driver"), (False, None)])
+def test_cleanup_returns_driver(monkeypatch, open_driver, expected):
+    _, _, driver, _, _ = run_cleanup(monkeypatch, open_driver)
+    assert driver == expected
+
+
+def test_cleanup_returns_credentials(monkeypatch):
+    _, _, _, creds, _ = run_cleanup(monkeypatch, True)
     assert creds.login == b"u"
-    assert sessions[0].closed is True
+
+
+@pytest.mark.parametrize("open_driver", [True, False])
+def test_cleanup_closes_session(monkeypatch, open_driver):
+    sessions, rm, _, _, _ = run_cleanup(monkeypatch, open_driver)
+    assert sessions[0].closed is open_driver
+
+
+@pytest.mark.parametrize("open_driver", [True, False])
+def test_cleanup_session_attr_cleared(monkeypatch, open_driver):
+    _, rm, _, _, _ = run_cleanup(monkeypatch, open_driver)
     assert rm._session is None
+
+
+@pytest.mark.parametrize("open_driver", [True, False])
+def test_cleanup_driver_attr_cleared(monkeypatch, open_driver):
+    _, rm, _, _, _ = run_cleanup(monkeypatch, open_driver)
     assert rm._driver is None
+
+
+def test_resource_manager_cleanup_removes_shared_memory(monkeypatch):
+    _, rm, _, creds, names = run_cleanup(monkeypatch, True)
     for name in names:
         with pytest.raises(FileNotFoundError):
             shared_memory.SharedMemory(name=name)
-
-    # avoid ResourceWarning
     creds.mem_key.close()
     creds.mem_login.close()
     creds.mem_password.close()
@@ -199,59 +228,120 @@ def test_resource_manager_close_is_idempotent(monkeypatch):
     assert rm._driver is None
 
 
-def test_resource_manager_context_calls(monkeypatch):
-    calls = {}
+class SpyConfigManager(DummyConfigManager):
+    def __init__(self, log_file, calls):
+        super().__init__(log_file)
+        self.calls = calls
 
-    class SpyConfigManager(DummyConfigManager):
-        def load(self):
-            calls["config_loaded"] = True
-            return super().load()
+    def load(self):
+        self.calls["config_loaded"] = True
+        return super().load()
 
-    class SpyBrowserSession(DummyBrowserSession):
-        def __init__(self, log_file, app_config):
-            super().__init__(log_file, app_config)
-            calls["session_created"] = True
 
-        def open(self, url, headless=False, no_sandbox=False):
-            calls["open_called"] = (url, headless, no_sandbox)
-            return super().open(url, headless=headless, no_sandbox=no_sandbox)
+class SpyBrowserSession(DummyBrowserSession):
+    def __init__(self, log_file, app_config, calls):
+        super().__init__(log_file, app_config)
+        calls["session_created"] = True
+        self.calls = calls
 
-        def close(self):
-            calls["closed"] = True
-            super().close()
+    def open(self, url, headless=False, no_sandbox=False):
+        self.calls["open_called"] = (url, headless, no_sandbox)
+        return super().open(url, headless=headless, no_sandbox=no_sandbox)
 
-    class SpyResourceContext(DummyResourceContext):
-        def __enter__(self):
-            calls["ctx_enter"] = True
-            return super().__enter__()
+    def close(self):
+        self.calls["closed"] = True
+        super().close()
 
-        def __exit__(self, exc_type, exc, tb):
-            calls["ctx_exit"] = True
-            return super().__exit__(exc_type, exc, tb)
 
-    monkeypatch.setattr(resource_manager, "ConfigManager", SpyConfigManager)
+class SpyResourceContext(DummyResourceContext):
+    def __init__(self, log_file, encryption_service=None, calls=None, **kwargs):
+        super().__init__(log_file, encryption_service, **kwargs)
+        self.calls = calls if calls is not None else {}
+
+    def __enter__(self):
+        self.calls["ctx_enter"] = True
+        return super().__enter__()
+
+    def __exit__(self, exc_type, exc, tb):
+        self.calls["ctx_exit"] = True
+        return super().__exit__(exc_type, exc, tb)
+
+
+@pytest.fixture()
+def context_calls(monkeypatch):
+    calls: dict[str, object] = {}
+    monkeypatch.setattr(
+        resource_manager,
+        "ConfigManager",
+        lambda log_file: SpyConfigManager(log_file, calls),
+    )
     monkeypatch.setattr(
         resource_manager,
         "create_session",
-        lambda cfg: SpyBrowserSession("log.html", cfg),
+        lambda cfg: SpyBrowserSession("log.html", cfg, calls),
     )
-    monkeypatch.setattr(resource_manager, "ResourceContext", SpyResourceContext)
-
+    monkeypatch.setattr(
+        resource_manager,
+        "ResourceContext",
+        lambda log_file, encryption_service=None, **kw: SpyResourceContext(
+            log_file, encryption_service, calls, **kw
+        ),
+    )
     with resource_manager.ResourceManager(
         "log.html", FakeEncryptionService("log.html")
     ) as rm:
         driver = rm.get_driver()
         creds = rm.get_credentials()
+    return rm, calls, driver, creds
 
+
+def test_context_manager_returns_driver(context_calls):
+    _, _, driver, _ = context_calls
     assert driver == "driver"
+
+
+def test_context_manager_returns_credentials(context_calls):
+    _, _, _, creds = context_calls
     assert creds.login == b"u"
-    assert calls.get("config_loaded") is True
-    assert calls.get("ctx_enter") is True
-    assert calls.get("ctx_exit") is True
-    assert calls.get("session_created") is True
-    assert calls.get("open_called") == ("http://example", False, False)
-    assert calls.get("closed") is True
+
+
+def test_context_manager_loads_config(context_calls):
+    _, calls, _, _ = context_calls
+    assert calls["config_loaded"] is True
+
+
+def test_context_manager_enters_context(context_calls):
+    _, calls, _, _ = context_calls
+    assert calls["ctx_enter"] is True
+
+
+def test_context_manager_exits_context(context_calls):
+    _, calls, _, _ = context_calls
+    assert calls["ctx_exit"] is True
+
+
+def test_context_manager_creates_session(context_calls):
+    _, calls, _, _ = context_calls
+    assert calls["session_created"] is True
+
+
+def test_context_manager_opens_session(context_calls):
+    _, calls, _, _ = context_calls
+    assert calls["open_called"] == ("http://example", False, False)
+
+
+def test_context_manager_closes_session(context_calls):
+    _, calls, _, _ = context_calls
+    assert calls["closed"] is True
+
+
+def test_context_manager_clears_session(context_calls):
+    rm, _, _, _ = context_calls
     assert rm._session is None
+
+
+def test_context_manager_clears_driver(context_calls):
+    rm, _, _, _ = context_calls
     assert rm._driver is None
 
 
