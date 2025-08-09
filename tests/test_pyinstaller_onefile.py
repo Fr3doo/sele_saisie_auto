@@ -1,5 +1,4 @@
 import os
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -9,24 +8,15 @@ import pytest
 pytestmark = pytest.mark.slow
 
 
-def _safe_rm(path: Path) -> None:
-    """Supprime un fichier ou un dossier si présent, sans branches."""
-    try:
-        path.unlink(missing_ok=True)
-    except IsADirectoryError:
-        shutil.rmtree(path, ignore_errors=True)
-
-
 @pytest.fixture(scope="session")
-def pyinstaller_env():
-    """Construit le binaire PyInstaller puis nettoie l'environnement."""
-    root = Path(__file__).resolve().parents[1]
-    dist_dir = root / "dist"
-    build_dir = root / "build"
-    spec_file = root / "main.spec"
+def pyinstaller_env(tmp_path_factory):
+    """Construit le binaire PyInstaller et fournit le chemin du binaire."""
+    pytest.importorskip("PyInstaller")
 
-    for p in (dist_dir, build_dir, spec_file):
-        _safe_rm(p)
+    root = Path(__file__).resolve().parents[1]
+    dist_dir = tmp_path_factory.mktemp("dist")
+    build_dir = tmp_path_factory.mktemp("build")
+    spec_dir = tmp_path_factory.mktemp("spec")
 
     result = subprocess.run(
         [
@@ -34,6 +24,14 @@ def pyinstaller_env():
             "-m",
             "PyInstaller",
             "--onefile",
+            "--name",
+            "main",
+            "--distpath",
+            str(dist_dir),
+            "--workpath",
+            str(build_dir),
+            "--specpath",
+            str(spec_dir),
             "src/sele_saisie_auto/main.py",
         ],
         cwd=root,
@@ -42,20 +40,15 @@ def pyinstaller_env():
         text=True,
     )
 
-    try:
-        yield result, dist_dir, build_dir, spec_file
-    finally:
-        for p in (dist_dir, build_dir, spec_file):
-            _safe_rm(p)
+    binary = {"nt": "main.exe"}.get(os.name, "main")
+    yield result, dist_dir / binary
 
 
 def test_pyinstaller_return_code(pyinstaller_env):
-    result, *_ = pyinstaller_env
-    assert result.returncode == 0, result.stdout
+    result, _ = pyinstaller_env
+    assert result.returncode == 0, f"{result.stdout}\n{result.args}"
 
 
 def test_pyinstaller_creates_binary(pyinstaller_env):
-    _, dist_dir, *_ = pyinstaller_env
-    binary = {"nt": "main.exe"}.get(os.name, "main")
-    binary_path = dist_dir / binary
+    _, binary_path = pyinstaller_env
     assert binary_path.exists(), f"Missing {binary_path}"
