@@ -134,7 +134,7 @@ def test_write_log_oserror(monkeypatch, tmp_path):
 
     monkeypatch.setattr(logger_utils, "initialize_html_log_file", lambda *a, **k: None)
     monkeypatch.setattr("builtins.open", bad_open)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(OSError):
         logger_utils.write_log(
             "msg", str(log_file), level=LogLevel.INFO, log_format="html"
         )
@@ -152,7 +152,7 @@ def test_close_logs_error(monkeypatch, tmp_path):
         raise OSError("fail")
 
     monkeypatch.setattr("builtins.open", bad_open)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(OSError):
         logger_utils.close_logs(str(log_file))
 
 
@@ -242,3 +242,35 @@ column_widths = timestamp10%
     monkeypatch.chdir(tmp_path)
     with pytest.raises(InvalidConfigError):
         logger_utils.get_html_style()
+
+
+def test_initialize_logger_override_and_config_invalid(tmp_path):
+    mod = importlib.reload(logger_utils)
+    cfg = configparser.ConfigParser()
+    cfg["settings"] = {"debug_mode": "BAD"}
+    log_file = tmp_path / "log.html"
+    mod.initialize_logger(cfg, log_level_override="WRONG", log_file=str(log_file))
+    assert mod.LOG_LEVEL_FILTER == LogLevel.INFO
+    assert "Invalid log level" in log_file.read_text(encoding="utf-8")
+
+
+def test_close_logs_no_double_closure(tmp_path):
+    log1 = tmp_path / "one.html"
+    log1.write_text("<table>", encoding="utf-8")
+    logger_utils.close_logs(str(log1))
+    content1 = log1.read_text(encoding="utf-8")
+    assert content1.count("</table></body></html>") == 1
+
+    log2 = tmp_path / "two.html"
+    log2.write_text("<table></table></body></html>", encoding="utf-8")
+    logger_utils.close_logs(str(log2))
+    content2 = log2.read_text(encoding="utf-8")
+    assert content2.count("</table></body></html>") == 1
+
+
+def test_validate_log_style_column_widths_format():
+    parser = configparser.ConfigParser(interpolation=None)
+    parser.add_section("log_style")
+    parser.set("log_style", "column_widths", "timestamp:10%,level")
+    with pytest.raises(InvalidConfigError):
+        logger_utils.validate_log_style(parser)
