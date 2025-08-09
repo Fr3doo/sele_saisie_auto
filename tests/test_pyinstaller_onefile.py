@@ -9,18 +9,24 @@ import pytest
 pytestmark = pytest.mark.slow
 
 
-def test_pyinstaller_build_onefile():
+def _safe_rm(path: Path) -> None:
+    """Supprime un fichier ou un dossier si présent, sans branches."""
+    try:
+        path.unlink(missing_ok=True)
+    except IsADirectoryError:
+        shutil.rmtree(path, ignore_errors=True)
+
+
+@pytest.fixture(scope="session")
+def pyinstaller_env():
+    """Construit le binaire PyInstaller puis nettoie l'environnement."""
     root = Path(__file__).resolve().parents[1]
     dist_dir = root / "dist"
     build_dir = root / "build"
     spec_file = root / "main.spec"
 
-    if dist_dir.exists():
-        shutil.rmtree(dist_dir)
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
-    if spec_file.exists():
-        spec_file.unlink()
+    for p in (dist_dir, build_dir, spec_file):
+        _safe_rm(p)
 
     result = subprocess.run(
         [
@@ -35,16 +41,21 @@ def test_pyinstaller_build_onefile():
         stderr=subprocess.STDOUT,
         text=True,
     )
+
+    try:
+        yield result, dist_dir, build_dir, spec_file
+    finally:
+        for p in (dist_dir, build_dir, spec_file):
+            _safe_rm(p)
+
+
+def test_pyinstaller_return_code(pyinstaller_env):
+    result, *_ = pyinstaller_env
     assert result.returncode == 0, result.stdout
 
-    binary_name = "main.exe" if os.name == "nt" else "main"
-    binary_path = dist_dir / binary_name
-    assert binary_path.exists(), f"Missing {binary_path}"
 
-    binary_path.unlink()
-    if dist_dir.exists() and not any(dist_dir.iterdir()):
-        dist_dir.rmdir()
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
-    if spec_file.exists():
-        spec_file.unlink()
+def test_pyinstaller_creates_binary(pyinstaller_env):
+    _, dist_dir, *_ = pyinstaller_env
+    binary = {"nt": "main.exe"}.get(os.name, "main")
+    binary_path = dist_dir / binary
+    assert binary_path.exists(), f"Missing {binary_path}"
