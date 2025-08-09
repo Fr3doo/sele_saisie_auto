@@ -75,6 +75,11 @@ def _append(path: str, text: str) -> None:
         f.write(text)
 
 
+def _read_all(path: str) -> str:
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+
 def _write_txt_line(path: str, ts: str, lvl: LogLevel, msg: str) -> None:
     formatted = LOG_ENTRY_FORMAT.format(timestamp=ts, level=lvl.value, message=msg)
     _append(path, formatted + "\n")
@@ -113,20 +118,18 @@ def _level_from_config(cfg: ConfigParser) -> Optional[LogLevel]:
 
 def _resolve_level(
     config: ConfigParser, log_level_override: LogLevel | str | None
-) -> tuple[LogLevel, str | None]:
+) -> tuple[LogLevel, list[str]]:
+    warnings: list[str] = []
     level = _parse_level_or_none(log_level_override)
-    if level is not None:
-        return level, None
-    warning = (
-        None
-        if log_level_override is None
-        else f"Invalid log level '{log_level_override}', fallback to INFO"
-    )
-    level = _level_from_config(config)
-    if level is not None:
-        return level, warning
-    raw = config.get("settings", "debug_mode", fallback=LogLevel.INFO.value)
-    return LogLevel.INFO, f"Invalid log level '{raw}' in config, fallback to INFO"
+    if level is None and log_level_override is not None:
+        warnings.append(f"Invalid log level '{log_level_override}', fallback to INFO")
+    if level is None:
+        level = _level_from_config(config)
+    if level is None:
+        raw = config.get("settings", "debug_mode", fallback=LogLevel.INFO.value)
+        warnings.append(f"Invalid log level '{raw}' in config, fallback to INFO")
+        level = LogLevel.INFO
+    return level, warnings
 
 
 def initialize_logger(
@@ -137,13 +140,14 @@ def initialize_logger(
     """Initialise le niveau de log avec priorité à l'override."""
 
     global LOG_LEVEL_FILTER
-    level, warning = _resolve_level(config, log_level_override)
-    LOG_LEVEL_FILTER = level
-
+    level, warnings = _resolve_level(config, log_level_override)
     if log_file is None:
+        LOG_LEVEL_FILTER = level
         return
-    if warning:
+    LOG_LEVEL_FILTER = LogLevel.WARNING
+    for warning in warnings:
         write_log(warning, log_file, LogLevel.WARNING)
+    LOG_LEVEL_FILTER = level
     write_log(
         f"Niveau de log initialisé sur {LOG_LEVEL_FILTER.name}",
         log_file,
@@ -207,9 +211,7 @@ def _parse_column_widths(value: str) -> dict[str, str]:
 def _validate_section_keys(section: Mapping[str, str]) -> None:
     unknown = [k for k in section.keys() if k not in LOG_STYLE_ALLOWED_KEYS]
     if unknown:
-        raise InvalidConfigError(
-            f"Clé inconnue dans [log_style]: {', '.join(unknown)}"
-        )
+        raise InvalidConfigError(f"Clé inconnue dans [log_style]: {', '.join(unknown)}")
 
 
 def _validate_column_widths(raw: str) -> None:
@@ -322,8 +324,7 @@ def initialize_html_log_file(log_file: str) -> None:
             f.write(get_html_style())
     else:
         # Vérifie si la balise </table> est présente
-        with open(log_file, encoding="utf-8") as f:
-            content = f.read()
+        content = _read_all(log_file)
         if "</table>" in content:
             # Supprime les balises fermantes pour continuer l'écriture
             content = content.replace("</table></body></html>", "")
@@ -354,10 +355,10 @@ def _write_log_entry(
 def _close_logs_impl(log_file: str, log_format: str) -> None:
     if log_format.lower() != HTML_FORMAT or not os.path.exists(log_file):
         return
-    with open(log_file, "r+", encoding="utf-8") as f:
-        content = f.read()
-        if "</table>" not in content:
-            f.write("</table></body></html>")
+    content = _read_all(log_file)
+    if "</table>" in content:
+        return
+    _append(log_file, "</table></body></html>")
 
 
 def write_log(
@@ -370,8 +371,8 @@ def write_log(
     """Écrit un message dans le fichier de log."""
     try:
         _write_log_entry(message, log_file, level, log_format, auto_close)
-    except OSError as e:
-        raise RuntimeError(f"Erreur liée au système de fichiers : {e}") from e
+    except OSError:
+        raise
     except Exception as e:
         raise RuntimeError(
             f"Erreur inattendue lors de l'écriture des logs : {e}"
@@ -385,8 +386,8 @@ def close_logs(
     """Ajoute la fermeture du tableau HTML si nécessaire."""
     try:
         _close_logs_impl(log_file, log_format)
-    except OSError as e:
-        raise RuntimeError(f"Erreur liée au système de fichiers : {e}") from e
+    except OSError:
+        raise
     except Exception as e:
         raise RuntimeError(
             f"Erreur inattendue lors de la fermeture des logs : {e}"
