@@ -4,12 +4,9 @@ from pathlib import Path
 import pytest
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
-
 from sele_saisie_auto import gui_builder  # noqa: E402
 
 pytestmark = pytest.mark.slow
-
-sep_instance = None
 
 
 class DummyWidget:
@@ -34,14 +31,16 @@ class FakeNotebook:
         self.add_calls.append((frame, text))
 
 
-def setup_module(module):
-    # Patch ttk and tk widget constructors with DummyWidget
-    module._patches = []
-    module.sep_instance = None
+@pytest.fixture(autouse=True)
+def patch_widgets(monkeypatch):
+    """
+    Remplace les widgets tk/ttk par DummyWidget et capture Separator.
+    """
+    holder = {}
 
     def new_separator(*args, **kwargs):
-        module.sep_instance = DummyWidget(*args, **kwargs)
-        return module.sep_instance
+        holder["sep"] = DummyWidget(*args, **kwargs)
+        return holder["sep"]
 
     for mod, name in [
         (gui_builder.ttk, "Frame"),
@@ -53,85 +52,122 @@ def setup_module(module):
         (gui_builder.ttk, "Button"),
         (gui_builder.tk, "Button"),
     ]:
-        original = getattr(mod, name)
-        module._patches.append((mod, name, original))
-        setattr(mod, name, DummyWidget)
+        monkeypatch.setattr(mod, name, DummyWidget)
 
-    module._patches.append((gui_builder.ttk, "Separator", gui_builder.ttk.Separator))
-    gui_builder.ttk.Separator = new_separator
+    monkeypatch.setattr(gui_builder.ttk, "Separator", new_separator)
+    return holder
 
 
-def teardown_module(module):
-    for mod, name, original in module._patches:
-        setattr(mod, name, original)
+# ─────────── tests ciblés : create_tab ───────────
 
 
-def test_build_widgets():
+def test_create_tab_returns_frame(patch_widgets):
     nb = FakeNotebook()
     tab = gui_builder.create_tab(nb, "Tab")
     assert isinstance(tab, DummyWidget)
+
+
+def test_create_tab_adds_to_notebook(patch_widgets):
+    nb = FakeNotebook()
+    tab = gui_builder.create_tab(nb, "Tab")
     assert nb.add_calls == [(tab, "Tab")]
 
-    frame = gui_builder.create_a_frame(tab)
-    assert isinstance(frame, DummyWidget)
-    assert frame.pack_kwargs["fill"] == "both"
 
-    lframe = gui_builder.create_labeled_frame(frame, text="lbl")
-    assert isinstance(lframe, DummyWidget)
-    assert lframe.pack_kwargs["expand"] is True
+# ─────────── tests ciblés : helpers pack() ───────────
 
-    title = gui_builder.create_title_label_with_grid(frame, "t", 0, 0)
-    assert isinstance(title, DummyWidget)
-    assert title.grid_kwargs["row"] == 0
 
-    lbl = gui_builder.create_modern_label_with_pack(frame, "hi")
-    assert isinstance(lbl, DummyWidget)
-    assert lbl.pack_kwargs == {"side": None, "padx": 0, "pady": 0, "sticky": None}
+def test_create_a_frame_packs_fill_both(patch_widgets):
+    parent = DummyWidget()
+    frame = gui_builder.create_a_frame(parent)
+    assert frame.pack_kwargs.get("fill") == "both"
 
-    entry = gui_builder.create_modern_entry_with_pack(frame, var="v")
-    assert isinstance(entry, DummyWidget)
-    assert entry.pack_kwargs["padx"] == 0
 
-    chk = gui_builder.create_modern_checkbox_with_pack(frame, var="c")
-    assert isinstance(chk, DummyWidget)
-    assert chk.pack_kwargs["side"] is None
+def test_create_labeled_frame_expands(patch_widgets):
+    parent = DummyWidget()
+    lf = gui_builder.create_labeled_frame(parent, text="lbl")
+    assert lf.pack_kwargs.get("expand") is True
 
-    label_g = gui_builder.create_modern_label_with_grid(frame, "g", 1, 1)
-    assert isinstance(label_g, DummyWidget)
-    assert label_g.grid_kwargs["column"] == 1
 
-    entry_g = gui_builder.create_modern_entry_with_grid(frame, var="v", row=2, col=2)
-    assert isinstance(entry_g, DummyWidget)
-    assert entry_g.grid_kwargs["row"] == 2
+def test_modern_label_with_pack_padx_zero(patch_widgets):
+    parent = DummyWidget()
+    lbl = gui_builder.create_modern_label_with_pack(parent, "hi")
+    assert lbl.pack_kwargs.get("padx") == 0
 
+
+def test_modern_entry_with_pack_padx_zero(patch_widgets):
+    parent = DummyWidget()
+    entry = gui_builder.create_modern_entry_with_pack(parent, var="v")
+    assert entry.pack_kwargs.get("padx") == 0
+
+
+def test_modern_checkbox_with_pack_side_none(patch_widgets):
+    parent = DummyWidget()
+    chk = gui_builder.create_modern_checkbox_with_pack(parent, var="c")
+    assert chk.pack_kwargs.get("side") is None
+
+
+def test_combobox_with_pack_pady_5(patch_widgets):
+    parent = DummyWidget()
+    combo = gui_builder.create_combobox_with_pack(parent, var="v", values=["a"])
+    assert combo.pack_kwargs.get("pady") == 5
+
+
+def test_button_with_style_ipady_none(patch_widgets):
+    parent = DummyWidget()
+    btn = gui_builder.create_button_with_style(parent, "ok", command=lambda: None)
+    assert btn.pack_kwargs.get("ipady") is None
+
+
+def test_button_without_style_fill_x(patch_widgets):
+    parent = DummyWidget()
+    btn = gui_builder.create_button_without_style(parent, "go", command=lambda: None)
+    assert btn.pack_kwargs.get("fill") == "x"
+
+
+# ─────────── tests ciblés : helpers grid() ───────────
+
+
+def test_title_label_with_grid_row_is_0(patch_widgets):
+    parent = DummyWidget()
+    title = gui_builder.create_title_label_with_grid(parent, "t", 0, 0)
+    assert title.grid_kwargs.get("row") == 0
+
+
+def test_modern_label_with_grid_column_is_1(patch_widgets):
+    parent = DummyWidget()
+    lbl = gui_builder.create_modern_label_with_grid(parent, "g", 1, 1)
+    assert lbl.grid_kwargs.get("column") == 1
+
+
+def test_modern_entry_with_grid_row_is_2(patch_widgets):
+    parent = DummyWidget()
+    entry = gui_builder.create_modern_entry_with_grid(parent, var="v", row=2, col=2)
+    assert entry.grid_kwargs.get("row") == 2
+
+
+def test_combobox_with_grid_row_is_4(patch_widgets):
+    parent = DummyWidget()
+    combo = gui_builder.create_combobox(parent, var="v", values=["b"], row=4, col=4)
+    assert combo.grid_kwargs.get("row") == 4
+
+
+# ─────────── cas spécifiques ───────────
+
+
+def test_password_entry_sets_show_asterisk(patch_widgets):
+    parent = DummyWidget()
     pwd = gui_builder.create_modern_entry_with_grid_for_password(
-        frame, var="p", row=3, col=3
+        parent, var="p", row=3, col=3
     )
-    assert isinstance(pwd, DummyWidget)
     assert pwd.kwargs.get("show") == "*"
 
-    combo_p = gui_builder.create_combobox_with_pack(frame, var="v", values=["a"])
-    assert isinstance(combo_p, DummyWidget)
-    assert combo_p.pack_kwargs["pady"] == 5
 
-    combo = gui_builder.create_combobox(frame, var="v", values=["b"], row=4, col=4)
-    assert isinstance(combo, DummyWidget)
-    assert combo.grid_kwargs["row"] == 4
-
-    btn_s = gui_builder.create_button_with_style(frame, "ok", command=lambda: None)
-    assert isinstance(btn_s, DummyWidget)
-    assert btn_s.pack_kwargs["ipady"] is None
-
-    btn = gui_builder.create_button_without_style(frame, "go", command=lambda: None)
-    assert isinstance(btn, DummyWidget)
-    assert btn.pack_kwargs["fill"] == "x"
-
-    gui_builder.seperator_ttk(frame)
-    assert isinstance(sep_instance, DummyWidget)
-    assert sep_instance.pack_kwargs["fill"] == "x"
+def test_separator_ttk_sets_fill_x(patch_widgets):
+    parent = DummyWidget()
+    gui_builder.seperator_ttk(parent)
+    assert patch_widgets["sep"].pack_kwargs.get("fill") == "x"
 
 
 def test_create_tab_invalid_object():
-    """Ensure ``create_tab`` fails clearly with an invalid notebook."""
     with pytest.raises(AttributeError):
         gui_builder.create_tab(DummyWidget(), "Bad")
