@@ -31,7 +31,7 @@ class FakeNotebook:
         self.add_calls.append((frame, text))
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def patch_widgets(monkeypatch):
     """
     Remplace les widgets tk/ttk par DummyWidget et capture Separator.
@@ -58,6 +58,11 @@ def patch_widgets(monkeypatch):
     return holder
 
 
+@pytest.fixture
+def parent():
+    return DummyWidget()
+
+
 # ─────────── tests ciblés : create_tab ───────────
 
 
@@ -76,50 +81,42 @@ def test_create_tab_adds_to_notebook(patch_widgets):
 # ─────────── tests ciblés : helpers pack() ───────────
 
 
-def test_create_a_frame_packs_fill_both(patch_widgets):
-    parent = DummyWidget()
+def test_create_a_frame_packs_fill_both(patch_widgets, parent):
     frame = gui_builder.create_a_frame(parent)
     assert frame.pack_kwargs.get("fill") == "both"
 
 
-def test_create_labeled_frame_expands(patch_widgets):
-    parent = DummyWidget()
+def test_create_labeled_frame_expands(patch_widgets, parent):
     lf = gui_builder.create_labeled_frame(parent, text="lbl")
     assert lf.pack_kwargs.get("expand") is True
 
 
-def test_modern_label_with_pack_padx_zero(patch_widgets):
-    parent = DummyWidget()
+def test_modern_label_with_pack_padx_zero(patch_widgets, parent):
     lbl = gui_builder.create_modern_label_with_pack(parent, "hi")
     assert lbl.pack_kwargs.get("padx") == 0
 
 
-def test_modern_entry_with_pack_padx_zero(patch_widgets):
-    parent = DummyWidget()
+def test_modern_entry_with_pack_padx_zero(patch_widgets, parent):
     entry = gui_builder.create_modern_entry_with_pack(parent, var="v")
     assert entry.pack_kwargs.get("padx") == 0
 
 
-def test_modern_checkbox_with_pack_side_none(patch_widgets):
-    parent = DummyWidget()
+def test_modern_checkbox_with_pack_side_none(patch_widgets, parent):
     chk = gui_builder.create_modern_checkbox_with_pack(parent, var="c")
     assert chk.pack_kwargs.get("side") is None
 
 
-def test_combobox_with_pack_pady_5(patch_widgets):
-    parent = DummyWidget()
+def test_combobox_with_pack_pady_5(patch_widgets, parent):
     combo = gui_builder.create_combobox_with_pack(parent, var="v", values=["a"])
     assert combo.pack_kwargs.get("pady") == 5
 
 
-def test_button_with_style_ipady_none(patch_widgets):
-    parent = DummyWidget()
+def test_button_with_style_ipady_none(patch_widgets, parent):
     btn = gui_builder.create_button_with_style(parent, "ok", command=lambda: None)
     assert btn.pack_kwargs.get("ipady") is None
 
 
-def test_button_without_style_fill_x(patch_widgets):
-    parent = DummyWidget()
+def test_button_without_style_fill_x(patch_widgets, parent):
     btn = gui_builder.create_button_without_style(parent, "go", command=lambda: None)
     assert btn.pack_kwargs.get("fill") == "x"
 
@@ -127,26 +124,22 @@ def test_button_without_style_fill_x(patch_widgets):
 # ─────────── tests ciblés : helpers grid() ───────────
 
 
-def test_title_label_with_grid_row_is_0(patch_widgets):
-    parent = DummyWidget()
+def test_title_label_with_grid_row_is_0(patch_widgets, parent):
     title = gui_builder.create_title_label_with_grid(parent, "t", 0, 0)
     assert title.grid_kwargs.get("row") == 0
 
 
-def test_modern_label_with_grid_column_is_1(patch_widgets):
-    parent = DummyWidget()
+def test_modern_label_with_grid_column_is_1(patch_widgets, parent):
     lbl = gui_builder.create_modern_label_with_grid(parent, "g", 1, 1)
     assert lbl.grid_kwargs.get("column") == 1
 
 
-def test_modern_entry_with_grid_row_is_2(patch_widgets):
-    parent = DummyWidget()
+def test_modern_entry_with_grid_row_is_2(patch_widgets, parent):
     entry = gui_builder.create_modern_entry_with_grid(parent, var="v", row=2, col=2)
     assert entry.grid_kwargs.get("row") == 2
 
 
-def test_combobox_with_grid_row_is_4(patch_widgets):
-    parent = DummyWidget()
+def test_combobox_with_grid_row_is_4(patch_widgets, parent):
     combo = gui_builder.create_combobox(parent, var="v", values=["b"], row=4, col=4)
     assert combo.grid_kwargs.get("row") == 4
 
@@ -154,20 +147,30 @@ def test_combobox_with_grid_row_is_4(patch_widgets):
 # ─────────── cas spécifiques ───────────
 
 
-def test_password_entry_sets_show_asterisk(patch_widgets):
-    parent = DummyWidget()
+def test_password_entry_sets_show_asterisk(patch_widgets, parent):
     pwd = gui_builder.create_modern_entry_with_grid_for_password(
         parent, var="p", row=3, col=3
     )
     assert pwd.kwargs.get("show") == "*"
 
 
-def test_separator_ttk_sets_fill_x(patch_widgets):
-    parent = DummyWidget()
+def test_password_entry_transmits_var(patch_widgets, parent):
+    pwd = gui_builder.create_modern_entry_with_grid_for_password(
+        parent, var="p", row=1, col=1
+    )
+    assert pwd.kwargs.get("textvariable") == "p"
+
+
+def test_combobox_transmits_values(patch_widgets, parent):
+    combo = gui_builder.create_combobox(parent, var="v", values=["b"], row=0, col=0)
+    assert combo.kwargs.get("values") == ["b"]
+
+
+def test_separator_ttk_sets_fill_x(patch_widgets, parent):
     gui_builder.seperator_ttk(parent)
     assert patch_widgets["sep"].pack_kwargs.get("fill") == "x"
 
 
-def test_create_tab_invalid_object():
+def test_create_tab_invalid_object(patch_widgets):
     with pytest.raises(AttributeError):
         gui_builder.create_tab(DummyWidget(), "Bad")
