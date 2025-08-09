@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from configparser import ConfigParser
 from datetime import datetime
-from typing import Literal
+from typing import Callable, Literal, Mapping, Optional
 
 from sele_saisie_auto import messages
 from sele_saisie_auto.enums import LogLevel
@@ -50,9 +50,83 @@ MESSAGE_TEMPLATES: dict[str, str] = {
     "DATE_VALIDATED": "Date validée avec succès.",
 }
 
+# -----------------------------------------------------------------------------
+# ----------------------------- HELPER FUNCTIONS -----------------------------
+# -----------------------------------------------------------------------------
+
+
+def _to_level(level: LogLevel | str) -> Optional[LogLevel]:
+    try:
+        return level if isinstance(level, LogLevel) else LogLevel(level)
+    except ValueError:
+        return None
+
+
+def _level_allowed(lvl: LogLevel) -> bool:
+    return LOG_LEVELS[lvl] <= LOG_LEVELS[LOG_LEVEL_FILTER]
+
+
+def _timestamp() -> str:
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _append(path: str, text: str) -> None:
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(text)
+
+
+def _write_txt_line(path: str, ts: str, lvl: LogLevel, msg: str) -> None:
+    formatted = LOG_ENTRY_FORMAT.format(timestamp=ts, level=lvl.value, message=msg)
+    _append(path, formatted + "\n")
+
+
+def _ensure_html_open(path: str) -> None:
+    initialize_html_log_file(path)
+
+
+def _write_html_row(path: str, ts: str, lvl: LogLevel, msg: str) -> None:
+    _ensure_html_open(path)
+    row = f"<tr><td>{ts}</td><td>{lvl.value}</td><td>{msg}</td></tr>\n"
+    _append(path, row)
+
+
+_WRITERS: Mapping[str, Callable[[str, str, LogLevel, str], None]] = {
+    HTML_FORMAT: _write_html_row,
+    TXT_FORMAT: _write_txt_line,
+}
+
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
+
+
+def _parse_level_or_none(value: LogLevel | str | None) -> Optional[LogLevel]:
+    if value is None:
+        return None
+    return _to_level(value)
+
+
+def _level_from_config(cfg: ConfigParser) -> Optional[LogLevel]:
+    raw = cfg.get("settings", "debug_mode", fallback=LogLevel.INFO.value)
+    return _to_level(raw)
+
+
+def _resolve_level(
+    config: ConfigParser, log_level_override: LogLevel | str | None
+) -> tuple[LogLevel, str | None]:
+    level = _parse_level_or_none(log_level_override)
+    if level is not None:
+        return level, None
+    warning = (
+        None
+        if log_level_override is None
+        else f"Invalid log level '{log_level_override}', fallback to INFO"
+    )
+    level = _level_from_config(config)
+    if level is not None:
+        return level, warning
+    raw = config.get("settings", "debug_mode", fallback=LogLevel.INFO.value)
+    return LogLevel.INFO, f"Invalid log level '{raw}' in config, fallback to INFO"
 
 
 def initialize_logger(
@@ -60,55 +134,21 @@ def initialize_logger(
     log_level_override: LogLevel | str | None = None,
     log_file: str | None = None,
 ) -> None:
-    """Initialise le niveau de log.
-
-    La priorité est donnée au niveau fourni en argument. Si aucun
-    ``log_level_override`` n'est passé, la valeur provient de la configuration.
-
-    Args:
-        config: Objet ``ConfigParser`` contenant les paramètres.
-        log_level_override: Niveau de log à appliquer en priorité.
-    """
+    """Initialise le niveau de log avec priorité à l'override."""
 
     global LOG_LEVEL_FILTER
-    if log_level_override:
-        try:
-            LOG_LEVEL_FILTER = (
-                log_level_override
-                if isinstance(log_level_override, LogLevel)
-                else LogLevel(log_level_override)
-            )
-        except ValueError:  # noqa: BLE001
-            LOG_LEVEL_FILTER = LogLevel.INFO
-            if log_file is not None:
-                write_log(
-                    f"Invalid log level '{log_level_override}', fallback to INFO",
-                    log_file,
-                    LogLevel.WARNING,
-                )
-    else:
-        raw_level = config.get(
-            "settings",
-            "debug_mode",
-            fallback=LogLevel.INFO.value,
-        )
-        try:
-            LOG_LEVEL_FILTER = LogLevel(raw_level)
-        except ValueError:  # noqa: BLE001
-            LOG_LEVEL_FILTER = LogLevel.INFO
-            if log_file is not None:
-                write_log(
-                    f"Invalid log level '{raw_level}' in config, fallback to INFO",
-                    log_file,
-                    LogLevel.WARNING,
-                )
+    level, warning = _resolve_level(config, log_level_override)
+    LOG_LEVEL_FILTER = level
 
-    if log_file is not None:
-        write_log(
-            f"Niveau de log initialisé sur {LOG_LEVEL_FILTER.name}",
-            log_file,
-            LogLevel.DEBUG,
-        )
+    if log_file is None:
+        return
+    if warning:
+        write_log(warning, log_file, LogLevel.WARNING)
+    write_log(
+        f"Niveau de log initialisé sur {LOG_LEVEL_FILTER.name}",
+        log_file,
+        LogLevel.DEBUG,
+    )
 
 
 def is_log_level_allowed(
@@ -164,23 +204,16 @@ def _parse_column_widths(value: str) -> dict[str, str]:
     return widths
 
 
-def validate_log_style(parser: ConfigParser) -> None:
-    """Validate the ``[log_style]`` section.
+def _validate_section_keys(section: Mapping[str, str]) -> None:
+    unknown = [k for k in section.keys() if k not in LOG_STYLE_ALLOWED_KEYS]
+    if unknown:
+        raise InvalidConfigError(
+            f"Clé inconnue dans [log_style]: {', '.join(unknown)}"
+        )
 
-    Raises :class:`InvalidConfigError` if an unknown key is present or if
-    ``column_widths`` contains malformed entries.
-    """
 
-    if not parser.has_section("log_style"):
-        return
-
-    section = parser["log_style"]
-    for key in section.keys():
-        if key not in LOG_STYLE_ALLOWED_KEYS:
-            raise InvalidConfigError(f"Clé inconnue dans [log_style]: {key}")
-
-    raw_widths = section.get("column_widths", "")
-    for item in raw_widths.split(","):
+def _validate_column_widths(raw: str) -> None:
+    for item in raw.split(","):
         item = item.strip()
         if item and ":" not in item:
             raise InvalidConfigError(
@@ -188,35 +221,44 @@ def validate_log_style(parser: ConfigParser) -> None:
             )
 
 
-def get_html_style() -> str:
-    """
-    Retourne le style HTML/CSS utilisé pour les fichiers de log.
+def validate_log_style(parser: ConfigParser) -> None:
+    """Validate the ``[log_style]`` section."""
 
-    Returns:
-        str: Chaîne contenant les balises HTML nécessaires pour inclure le style CSS.
-    """
+    if not parser.has_section("log_style"):
+        return
+    section = parser["log_style"]
+    _validate_section_keys(section)
+    _validate_column_widths(section.get("column_widths", ""))
+
+
+def _load_style_overrides() -> tuple[dict[str, str], str, str]:
     column_widths = COLUMN_WIDTHS.copy()
     row_height = ROW_HEIGHT
     font_size = FONT_SIZE
 
     config_file = os.path.join(os.getcwd(), "config.ini")
-    if os.path.exists(config_file):
-        parser = ConfigParser(interpolation=None)
-        try:
-            with open(config_file, encoding="utf-8") as cfg:
-                parser.read_file(cfg)
-            validate_log_style(parser)
-            if parser.has_section("log_style"):
-                raw_widths = parser.get("log_style", "column_widths", fallback="")
-                if raw_widths:
-                    column_widths.update(_parse_column_widths(raw_widths))
-                row_height = parser.get("log_style", "row_height", fallback=row_height)
-                font_size = parser.get("log_style", "font_size", fallback=font_size)
-        except InvalidConfigError:
-            raise
-        except Exception as e:  # noqa: BLE001
-            print(f"Erreur lors de la lecture du style de log : {e}")
+    if not os.path.exists(config_file):
+        return column_widths, row_height, font_size
 
+    parser = ConfigParser(interpolation=None)
+    try:
+        with open(config_file, encoding="utf-8") as cfg:
+            parser.read_file(cfg)
+    except Exception as e:  # noqa: BLE001
+        print(f"Erreur lors de la lecture du style de log : {e}")
+        return column_widths, row_height, font_size
+
+    validate_log_style(parser)
+    if parser.has_section("log_style"):
+        raw_widths = parser.get("log_style", "column_widths", fallback="")
+        column_widths.update(_parse_column_widths(raw_widths))
+        row_height = parser.get("log_style", "row_height", fallback=row_height)
+        font_size = parser.get("log_style", "font_size", fallback=font_size)
+    return column_widths, row_height, font_size
+
+
+def get_html_style() -> str:
+    column_widths, row_height, font_size = _load_style_overrides()
     return f"""
     <html>
     <head>
@@ -232,25 +274,12 @@ def get_html_style() -> str:
                 height: {row_height};
                 font-size: {font_size};
             }}
-            th {{
-                background-color: #f2f2f2;
-            }}
-            tr:nth-child(even) {{
-                background-color: #f9f9f9;
-            }}
-            tr:hover {{
-                background-color: #f1f1f1;
-            }}
-            /* Limiter la largeur des colonnes */
-            th:nth-child(1), td:nth-child(1) {{
-                width: {column_widths['timestamp']};
-            }}
-            th:nth-child(2), td:nth-child(2) {{
-                width: {column_widths['level']};
-            }}
-            th:nth-child(3), td:nth-child(3) {{
-                width: {column_widths['message']};
-            }}
+            th {{ background-color: #f2f2f2; }}
+            tr:nth-child(even) {{ background-color: #f9f9f9; }}
+            tr:hover {{ background-color: #f1f1f1; }}
+            th:nth-child(1), td:nth-child(1) {{ width: {column_widths['timestamp']}; }}
+            th:nth-child(2), td:nth-child(2) {{ width: {column_widths['level']}; }}
+            th:nth-child(3), td:nth-child(3) {{ width: {column_widths['message']}; }}
         </style>
     </head>
     <body>
@@ -302,6 +331,35 @@ def initialize_html_log_file(log_file: str) -> None:
                 f.write(content)
 
 
+def _write_log_entry(
+    message: str,
+    log_file: str,
+    level: LogLevel | str,
+    log_format: Literal["html", "txt"],
+    auto_close: bool,
+) -> None:
+    lvl = _to_level(level)
+    if lvl is None or not _level_allowed(lvl):
+        return
+
+    ts = _timestamp()
+    fmt = log_format.lower()
+    writer = _WRITERS.get(fmt, _write_txt_line)
+    writer(log_file, ts, lvl, message)
+
+    if auto_close and fmt == HTML_FORMAT:
+        _append(log_file, "</table></body></html>")
+
+
+def _close_logs_impl(log_file: str, log_format: str) -> None:
+    if log_format.lower() != HTML_FORMAT or not os.path.exists(log_file):
+        return
+    with open(log_file, "r+", encoding="utf-8") as f:
+        content = f.read()
+        if "</table>" not in content:
+            f.write("</table></body></html>")
+
+
 def write_log(
     message: str,
     log_file: str,
@@ -311,46 +369,7 @@ def write_log(
 ) -> None:
     """Écrit un message dans le fichier de log."""
     try:
-        # Vérifier si le niveau de log est valide
-        try:
-            lvl = level if isinstance(level, LogLevel) else LogLevel(level)
-        except ValueError:
-            return
-        if lvl not in LOG_LEVELS:
-            return
-
-        # Appliquer le filtre de niveau (gère les niveaux supérieurs ou égaux à LOG_LEVEL_FILTER)
-        if LOG_LEVELS[lvl] > LOG_LEVELS[LOG_LEVEL_FILTER]:
-            return
-
-        # Securité supplementaire pour les logs: Si le mode DEBUG est désactivé, n'afficher que les logs INFO
-        # Écriture dans le fichier
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        formatted = LOG_ENTRY_FORMAT.format(
-            timestamp=timestamp,
-            level=lvl.value,
-            message=message,
-        )
-
-        if log_format.lower() == HTML_FORMAT:
-            log_message = (
-                f"<tr><td>{timestamp}</td><td>{lvl.value}</td><td>{message}</td></tr>\n"
-            )
-
-            initialize_html_log_file(log_file)
-
-            # Ajout du message
-            with open(log_file, "a", encoding="utf-8") as f:
-                f.write(log_message)
-            # Ajouter fermeture propre si auto_close est activé
-            if auto_close:
-                with open(log_file, "a", encoding="utf-8") as f:
-                    f.write("</table></body></html>")
-        else:  # Format texte brut
-            with open(log_file, "a", encoding="utf-8") as f:
-                f.write(f"{formatted}\n")
-
+        _write_log_entry(message, log_file, level, log_format, auto_close)
     except OSError as e:
         raise RuntimeError(f"Erreur liée au système de fichiers : {e}") from e
     except Exception as e:
@@ -363,19 +382,9 @@ def close_logs(
     log_file: str,
     log_format: Literal["html", "txt"] = HTML_FORMAT,
 ) -> None:
-    """
-    Ajoute une fermeture propre du tableau HTML si nécessaire.
-
-    Args:
-        log_file (str): Chemin complet du fichier de log.
-        log_format (str): Format du fichier de log ("html" ou "txt").
-    """
+    """Ajoute la fermeture du tableau HTML si nécessaire."""
     try:
-        if log_format.lower() == HTML_FORMAT and os.path.exists(log_file):
-            with open(log_file, "r+", encoding="utf-8") as f:
-                content = f.read()
-                if "</table>" not in content:
-                    f.write("</table></body></html>")
+        _close_logs_impl(log_file, log_format)
     except OSError as e:
         raise RuntimeError(f"Erreur liée au système de fichiers : {e}") from e
     except Exception as e:
