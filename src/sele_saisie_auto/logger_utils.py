@@ -75,6 +75,11 @@ def _append(path: str, text: str) -> None:
         f.write(text)
 
 
+def _read_all(path: str) -> str:
+    with open(path, encoding="utf-8") as f:
+        return f.read()
+
+
 def _write_txt_line(path: str, ts: str, lvl: LogLevel, msg: str) -> None:
     formatted = LOG_ENTRY_FORMAT.format(timestamp=ts, level=lvl.value, message=msg)
     _append(path, formatted + "\n")
@@ -143,11 +148,11 @@ def initialize_logger(
     if log_file is None:
         return
     if warning:
-        write_log(warning, log_file, LogLevel.WARNING)
+        write_log(warning, log_file, LogLevel.INFO)
     write_log(
         f"Niveau de log initialisé sur {LOG_LEVEL_FILTER.name}",
         log_file,
-        LogLevel.DEBUG,
+        LogLevel.INFO,
     )
 
 
@@ -207,9 +212,7 @@ def _parse_column_widths(value: str) -> dict[str, str]:
 def _validate_section_keys(section: Mapping[str, str]) -> None:
     unknown = [k for k in section.keys() if k not in LOG_STYLE_ALLOWED_KEYS]
     if unknown:
-        raise InvalidConfigError(
-            f"Clé inconnue dans [log_style]: {', '.join(unknown)}"
-        )
+        raise InvalidConfigError(f"Clé inconnue dans [log_style]: {', '.join(unknown)}")
 
 
 def _validate_column_widths(raw: str) -> None:
@@ -242,8 +245,7 @@ def _load_style_overrides() -> tuple[dict[str, str], str, str]:
 
     parser = ConfigParser(interpolation=None)
     try:
-        with open(config_file, encoding="utf-8") as cfg:
-            parser.read_file(cfg)
+        parser.read_string(_read_all(config_file))
     except Exception as e:  # noqa: BLE001
         print(f"Erreur lors de la lecture du style de log : {e}")
         return column_widths, row_height, font_size
@@ -321,9 +323,7 @@ def initialize_html_log_file(log_file: str) -> None:
         with open(log_file, "w", encoding="utf-8") as f:
             f.write(get_html_style())
     else:
-        # Vérifie si la balise </table> est présente
-        with open(log_file, encoding="utf-8") as f:
-            content = f.read()
+        content = _read_all(log_file)
         if "</table>" in content:
             # Supprime les balises fermantes pour continuer l'écriture
             content = content.replace("</table></body></html>", "")
@@ -354,10 +354,9 @@ def _write_log_entry(
 def _close_logs_impl(log_file: str, log_format: str) -> None:
     if log_format.lower() != HTML_FORMAT or not os.path.exists(log_file):
         return
-    with open(log_file, "r+", encoding="utf-8") as f:
-        content = f.read()
-        if "</table>" not in content:
-            f.write("</table></body></html>")
+    content = _read_all(log_file)
+    if "</table>" not in content:
+        _append(log_file, "</table></body></html>")
 
 
 def write_log(
@@ -370,8 +369,8 @@ def write_log(
     """Écrit un message dans le fichier de log."""
     try:
         _write_log_entry(message, log_file, level, log_format, auto_close)
-    except OSError as e:
-        raise RuntimeError(f"Erreur liée au système de fichiers : {e}") from e
+    except OSError:
+        raise
     except Exception as e:
         raise RuntimeError(
             f"Erreur inattendue lors de l'écriture des logs : {e}"
@@ -385,8 +384,8 @@ def close_logs(
     """Ajoute la fermeture du tableau HTML si nécessaire."""
     try:
         _close_logs_impl(log_file, log_format)
-    except OSError as e:
-        raise RuntimeError(f"Erreur liée au système de fichiers : {e}") from e
+    except OSError:
+        raise
     except Exception as e:
         raise RuntimeError(
             f"Erreur inattendue lors de la fermeture des logs : {e}"
