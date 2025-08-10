@@ -40,9 +40,7 @@ class DefaultEncryptionBackend:
 
     def generer_cle_aes(self, taille_cle: int = 32) -> bytes:
         try:
-            key = os.urandom(taille_cle)
-            write_log("💀 Clé AES générée avec succès.", self.log_file, "CRITICAL")
-            return key
+            return os.urandom(taille_cle)
         except Exception as e:
             write_log(
                 f"❌ Erreur lors de la génération de la clé AES : {e}",
@@ -200,16 +198,20 @@ class EncryptionService:
         return self
 
     def store_credentials(self, login_data: bytes, password_data: bytes) -> None:
-        """Save encrypted credentials in shared memory."""
+        """Save encrypted credentials in shared memory atomically."""
 
         mem_login = self._creer_segment_si_besoin(
             self.memory_config.login_name, login_data
         )
-        self._memoires.append(mem_login)
-        mem_pwd = self._creer_segment_si_besoin(
-            self.memory_config.password_name, password_data
-        )
-        self._memoires.append(mem_pwd)
+        try:
+            mem_pwd = self._creer_segment_si_besoin(
+                self.memory_config.password_name, password_data
+            )
+        except Exception:
+            self.remove_shared_memory(mem_login)
+            raise
+
+        self._memoires.extend([mem_login, mem_pwd])
 
     def __exit__(
         self,
