@@ -155,71 +155,74 @@ class EncryptionService:
         return self.backend.dechiffrer_donnees(donnees_chiffrees, cle, taille_bloc)
 
     # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
+
+    def _creer_segment_si_besoin(
+        self, nom: str, donnees: bytes
+    ) -> shared_memory.SharedMemory:
+        """Create a shared memory segment, cleaning stale data if necessary.
+
+        This helper first tries to store ``donnees``.  If a ``FileExistsError``
+        occurs, the existing block is removed via
+        :func:`SharedMemoryService.ensure_clean_segment` before retrying once.
+        Any other exception is logged and re-raised without touching the
+        internal state.
+        """
+
+        try:
+            return self.shared_memory_service.stocker_en_memoire_partagee(nom, donnees)
+        except FileExistsError:
+            self.logger.info(
+                "⚠️ Segment déjà présent, nettoyage puis nouvelle tentative"
+            )
+            self.shared_memory_service.ensure_clean_segment(nom, len(donnees))
+            try:
+                return self.shared_memory_service.stocker_en_memoire_partagee(
+                    nom, donnees
+                )
+            except Exception as retry_exc:
+                self.logger.error(
+                    f"❌ Impossible d'initialiser la mémoire partagée : {retry_exc}"
+                )
+                raise
+        except Exception as exc:
+            self.logger.error(
+                f"❌ Impossible d'initialiser la mémoire partagée : {exc}"
+            )
+            raise
+
+    def _read_segment(self, name: str) -> tuple[shared_memory.SharedMemory, bytes]:
+        """Open ``name`` and return the non-zero bytes it contains."""
+
+        mem = shared_memory.SharedMemory(name=name)
+        size = len(bytes(mem.buf).rstrip(b"\x00"))
+        data = bytes(mem.buf[:size])
+        self.logger.info(f"✅ Segment '{name}' lu ({size} octets)")
+        return mem, data
+
+    # ------------------------------------------------------------------
     # Context manager utilities
     # ------------------------------------------------------------------
 
     def __enter__(self) -> "EncryptionService":
         """Generate and store the AES key in shared memory."""
         self.cle_aes = self.generer_cle_aes(self.memory_config.key_size)
-        mem = None
-        try:
-            mem = self.shared_memory_service.stocker_en_memoire_partagee(
-                self.memory_config.cle_name,
-                self.cle_aes,
-            )
-            self._memoires.append(mem)
-        except FileExistsError:
-            self.logger.info(
-                "⚠️ Segment déjà présent, nettoyage puis nouvelle tentative"
-            )
-            try:
-                self.shared_memory_service.ensure_clean_segment(
-                    self.memory_config.cle_name,
-                    len(self.cle_aes),
-                )
-                mem = self.shared_memory_service.stocker_en_memoire_partagee(
-                    self.memory_config.cle_name,
-                    self.cle_aes,
-                )
-                self._memoires.append(mem)
-            except Exception as retry_exc:
-                if mem is not None:
-                    try:
-                        self.remove_shared_memory(mem)
-                    except Exception:  # nosec B110
-                        pass
-                self.cle_aes = None
-                self.logger.error(
-                    f"❌ Impossible d'initialiser la mémoire partagée : {retry_exc}"
-                )
-                raise
-        except Exception as exc:
-            if mem is not None:
-                try:
-                    self.remove_shared_memory(mem)
-                except Exception:  # nosec B110
-                    pass
-            self.cle_aes = None
-            self.logger.error(
-                f"❌ Impossible d'initialiser la mémoire partagée : {exc}"
-            )
-            raise
-        else:
-            if self.log_file:
-                self.logger.info("✅ Mémoire partagée initialisée")
+        mem = self._creer_segment_si_besoin(self.memory_config.cle_name, self.cle_aes)
+        self._memoires.append(mem)
+        self.logger.info("✅ Mémoire partagée initialisée")
         return self
 
     def store_credentials(self, login_data: bytes, password_data: bytes) -> None:
         """Save encrypted credentials in shared memory."""
-        mem_login = self.shared_memory_service.stocker_en_memoire_partagee(
-            self.memory_config.login_name,
-            login_data,
+        mem_login = self._creer_segment_si_besoin(
+            self.memory_config.login_name, login_data
         )
-        mem_pwd = self.shared_memory_service.stocker_en_memoire_partagee(
-            self.memory_config.password_name,
-            password_data,
+        self._memoires.append(mem_login)
+        mem_pwd = self._creer_segment_si_besoin(
+            self.memory_config.password_name, password_data
         )
-        self._memoires.extend([mem_login, mem_pwd])
+        self._memoires.append(mem_pwd)
 
     def __exit__(
         self,
@@ -242,26 +245,11 @@ class EncryptionService:
             self.memory_config.cle_name,
             self.memory_config.key_size,
         )
-        write_log(f"💀 Clé AES récupérée : {aes_key.hex()}", self.log_file, "CRITICAL")
+        self.logger.info(f"✅ Clé AES récupérée ({len(aes_key)} octets)")
 
         try:
-            mem_login = shared_memory.SharedMemory(name=self.memory_config.login_name)
-            taille_nom = len(bytes(mem_login.buf).rstrip(b"\x00"))
-            login = bytes(mem_login.buf[:taille_nom])
-            write_log(
-                f"💀 Taille du login chiffré : {len(login)}",
-                self.log_file,
-                "CRITICAL",
-            )
-
-            mem_pwd = shared_memory.SharedMemory(name=self.memory_config.password_name)
-            taille_pwd = len(bytes(mem_pwd.buf).rstrip(b"\x00"))
-            password = bytes(mem_pwd.buf[:taille_pwd])
-            write_log(
-                f"💀 Taille du mot de passe chiffré : {len(password)}",
-                self.log_file,
-                "CRITICAL",
-            )
+            mem_login, login = self._read_segment(self.memory_config.login_name)
+            mem_pwd, password = self._read_segment(self.memory_config.password_name)
         except FileNotFoundError as exc:
             msg = "identifiants non trouvés : lancez d'abord psatime-launcher"
             self.logger.error(msg)
