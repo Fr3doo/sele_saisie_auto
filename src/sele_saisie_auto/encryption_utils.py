@@ -235,7 +235,8 @@ class EncryptionService:
         except FileNotFoundError as exc:
             msg = "identifiants non trouvés : lancez d'abord psatime-launcher"
             self.logger.error(msg)
-            self.remove_shared_memory(mem_key)
+            with suppress(Exception):  # nosec B110
+                self.remove_shared_memory(mem_key)
             raise AutomationExitError(msg) from exc
 
         return Credentials(
