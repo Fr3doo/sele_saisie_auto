@@ -17,6 +17,7 @@ from sele_saisie_auto.interfaces import (
     LoginHandlerProtocol,
     WaiterProtocol,
 )
+from sele_saisie_auto.logging_service import get_logger
 from sele_saisie_auto.memory_config import MemoryConfig
 from sele_saisie_auto.selenium_utils import Waiter
 
@@ -81,8 +82,9 @@ class ServiceConfigurator:
 
     def create_encryption_service(self, log_file: str) -> EncryptionService:
         """Return a new :class:`EncryptionService`."""
-
-        backend = self.encryption_backend or DefaultEncryptionBackend(log_file)
+        backend = self.encryption_backend or DefaultEncryptionBackend(
+            get_logger(log_file)
+        )
         return EncryptionService(
             log_file,
             backend=backend,
