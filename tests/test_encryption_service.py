@@ -234,6 +234,8 @@ def test_retrieve_credentials_missing_segment(missing):
         enc.remove_shared_memory(mem)
         with pytest.raises(AutomationExitError, match="identifiants non trouvés"):
             enc.retrieve_credentials()
+        with pytest.raises(FileNotFoundError):
+            shared_memory.SharedMemory(name=enc.memory_config.cle_name)
 
 
 def test_enter_cleans_on_failure(monkeypatch):
