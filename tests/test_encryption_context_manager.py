@@ -3,6 +3,7 @@ from unittest.mock import Mock, call
 import pytest
 
 from sele_saisie_auto.encryption_utils import EncryptionService
+from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.logging_service import Logger
 from sele_saisie_auto.memory_config import MemoryConfig
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
@@ -226,3 +227,20 @@ def test_store_credentials_cleans_up_on_exit(mem_cfg):
     )
     assert service.cle_aes is None
     assert service._memoires == []
+
+
+def test_retrieve_credentials_missing_segment_cleans_key_best_effort(mem_cfg):
+    expected_key = b"k" * mem_cfg.key_size
+    mem_key = object()
+    mock_service = Mock(spec=SharedMemoryService)
+    mock_service.stocker_en_memoire_partagee.return_value = object()
+    mock_service.recuperer_de_memoire_partagee.return_value = (mem_key, expected_key)
+    service = _make_service(mock_service, mem_cfg, expected_key)
+    service._lire_segment = Mock(side_effect=FileNotFoundError)
+
+    with service as enc:
+        with pytest.raises(AutomationExitError, match="identifiants non trouvés"):
+            enc.retrieve_credentials()
+        mock_service.supprimer_memoire_partagee_securisee.assert_called_once_with(
+            mem_key
+        )
