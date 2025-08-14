@@ -1,10 +1,14 @@
 import types
 from configparser import ConfigParser
 from pathlib import Path
+from unittest.mock import Mock, call
 
 import pytest
 
 from sele_saisie_auto.automation.browser_session import BrowserSession
+from sele_saisie_auto.encryption_utils import EncryptionService
+from sele_saisie_auto.memory_config import MemoryConfig
+from sele_saisie_auto.shared_memory_service import SharedMemoryService
 
 
 class DummyLogger:
@@ -77,6 +81,54 @@ class FakeEncryptionService:
     # New helper mirroring production API
     def remove_shared_memory(self, mem):
         self.supprimer_memoire_partagee_securisee(mem)
+
+
+@pytest.fixture
+def service_factory():
+    def _factory(
+        mock_service: Mock, mem_cfg: MemoryConfig, expected_key: bytes
+    ) -> EncryptionService:
+        service = EncryptionService(
+            shared_memory_service=mock_service, memory_config=mem_cfg
+        )
+        service.generer_cle_aes = Mock(return_value=expected_key)
+        return service
+
+    return _factory
+
+
+def assert_call_sequence(mock: Mock, *expected: call) -> None:
+    assert mock.call_args_list == list(expected)
+
+
+def assert_call_prefix(mock: Mock, *expected: call) -> None:
+    assert mock.mock_calls[: len(expected)] == list(expected)
+
+
+def store_setup(mem_cfg: MemoryConfig, service_factory):
+    expected_key = b"k" * mem_cfg.key_size
+    mem_key = object()
+    mem_login = object()
+    mem_pwd = object()
+    login_blob = b"login-data"
+    pwd_blob = b"pwd-data"
+    mock_service = Mock(spec=SharedMemoryService)
+    mock_service.stocker_en_memoire_partagee.side_effect = [
+        mem_key,
+        mem_login,
+        mem_pwd,
+    ]
+    service = service_factory(mock_service, mem_cfg, expected_key)
+    return (
+        service,
+        mock_service,
+        expected_key,
+        mem_key,
+        mem_login,
+        mem_pwd,
+        login_blob,
+        pwd_blob,
+    )
 
 
 # ----------------------------
