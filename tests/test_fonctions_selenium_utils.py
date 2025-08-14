@@ -411,6 +411,12 @@ class DummyDoublonDriver:
     def find_elements(self, by, value):
         if by == "css selector" and value == "[id^='POL_DESCR$']":
             return [DummyDesc(self.descs[idx]) for idx in sorted(self.descs)]
+        if by == "id" and value.startswith("POL_TIME"):
+            prefix, row = value.split("$")
+            day = int(prefix[8:])
+            idx = int(row)
+            if (day, idx) in self.values:
+                return [DummyField(self.values[(day, idx)])]
         return []
 
 
