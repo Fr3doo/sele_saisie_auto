@@ -5,15 +5,18 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
-from sele_saisie_auto.selenium_utils import NoSuchElementException  # noqa: E402
 from sele_saisie_auto.selenium_utils.duplicate_day_detector import (  # noqa: E402
     DuplicateDayDetector,
 )
 
 
 class DummyDesc:
-    def __init__(self, text=""):
+    def __init__(self, ident: str, text: str = ""):
+        self._id = ident
         self.text = text
+
+    def get_attribute(self, name: str) -> str:
+        return self._id if name == "id" else ""
 
 
 class DummyField:
@@ -29,24 +32,26 @@ class DummyDriver:
         self.descs = descs
         self.values = values
 
-    def find_element(self, by, ident):
-        if ident.startswith("POL_DESCR$"):
-            idx = int(ident.split("$")[1])
-            if idx in self.descs:
-                return DummyDesc(self.descs[idx])
-            raise NoSuchElementException("desc")
-        if ident.startswith("POL_TIME"):
-            prefix, row = ident.split("$")
-            day = int(prefix[8:])
-            idx = int(row)
-            if (day, idx) in self.values:
-                return DummyField(self.values[(day, idx)])
-            raise NoSuchElementException("day")
-        raise NoSuchElementException("unknown")
-
     def find_elements(self, by, value):
         if by == "css selector" and value == "[id^='POL_DESCR$']":
-            return [DummyDesc(self.descs[idx]) for idx in sorted(self.descs)]
+            return [
+                DummyDesc(f"POL_DESCR${idx}", self.descs[idx])
+                for idx in sorted(self.descs)
+            ]
+        if by == "id":
+            ident = value
+            if ident.startswith("POL_TIME"):
+                prefix, row = ident.split("$")
+                day = int(prefix[8:])
+                idx = int(row)
+                if (day, idx) in self.values:
+                    return [DummyField(self.values[(day, idx)])]
+                return []
+            if ident.startswith("POL_DESCR$"):
+                idx = int(ident.split("$")[1])
+                if idx in self.descs:
+                    return [DummyDesc(ident, self.descs[idx])]
+                return []
         return []
 
 
@@ -100,7 +105,10 @@ def test_detector_handles_missing_rows(monkeypatch):
 
     def fake_find_elements(by, value):
         if by == "css selector" and value == "[id^='POL_DESCR$']":
-            return [DummyDesc("A"), DummyDesc("B")]
+            return [
+                DummyDesc("POL_DESCR$0", "A"),
+                DummyDesc("POL_DESCR$1", "B"),
+            ]
         return []
 
     monkeypatch.setattr(driver, "find_elements", fake_find_elements)
