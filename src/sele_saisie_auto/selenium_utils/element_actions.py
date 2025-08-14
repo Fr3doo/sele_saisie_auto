@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import cast
+from typing import Callable, Iterable, NoReturn, cast
 
 from selenium.common.exceptions import (
     NoSuchElementException,
@@ -21,6 +21,48 @@ from sele_saisie_auto.selenium_utils.duplicate_day_detector import DuplicateDayD
 
 from . import get_default_logger
 from .navigation import switch_to_frame_by_id
+
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
+
+
+def _normalize_text(text: str) -> str:
+    """Return ``text`` stripped with internal spaces collapsed."""
+    return " ".join((text or "").split())
+
+
+def _iter_rows(
+    driver: WebDriver, row_prefix: str, max_rows: int | None
+) -> Iterable[tuple[int, WebElement]]:
+    """Yield ``(index, element)`` for each matching row."""
+    if max_rows is None:
+        yield from _iter_rows_dynamic(driver, row_prefix)
+    else:
+        yield from _iter_rows_fixed(driver, row_prefix, max_rows)
+
+
+def _iter_rows_dynamic(
+    driver: WebDriver, row_prefix: str
+) -> Iterable[tuple[int, WebElement]]:
+    row_elements = driver.find_elements(By.CSS_SELECTOR, f"[id^='{row_prefix}']")
+    for idx in range(len(row_elements)):
+        try:
+            el = driver.find_element(By.ID, f"{row_prefix}{idx}")
+        except NoSuchElementException:
+            continue
+        yield idx, el
+
+
+def _iter_rows_fixed(
+    driver: WebDriver, row_prefix: str, max_rows: int
+) -> Iterable[tuple[int, WebElement]]:
+    for i in range(max_rows):
+        try:
+            el = driver.find_element(By.ID, f"{row_prefix}{i}")
+        except NoSuchElementException:
+            continue
+        yield i, el
 
 
 def modifier_date_input(
@@ -79,9 +121,8 @@ def verifier_champ_jour_rempli(
 ) -> str | None:
     """Check if a day's field already contains a value."""
     logger = logger or get_default_logger()
-    field_content: str | None = day_field.get_attribute("value")
-    # On vérifie que l’attribut existe et n’est pas vide après strip
-    if field_content and field_content.strip():
+    field_content = (day_field.get_attribute("value") or "").strip()
+    if field_content:
         logger.debug(f"Jour '{day_label}' contient une valeur : {field_content}")
         return day_label
 
@@ -97,16 +138,16 @@ def remplir_champ_texte(
 ) -> None:
     """Fill a day's input if empty."""
     logger = logger or get_default_logger()
-    current_content: str | None = day_input_field.get_attribute("value")
-
-    if current_content is None or not current_content.strip():
-        day_input_field.clear()
-        day_input_field.send_keys(input_value)
-        logger.debug(f"Valeur '{input_value}' insérée dans le jour '{day_label}'")
-    else:
+    current_content = (day_input_field.get_attribute("value") or "").strip()
+    if current_content:
         logger.debug(
             f"Le jour '{day_label}' contient déjà une valeur : {current_content}, rien à changer."
         )
+        return
+
+    day_input_field.clear()
+    day_input_field.send_keys(input_value)
+    logger.debug(f"Valeur '{input_value}' insérée dans le jour '{day_label}'")
 
 
 def detecter_et_verifier_contenu(
@@ -116,30 +157,35 @@ def detecter_et_verifier_contenu(
     logger = logger or get_default_logger()
     try:
         day_input_field = driver.find_element(By.ID, element_id)
-        raw_content: str | None = day_input_field.get_attribute("value")
-        current_content = raw_content.strip() if raw_content else ""
-        is_correct_value = current_content == input_value
+        raw_content = day_input_field.get_attribute("value") or ""
+        is_correct_value = raw_content.strip() == input_value
         logger.debug(
             f"id trouvé : {element_id} / is_correct_value : {is_correct_value}"
         )
         return day_input_field, is_correct_value
-    except NoSuchElementException as e:
-        logger.error(
-            f"❌ Élément avec id='{element_id}' {messages.INTROUVABLE}. {str(e)}"
-        )
-        raise
-    except StaleElementReferenceException as e:
-        logger.error(
-            f"❌ {messages.REFERENCE_OBSOLETE} pour l'élément id='{element_id}'. {str(e)}"
-        )
-        raise
     except Exception as e:  # noqa: BLE001
-        logger.error(
-            f"❌ {messages.ERREUR_INATTENDUE} lors de la détection et de la vérification du contenu : {str(e)}"
-        )
-        raise RuntimeError(
-            f"{messages.ERREUR_INATTENDUE} lors de la détection et de la vérification du contenu"
-        ) from e
+        _handle_detection_error(e, element_id, logger)
+
+
+def _handle_detection_error(e: Exception, element_id: str, logger: Logger) -> NoReturn:
+    match e:
+        case NoSuchElementException():
+            logger.error(
+                f"❌ Élément avec id='{element_id}' {messages.INTROUVABLE}. {str(e)}"
+            )
+            raise e
+        case StaleElementReferenceException():
+            logger.error(
+                f"❌ {messages.REFERENCE_OBSOLETE} pour l'élément id='{element_id}'. {str(e)}"
+            )
+            raise e
+        case _:
+            logger.error(
+                f"❌ {messages.ERREUR_INATTENDUE} lors de la détection et de la vérification du contenu : {str(e)}"
+            )
+            raise RuntimeError(
+                f"{messages.ERREUR_INATTENDUE} lors de la détection et de la vérification du contenu"
+            ) from e
 
 
 def effacer_et_entrer_valeur(
@@ -186,45 +232,29 @@ def trouver_ligne_par_description(
     logger: Logger | None = None,
     max_rows: int | None = None,
 ) -> int | None:
-    """Return the row index matching a description or None."""
+    """Return the row index matching a description or ``None``."""
     logger = logger or get_default_logger()
-    matched_row_index = None
+    target = _normalize_text(target_description)
+
+    predicate, msg_prefix = {
+        True: (
+            cast(Callable[[str], bool], lambda t: target in t),
+            "Ligne trouvée (correspondance partielle)",
+        ),
+        False: (
+            cast(Callable[[str], bool], lambda t: t == target),
+            "Ligne trouvée",
+        ),
+    }[partial_match]
+
+    for idx, element in _iter_rows(driver, row_prefix, max_rows):
+        if predicate(_normalize_text(element.text)):
+            logger.debug(f"{msg_prefix} pour '{target_description}' à l'index {idx}")
+            return idx
 
     if max_rows is None:
-        row_elements = driver.find_elements(By.CSS_SELECTOR, f"[id^='{row_prefix}']")
-        row_range = range(len(row_elements))
-    else:
-        row_range = range(max_rows)
-
-    for row_counter in row_range:
-        try:
-            current_description_element = driver.find_element(
-                By.ID, f"{row_prefix}{row_counter}"
-            )
-        except NoSuchElementException:
-            if max_rows is None:
-                logger.warning(f"Aucune ligne trouvée pour '{target_description}'.")
-                break
-            continue
-
-        raw_text = current_description_element.text.strip()
-        cleaned_text = " ".join(raw_text.split())
-
-        if partial_match:
-            if target_description in cleaned_text:
-                logger.debug(
-                    f"Ligne trouvée (correspondance partielle) pour '{target_description}' à l'index {row_counter}"
-                )
-                matched_row_index = row_counter
-                break
-        else:
-            if cleaned_text == target_description:
-                logger.debug(
-                    f"Ligne trouvée pour '{target_description}' à l'index {row_counter}"
-                )
-                matched_row_index = row_counter
-                break
-    return matched_row_index
+        logger.warning(f"Aucune ligne trouvée pour '{target_description}'.")
+    return None
 
 
 def detecter_doublons_jours(
