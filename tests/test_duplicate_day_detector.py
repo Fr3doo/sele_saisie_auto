@@ -3,6 +3,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
+from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
 from sele_saisie_auto.selenium_utils import NoSuchElementException  # noqa: E402
 from sele_saisie_auto.selenium_utils.duplicate_day_detector import (  # noqa: E402
@@ -96,11 +97,13 @@ def test_detector_handles_missing_rows(monkeypatch):
     descs = {0: "A"}
     values = {}
     driver = DummyDriver(descs, values)
-    monkeypatch.setattr(
-        driver,
-        "find_elements",
-        lambda by, value: [DummyDesc("A"), DummyDesc("B")],
-    )
+
+    def fake_find_elements(by, value):
+        if by == "css selector" and value == "[id^='POL_DESCR$']":
+            return [DummyDesc("A"), DummyDesc("B")]
+        return []
+
+    monkeypatch.setattr(driver, "find_elements", fake_find_elements)
     detector = DuplicateDayDetector(logger=logger)
     detector.detect(driver)
-    assert any("Fin de l'analyse" in m for m in logs)
+    assert any(messages.IMPOSSIBLE_DE_TROUVER in m for m in logs)
