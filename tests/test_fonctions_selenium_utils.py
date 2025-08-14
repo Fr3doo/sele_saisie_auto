@@ -376,15 +376,21 @@ def test_definir_taille_navigateur():
 
 
 class DummyDesc:
-    def __init__(self, text=""):
+    def __init__(self, text: str = "", element_id: str = ""):
         self.text = text
+        self.element_id = element_id
+
+    def get_attribute(self, name: str) -> str | None:
+        if name == "id":
+            return self.element_id
+        return None
 
 
 class DummyField:
-    def __init__(self, value=""):
+    def __init__(self, value: str = ""):
         self.value = value
 
-    def get_attribute(self, name):
+    def get_attribute(self, name: str) -> str:
         return self.value
 
 
@@ -393,24 +399,19 @@ class DummyDoublonDriver:
         self.descs = descs
         self.values = values
 
-    def find_element(self, by, ident):
-        if ident.startswith("POL_DESCR$"):
-            idx = int(ident.split("$")[1])
-            if idx in self.descs:
-                return DummyDesc(self.descs[idx])
-            raise fsu.NoSuchElementException("desc")
-        if ident.startswith("POL_TIME"):
-            prefix, row = ident.split("$")
+    def find_elements(self, by, value):
+        if by == "css selector" and value == "[id^='POL_DESCR$']":
+            return [
+                DummyDesc(self.descs[idx], f"POL_DESCR${idx}")
+                for idx in sorted(self.descs)
+            ]
+        if by == "id" and value.startswith("POL_TIME"):
+            prefix, row = value.split("$")
             day = int(prefix[8:])
             idx = int(row)
             if (day, idx) in self.values:
-                return DummyField(self.values[(day, idx)])
-            raise fsu.NoSuchElementException("day")
-        raise fsu.NoSuchElementException("unknown")
-
-    def find_elements(self, by, value):
-        if by == "css selector" and value == "[id^='POL_DESCR$']":
-            return [DummyDesc(self.descs[idx]) for idx in sorted(self.descs)]
+                return [DummyField(self.values[(day, idx)])]
+            return []
         return []
 
 

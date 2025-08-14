@@ -4,48 +4,48 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.logging_service import Logger  # noqa: E402
-from sele_saisie_auto.selenium_utils import NoSuchElementException  # noqa: E402
 from sele_saisie_auto.selenium_utils.duplicate_day_detector import (  # noqa: E402
     DuplicateDayDetector,
 )
 
 
 class DummyDesc:
-    def __init__(self, text=""):
+    def __init__(self, text: str = "", element_id: str = ""):
         self.text = text
+        self.element_id = element_id
+
+    def get_attribute(self, name: str) -> str | None:  # pragma: no cover - trivial
+        if name == "id":
+            return self.element_id
+        return None
 
 
 class DummyField:
-    def __init__(self, value=""):
+    def __init__(self, value: str = ""):
         self.value = value
 
-    def get_attribute(self, name):
+    def get_attribute(self, name: str) -> str:  # pragma: no cover - trivial
         return self.value
 
 
 class DummyDriver:
-    def __init__(self, descs, values):
+    def __init__(self, descs: dict[int, str], values: dict[tuple[int, int], str]):
         self.descs = descs
         self.values = values
 
-    def find_element(self, by, ident):
-        if ident.startswith("POL_DESCR$"):
-            idx = int(ident.split("$")[1])
-            if idx in self.descs:
-                return DummyDesc(self.descs[idx])
-            raise NoSuchElementException("desc")
-        if ident.startswith("POL_TIME"):
-            prefix, row = ident.split("$")
+    def find_elements(self, by: str, value: str):  # pragma: no cover - simple stub
+        if by == "css selector" and value == "[id^='POL_DESCR$']":
+            return [
+                DummyDesc(self.descs[idx], f"POL_DESCR${idx}")
+                for idx in sorted(self.descs)
+            ]
+        if by == "id" and value.startswith("POL_TIME"):
+            prefix, row = value.split("$")
             day = int(prefix[8:])
             idx = int(row)
             if (day, idx) in self.values:
-                return DummyField(self.values[(day, idx)])
-            raise NoSuchElementException("day")
-        raise NoSuchElementException("unknown")
-
-    def find_elements(self, by, value):
-        if by == "css selector" and value == "[id^='POL_DESCR$']":
-            return [DummyDesc(self.descs[idx]) for idx in sorted(self.descs)]
+                return [DummyField(self.values[(day, idx)])]
+            return []
         return []
 
 
@@ -90,17 +90,22 @@ def test_detector_no_duplicate(monkeypatch):
     assert any("Aucun doublon" in m for m in logs)
 
 
-def test_detector_handles_missing_rows(monkeypatch):
+def test_detector_handles_missing_row_ids(monkeypatch):
     logs = []
     logger = Logger(None, writer=lambda msg, *a, **k: logs.append(msg))
     descs = {0: "A"}
-    values = {}
+    values: dict[tuple[int, int], str] = {}
     driver = DummyDriver(descs, values)
+
     monkeypatch.setattr(
         driver,
         "find_elements",
-        lambda by, value: [DummyDesc("A"), DummyDesc("B")],
+        lambda by, value: [
+            DummyDesc("A", "POL_DESCR$0"),
+            DummyDesc("B", ""),
+        ],
     )
+
     detector = DuplicateDayDetector(logger=logger)
     detector.detect(driver)
-    assert any("Fin de l'analyse" in m for m in logs)
+    assert any("index 1" in m for m in logs)
