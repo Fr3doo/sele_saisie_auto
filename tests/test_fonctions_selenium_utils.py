@@ -551,7 +551,7 @@ def test_verifier_accessibilite_url_ssl_branches(monkeypatch):
     def get_fail(url, timeout=10, verify=True):
         if verify:
             raise fsu.requests.exceptions.SSLError("ssl")
-        raise Exception("boom")
+        raise fsu.requests.exceptions.RequestException("boom")
 
     monkeypatch.setattr(fsu.navigation.requests, "get", get_fail)
     assert fsu.verifier_accessibilite_url("http://x", logger=logger) is False
