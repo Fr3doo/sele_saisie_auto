@@ -266,22 +266,26 @@ def test_select_and_find_row(monkeypatch):
     assert selected["v"] == "opt"
 
     class Element:
-        def __init__(self, text):
+        def __init__(self, text: str, idx: int):
             self.text = text
+            self._id = f"ROW{idx}"
+
+        def get_attribute(self, attr: str) -> str | None:
+            return self._id if attr == "id" else None
 
     class Driver:
-        def __init__(self, rows):
+        def __init__(self, rows: list[str]):
             self.rows = rows
 
         def find_element(self, by, ident):
             prefix, idx = ident[:-1], ident[-1]
             if prefix == "ROW" and int(idx) < len(self.rows):
-                return Element(self.rows[int(idx)])
+                return Element(self.rows[int(idx)], int(idx))
             raise fsu.NoSuchElementException("no")
 
         def find_elements(self, by, value):
             if by == "css selector" and value == "[id^='ROW']":
-                return [object()] * len(self.rows)
+                return [Element(text, i) for i, text in enumerate(self.rows)]
             return []
 
     d = Driver(["foo", "bar"])
@@ -293,6 +297,29 @@ def test_select_and_find_row(monkeypatch):
         == 1
     )
     assert fsu.trouver_ligne_par_description(d, "absent", "ROW", logger=logger) is None
+
+
+def test_trouver_ligne_par_description_elements_with_ids(monkeypatch):
+    class Element:
+        def __init__(self, text: str, idx: int):
+            self.text = text
+            self._id = f"ROW{idx}"
+
+        def get_attribute(self, attr: str) -> str | None:
+            return self._id if attr == "id" else None
+
+    class Driver:
+        def __init__(self, rows: list[str]):
+            self.rows = rows
+
+        def find_elements(self, by: str, value: str):
+            if by == "css selector" and value == "[id^='ROW']":
+                return [Element(text, i) for i, text in enumerate(self.rows)]
+            return []
+
+    logger = Logger(None, writer=lambda msg, *a, **k: None)
+    driver = Driver(["foo", "bar"])
+    assert fsu.trouver_ligne_par_description(driver, "bar", "ROW", logger=logger) == 1
 
 
 # ──────────────── verifier_accessibilite_url (4 cas) ─────────────────
