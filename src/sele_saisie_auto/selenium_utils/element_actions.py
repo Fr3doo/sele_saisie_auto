@@ -38,20 +38,44 @@ def _text_equals(target: str, text: str) -> bool:
     return text == target
 
 
+def _parse_index_from_id(row_id: str, row_prefix: str) -> int | None:
+    """Extrait l'indice numérique à partir d'un identifiant d'élément."""
+    if not row_id.startswith(row_prefix):
+        return None
+    prefix_len = len(row_prefix)
+    suffix = row_id[prefix_len:]
+    try:
+        return int(suffix)
+    except ValueError:
+        return None
+
+
 def _iter_existing_rows(
     driver: WebDriver, row_prefix: str
 ) -> Iterable[tuple[int, WebElement]]:
     """Itère sur les lignes présentes dans le DOM."""
-    for el in driver.find_elements(By.CSS_SELECTOR, f"[id^='{row_prefix}']"):
-        row_id = (el.get_attribute("id") or "").strip()
-        if not row_id.startswith(row_prefix):
-            continue
-        suffix = row_id.removeprefix(row_prefix)
-        try:
-            idx = int(suffix)
-        except ValueError:
-            continue
-        yield idx, el
+    elements = driver.find_elements(By.CSS_SELECTOR, f"[id^='{row_prefix}']")
+    for i, el in enumerate(elements):
+        idx, real_el = _extract_index_and_element(driver, row_prefix, i, el)
+        if idx is not None and real_el is not None:
+            yield idx, real_el
+
+
+def _extract_index_and_element(
+    driver: WebDriver, row_prefix: str, index: int, el: WebElement
+) -> tuple[int | None, WebElement | None]:
+    """Retourne l'indice et l'élément réel correspondant à ``el``."""
+    get_attr = getattr(el, "get_attribute", None)
+    if callable(get_attr):
+        row_id = (get_attr("id") or "").strip()
+        idx = _parse_index_from_id(row_id, row_prefix)
+        if idx is not None:
+            return idx, el
+    try:
+        real_el = driver.find_element(By.ID, f"{row_prefix}{index}")
+    except NoSuchElementException:
+        return None, None
+    return index, real_el
 
 
 def _iter_range_rows(

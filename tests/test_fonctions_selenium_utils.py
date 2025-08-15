@@ -295,6 +295,29 @@ def test_select_and_find_row(monkeypatch):
     assert fsu.trouver_ligne_par_description(d, "absent", "ROW", logger=logger) is None
 
 
+def test_trouver_ligne_par_description_elements_with_ids(monkeypatch):
+    class Element:
+        def __init__(self, text: str, idx: int):
+            self.text = text
+            self._id = f"ROW{idx}"
+
+        def get_attribute(self, attr: str) -> str | None:
+            return self._id if attr == "id" else None
+
+    class Driver:
+        def __init__(self, rows: list[str]):
+            self.rows = rows
+
+        def find_elements(self, by: str, value: str):
+            if by == "css selector" and value == "[id^='ROW']":
+                return [Element(text, i) for i, text in enumerate(self.rows)]
+            return []
+
+    logger = Logger(None, writer=lambda msg, *a, **k: None)
+    driver = Driver(["foo", "bar"])
+    assert fsu.trouver_ligne_par_description(driver, "bar", "ROW", logger=logger) == 1
+
+
 # ──────────────── verifier_accessibilite_url (4 cas) ─────────────────
 @pytest.mark.parametrize(
     "getter,expected",
