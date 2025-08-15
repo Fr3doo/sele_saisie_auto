@@ -322,6 +322,65 @@ def test_trouver_ligne_par_description_elements_with_ids(monkeypatch):
     assert fsu.trouver_ligne_par_description(driver, "bar", "ROW", logger=logger) == 1
 
 
+def test_trouver_ligne_par_description_non_contigus(silent_logger):
+    class Element:
+        def __init__(self, text, idv):
+            self.text, self._id = text, idv
+
+        def get_attribute(self, attr):
+            return self._id if attr == "id" else None
+
+    class Driver:
+        def find_elements(self, by, value):  # noqa: D401
+            return [Element("foo", "ROW2"), Element("bar", "ROW10")]
+
+    d = Driver()
+    assert (
+        fsu.trouver_ligne_par_description(d, "bar", "ROW", logger=silent_logger) == 10
+    )
+
+
+def test_trouver_ligne_par_description_suffixe_non_numerique(silent_logger):
+    class Element:
+        def __init__(self, text, idv):
+            self.text, self._id = text, idv
+
+        def get_attribute(self, attr):
+            return self._id if attr == "id" else None
+
+    class Driver:
+        def find_elements(self, by, value):  # noqa: D401
+            return [Element("bar", "ROWx")]
+
+    d = Driver()
+    assert (
+        fsu.trouver_ligne_par_description(d, "bar", "ROW", logger=silent_logger) is None
+    )
+
+
+def test_normalize_nbsp_and_spaces(silent_logger):
+    nbsp = "\xa0"
+
+    class Element:
+        def __init__(self, text, idx):
+            self.text, self._id = text, f"ROW{idx}"
+
+        def get_attribute(self, attr):
+            return self._id if attr == "id" else None
+
+    class Driver:
+        def find_elements(self, by, value):  # noqa: D401
+            return [Element(f"b{nbsp}a{nbsp}r   ", 0)]
+
+    d = Driver()
+    assert (
+        fsu.trouver_ligne_par_description(
+            d, "bar", "ROW", partial_match=True, logger=silent_logger
+        )
+        == 0
+    )
+
+
 # ──────────────── verifier_accessibilite_url (4 cas) ─────────────────
 @pytest.mark.parametrize(
     "getter,expected",
