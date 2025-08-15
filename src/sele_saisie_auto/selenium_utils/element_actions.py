@@ -22,10 +22,12 @@ from sele_saisie_auto.selenium_utils.duplicate_day_detector import DuplicateDayD
 from . import get_default_logger
 from .navigation import switch_to_frame_by_id
 
+CompareFn = Callable[[str, str], bool]  # (target, cleaned) -> bool
+
 
 def _normalize_text(text: str) -> str:
-    """Nettoie les espaces multiples et supprime les espaces de début/fin."""
-    return " ".join((text or "").split())
+    """Supprime tous les espaces (y compris insécables) du texte."""
+    return "".join((text or "").split())
 
 
 def _text_contains(target: str, text: str) -> bool:
@@ -88,7 +90,7 @@ def _find_row(
     driver: WebDriver,
     row_prefix: str,
     max_rows: int | None,
-    compare: Callable[[str, str], bool],
+    compare: CompareFn,
     target: str,
     log_msg: str,
     raw_target: str,
@@ -273,7 +275,7 @@ def trouver_ligne_par_description(
     target = _normalize_text(target_description)
 
     if partial_match:
-        compare = _text_contains
+        compare: CompareFn = _text_contains
         log_msg = "Ligne trouvée (correspondance partielle)"
     else:
         compare = _text_equals
@@ -289,8 +291,13 @@ def trouver_ligne_par_description(
         target_description,
         logger,
     )
-    if idx is None and max_rows is None:
-        logger.warning(f"Aucune ligne trouvée pour '{target_description}'.")
+    if idx is None:
+        if max_rows is None:
+            logger.warning(f"Aucune ligne trouvée pour '{target_description}'.")
+        else:
+            logger.debug(
+                f"Aucune ligne trouvée pour '{target_description}' parmi {max_rows} lignes."
+            )
     return idx
 
 
