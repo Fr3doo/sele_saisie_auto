@@ -53,29 +53,12 @@ def _parse_index_from_id(row_id: str, row_prefix: str) -> int | None:
 def _iter_existing_rows(
     driver: WebDriver, row_prefix: str
 ) -> Iterable[tuple[int, WebElement]]:
-    """Itère sur les lignes présentes dans le DOM."""
-    elements = driver.find_elements(By.CSS_SELECTOR, f"[id^='{row_prefix}']")
-    for i, el in enumerate(elements):
-        idx, real_el = _extract_index_and_element(driver, row_prefix, i, el)
-        if idx is not None and real_el is not None:
-            yield idx, real_el
-
-
-def _extract_index_and_element(
-    driver: WebDriver, row_prefix: str, index: int, el: WebElement
-) -> tuple[int | None, WebElement | None]:
-    """Retourne l'indice et l'élément réel correspondant à ``el``."""
-    get_attr = getattr(el, "get_attribute", None)
-    if callable(get_attr):
-        row_id = (get_attr("id") or "").strip()
+    """Itère sur les lignes présentes dans le DOM en parsant l'ID réel."""
+    for el in driver.find_elements(By.CSS_SELECTOR, f"[id^='{row_prefix}']"):
+        row_id = (el.get_attribute("id") or "").strip()
         idx = _parse_index_from_id(row_id, row_prefix)
         if idx is not None:
-            return idx, el
-    try:
-        real_el = driver.find_element(By.ID, f"{row_prefix}{index}")
-    except NoSuchElementException:
-        return None, None
-    return index, real_el
+            yield idx, el
 
 
 def _iter_range_rows(
