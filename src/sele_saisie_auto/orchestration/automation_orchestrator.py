@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import types
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, cast
+from multiprocessing import shared_memory
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from selenium.webdriver.common.by import By
 
@@ -28,8 +29,21 @@ from sele_saisie_auto.remplir_jours_feuille_de_temps import (
     context_from_app_config,
 )
 from sele_saisie_auto.resources.resource_manager import ResourceManager
-from sele_saisie_auto.selenium_utils import detecter_doublons_jours, wait_for_dom_after
+from sele_saisie_auto.selenium_utils import (  # noqa: F401  # re-export
+    detecter_doublons_jours,
+    wait_for_dom_after,
+)
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
+
+
+class CredsProtocol(Protocol):
+    aes_key: bytes
+    login: bytes
+    password: bytes
+    mem_key: shared_memory.SharedMemory
+    mem_login: shared_memory.SharedMemory
+    mem_password: shared_memory.SharedMemory
+
 
 __all__ = ["AutomationOrchestrator", "detecter_doublons_jours"]
 
@@ -185,7 +199,7 @@ class AutomationOrchestrator:
     def _process_date_entry(self, driver: Any) -> None:
         """Renseigne la date cible dans l'interface."""
 
-        self.date_entry_page.process_date(driver, cast(str, self.config.date_cible))
+        self.date_entry_page.process_date(driver, self._date_cible_str())
 
     def navigate_from_home_to_date_entry_page(self, driver: Any) -> bool:
         """Navigate to the date entry page."""
@@ -237,6 +251,61 @@ class AutomationOrchestrator:
         self.page_navigator.timesheet_helper = helper
         self.page_navigator.submit_full_timesheet(driver)
 
+    # ----------------------------
+    # Run helpers (réduction CC)
+    # ----------------------------
+    def _date_cible_str(self) -> str:
+        dc = getattr(self.config, "date_cible", None)
+        if not isinstance(dc, str) or not dc.strip():
+            raise ValueError("date_cible manquante ou invalide")
+        return dc
+
+    def _ensure_config(self) -> None:
+        """Charge la config si nécessaire (early guard)."""
+        if self.config is None:
+            self.config = ConfigManager().load()
+
+    def _get_driver_or_raise(
+        self, rm: ResourceManager, *, headless: bool, no_sandbox: bool
+    ) -> Any:
+        driver = rm.get_driver(headless=headless, no_sandbox=no_sandbox)
+        if driver is None:
+            raise RuntimeError("driver missing")
+        return driver
+
+    def _supports_prepare_run(self) -> bool:
+        nav = self.page_navigator
+        return bool(nav) and hasattr(nav, "prepare") and hasattr(nav, "run")
+
+    def _debug(self, msg: str) -> None:
+        fn = getattr(self.logger, "debug", None)
+        (fn or self.logger.info)(msg)
+
+    def _run_prepared_flow(self, driver: Any, creds: CredsProtocol) -> None:
+        self._debug("Flow=prepared")
+        assert self.page_navigator is not None  # nosec B101
+        # Le navigator peut typer 'Credentials' : on évite le couplage runtime
+        self.page_navigator.prepare(creds, self._date_cible_str())  # type: ignore[arg-type]
+        self.page_navigator.run(driver)
+
+    def _run_legacy_flow(self, driver: Any, creds: CredsProtocol) -> None:
+        self._debug("Flow=legacy")
+        assert self.page_navigator is not None  # nosec B101
+        self.page_navigator.login(
+            driver,
+            creds.aes_key,
+            creds.login,
+            creds.password,
+        )
+        result = self.page_navigator.navigate_to_date_entry(
+            driver, self._date_cible_str()
+        )
+        if result is not False:
+            self._fill_and_save_timesheet(driver)
+
+    def _cleanup_creds(self, creds: CredsProtocol) -> None:
+        self.cleanup_resources(creds.mem_key, creds.mem_login, creds.mem_password)
+
     @handle_errors()
     def run(
         self,
@@ -250,39 +319,21 @@ class AutomationOrchestrator:
         All domain specific logic is delegated outside this class.
         """
 
-        if self.config is None:
-            self.config = ConfigManager().load()
-
+        self._ensure_config()
+        assert (
+            self.page_navigator is not None
+        ), "page_navigator non initialisé"  # nosec B101
         with self.resource_manager as rm:
-            creds = rm.initialize_shared_memory(None)
-            driver = rm.get_driver(headless=headless, no_sandbox=no_sandbox)
-            if driver is None:
-                raise RuntimeError("driver missing")
+            creds: CredsProtocol = rm.initialize_shared_memory(None)
+            driver = self._get_driver_or_raise(
+                rm, headless=headless, no_sandbox=no_sandbox
+            )
             try:
-                if hasattr(self.page_navigator, "prepare") and hasattr(
-                    self.page_navigator, "run"
-                ):
-                    assert self.page_navigator is not None  # nosec B101
-                    self.page_navigator.prepare(
-                        creds, cast(str, self.config.date_cible)
-                    )
-                    self.page_navigator.run(driver)
-                else:
-                    assert self.page_navigator is not None  # nosec B101
-                    self.page_navigator.login(
-                        driver,
-                        creds.aes_key,
-                        creds.login,
-                        creds.password,
-                    )
-                    result = self.page_navigator.navigate_to_date_entry(
-                        driver, cast(str, self.config.date_cible)
-                    )
-                    if result is not False:
-                        self._fill_and_save_timesheet(driver)
-            finally:
-                self.cleanup_resources(
-                    creds.mem_key,
-                    creds.mem_login,
-                    creds.mem_password,
+                flow = (
+                    self._run_prepared_flow
+                    if self._supports_prepare_run()
+                    else self._run_legacy_flow
                 )
+                flow(driver, creds)
+            finally:
+                self._cleanup_creds(creds)
