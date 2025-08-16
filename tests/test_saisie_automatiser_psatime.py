@@ -14,7 +14,6 @@ from sele_saisie_auto.utils import misc as utils_misc
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 import sele_saisie_auto.cli as cli  # noqa: E402
-import sele_saisie_auto.logger_utils as logger_utils  # noqa: E402
 from sele_saisie_auto import messages  # noqa: E402
 from sele_saisie_auto import saisie_automatiser_psatime as sap  # noqa: E402
 from sele_saisie_auto.logger_utils import afficher_message_insertion  # noqa: E402

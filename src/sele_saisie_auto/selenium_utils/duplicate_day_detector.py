@@ -2,7 +2,7 @@
 """Detect duplicate days in time sheet entries."""
 from __future__ import annotations
 
-from typing import Iterator
+from collections.abc import Iterator
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver

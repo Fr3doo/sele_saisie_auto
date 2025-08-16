@@ -3,7 +3,8 @@
 
 from __future__ import annotations
 
-from typing import Callable, Iterable, NoReturn, cast
+from collections.abc import Callable, Iterable
+from typing import NoReturn, cast
 
 from selenium.common.exceptions import (
     NoSuchElementException,

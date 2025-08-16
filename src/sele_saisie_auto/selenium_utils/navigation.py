@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
 import requests
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
@@ -20,7 +18,7 @@ _DEFAULT_TIMEOUT = 10
 
 def _get_status(
     url: str, *, verify: bool, timeout: int = _DEFAULT_TIMEOUT
-) -> Tuple[Optional[int], Optional[Exception]]:
+) -> tuple[int | None, Exception | None]:
     """Effectue une requête GET et renvoie (status_code, error)."""
     try:
         response = requests.get(url, timeout=timeout, verify=verify)

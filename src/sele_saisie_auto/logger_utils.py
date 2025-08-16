@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable, Mapping
 from configparser import ConfigParser
 from datetime import datetime
-from typing import Callable, Literal, Mapping, Optional
+from typing import Literal
 
 from sele_saisie_auto import messages
 from sele_saisie_auto.enums import LogLevel
@@ -55,7 +56,7 @@ MESSAGE_TEMPLATES: dict[str, str] = {
 # -----------------------------------------------------------------------------
 
 
-def _to_level(level: LogLevel | str) -> Optional[LogLevel]:
+def _to_level(level: LogLevel | str) -> LogLevel | None:
     try:
         return level if isinstance(level, LogLevel) else LogLevel(level)
     except ValueError:
@@ -105,13 +106,13 @@ _WRITERS: Mapping[str, Callable[[str, str, LogLevel, str], None]] = {
 # ------------------------------------------------------------------------------------------- #
 
 
-def _parse_level_or_none(value: LogLevel | str | None) -> Optional[LogLevel]:
+def _parse_level_or_none(value: LogLevel | str | None) -> LogLevel | None:
     if value is None:
         return None
     return _to_level(value)
 
 
-def _level_from_config(cfg: ConfigParser) -> Optional[LogLevel]:
+def _level_from_config(cfg: ConfigParser) -> LogLevel | None:
     raw = cfg.get("settings", "debug_mode", fallback=LogLevel.INFO.value)
     return _to_level(raw)
 
