@@ -43,14 +43,16 @@ from sele_saisie_auto.orchestration import AutomationOrchestrator
 from sele_saisie_auto.remplir_jours_feuille_de_temps import ajouter_jour_a_jours_remplis
 from sele_saisie_auto.resources.resource_manager import ResourceManager
 from sele_saisie_auto.saisie_context import SaisieContext
-from sele_saisie_auto.selenium_utils import (
+from sele_saisie_auto.selenium_utils import (  # noqa: F401  # re-export
     click_element_without_wait,
     detecter_doublons_jours,
     modifier_date_input,
     send_keys_to_element,
 )
 from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
-from sele_saisie_auto.selenium_utils import wait_for_dom_after
+from sele_saisie_auto.selenium_utils import (  # noqa: F401  # re-export
+    wait_for_dom_after,
+)
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.date_utils import get_next_saturday_if_not_saturday

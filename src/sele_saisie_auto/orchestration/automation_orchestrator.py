@@ -29,7 +29,10 @@ from sele_saisie_auto.remplir_jours_feuille_de_temps import (
     context_from_app_config,
 )
 from sele_saisie_auto.resources.resource_manager import ResourceManager
-from sele_saisie_auto.selenium_utils import detecter_doublons_jours, wait_for_dom_after
+from sele_saisie_auto.selenium_utils import (  # noqa: F401  # re-export
+    detecter_doublons_jours,
+    wait_for_dom_after,
+)
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 
 
@@ -45,7 +48,6 @@ class CredsProtocol(Protocol):
 __all__ = ["AutomationOrchestrator", "detecter_doublons_jours"]
 
 if TYPE_CHECKING:
-    from sele_saisie_auto.encryption_utils import Credentials
     from sele_saisie_auto.saisie_context import SaisieContext
 
 
@@ -282,7 +284,8 @@ class AutomationOrchestrator:
     def _run_prepared_flow(self, driver: Any, creds: CredsProtocol) -> None:
         self._debug("Flow=prepared")
         assert self.page_navigator is not None  # nosec B101
-        self.page_navigator.prepare(cast("Credentials", creds), self._date_cible_str())
+        # Le navigator peut typer 'Credentials' : on évite le couplage runtime
+        self.page_navigator.prepare(creds, self._date_cible_str())  # type: ignore[arg-type]
         self.page_navigator.run(driver)
 
     def _run_legacy_flow(self, driver: Any, creds: CredsProtocol) -> None:
