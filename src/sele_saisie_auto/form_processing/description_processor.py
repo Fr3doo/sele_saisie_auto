@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
@@ -76,7 +77,7 @@ def _resolve_element_for_day(
     id_value_days: str,
     row_index: int,
     day_index: int,
-    week_days: dict[int, str],
+    week_days: Mapping[int, str],
     log_file: str,
 ) -> DayField:
     """Build the day field ID, fetch the element and log if absent."""
@@ -115,12 +116,13 @@ def _collect_filled_days(
     id_value_days: str,
     row_index: int,
     log_file: str,
-    week_days: dict[int, str] = JOURS_SEMAINE,
+    week_days: Mapping[int, str] = JOURS_SEMAINE,
+    day_range: range = range(1, 8),
 ) -> list[str]:
     """Return a list of already filled days for ``row_index``."""
     filled_days: list[str] = []
     write_log(messages.CHECK_FILLED_DAYS, log_file, "DEBUG")
-    for day_index in range(1, 8):
+    for day_index in day_range:
         day = _resolve_element_for_day(
             driver,
             waiter,
@@ -163,12 +165,13 @@ def _fill_days(
     filled_days: list[str],
     type_element: str,
     log_file: str,
-    week_days: dict[int, str] = JOURS_SEMAINE,
+    week_days: Mapping[int, str] = JOURS_SEMAINE,
     filling_context: ElementFillingContext | None = None,
     logger: Logger | None = None,
+    day_range: range = range(1, 8),
 ) -> None:
     """Fill remaining empty days for the row."""
-    for day_index in range(1, 8):
+    for day_index in day_range:
         day = _resolve_element_for_day(
             driver,
             waiter,
