@@ -60,30 +60,69 @@ def _find_description_row(
     return row_index
 
 
+def _resolve_element_for_day(
+    driver: WebDriver,
+    waiter: Waiter | None,
+    id_value_days: str,
+    row_index: int,
+    day_index: int,
+    week_days: dict[int, str],
+    log_file: str,
+) -> tuple[str, str, Any | None]:
+    """Build the day field ID, resolve the Selenium element and log if missing."""
+    input_id = ElementIdBuilder.build_day_input_id(id_value_days, day_index, row_index)
+    element = _get_element(driver, waiter, input_id)
+    day_name = week_days[day_index]
+    if not element:
+        write_log(messages.ELEMENT_NOT_FOUND_ID.format(id=input_id), log_file, "DEBUG")
+        return day_name, input_id, None
+    return day_name, input_id, element
+
+
+def _apply_value(
+    element: Any,
+    *,
+    type_element: str,
+    day_name: str,
+    value: str,
+    filling_context: ElementFillingContext | None,
+    logger: Logger | None,
+) -> None:
+    """Apply the value using the provided context or default strategies."""
+    if filling_context is not None:
+        filling_context.fill(element, value, logger)
+        return
+
+    if type_element == "select":
+        select_by_text(element, value)
+    elif type_element == "input":
+        remplir_champ_texte(element, day_name, value)
+
+
 def _collect_filled_days(
     driver: WebDriver,
     waiter: Waiter | None,
     id_value_days: str,
     row_index: int,
     log_file: str,
-    week_days: dict[int, str] | None = None,
+    week_days: dict[int, str] = JOURS_SEMAINE,
 ) -> list[str]:
     """Return a list of already filled days for ``row_index``."""
     filled_days: list[str] = []
-    week_days = week_days or JOURS_SEMAINE
     write_log(messages.CHECK_FILLED_DAYS, log_file, "DEBUG")
     for day_index in range(1, 8):
-        input_id = ElementIdBuilder.build_day_input_id(
-            id_value_days, day_index, row_index
+        day_name, input_id, element = _resolve_element_for_day(
+            driver,
+            waiter,
+            id_value_days,
+            row_index,
+            day_index,
+            week_days,
+            log_file,
         )
-        element = _get_element(driver, waiter, input_id)
         if not element:
-            write_log(
-                messages.ELEMENT_NOT_FOUND_ID.format(id=input_id), log_file, "DEBUG"
-            )
             continue
 
-        day_name = week_days[day_index]
         write_log(
             messages.DAY_CHECK.format(jour=day_name, id=input_id),
             log_file,
@@ -96,12 +135,13 @@ def _collect_filled_days(
                 log_file,
                 "DEBUG",
             )
-        else:
-            write_log(
-                messages.DAY_EMPTY.format(jour=day_name),
-                log_file,
-                "DEBUG",
-            )
+            continue
+
+        write_log(
+            messages.DAY_EMPTY.format(jour=day_name),
+            log_file,
+            "DEBUG",
+        )
     return filled_days
 
 
@@ -114,24 +154,24 @@ def _fill_days(
     filled_days: list[str],
     type_element: str,
     log_file: str,
-    week_days: dict[int, str] | None = None,
+    week_days: dict[int, str] = JOURS_SEMAINE,
     filling_context: ElementFillingContext | None = None,
     logger: Logger | None = None,
 ) -> None:
     """Fill remaining empty days for the row."""
-    week_days = week_days or JOURS_SEMAINE
     for day_index in range(1, 8):
-        input_id = ElementIdBuilder.build_day_input_id(
-            id_value_days, day_index, row_index
+        day_name, _, element = _resolve_element_for_day(
+            driver,
+            waiter,
+            id_value_days,
+            row_index,
+            day_index,
+            week_days,
+            log_file,
         )
-        element = _get_element(driver, waiter, input_id)
         if not element:
-            write_log(
-                messages.ELEMENT_NOT_FOUND_ID.format(id=input_id), log_file, "DEBUG"
-            )
             continue
 
-        day_name = week_days[day_index]
         if day_name in filled_days:
             write_log(
                 messages.DAY_ALREADY_FILLED_NO_CHANGE.format(jour=day_name),
@@ -154,13 +194,14 @@ def _fill_days(
             log_file,
             "DEBUG",
         )
-        if filling_context is not None:
-            filling_context.fill(element, value, logger)
-        else:
-            if type_element == "select":
-                select_by_text(element, value)
-            elif type_element == "input":
-                remplir_champ_texte(element, day_name, value)
+        _apply_value(
+            element,
+            type_element=type_element,
+            day_name=day_name,
+            value=value,
+            filling_context=filling_context,
+            logger=logger,
+        )
 
 
 def process_description(
