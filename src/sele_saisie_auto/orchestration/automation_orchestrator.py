@@ -237,6 +237,48 @@ class AutomationOrchestrator:
         self.page_navigator.timesheet_helper = helper
         self.page_navigator.submit_full_timesheet(driver)
 
+    # ----------------------------
+    # Run helpers (réduction CC)
+    # ----------------------------
+    def _ensure_config(self) -> None:
+        """Charge la config si nécessaire (early guard)."""
+        if self.config is None:
+            self.config = ConfigManager().load()
+
+    def _get_driver_or_raise(self, *, headless: bool, no_sandbox: bool) -> Any:
+        driver = self.resource_manager.get_driver(
+            headless=headless, no_sandbox=no_sandbox
+        )
+        if driver is None:
+            raise RuntimeError("driver missing")
+        return driver
+
+    def _supports_prepare_run(self) -> bool:
+        nav = self.page_navigator
+        return hasattr(nav, "prepare") and hasattr(nav, "run")
+
+    def _run_prepared_flow(self, driver: Any, creds: Any) -> None:
+        assert self.page_navigator is not None  # nosec B101
+        self.page_navigator.prepare(creds, cast(str, self.config.date_cible))
+        self.page_navigator.run(driver)
+
+    def _run_legacy_flow(self, driver: Any, creds: Any) -> None:
+        assert self.page_navigator is not None  # nosec B101
+        self.page_navigator.login(
+            driver,
+            creds.aes_key,
+            creds.login,
+            creds.password,
+        )
+        result = self.page_navigator.navigate_to_date_entry(
+            driver, cast(str, self.config.date_cible)
+        )
+        if result is not False:
+            self._fill_and_save_timesheet(driver)
+
+    def _cleanup_creds(self, creds: Any) -> None:
+        self.cleanup_resources(creds.mem_key, creds.mem_login, creds.mem_password)
+
     @handle_errors()
     def run(
         self,
@@ -250,39 +292,16 @@ class AutomationOrchestrator:
         All domain specific logic is delegated outside this class.
         """
 
-        if self.config is None:
-            self.config = ConfigManager().load()
-
+        self._ensure_config()
         with self.resource_manager as rm:
             creds = rm.initialize_shared_memory(None)
-            driver = rm.get_driver(headless=headless, no_sandbox=no_sandbox)
-            if driver is None:
-                raise RuntimeError("driver missing")
+            driver = self._get_driver_or_raise(headless=headless, no_sandbox=no_sandbox)
             try:
-                if hasattr(self.page_navigator, "prepare") and hasattr(
-                    self.page_navigator, "run"
-                ):
-                    assert self.page_navigator is not None  # nosec B101
-                    self.page_navigator.prepare(
-                        creds, cast(str, self.config.date_cible)
-                    )
-                    self.page_navigator.run(driver)
-                else:
-                    assert self.page_navigator is not None  # nosec B101
-                    self.page_navigator.login(
-                        driver,
-                        creds.aes_key,
-                        creds.login,
-                        creds.password,
-                    )
-                    result = self.page_navigator.navigate_to_date_entry(
-                        driver, cast(str, self.config.date_cible)
-                    )
-                    if result is not False:
-                        self._fill_and_save_timesheet(driver)
-            finally:
-                self.cleanup_resources(
-                    creds.mem_key,
-                    creds.mem_login,
-                    creds.mem_password,
+                flow = (
+                    self._run_prepared_flow
+                    if self._supports_prepare_run()
+                    else self._run_legacy_flow
                 )
+                flow(driver, creds)
+            finally:
+                self._cleanup_creds(creds)
