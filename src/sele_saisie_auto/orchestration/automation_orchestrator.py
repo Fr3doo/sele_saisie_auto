@@ -14,7 +14,6 @@ from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import ServiceConfigurator
 from sele_saisie_auto.decorators import handle_errors
-from sele_saisie_auto.encryption_utils import Credentials
 from sele_saisie_auto.interfaces import (
     AdditionalInfoPageProtocol,
     BrowserSessionProtocol,
@@ -46,6 +45,7 @@ class CredsProtocol(Protocol):
 __all__ = ["AutomationOrchestrator", "detecter_doublons_jours"]
 
 if TYPE_CHECKING:
+    from sele_saisie_auto.encryption_utils import Credentials
     from sele_saisie_auto.saisie_context import SaisieContext
 
 
@@ -275,14 +275,18 @@ class AutomationOrchestrator:
         nav = self.page_navigator
         return bool(nav) and hasattr(nav, "prepare") and hasattr(nav, "run")
 
+    def _debug(self, msg: str) -> None:
+        fn = getattr(self.logger, "debug", None)
+        (fn or self.logger.info)(msg)
+
     def _run_prepared_flow(self, driver: Any, creds: CredsProtocol) -> None:
-        self.logger.debug("Flow=prepared")
+        self._debug("Flow=prepared")
         assert self.page_navigator is not None  # nosec B101
-        self.page_navigator.prepare(cast(Credentials, creds), self._date_cible_str())
+        self.page_navigator.prepare(cast("Credentials", creds), self._date_cible_str())
         self.page_navigator.run(driver)
 
     def _run_legacy_flow(self, driver: Any, creds: CredsProtocol) -> None:
-        self.logger.debug("Flow=legacy")
+        self._debug("Flow=legacy")
         assert self.page_navigator is not None  # nosec B101
         self.page_navigator.login(
             driver,
@@ -313,8 +317,11 @@ class AutomationOrchestrator:
         """
 
         self._ensure_config()
+        assert (
+            self.page_navigator is not None
+        ), "page_navigator non initialisé"  # nosec B101
         with self.resource_manager as rm:
-            creds: Credentials = rm.initialize_shared_memory(None)
+            creds: CredsProtocol = rm.initialize_shared_memory(None)
             driver = self._get_driver_or_raise(
                 rm, headless=headless, no_sandbox=no_sandbox
             )
