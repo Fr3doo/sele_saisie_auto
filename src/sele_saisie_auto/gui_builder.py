@@ -7,13 +7,17 @@ from __future__ import annotations
 import tkinter as tk
 from collections.abc import Callable
 from tkinter import ttk
-from typing import Any, Literal
+from typing import Any, Literal, Protocol
 
 # Types lisibles -----------------------------------------------------------
 Orient = Literal["horizontal", "vertical"]
 PackFill = Literal["none", "x", "y", "both"]
 Side = Literal["left", "right", "top", "bottom"]
 Padding = tuple[int, int, int, int]
+
+
+class Packable(Protocol):
+    def pack(self, **kwargs: Any) -> Any: ...
 
 
 # Helpers internes (réduisent la complexité des fonctions publiques) -------
@@ -23,7 +27,7 @@ def _frame_kwargs(style: str, padding: Padding | None) -> dict[str, Any]:
 
 
 def _pack(
-    widget: tk.Widget,
+    widget: Packable,  # accepte tout objet ayant .pack(...)
     *,
     side: Side | None = None,
     fill: PackFill | None = None,
@@ -36,7 +40,8 @@ def _pack(
     opts: dict[str, Any] = {"expand": expand, "padx": padx, "pady": pady}
     if side is not None:
         opts["side"] = side
-    if fill is not None:
+    # Ne pas transmettre 'none' à Tk
+    if fill not in (None, "none"):
         opts["fill"] = fill
     if ipady is not None:
         opts["ipady"] = ipady
@@ -44,7 +49,7 @@ def _pack(
 
 
 # Widgets simples ----------------------------------------------------------
-def seperator_ttk(
+def separator_ttk(
     menu: ttk.Widget,
     orient: Orient = "horizontal",
     fill: PackFill = "x",
@@ -188,9 +193,15 @@ def create_modern_entry_with_grid(
     style: str = "Modern.TEntry",
     padx: int = 5,
     pady: int = 5,
+    show: str | None = None,
 ) -> ttk.Entry:
     """Créer une zone de saisie positionnée avec ``grid``."""
-    modern_entry_grid = ttk.Entry(frame, textvariable=var, width=width, style=style)
+    entry_kwargs: dict[str, Any] = {}
+    if show is not None:
+        entry_kwargs["show"] = show
+    modern_entry_grid = ttk.Entry(
+        frame, textvariable=var, width=width, style=style, **entry_kwargs
+    )
     modern_entry_grid.grid(row=row, column=col, padx=padx, pady=pady)
     return modern_entry_grid
 
@@ -205,16 +216,18 @@ def create_modern_entry_with_grid_for_password(
     padx: int = 5,
     pady: int = 5,
 ) -> ttk.Entry:
-    """Créer un champ de mot de passe positionné avec ``grid``."""
-    modern_entry_grid_for_password = ttk.Entry(
+    """Créer un champ de mot de passe positionné avec ``grid`` (wrapper)."""
+    return create_modern_entry_with_grid(
         frame,
-        textvariable=var,
-        show="*",
+        var,
+        row,
+        col,
         width=width,
         style=style,
+        padx=padx,
+        pady=pady,
+        show="*",
     )
-    modern_entry_grid_for_password.grid(row=row, column=col, padx=padx, pady=pady)
-    return modern_entry_grid_for_password
 
 
 def create_combobox_with_pack(

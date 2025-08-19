@@ -167,7 +167,7 @@ def test_combobox_transmits_values(patch_widgets, parent):
 
 
 def test_separator_ttk_sets_fill_x(patch_widgets, parent):
-    gui_builder.seperator_ttk(parent)
+    gui_builder.separator_ttk(parent)
     assert patch_widgets["sep"].pack_kwargs.get("fill") == "x"
 
 
