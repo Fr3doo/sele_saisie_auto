@@ -8,7 +8,7 @@ import sys  # noqa: F401
 from dataclasses import dataclass
 from multiprocessing import shared_memory
 from types import TracebackType
-from typing import Any, cast
+from typing import Any, Mapping, cast
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -48,9 +48,11 @@ from sele_saisie_auto.selenium_utils import (  # noqa: F401  # re-export  # noqa
     detecter_doublons_jours,
     modifier_date_input,
     send_keys_to_element,
-    wait_for_dom_after,
 )
 from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
+from sele_saisie_auto.selenium_utils import (  # noqa: F401  # re-export  # noqa: F401  # re-export
+    wait_for_dom_after,
+)
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.date_utils import get_next_saturday_if_not_saturday
@@ -116,37 +118,20 @@ class PSATimeAutomation:
         services: Services | None = None,
         shared_memory_service: SharedMemoryService | None = None,
     ) -> None:
-        """Initialise la configuration et les dépendances."""
+        """Initialise la configuration et les dépendances (complexité réduite)."""
 
         self.log_file: str = log_file
-        mem_cfg = memory_config
-        if mem_cfg is None and services is not None:
-            mem_cfg = services.encryption_service.memory_config
-        self.memory_config = mem_cfg or MemoryConfig()
-        LoggingConfigurator.setup(log_file, app_config.debug_mode, app_config.raw)
-        self.logger = logger or get_logger(log_file)
-        self.shared_memory_service = shared_memory_service or SharedMemoryService(
-            self.logger
+        self.memory_config = self._resolve_memory_config(memory_config, services)
+        self._setup_logging(logger, app_config)
+        self.shared_memory_service = self._init_shared_memory_service(
+            shared_memory_service
         )
         self.services = services or self._init_services(app_config)
         self.waiter = self.services.waiter
         self.browser_session = self.services.browser_session
         self.encryption_service = self.services.encryption_service
         self._login_handler = getattr(self.services, "login_handler", None)
-        self.context = SaisieContext(
-            config=app_config,
-            encryption_service=self.encryption_service,
-            shared_memory_service=self.shared_memory_service,
-            project_mission_info={
-                item_projet: {
-                    opt.label.lower(): opt.code
-                    for opt in app_config.cgi_options_billing_action
-                }.get(str(value).lower(), str(value))
-                for item_projet, value in app_config.project_information.items()
-            },
-            descriptions=[],
-        )
-        ensure_descriptions(self.context)
+        self.context = self._build_context(app_config)
 
         self._date_entry_page: DateEntryPage | None = None
         self._additional_info_page: AdditionalInfoPage | None = None
@@ -182,9 +167,67 @@ class PSATimeAutomation:
         self.resource_manager.__exit__(exc_type, exc, tb)
 
     def log_configuration_details(self) -> None:
-        """Enregistre les détails de la configuration dans les logs."""
-
+        """Enregistre les détails de la configuration dans les logs (complexité réduite)."""
         write_log("📌 Chargement des configurations...", self.log_file, "DEBUG")
+        PSATimeAutomation._log_config_overview(self)
+        PSATimeAutomation._log_work_schedule(self)
+        PSATimeAutomation._log_additional_information(self)
+        PSATimeAutomation._log_work_locations(self)
+
+    # ------------------------------ helpers d'initialisation ------------------------------ #
+    def _resolve_memory_config(
+        self,
+        memory_config: MemoryConfig | None,
+        services: Services | None,
+    ) -> MemoryConfig:
+        """Résout la MemoryConfig de façon déterministe et simple."""
+        if memory_config is not None:
+            return memory_config
+        if services is not None:
+            return services.encryption_service.memory_config
+        return MemoryConfig()
+
+    def _setup_logging(self, logger: Logger | None, app_config: AppConfig) -> None:
+        """Configure le logging et initialise self.logger."""
+        LoggingConfigurator.setup(self.log_file, app_config.debug_mode, app_config.raw)
+        self.logger = logger or get_logger(self.log_file)
+
+    def _init_shared_memory_service(
+        self, shared_memory_service: SharedMemoryService | None
+    ) -> SharedMemoryService:
+        """Instancie (ou réutilise) le service de mémoire partagée."""
+        return shared_memory_service or SharedMemoryService(self.logger)
+
+    def _build_context(self, app_config: AppConfig) -> SaisieContext:
+        """Construit le contexte métier de saisie avec une fonction dédiée."""
+        project_mission_info = self._build_project_mission_info(app_config)
+        ctx = SaisieContext(
+            config=app_config,
+            encryption_service=self.encryption_service,
+            shared_memory_service=self.shared_memory_service,
+            project_mission_info=project_mission_info,
+            descriptions=[],
+        )
+        ensure_descriptions(ctx)
+        return ctx
+
+    def _build_project_mission_info(self, app_config: AppConfig) -> dict[str, str]:
+        """
+        Construit le mapping projet -> code (robuste aux variations de casse).
+        Séparé pour réduire la complexité de __init__ et clarifier l'intention.
+        """
+        label_to_code = {
+            opt.label.lower(): opt.code for opt in app_config.cgi_options_billing_action
+        }
+        result: dict[str, str] = {}
+        for item_projet, value in app_config.project_information.items():
+            key = str(item_projet)
+            lookup = str(value).lower()
+            result[key] = label_to_code.get(lookup, str(value))
+        return result
+
+    # ------------------------------ helpers de log ------------------------------ #
+    def _log_config_overview(self) -> None:
         write_log(
             f"👉 Login : {self.context.config.encrypted_login} - pas visible, normal",
             self.log_file,
@@ -202,8 +245,8 @@ class PSATimeAutomation:
             "DEBUG",
         )
 
+    def _log_work_schedule(self) -> None:
         write_log("👉 Planning de travail de la semaine:", self.log_file, "DEBUG")
-        # Log work schedule details
         work_schedule: dict[str, tuple[str, str]] = cast(
             dict[str, tuple[str, str]],
             self.context.config.work_schedule,
@@ -215,7 +258,7 @@ class PSATimeAutomation:
                 "DEBUG",
             )
 
-        # Additional information sections
+    def _log_additional_information(self) -> None:
         sections = {
             "periode_repos_respectee": "👉 Infos_supp_cgi_periode_repos_respectee:",
             "horaire_travail_effectif": "👉 Infos_supp_cgi_horaire_travail_effectif:",
@@ -224,18 +267,25 @@ class PSATimeAutomation:
         }
         add_info = self.context.config.additional_information
         for key, title in sections.items():
-            write_log(title, self.log_file, "DEBUG")
             values = cast(dict[str, str], add_info.get(key, {}))
-            for day, status in values.items():
-                write_log(f"🔹 '{day}': '{status}'", self.log_file, "DEBUG")
+            PSATimeAutomation._log_dict(self, title, values)
 
-        write_log("👉 Lieu de travail Matin:", self.log_file, "DEBUG")
-        for day, location in self.context.config.work_location_am.items():
-            write_log(f"🔹 '{day}': '{location}'", self.log_file, "DEBUG")
+    def _log_work_locations(self) -> None:
+        PSATimeAutomation._log_dict(
+            self,
+            "👉 Lieu de travail Matin:",
+            cast(dict[str, str], self.context.config.work_location_am),
+        )
+        PSATimeAutomation._log_dict(
+            self,
+            "👉 Lieu de travail Apres-midi:",
+            cast(dict[str, str], self.context.config.work_location_pm),
+        )
 
-        write_log("👉 Lieu de travail Apres-midi:", self.log_file, "DEBUG")
-        for day, location in self.context.config.work_location_pm.items():
-            write_log(f"🔹 '{day}': '{location}'", self.log_file, "DEBUG")
+    def _log_dict(self, title: str, mapping: Mapping[str, Any]) -> None:
+        write_log(title, self.log_file, "DEBUG")
+        for k, v in mapping.items():
+            write_log(f"🔹 '{k}': '{v}'", self.log_file, "DEBUG")
 
     def _init_services(self, app_config: AppConfig) -> Services:
         """Initialise les services principaux via :class:`ServiceConfigurator`."""
