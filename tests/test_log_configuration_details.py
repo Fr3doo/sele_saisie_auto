@@ -20,6 +20,22 @@ def test_log_configuration_details(monkeypatch, sample_config):
         log_file="log.html",
     )
 
+    # Bind required private helper methods from PSATimeAutomation to the dummy object
+    for name in (
+        "_log_config_overview",
+        "_log_work_schedule",
+        "_log_additional_information",
+        "_log_work_locations",
+        "_log_dict",
+    ):
+        setattr(
+            dummy,
+            name,
+            lambda *args, name=name, **kwargs: getattr(sap.PSATimeAutomation, name)(
+                dummy, *args, **kwargs
+            ),
+        )
+
     sap.PSATimeAutomation.log_configuration_details(dummy)
 
     expected_messages = [
