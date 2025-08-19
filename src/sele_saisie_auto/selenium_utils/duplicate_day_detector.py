@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import cast
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -43,9 +42,8 @@ class DuplicateDayDetector:
 
     @staticmethod
     def _get_row_elements(driver: WebDriver, max_rows: int | None) -> list[WebElement]:
-        row_elements = cast(
-            list[WebElement],
-            driver.find_elements(By.CSS_SELECTOR, "[id^='POL_DESCR$']"),
+        row_elements: list[WebElement] = driver.find_elements(
+            By.CSS_SELECTOR, "[id^='POL_DESCR$']"
         )
         if max_rows is not None:
             row_elements = row_elements[:max_rows]
