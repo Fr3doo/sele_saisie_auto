@@ -19,6 +19,19 @@ def test_log_configuration_details(monkeypatch, sample_config):
         context=types.SimpleNamespace(config=app_cfg),
         log_file="log.html",
     )
+    dummy._log_config_overview = types.MethodType(
+        sap.PSATimeAutomation._log_config_overview, dummy
+    )
+    dummy._log_work_schedule = types.MethodType(
+        sap.PSATimeAutomation._log_work_schedule, dummy
+    )
+    dummy._log_additional_information = types.MethodType(
+        sap.PSATimeAutomation._log_additional_information, dummy
+    )
+    dummy._log_work_locations = types.MethodType(
+        sap.PSATimeAutomation._log_work_locations, dummy
+    )
+    dummy._log_dict = types.MethodType(sap.PSATimeAutomation._log_dict, dummy)
 
     sap.PSATimeAutomation.log_configuration_details(dummy)
 
