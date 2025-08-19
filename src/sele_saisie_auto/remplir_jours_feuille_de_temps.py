@@ -42,13 +42,15 @@ from sele_saisie_auto.selenium_utils import (
     controle_insertion,
     detecter_et_verifier_contenu,
     effacer_et_entrer_valeur,
+)
+from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
+from sele_saisie_auto.selenium_utils import (
     trouver_ligne_par_description,
     verifier_champ_jour_rempli,
     wait_for_dom_ready,
     wait_for_element,
     wait_until_dom_is_stable,
 )
-from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.selenium_utils.wait_helpers import Waiter
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
@@ -101,40 +103,52 @@ def context_from_app_config(app_config: AppConfig, log_file: str) -> TimeSheetCo
 LOG_FILE: str = ""
 
 MAX_ATTEMPTS = 5
+JOUR_TO_INDEX: dict[str, int] = {v: k for k, v in JOURS_SEMAINE.items()}
 
 
-def initialize(log_file: str) -> TimeSheetContext:
-    """Load configuration and return a :class:`TimeSheetContext`."""
-
-    set_log_file_selenium(log_file)
-    config = read_config_ini(log_file)
-    item_descriptions = [
+# ------------------------------- Helpers "initialize" ------------------------------- #
+def _parse_item_descriptions(config: ConfigParser) -> list[str]:
+    return [
         item.strip().strip('"')
         for item in config.get("settings", "liste_items_planning").split(",")
         if item.strip()
     ]
-    work_days = {
+
+
+def _parse_work_days(config: ConfigParser) -> dict[str, tuple[str, str]]:
+    return {
         day: (value.partition(",")[0].strip(), value.partition(",")[2].strip())
         for day, value in config.items("work_schedule")
     }
+
+
+def _load_billing_map(config: ConfigParser) -> dict[str, str]:
     if config.has_section("cgi_options_billing_action"):
-        billing_map = {
-            k.lower(): v for k, v in config.items("cgi_options_billing_action")
-        }
-    else:
-        billing_map = {
-            opt.label.lower(): opt.code for opt in default_cgi_options_billing_action
-        }
-    project_mission_info = {
+        return {k.lower(): v for k, v in config.items("cgi_options_billing_action")}
+    # fallback par défaut
+    return {opt.label.lower(): opt.code for opt in default_cgi_options_billing_action}
+
+
+def _build_project_mission_info(
+    config: ConfigParser, billing_map: dict[str, str]
+) -> dict[str, str]:
+    return {
         item_projet: billing_map.get(value.lower(), value)
         for item_projet, value in config.items("project_information")
     }
 
+
+def initialize(log_file: str) -> TimeSheetContext:
+    """Load configuration and return a :class:`TimeSheetContext` (responsabilité unique)."""
+
+    set_log_file_selenium(log_file)
+    config = read_config_ini(log_file)
+    billing_map = _load_billing_map(config)
     return TimeSheetContext(
         log_file=log_file,
-        item_descriptions=item_descriptions,
-        work_days=work_days,
-        project_mission_info=project_mission_info,
+        item_descriptions=_parse_item_descriptions(config),
+        work_days=_parse_work_days(config),
+        project_mission_info=_build_project_mission_info(config, billing_map),
         config=config,
     )
 
@@ -185,6 +199,20 @@ def _collect_filled_days_for_row(
     return collected
 
 
+def _get_day_element(
+    driver: WebDriver, jour: str, description_cible: str
+) -> tuple[str, Any | None]:
+    """Retourne l'ID et l'élément du jour cible."""
+    row_index = trouver_ligne_par_description(driver, description_cible, "POL_DESCR$")
+    if row_index is None:
+        return "", None
+    input_id = f"POL_TIME{JOUR_TO_INDEX[jour]}${row_index}"
+    element = cast(Any, wait_for_element)(
+        driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
+    )
+    return input_id, element
+
+
 # ------------------------------------------------------------------------------------------- #
 # ----------------------------------- FONCTIONS --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
@@ -224,33 +252,16 @@ def traiter_jour(
     filled_days: list[str],
     context: TimeSheetContext,
 ) -> list[str]:
-    """Traiter un jour spécifique pour le remplissage."""
+    """Traiter un jour spécifique pour le remplissage (flux épuré, garde-fous précoces)."""
     if jour in filled_days or not description_cible:
         return filled_days
-
-    id_value = "POL_DESCR$"
-    row_index = trouver_ligne_par_description(driver, description_cible, id_value)
-    if row_index is None:
+    input_id, element = _get_day_element(driver, jour, description_cible)
+    if element is None or not insert_with_retries(
+        driver, input_id, value_to_fill, None
+    ):
         return filled_days
-
-    jour_index = list(JOURS_SEMAINE.keys())[list(JOURS_SEMAINE.values()).index(jour)]
-    input_id = f"POL_TIME{jour_index}${row_index}"
-
-    element = cast(Any, wait_for_element)(
-        driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
-    )
-    if not element:
-        return filled_days
-
-    if insert_with_retries(driver, input_id, value_to_fill, None):
-        filled_days = ajouter_jour_a_jours_remplis(jour, filled_days)
-        afficher_message_insertion(
-            jour,
-            value_to_fill,
-            0,
-            "après insertion",
-            LOG_FILE,
-        )
+    filled_days = ajouter_jour_a_jours_remplis(jour, filled_days)
+    afficher_message_insertion(jour, value_to_fill, 0, "après insertion", LOG_FILE)
     return filled_days
 
 
@@ -292,13 +303,10 @@ def remplir_mission_specifique(
     """Cas spécifique pour les jours en mission.
     Cas où description_cible est "En mission", on écrit directement dans les IDs spécifiques sans utiliser `description_cible`
     """
-    jour_index = list(JOURS_SEMAINE.keys())[list(JOURS_SEMAINE.values()).index(jour)]
-    input_id = f"TIME{jour_index}$0"  # Définir l'ID de l'élément pour ce jour
-
+    input_id = f"TIME{JOUR_TO_INDEX[jour]}$0"
     element = cast(Any, wait_for_element)(
         driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
     )
-
     if element and insert_with_retries(driver, input_id, value_to_fill, None):
         filled_days = ajouter_jour_a_jours_remplis(jour, filled_days)
         afficher_message_insertion(
@@ -310,6 +318,53 @@ def remplir_mission_specifique(
         )
 
 
+def _wait_and_get_element(
+    driver: WebDriver, field_id: str, waiter: WaiterProtocol | None
+) -> Any | None:
+    """Attendre le DOM puis récupérer l'élément."""
+    if waiter is not None:
+        wait_for_dom(driver, waiter=waiter)
+    else:
+        wait_for_dom(driver)
+    getter: Callable[..., Any] = (
+        waiter.wait_for_element if waiter else cast(Any, wait_for_element)
+    )
+    return getter(driver, By.ID, field_id, timeout=DEFAULT_TIMEOUT)
+
+
+def _try_fill_once(driver: WebDriver, field_id: str, value: str) -> bool:
+    """Une tentative d'insertion (succès si déjà correct ou insertion ok)."""
+    input_field, is_correct_value = detecter_et_verifier_contenu(
+        driver, field_id, value
+    )
+    if input_field is None:
+        raise RuntimeError("detecter_et_verifier_contenu returned None")
+    if is_correct_value:
+        write_log(
+            f"Valeur correcte déjà présente pour '{field_id}'.", LOG_FILE, "DEBUG"
+        )
+        return True
+    effacer_et_entrer_valeur(input_field, value)
+    program_break_time(1, "Stabilisation du DOM après insertion.")
+    write_log(messages.DOM_STABLE, LOG_FILE, "DEBUG")
+    if cast(Callable[[Any, str], bool], controle_insertion)(input_field, value):
+        write_log(
+            f"Valeur '{value}' insérée avec succès pour '{field_id}'.",
+            LOG_FILE,
+            "DEBUG",
+        )
+        return True
+    return False
+
+
+def _log_insert_failure(field_id: str, max_attempts: int) -> None:
+    write_log(
+        f"{messages.ECHEC_INSERTION} pour '{field_id}' après {max_attempts} tentatives.",
+        LOG_FILE,
+        "ERROR",
+    )
+
+
 def _insert_value_with_retries(
     driver: WebDriver,
     field_id: str,
@@ -317,46 +372,12 @@ def _insert_value_with_retries(
     max_attempts: int,
     waiter: WaiterProtocol | None,
 ) -> bool:
-    """Essaye d'insérer la valeur plusieurs fois si nécessaire."""
-    if waiter is not None:
-        wait_for_dom(driver, waiter=waiter)
-    else:
-        wait_for_dom(driver)
-    element = (
-        cast(Any, waiter.wait_for_element)(
-            driver, By.ID, field_id, timeout=DEFAULT_TIMEOUT
-        )
-        if waiter
-        else cast(Any, wait_for_element)(
-            driver, By.ID, field_id, timeout=DEFAULT_TIMEOUT
-        )
-    )
-    if not element:
+    """Essaye d'insérer la valeur plusieurs fois si nécessaire (boucle compacte)."""
+    if not _wait_and_get_element(driver, field_id, waiter):
         return False
-    attempt = 0
-    while attempt < max_attempts:
+    for attempt in range(max_attempts):
         try:
-            input_field, is_correct_value = detecter_et_verifier_contenu(
-                driver, field_id, value
-            )
-            if input_field is None:
-                raise RuntimeError("detecter_et_verifier_contenu returned None")
-            if is_correct_value:
-                write_log(
-                    f"Valeur correcte déjà présente pour '{field_id}'.",
-                    LOG_FILE,
-                    "DEBUG",
-                )
-                return True
-            effacer_et_entrer_valeur(input_field, value)
-            program_break_time(1, "Stabilisation du DOM après insertion.")
-            write_log(messages.DOM_STABLE, LOG_FILE, "DEBUG")
-            if cast(Callable[[Any, str], bool], controle_insertion)(input_field, value):
-                write_log(
-                    f"Valeur '{value}' insérée avec succès pour '{field_id}'.",
-                    LOG_FILE,
-                    "DEBUG",
-                )
+            if _try_fill_once(driver, field_id, value):
                 return True
         except StaleElementReferenceException:
             write_log(
@@ -364,12 +385,7 @@ def _insert_value_with_retries(
                 LOG_FILE,
                 "ERROR",
             )
-        attempt += 1
-    write_log(
-        f"{messages.ECHEC_INSERTION} pour '{field_id}' après {max_attempts} tentatives.",
-        LOG_FILE,
-        "ERROR",
-    )
+    _log_insert_failure(field_id, max_attempts)
     return False
 
 
