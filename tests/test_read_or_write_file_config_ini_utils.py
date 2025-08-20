@@ -1,5 +1,6 @@
 import builtins
 import configparser
+import os
 import sys
 from pathlib import Path
 
@@ -386,3 +387,74 @@ def test_read_config_ini_uses_cache(tmp_path, monkeypatch):
     second = read_config_ini()
     assert first is second
     assert len(opened) == 1
+
+
+def test_write_config_ini_atomic_cleanup(tmp_path, monkeypatch):
+    cfg_path = tmp_path / "config.ini"
+    cfg_path.write_text("[s]\n", encoding="utf-8")
+    cp = configparser.ConfigParser()
+    cp["s"] = {}
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.messagebox.showinfo",
+        noop,
+    )
+
+    def failing_replace(src, dst):
+        raise ValueError("boom")
+
+    monkeypatch.setattr(os, "replace", failing_replace)
+    with pytest.raises(RuntimeError):
+        write_config_ini(cp)
+    assert not (tmp_path / "config.ini.tmp").exists()
+
+
+def test_set_notifier_custom(tmp_path, monkeypatch):
+    cfg_path = tmp_path / "config.ini"
+    cfg_path.write_text("[s]\na=b\n", encoding="utf-8")
+    cp = configparser.ConfigParser()
+    cp["s"] = {"a": "c"}
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.messagebox.showinfo",
+        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("should not")),
+    )
+    from sele_saisie_auto import read_or_write_file_config_ini_utils as mod
+
+    calls: list[tuple[str, str]] = []
+
+    class Stub:
+        def info(self, title: str, message: str) -> None:
+            calls.append((title, message))
+
+    mod.set_notifier(Stub())
+    write_config_ini(cp)
+    assert calls
+    mod.set_notifier(None)
+
+
+def test_get_runtime_resource_path_env_override(tmp_path, monkeypatch):
+    monkeypatch.setenv("SAA_RES_DIR", str(tmp_path))
+    other = tmp_path / "other"
+    other.mkdir()
+    monkeypatch.chdir(other)
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
+    )
+    monkeypatch.setattr(
+        "sele_saisie_auto.read_or_write_file_config_ini_utils.log_info", noop
+    )
+    path = get_runtime_resource_path("data.txt")
+    assert path == str(tmp_path / "data.txt")
