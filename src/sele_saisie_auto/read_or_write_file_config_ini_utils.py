@@ -21,150 +21,130 @@ def clear_cache() -> None:
     _CACHE.clear()
 
 
-def get_runtime_config_path(log_file: str | None = None) -> str:
-    """Détermine le chemin du fichier `config.ini` à utiliser.
-    Si le fichier n'existe pas dans le répertoire courant, copie la version embarquée.
-    """
-    # Garantit un log_file de type str
-    lf: str = log_file or get_log_file()
-
-    # Chemin du fichier `config.ini` dans le répertoire courant
-    current_dir_config = os.path.join(os.getcwd(), "config.ini")
-    log_info(f"🔹 Chemin du fichier courant : {current_dir_config}", lf)
-
-    # Si PyInstaller est utilisé
-    if hasattr(sys, "_MEIPASS"):
-        # Chemin du fichier `config.ini` embarqué
-        embedded_config = os.path.join(sys._MEIPASS, "config.ini")
-        log_info(
-            f"🔹 Exécution via PyInstaller. Fichier embarqué : {embedded_config}", lf
-        )
-
-        # Copier le fichier embarqué vers le répertoire courant si nécessaire (si absent)
-        if not os.path.exists(current_dir_config):
-            shutil.copy(embedded_config, current_dir_config)
-            log_info(f"🔹 Copie de {embedded_config} vers {current_dir_config}", lf)
-    else:
-        log_info("🔹 Exécution en mode script.", lf)
-
-    return current_dir_config
+# ---------------------------- Helpers internes -----------------------------
 
 
-def get_runtime_resource_path(relative_path: str, log_file: str | None = None) -> str:
-    """Détermine le chemin absolu d'une ressource (comme une image) à utiliser.
-    Si le fichier n'existe pas dans le répertoire courant, copie la version embarquée.
-    """
-    # Chemin de la ressource dans le répertoire courant
-    lf: str = log_file or get_log_file()
-    current_dir_resource = os.path.join(os.getcwd(), relative_path)
-    log_info(f"🔹 Chemin du fichier courant : {current_dir_resource}", lf)
+def _is_frozen() -> bool:
+    """Retourne True si l'application tourne via PyInstaller."""
+    return hasattr(sys, "_MEIPASS")
 
-    # Si PyInstaller est utilisé
-    if hasattr(sys, "_MEIPASS"):
-        # Chemin de la ressource embarquée
-        embedded_resource = os.path.join(sys._MEIPASS, relative_path)
-        log_info(
-            f"🔹 Exécution via PyInstaller. Fichier embarqué : {embedded_resource}",
+
+def _copy_if_missing(src: str, dst: str, lf: str) -> None:
+    """Copie src -> dst uniquement si dst n'existe pas. Journalise et lève des erreurs explicites."""
+    if os.path.exists(dst):
+        return
+    try:
+        shutil.copy(src, dst)
+        log_info(f"🔹 Copie de {src} vers {dst}", lf)
+    except FileNotFoundError as e:
+        write_log(
+            f"🔴 Fichier embarqué {messages.INTROUVABLE} : {src}",
             lf,
-        )
-
-        # Copier le fichier embarqué vers le répertoire courant si nécessaire (si absent)
-        if not os.path.exists(current_dir_resource):
-            try:
-                shutil.copy(embedded_resource, current_dir_resource)
-                log_info(
-                    f"🔹 Copie de {embedded_resource} vers {current_dir_resource}",
-                    lf,
-                )
-            except FileNotFoundError as e:
-                write_log(
-                    f"🔴 Fichier embarqué {messages.INTROUVABLE} : {embedded_resource}",
-                    lf,
-                    "ERROR",
-                )
-                raise FileNotFoundError(
-                    f"{messages.IMPOSSIBLE_DE_TROUVER} le fichier embarqué : {embedded_resource}"
-                ) from e
-            except PermissionError as e:
-                write_log(
-                    f"🔴 Permission refusée pour copier {embedded_resource} vers {current_dir_resource}",
-                    lf,
-                    "ERROR",
-                )
-                raise PermissionError(
-                    f"Permission refusée pour copier : {embedded_resource}"
-                ) from e
-    else:
-        log_info("🔹 Exécution en mode script.", lf)
-
-    return current_dir_resource
-
-
-def read_config_ini(log_file: str | None = None) -> configparser.ConfigParser:
-    """Lit ``config.ini`` et retourne un :class:`ConfigParser`.
-
-    Si le fichier n'a pas changé depuis la dernière lecture,
-    la configuration est retournée depuis le cache.
-    """
-    lf: str = log_file or get_log_file()
-    config_file_ini = get_runtime_config_path(log_file=lf)
-
-    if not os.path.exists(config_file_ini):
-        log_info(
-            f"🔹 Le fichier '{config_file_ini}' est {messages.INTROUVABLE}.",
-            lf,
+            "ERROR",
         )
         raise FileNotFoundError(
-            f"Le fichier de configuration '{config_file_ini}' est {messages.INTROUVABLE}."
+            f"{messages.IMPOSSIBLE_DE_TROUVER} le fichier embarqué : {src}"
+        ) from e
+    except PermissionError as e:
+        write_log(
+            f"🔴 Permission refusée pour copier {src} vers {dst}",
+            lf,
+            "ERROR",
         )
+        raise PermissionError(f"Permission refusée pour copier : {src}") from e
+
+
+def _ensure_runtime_resource(relative_path: str, lf: str) -> str:
+    """
+    Retourne le chemin courant d'une ressource (copie la version PyInstaller si nécessaire).
+    Utilisé à la fois pour config.ini et pour toute ressource embarquée.
+    """
+    dst = os.path.join(os.getcwd(), relative_path)
+    log_info(f"🔹 Chemin du fichier courant : {dst}", lf)
+
+    if _is_frozen():
+        src = os.path.join(sys._MEIPASS, relative_path)  # type: ignore[attr-defined]
+        log_info(f"🔹 Exécution via PyInstaller. Fichier embarqué : {src}", lf)
+        _copy_if_missing(src, dst, lf)
     else:
-        log_info(
-            f"🔹 Le fichier '{config_file_ini}' a été trouvé.",
-            lf,
-        )
+        log_info("🔹 Exécution en mode script.", lf)
 
-    current_mtime = os.path.getmtime(config_file_ini)
-    cached = _CACHE.get(config_file_ini)
-    if cached and cached[0] == current_mtime:
-        log_info(
-            "🔹 Configuration chargée depuis le cache.",
-            lf,
-        )
-        return cached[1]
+    return dst
 
+
+def _ensure_exists(path: str, lf: str, label: str) -> None:
+    """Vérifie l'existence d'un fichier, logge, et lève FileNotFoundError si absent."""
+    if os.path.exists(path):
+        log_info(f"🔹 Le fichier '{path}' a été trouvé.", lf)
+        return
+    log_info(f"🔹 Le fichier '{path}' est {messages.INTROUVABLE}.", lf)
+    raise FileNotFoundError(f"Le fichier {label} '{path}' est {messages.INTROUVABLE}.")
+
+
+def _read_ini_file(path: str, lf: str) -> configparser.ConfigParser:
+    """Lit un INI en UTF-8 et retourne un ConfigParser avec gestion d'erreurs normalisée."""
     config = configparser.ConfigParser(interpolation=None)
-
     try:
-        # Lire le fichier avec l'encodage UTF-8
-        with open(config_file_ini, encoding="utf-8") as configfile:
+        with open(path, encoding="utf-8") as configfile:
             config.read_file(configfile)
             log_info(
-                f"🧐 Le fichier de configuration '{config_file_ini}' a été lu avec succès.",
-                lf,
+                f"🧐 Le fichier de configuration '{path}' a été lu avec succès.", lf
             )
+            return config
     except UnicodeDecodeError as e:  # noqa: BLE001
         log_info(
-            f"🔹 Erreur d'encodage lors de la lecture du fichier '{config_file_ini}'.",
+            f"🔹 Erreur d'encodage lors de la lecture du fichier '{path}'.",
             lf,
         )
         raise TypeError(str(e)) from e
     except configparser.Error as e:  # noqa: BLE001
         section = getattr(e, "section", "inconnue")
         log_info(
-            f"🔹 Erreur de configuration dans la section '{section}' du fichier '{config_file_ini}': {e}",
+            f"🔹 Erreur de configuration dans la section '{section}' du fichier '{path}': {e}",
             lf,
         )
         raise
     except Exception as e:
         log_info(
-            f"🔹 {messages.ERREUR_INATTENDUE} lors de la lecture du fichier '{config_file_ini}': {e}",
+            f"🔹 {messages.ERREUR_INATTENDUE} lors de la lecture du fichier '{path}': {e}",
             lf,
         )
-        raise RuntimeError(
-            f"Erreur lors de la lecture du fichier '{config_file_ini}': {e}"
-        ) from e
+        raise RuntimeError(f"Erreur lors de la lecture du fichier '{path}': {e}") from e
 
-    _CACHE[config_file_ini] = (current_mtime, config)
+
+# ---------------------------- API publique ---------------------------------
+
+
+def get_runtime_config_path(log_file: str | None = None) -> str:
+    """Retourne le chemin du `config.ini` prêt à l'emploi (copie la version embarquée si besoin)."""
+    lf: str = log_file or get_log_file()
+    return _ensure_runtime_resource("config.ini", lf)
+
+
+def get_runtime_resource_path(relative_path: str, log_file: str | None = None) -> str:
+    """Retourne le chemin absolu d'une ressource (copie la version embarquée si besoin)."""
+    lf: str = log_file or get_log_file()
+    return _ensure_runtime_resource(relative_path, lf)
+
+
+def read_config_ini(log_file: str | None = None) -> configparser.ConfigParser:
+    """
+    Lit ``config.ini`` et retourne un ConfigParser.
+    Utilise un cache invalide dès que le mtime change.
+    """
+    lf: str = log_file or get_log_file()
+    config_path = get_runtime_config_path(log_file=lf)
+
+    _ensure_exists(config_path, lf, "de configuration")
+
+    mtime = os.path.getmtime(config_path)
+    cached = _CACHE.get(config_path)
+    if cached and cached[0] == mtime:
+        log_info("🔹 Configuration chargée depuis le cache.", lf)
+        return cached[1]
+
+    config = _read_ini_file(config_path, lf)
+    _CACHE[config_path] = (mtime, config)
     log_info("🔹 Configuration initialisée avec succès.", lf)
     return config
 
@@ -173,49 +153,33 @@ def write_config_ini(
     configuration_personnel: configparser.ConfigParser, log_file: str | None = None
 ) -> str:
     """Écrit et sauvegarde les modifications dans le fichier `config.ini`."""
-    # Obtenir le chemin du fichier de configuration
     lf: str = log_file or get_log_file()
-    config_file_ini = get_runtime_config_path(log_file=lf)
+    config_path = get_runtime_config_path(log_file=lf)
 
-    # Vérifier si le fichier existe
-    if not os.path.exists(config_file_ini):
-        log_info(
-            f"🔹 Le fichier '{config_file_ini}' est {messages.INTROUVABLE}.",
-            lf,
-        )
-        raise FileNotFoundError(
-            f"Le fichier de configuration '{config_file_ini}' est {messages.INTROUVABLE}."
-        )
-    else:
-        log_info(
-            f"🔹 Le fichier '{config_file_ini}' a été trouvé.",
-            lf,
-        )
+    _ensure_exists(config_path, lf, "de configuration")
 
     try:
-        # Écrire dans le fichier avec l'encodage UTF-8
-        with open(config_file_ini, "w", encoding="utf-8") as configfile:
+        with open(config_path, "w", encoding="utf-8") as configfile:
             configuration_personnel.write(configfile)
             log_info(
-                f"💾 Le fichier de configuration '{config_file_ini}' a été sauvegardé avec succès.",
+                f"💾 Le fichier de configuration '{config_path}' a été sauvegardé avec succès.",
                 lf,
             )
             messagebox.showinfo("Enregistré", "Configuration sauvegardée avec succès.")
-        _CACHE.pop(config_file_ini, None)
+        _CACHE.pop(config_path, None)
     except UnicodeDecodeError as e:  # noqa: BLE001
-        # Gérer les erreurs d'encodage
         log_info(
-            f"🔹 Erreur d'encodage lors de la lecture du fichier '{config_file_ini}'.",
+            f"🔹 Erreur d'encodage lors de la lecture du fichier '{config_path}'.",
             lf,
         )
         raise TypeError(str(e)) from e
     except Exception as e:
         log_info(
-            f"🔹 {messages.ERREUR_INATTENDUE} lors de la lecture du fichier '{config_file_ini}': {e}",
+            f"🔹 {messages.ERREUR_INATTENDUE} lors de la lecture du fichier '{config_path}': {e}",
             lf,
         )
         raise RuntimeError(
-            f"Erreur lors de la lecture du fichier '{config_file_ini}': {e}"
+            f"Erreur lors de la lecture du fichier '{config_path}': {e}"
         ) from e
 
-    return config_file_ini
+    return config_path
