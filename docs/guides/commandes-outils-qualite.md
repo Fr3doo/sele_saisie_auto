@@ -115,12 +115,17 @@ poetry run radon cc src/sele_saisie_auto/remplir_jours_feuille_de_temps.py -s -a
 
 ### Commandes avancées
 
-| Commande                                             | Description                                | Chemin de sortie                |
-| ---------------------------------------------------- | ------------------------------------------ | ------------------------------- |
-| `radon cc src/ -j -O reports/radon/cc_report.json`   | Rapport JSON de la complexité cyclomatique | `reports/radon/cc_report.json`  |
-| `radon mi src/ -j -O reports/radon/mi_report.json`   | Rapport JSON de l'indice de maintenabilité | `reports/radon/mi_report.json`  |
-| `radon raw src/ -j -O reports/radon/raw_report.json` | Rapport JSON des métriques brutes          | `reports/radon/raw_report.json` |
-| `radon hal src/ -j -O reports/radon/hal_report.json` | Rapport JSON des métriques de Halstead     | `reports/radon/hal_report.json` |
+| Commande                                             | Description                                                                 | Chemin de sortie                |
+| ---------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------- |
+| `radon cc -n B -s`                                   | Complexité cyclomatique : n’affiche que F/M/C notés **B → F** (> A)         | `stdout` (console)              |
+| `radon cc -n B -s src/`                              | Complexité cyclomatique : n’affiche que F/M/C notés **B → F** (> A)         | `stdout` (console)              |
+| `radon mi -n B -s`                                   | Indice de maintenabilité : n’affiche que les fichiers classés **B/C**       | `stdout` (console)              |
+| `radon mi -n B -s src/`                              | Indice de maintenabilité : n’affiche que les fichiers classés **B/C**       | `stdout` (console)              |
+| `radon cc -n B src/ \| grep -E '^[^ ]' \| sort -u`   | Liste **uniquement** les chemins de fichiers contenant au moins un bloc > A | `stdout` (console)              |
+| `radon cc src/ -j -O reports/radon/cc_report.json`   | Rapport JSON de la complexité cyclomatique                                  | `reports/radon/cc_report.json`  |
+| `radon mi src/ -j -O reports/radon/mi_report.json`   | Rapport JSON de l'indice de maintenabilité                                  | `reports/radon/mi_report.json`  |
+| `radon raw src/ -j -O reports/radon/raw_report.json` | Rapport JSON des métriques brutes                                           | `reports/radon/raw_report.json` |
+| `radon hal src/ -j -O reports/radon/hal_report.json` | Rapport JSON des métrriques de Halstead                                     | `reports/radon/hal_report.json` |
 
 ---
 ## Ruff - Lint
