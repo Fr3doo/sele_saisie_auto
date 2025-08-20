@@ -16,7 +16,7 @@ from sele_saisie_auto.logging_service import log_info
 from sele_saisie_auto.shared_utils import get_log_file
 
 # Cache des configurations lues, indexé par chemin du fichier
-_CACHE: dict[str, tuple[float, configparser.ConfigParser]] = {}
+_CACHE: dict[str, tuple[int, configparser.ConfigParser]] = {}
 _CACHE_LOCK = threading.RLock()
 
 
@@ -39,6 +39,8 @@ def _copy_if_missing(src: str, dst: str, lf: str) -> None:
     if os.path.exists(dst):
         return
     try:
+        # S'assure que le dossier cible existe
+        Path(dst).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(src, dst)
         log_info(f"🔹 Copie de {src} vers {dst}", lf)
     except FileNotFoundError as e:
@@ -74,7 +76,7 @@ def _ensure_runtime_resource(relative_path: str, lf: str) -> str:
     log_info(f"🔹 Chemin du fichier courant : {dst}", lf)
 
     if _is_frozen():
-        src = Path(getattr(sys, "_MEIPASS")) / relative_path
+        src = Path(sys._MEIPASS) / relative_path # type: ignore[attr-defined]
         log_info(f"🔹 Exécution via PyInstaller. Fichier embarqué : {src}", lf)
         _copy_if_missing(str(src), str(dst), lf)
     else:
@@ -139,15 +141,15 @@ def _atomic_write_config(path: str, cfg: configparser.ConfigParser) -> None:
             pass
 
 
-def _get_cached_config(path: str, mtime: float) -> configparser.ConfigParser | None:
+def _get_cached_config(path: str, mtime_ns: int) -> configparser.ConfigParser | None:
     with _CACHE_LOCK:
         cached = _CACHE.get(path)
-        return cached[1] if cached and cached[0] == mtime else None
+        return cached[1] if cached and cached[0] == mtime_ns else None
 
 
-def _set_cache(path: str, mtime: float, cfg: configparser.ConfigParser) -> None:
+def _set_cache(path: str, mtime_ns: int, cfg: configparser.ConfigParser) -> None:
     with _CACHE_LOCK:
-        _CACHE[path] = (mtime, cfg)
+        _CACHE[path] = (mtime_ns, cfg)
 
 
 @runtime_checkable
@@ -202,14 +204,14 @@ def read_config_ini(log_file: str | None = None) -> configparser.ConfigParser:
 
     _ensure_exists(config_path, lf, "de configuration")
 
-    mtime = os.path.getmtime(config_path)
-    cached = _get_cached_config(config_path, mtime)
+    mtime_ns = os.stat(config_path).st_mtime_ns
+    cached = _get_cached_config(config_path, mtime_ns)
     if cached:
         log_info("🔹 Configuration chargée depuis le cache.", lf)
         return cached
 
     config = _read_ini_file(config_path, lf)
-    _set_cache(config_path, mtime, config)
+    _set_cache(config_path, mtime_ns, config)
     log_info("🔹 Configuration initialisée avec succès.", lf)
     return config
 

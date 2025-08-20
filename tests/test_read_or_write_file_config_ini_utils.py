@@ -42,7 +42,7 @@ def test_get_runtime_config_path_meipass_copy(tmp_path, monkeypatch):
 
 def test_get_runtime_config_path_no_meipass(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    monkeypatch.delenv("_MEIPASS", raising=False)
+    monkeypatch.delattr(sys, "_MEIPASS", raising=False)
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
     )
@@ -158,7 +158,7 @@ def test_get_runtime_resource_path_exists(tmp_path, monkeypatch):
 
 def test_get_runtime_resource_path_no_meipass(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    monkeypatch.delenv("_MEIPASS", raising=False)
+    monkeypatch.delattr(sys, "_MEIPASS", raising=False)
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.write_log", noop
     )
