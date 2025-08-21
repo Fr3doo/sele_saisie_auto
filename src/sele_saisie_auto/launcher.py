@@ -15,6 +15,13 @@ from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import Services, service_configurator_factory
+from sele_saisie_auto.dropdown_options import (
+    cgi_options,
+    cgi_options_billing_action,
+    cgi_options_dejeuner,
+    work_location_options,
+    work_schedule_options,
+)
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.enums import LogLevel
 from sele_saisie_auto.gui_builder import (
@@ -241,6 +248,52 @@ def start_configuration(
     debug_row = create_a_frame(frame, padding=(10, 10, 10, 10))
     create_modern_label_with_pack(debug_row, "Log Level:", side="left")
     create_combobox_with_pack(debug_row, debug_var, values=LOG_LEVEL_CHOICES)
+
+    planning_tab = create_tab(cast(ttk.Notebook, notebook), title="Planning de travail")
+    planning_var = tk.StringVar()
+    planning_row = create_a_frame(planning_tab, padding=(10, 10, 10, 10))
+    create_modern_label_with_pack(planning_row, "Option:", side="left")
+    create_combobox_with_pack(
+        planning_row,
+        planning_var,
+        values=[opt.label for opt in work_schedule_options],
+    )
+
+    cgi_tab = create_tab(cast(ttk.Notebook, notebook), title="Informations CGI")
+    cgi_option_var = tk.StringVar()
+    cgi_row = create_a_frame(cgi_tab, padding=(10, 10, 10, 10))
+    create_modern_label_with_pack(cgi_row, "Option:", side="left")
+    create_combobox_with_pack(
+        cgi_row, cgi_option_var, values=[opt.label for opt in cgi_options]
+    )
+    lunch_var = tk.StringVar()
+    lunch_row = create_a_frame(cgi_tab, padding=(10, 10, 10, 10))
+    create_modern_label_with_pack(lunch_row, "Déjeuner:", side="left")
+    create_combobox_with_pack(
+        lunch_row, lunch_var, values=[opt.label for opt in cgi_options_dejeuner]
+    )
+    billing_var = tk.StringVar()
+    billing_row = create_a_frame(cgi_tab, padding=(10, 10, 10, 10))
+    create_modern_label_with_pack(billing_row, "Facturation:", side="left")
+    create_combobox_with_pack(
+        billing_row,
+        billing_var,
+        values=[opt.label for opt in cgi_options_billing_action],
+    )
+
+    work_tab = create_tab(cast(ttk.Notebook, notebook), title="Lieu de travail")
+    work_am_var = tk.StringVar()
+    work_pm_var = tk.StringVar()
+    am_row = create_a_frame(work_tab, padding=(10, 10, 10, 10))
+    create_modern_label_with_pack(am_row, "Matin:", side="left")
+    create_combobox_with_pack(
+        am_row, work_am_var, values=[opt.label for opt in work_location_options]
+    )
+    pm_row = create_a_frame(work_tab, padding=(10, 10, 10, 10))
+    create_modern_label_with_pack(pm_row, "Après-midi:", side="left")
+    create_combobox_with_pack(
+        pm_row, work_pm_var, values=[opt.label for opt in work_location_options]
+    )
 
     def save() -> None:
         """Enregistre la configuration saisie."""
