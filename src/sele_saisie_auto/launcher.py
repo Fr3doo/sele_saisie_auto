@@ -15,6 +15,13 @@ from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import Services, service_configurator_factory
+from sele_saisie_auto.dropdown_options import (
+    cgi_options,
+    cgi_options_billing_action,
+    cgi_options_dejeuner,
+    work_location_options,
+    work_schedule_options,
+)
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.enums import LogLevel
 from sele_saisie_auto.gui_builder import (
@@ -242,6 +249,100 @@ def start_configuration(
     create_modern_label_with_pack(debug_row, "Log Level:", side="left")
     create_combobox_with_pack(debug_row, debug_var, values=LOG_LEVEL_CHOICES)
 
+    planning_tab = create_tab(cast(ttk.Notebook, notebook), title="Planning de travail")
+    cgi_tab = create_tab(cast(ttk.Notebook, notebook), title="Informations CGI")
+    location_tab = create_tab(cast(ttk.Notebook, notebook), title="Lieu de travail")
+
+    days = [
+        "dimanche",
+        "lundi",
+        "mardi",
+        "mercredi",
+        "jeudi",
+        "vendredi",
+        "samedi",
+    ]
+
+    ws_activity_vars: dict[str, tk.StringVar] = {}
+    ws_hours_vars: dict[str, tk.StringVar] = {}
+    ws_values = [o.label for o in work_schedule_options]
+    for day in days:
+        act, _, hrs = config.get("work_schedule", {}).get(day, ",").partition(",")
+        row = create_a_frame(planning_tab, padding=(5, 5, 5, 5))
+        create_modern_label_with_pack(row, f"{day.capitalize()}:", side="left")
+        act_var = tk.StringVar(value=act.strip())
+        hrs_var = tk.StringVar(value=hrs.strip())
+        create_combobox_with_pack(row, act_var, values=ws_values, side="left")
+        create_modern_entry_with_pack(row, hrs_var, width=5, side="left")
+        ws_activity_vars[day] = act_var
+        ws_hours_vars[day] = hrs_var
+
+    billing_action_var = tk.StringVar(
+        value=config.get("project_information", {}).get("billing_action", "")
+    )
+    billing_row = create_a_frame(cgi_tab, padding=(10, 10, 10, 10))
+    create_modern_label_with_pack(billing_row, "Billing action:", side="left")
+    create_combobox_with_pack(
+        billing_row,
+        billing_action_var,
+        values=[o.label for o in cgi_options_billing_action],
+        side="left",
+    )
+
+    cgi_sections: dict[str, dict[str, tk.StringVar]] = {
+        "additional_information_rest_period_respected": {},
+        "additional_information_work_time_range": {},
+        "additional_information_half_day_worked": {},
+        "additional_information_lunch_break_duration": {},
+    }
+    section_titles = {
+        "additional_information_rest_period_respected": "Repos respecté",
+        "additional_information_work_time_range": "Plage de travail",
+        "additional_information_half_day_worked": "Demi-journée travaillée",
+        "additional_information_lunch_break_duration": "Durée pause déjeuner",
+    }
+    section_values = {
+        "additional_information_rest_period_respected": [o.label for o in cgi_options],
+        "additional_information_work_time_range": [o.label for o in cgi_options],
+        "additional_information_half_day_worked": [o.label for o in cgi_options],
+        "additional_information_lunch_break_duration": [
+            o.label for o in cgi_options_dejeuner
+        ],
+    }
+    for section, vars_dict in cgi_sections.items():
+        create_modern_label_with_pack(cgi_tab, section_titles[section], side="top")
+        for day in days:
+            row = create_a_frame(cgi_tab, padding=(5, 5, 5, 5))
+            create_modern_label_with_pack(row, f"{day.capitalize()}:", side="left")
+            var = tk.StringVar(value=config.get(section, {}).get(day, ""))
+            create_combobox_with_pack(
+                row,
+                var,
+                values=section_values[section],
+                side="left",
+            )
+            vars_dict[day] = var
+
+    work_location_vars: dict[str, dict[str, tk.StringVar]] = {
+        "work_location_am": {},
+        "work_location_pm": {},
+    }
+    location_titles = {
+        "work_location_am": "Matin",
+        "work_location_pm": "Après-midi",
+    }
+    location_values = [o.label for o in work_location_options]
+    for section, vars_dict in work_location_vars.items():
+        create_modern_label_with_pack(
+            location_tab, location_titles[section], side="top"
+        )
+        for day in days:
+            row = create_a_frame(location_tab, padding=(5, 5, 5, 5))
+            create_modern_label_with_pack(row, f"{day.capitalize()}:", side="left")
+            var = tk.StringVar(value=config.get(section, {}).get(day, ""))
+            create_combobox_with_pack(row, var, values=location_values, side="left")
+            vars_dict[day] = var
+
     def save() -> None:
         """Enregistre la configuration saisie."""
         config["settings"]["date_cible"] = date_var.get()
@@ -249,6 +350,41 @@ def start_configuration(
         if isinstance(debug_val, LogLevel):
             debug_val = debug_val.value
         config["settings"]["debug_mode"] = debug_val
+        for day in days:
+            activity = ws_activity_vars[day].get()
+            hours = ws_hours_vars[day].get()
+            config.setdefault("work_schedule", {})[day] = f"{activity},{hours}"
+            if isinstance(raw_cfg, configparser.ConfigParser):
+                if not raw_cfg.has_section("work_schedule"):
+                    raw_cfg.add_section("work_schedule")
+                raw_cfg.set("work_schedule", day, f"{activity},{hours}")
+        for section, day_vars in cgi_sections.items():
+            config.setdefault(section, {})
+            if isinstance(raw_cfg, configparser.ConfigParser):
+                if not raw_cfg.has_section(section):
+                    raw_cfg.add_section(section)
+            for day, var in day_vars.items():
+                config[section][day] = var.get()
+                if isinstance(raw_cfg, configparser.ConfigParser):
+                    raw_cfg.set(section, day, var.get())
+        config.setdefault("project_information", {})[
+            "billing_action"
+        ] = billing_action_var.get()
+        if isinstance(raw_cfg, configparser.ConfigParser):
+            if not raw_cfg.has_section("project_information"):
+                raw_cfg.add_section("project_information")
+            raw_cfg.set(
+                "project_information", "billing_action", billing_action_var.get()
+            )
+        for section, day_vars in work_location_vars.items():
+            config.setdefault(section, {})
+            if isinstance(raw_cfg, configparser.ConfigParser):
+                if not raw_cfg.has_section(section):
+                    raw_cfg.add_section(section)
+            for day, var in day_vars.items():
+                config[section][day] = var.get()
+                if isinstance(raw_cfg, configparser.ConfigParser):
+                    raw_cfg.set(section, day, var.get())
         if isinstance(raw_cfg, configparser.ConfigParser):
             if not raw_cfg.has_section("settings"):
                 raw_cfg.add_section("settings")
