@@ -275,8 +275,11 @@ class AutomationOrchestrator:
 
     def _supports_prepare_run(self) -> bool:
         nav = self.page_navigator
-        return bool(nav) and callable(getattr(nav, "prepare", None)) and callable(getattr(nav, "run", None))
-
+        return (
+            bool(nav)
+            and callable(getattr(nav, "prepare", None))
+            and callable(getattr(nav, "run", None))
+        )
 
     def _debug(self, msg: str) -> None:
         fn = getattr(self.logger, "debug", None)

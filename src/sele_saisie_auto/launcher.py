@@ -15,6 +15,13 @@ from sele_saisie_auto.app_config import AppConfig
 from sele_saisie_auto.automation.browser_session import BrowserSession
 from sele_saisie_auto.config_manager import ConfigManager
 from sele_saisie_auto.configuration import Services, service_configurator_factory
+from sele_saisie_auto.dropdown_options import (
+    cgi_options,
+    cgi_options_billing_action,
+    cgi_options_dejeuner,
+    work_location_options,
+    work_schedule_options,
+)
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.enums import LogLevel
 from sele_saisie_auto.gui_builder import (
@@ -231,8 +238,105 @@ def start_configuration(
         notebook = root
     frame = create_tab(cast(ttk.Notebook, notebook), title="Paramètres")
 
+    # Additional tabs for advanced configuration
+    schedule_frame = create_tab(
+        cast(ttk.Notebook, notebook), title="Planning de travail"
+    )
+    cgi_frame = create_tab(cast(ttk.Notebook, notebook), title="Informations CGI")
+    location_frame = create_tab(cast(ttk.Notebook, notebook), title="Lieu de travail")
+
     date_var = tk.StringVar(value=config["settings"].get("date_cible", ""))
     debug_var = tk.StringVar(value=config["settings"].get("debug_mode", "INFO"))
+
+    days = [
+        "dimanche",
+        "lundi",
+        "mardi",
+        "mercredi",
+        "jeudi",
+        "vendredi",
+        "samedi",
+    ]
+
+    # ----- Planning de travail -----
+    schedule_values = [opt.label for opt in work_schedule_options]
+    work_schedule_vars: dict[str, tuple[tk.StringVar, tk.StringVar]] = {}
+    for day in days:
+        row = create_a_frame(schedule_frame, padding=(5, 5, 5, 5))
+        create_modern_label_with_pack(row, f"{day.capitalize()}:", side="left")
+        raw = config.get("work_schedule", {}).get(day, "")
+        activity = raw.partition(",")[0].strip()
+        hours = raw.partition(",")[2].strip()
+        act_var = tk.StringVar(value=activity)
+        hrs_var = tk.StringVar(value=hours)
+        create_combobox_with_pack(row, act_var, schedule_values, side="left")
+        create_modern_entry_with_pack(row, hrs_var, width=5, side="left")
+        work_schedule_vars[day] = (act_var, hrs_var)
+
+    # ----- Informations CGI -----
+    cgi_values = [opt.label for opt in cgi_options]
+    cgi_lunch_values = [opt.label for opt in cgi_options_dejeuner]
+    cgi_billing_values = [opt.label for opt in cgi_options_billing_action]
+    additional_info_sections = {
+        "additional_information_rest_period_respected": {},
+        "additional_information_work_time_range": {},
+        "additional_information_half_day_worked": {},
+        "additional_information_lunch_break_duration": {},
+    }
+    for day in days:
+        row = create_a_frame(cgi_frame, padding=(5, 5, 5, 5))
+        create_modern_label_with_pack(row, f"{day.capitalize()}:", side="left")
+        rest_var = tk.StringVar(
+            value=config.get("additional_information_rest_period_respected", {}).get(
+                day, ""
+            )
+        )
+        time_var = tk.StringVar(
+            value=config.get("additional_information_work_time_range", {}).get(day, "")
+        )
+        half_var = tk.StringVar(
+            value=config.get("additional_information_half_day_worked", {}).get(day, "")
+        )
+        lunch_var = tk.StringVar(
+            value=config.get("additional_information_lunch_break_duration", {}).get(
+                day, ""
+            )
+        )
+        create_combobox_with_pack(row, rest_var, cgi_values, side="left")
+        create_combobox_with_pack(row, time_var, cgi_values, side="left")
+        create_combobox_with_pack(row, half_var, cgi_values, side="left")
+        create_combobox_with_pack(row, lunch_var, cgi_lunch_values, side="left")
+        additional_info_sections["additional_information_rest_period_respected"][
+            day
+        ] = rest_var
+        additional_info_sections["additional_information_work_time_range"][
+            day
+        ] = time_var
+        additional_info_sections["additional_information_half_day_worked"][
+            day
+        ] = half_var
+        additional_info_sections["additional_information_lunch_break_duration"][
+            day
+        ] = lunch_var
+
+    billing_row = create_a_frame(cgi_frame, padding=(10, 10, 10, 10))
+    create_modern_label_with_pack(billing_row, "Billing action:", side="left")
+    billing_var = tk.StringVar(
+        value=config.get("project_information", {}).get("billing_action", "")
+    )
+    create_combobox_with_pack(billing_row, billing_var, cgi_billing_values, side="left")
+
+    # ----- Lieu de travail -----
+    location_values = [opt.label for opt in work_location_options]
+    work_location_vars: dict[str, tuple[tk.StringVar, tk.StringVar]] = {}
+    for day in days:
+        row = create_a_frame(location_frame, padding=(5, 5, 5, 5))
+        create_modern_label_with_pack(row, f"{day.capitalize()}:", side="left")
+        am_var = tk.StringVar(value=config.get("work_location_am", {}).get(day, ""))
+        pm_var = tk.StringVar(value=config.get("work_location_pm", {}).get(day, ""))
+        create_combobox_with_pack(row, am_var, location_values, side="left")
+        create_combobox_with_pack(row, pm_var, location_values, side="left")
+        work_location_vars[day] = (am_var, pm_var)
 
     date_row = create_a_frame(frame, padding=(10, 10, 10, 10))
     create_modern_label_with_pack(date_row, "Date cible:", side="left")
@@ -249,11 +353,27 @@ def start_configuration(
         if isinstance(debug_val, LogLevel):
             debug_val = debug_val.value
         config["settings"]["debug_mode"] = debug_val
+        config.setdefault("work_schedule", {})
+        for day, (act_var, hrs_var) in work_schedule_vars.items():
+            config["work_schedule"][day] = f"{act_var.get()},{hrs_var.get()}"
+        for section, vars_map in additional_info_sections.items():
+            config.setdefault(section, {})
+            for day, var in vars_map.items():
+                config[section][day] = var.get()
+        config.setdefault("project_information", {})
+        config["project_information"]["billing_action"] = billing_var.get()
+        config.setdefault("work_location_am", {})
+        config.setdefault("work_location_pm", {})
+        for day, (am_var, pm_var) in work_location_vars.items():
+            config["work_location_am"][day] = am_var.get()
+            config["work_location_pm"][day] = pm_var.get()
+
         if isinstance(raw_cfg, configparser.ConfigParser):
-            if not raw_cfg.has_section("settings"):
-                raw_cfg.add_section("settings")
-            raw_cfg.set("settings", "date_cible", config["settings"]["date_cible"])
-            raw_cfg.set("settings", "debug_mode", debug_val)
+            for section, values in config.items():
+                if not raw_cfg.has_section(section):
+                    raw_cfg.add_section(section)
+                for key, value in values.items():
+                    raw_cfg.set(section, key, value)
             write_config_ini(raw_cfg, log_file)
         else:
             write_config_ini(config, log_file)

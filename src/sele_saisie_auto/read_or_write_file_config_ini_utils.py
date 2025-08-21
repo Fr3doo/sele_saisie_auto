@@ -76,7 +76,7 @@ def _ensure_runtime_resource(relative_path: str, lf: str) -> str:
     log_info(f"🔹 Chemin du fichier courant : {dst}", lf)
 
     if _is_frozen():
-        src = Path(sys._MEIPASS) / relative_path # type: ignore[attr-defined]
+        src = Path(sys._MEIPASS) / relative_path  # type: ignore[attr-defined]
         log_info(f"🔹 Exécution via PyInstaller. Fichier embarqué : {src}", lf)
         _copy_if_missing(str(src), str(dst), lf)
     else:
