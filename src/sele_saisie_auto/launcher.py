@@ -29,11 +29,8 @@ from sele_saisie_auto.gui_builder import (
     create_a_frame,
     create_button_with_style,
     create_combobox,
-    create_combobox_with_pack,
     create_modern_entry_with_grid,
-    create_modern_entry_with_pack,
     create_modern_label_with_grid,
-    create_modern_label_with_pack,
     create_tab,
 )
 from sele_saisie_auto.interfaces import LoggerProtocol
@@ -262,14 +259,55 @@ def tab_settings(
     nb: ttk.Notebook | tk.Tk, config: dict[str, dict[str, str]]
 ) -> tuple[ttk.Frame, tk.StringVar, tk.StringVar]:
     frame = create_tab(cast(ttk.Notebook, nb), title="Paramètres")
+    frame.columnconfigure(0, weight=1)
+    frame.columnconfigure(1, weight=1)
+
     date_var = tk.StringVar(value=config["settings"].get("date_cible", ""))
     debug_var = tk.StringVar(value=config["settings"].get("debug_mode", "INFO"))
-    date_row = create_a_frame(frame, padding=(10, 10, 10, 10))
-    create_modern_label_with_pack(date_row, "Date cible:", side="left")
-    create_modern_entry_with_pack(date_row, date_var, side="left")
-    debug_row = create_a_frame(frame, padding=(10, 10, 10, 10))
-    create_modern_label_with_pack(debug_row, "Log Level:", side="left")
-    create_combobox_with_pack(debug_row, debug_var, values=LOG_LEVEL_CHOICES)
+
+    left = ttk.Frame(frame)
+    left.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+
+    create_modern_label_with_grid(left, "Date cible (jj/mm/aaaa):", row=0, col=0)
+    create_modern_entry_with_grid(left, date_var, row=0, col=1, width=15)
+    create_modern_label_with_grid(left, "Log Level :", row=1, col=0)
+    create_combobox(
+        left,
+        debug_var,
+        LOG_LEVEL_CHOICES,
+        row=1,
+        col=1,
+        width=12,
+        state="readonly",
+    )
+
+    notes_frame = ttk.LabelFrame(frame, text="Notes")
+    notes_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+
+    notes_text = (
+        "Gestion de la Date :\n"
+        "• La date peut être vide ou 'None'.\n"
+        "• Si c'est vide ou 'None', l’outil sélectionne le prochain samedi.\n"
+        "• Si nous sommes un samedi, il garde ce jour.\n\n"
+        "Gestion du fichier config.ini :\n"
+        "• Vous pouvez le modifier directement sans passer par la configuration.\n\n"
+        "Si vous êtes en mission :\n"
+        "• Dans l'onglet 'Planning de travail', sélectionnez 'En mission'.\n"
+        "  Un nouveau cadre apparaît afin de remplir les informations de la mission."
+    )
+
+    style = ttk.Style(notes_frame)
+    style.configure("Notes.TLabel", background="#FFF8DC")
+    style.configure("Notes.TLabelframe", background="#FFF8DC")
+    notes_label = ttk.Label(
+        notes_frame,
+        text=notes_text,
+        style="Notes.TLabel",
+        justify="left",
+        wraplength=250,
+    )
+    notes_label.pack(anchor="nw", padx=8, pady=8, fill="both", expand=True)
+
     return frame, date_var, debug_var
 
 

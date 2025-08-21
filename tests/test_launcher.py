@@ -3,6 +3,7 @@ import sys
 import types
 from multiprocessing import shared_memory
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -118,12 +119,30 @@ class DummyStyle:
     def theme_use(self, theme):
         self.theme = theme
 
+    def configure(self, *args, **kwargs):
+        pass
 
-class DummyLabelFrame:
+
+class DummyFrame:
     def __init__(self, *args, **kwargs):
         pass
 
+    def columnconfigure(self, *args, **kwargs):
+        pass
+
     def grid(self, *args, **kwargs):
+        pass
+
+
+class DummyLabelFrame(DummyFrame):
+    pass
+
+
+class DummyLabel:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def pack(self, *args, **kwargs):
         pass
 
 
@@ -136,18 +155,26 @@ def fake_stringvar(value=""):
     return var
 
 
-def test_parse_args_basic(monkeypatch):
+def _parse_cli(args: list[str]):
     mod = importlib.reload(importlib.import_module("sele_saisie_auto.cli"))
-    args = mod.parse_args([])
+    return mod.parse_args(args)
+
+
+def test_parse_args_defaults(monkeypatch):
+    args = _parse_cli([])
     assert args.log_level is None
     assert args.headless is False
     assert args.no_sandbox is False
     assert args.cleanup_mem is False
 
-    args = mod.parse_args(["-l", "DEBUG"])
+
+def test_parse_args_log_level(monkeypatch):
+    args = _parse_cli(["-l", "DEBUG"])
     assert args.log_level == "DEBUG"
 
-    args = mod.parse_args(["--cleanup-mem"])
+
+def test_parse_args_cleanup(monkeypatch):
+    args = _parse_cli(["--cleanup-mem"])
     assert args.cleanup_mem is True
 
 
@@ -451,24 +478,22 @@ def test_run_psatime_with_credentials_no_key(monkeypatch):
     assert not enc.stored
 
 
-def test_start_configuration_and_save(monkeypatch):
+def _setup_start_configuration(monkeypatch):
     launcher = import_launcher(monkeypatch)
     created_vars.clear()
     root = DummyRoot()
     cfg = {"settings": {}}
-    button = {}
-
+    button: dict[str, Any] = {}
     monkeypatch.setattr(launcher.tk, "Tk", lambda: root)
     monkeypatch.setattr(launcher.tk, "StringVar", fake_stringvar)
     monkeypatch.setattr(launcher.ttk, "Style", DummyStyle)
-    monkeypatch.setattr(launcher, "create_tab", lambda *a, **k: object())
-    monkeypatch.setattr(launcher, "create_a_frame", lambda *a, **k: object())
-    monkeypatch.setattr(launcher, "create_modern_label_with_pack", lambda *a, **k: None)
-    monkeypatch.setattr(launcher, "create_modern_entry_with_pack", lambda *a, **k: None)
-    monkeypatch.setattr(launcher, "create_combobox_with_pack", lambda *a, **k: None)
+    monkeypatch.setattr(launcher, "create_tab", lambda *a, **k: DummyFrame())
+    monkeypatch.setattr(launcher, "create_a_frame", lambda *a, **k: DummyFrame())
     monkeypatch.setattr(launcher, "create_modern_label_with_grid", lambda *a, **k: None)
     monkeypatch.setattr(launcher, "create_modern_entry_with_grid", lambda *a, **k: None)
     monkeypatch.setattr(launcher, "create_combobox", lambda *a, **k: None)
+    monkeypatch.setattr(launcher.ttk, "Frame", DummyFrame)
+    monkeypatch.setattr(launcher.ttk, "Label", DummyLabel)
     monkeypatch.setattr(launcher.ttk, "LabelFrame", DummyLabelFrame)
 
     def fake_button(frame, text, command):
@@ -477,7 +502,7 @@ def test_start_configuration_and_save(monkeypatch):
 
     monkeypatch.setattr(launcher, "create_button_with_style", fake_button)
     monkeypatch.setattr(launcher, "read_config_ini", lambda lf: cfg)
-    saved = {}
+    saved: dict[str, Any] = {}
     monkeypatch.setattr(
         launcher, "write_config_ini", lambda c, lf: saved.setdefault("cfg", c)
     )
@@ -492,7 +517,11 @@ def test_start_configuration_and_save(monkeypatch):
             saved.setdefault("kwargs", k),
         ),
     )
+    return launcher, root, cfg, button, saved
 
+
+def test_start_configuration_saves_config(monkeypatch):
+    launcher, root, cfg, button, _ = _setup_start_configuration(monkeypatch)
     launcher.start_configuration(
         b"k",
         "log",
@@ -500,20 +529,30 @@ def test_start_configuration_and_save(monkeypatch):
         headless=True,
         no_sandbox=True,
     )
-
     assert root.mainloop_called
     created_vars[0].set("2024-07-01")
     created_vars[1].set("WARNING")
     button["cmd"]()
-
     assert cfg["settings"]["date_cible"] == "2024-07-01"
     assert cfg["settings"]["debug_mode"] == "WARNING"
     assert root.destroy_called
+
+
+def test_start_configuration_calls_menu(monkeypatch):
+    launcher, root, cfg, button, saved = _setup_start_configuration(monkeypatch)
+    launcher.start_configuration(
+        b"k",
+        "log",
+        DummyEncryption(),
+        headless=True,
+        no_sandbox=True,
+    )
+    button["cmd"]()
     assert saved["menu"] is True
     assert saved["kwargs"] == {"headless": True, "no_sandbox": True}
 
 
-def test_main(monkeypatch):
+def _setup_main(monkeypatch):
     launcher = import_launcher(monkeypatch)
     dummy_args = types.SimpleNamespace(
         log_level="ERROR",
@@ -522,9 +561,8 @@ def test_main(monkeypatch):
     )
     monkeypatch.setattr(launcher.cli, "parse_args", lambda argv: dummy_args)
     monkeypatch.setattr(launcher, "get_log_file", lambda: "log.html")
-    cfg = {"settings": {}}
-    monkeypatch.setattr(launcher, "read_config_ini", lambda lf: cfg)
-    init = {}
+    monkeypatch.setattr(launcher, "read_config_ini", lambda lf: {"settings": {}})
+    init: dict[str, Any] = {}
     monkeypatch.setattr(
         launcher.LoggingConfigurator,
         "setup",
@@ -535,8 +573,7 @@ def test_main(monkeypatch):
         "freeze_support",
         lambda: init.setdefault("freeze", True),
     )
-    enc = DummyEncryption()
-    monkeypatch.setattr(launcher, "EncryptionService", lambda lf: enc)
+    monkeypatch.setattr(launcher, "EncryptionService", lambda lf: DummyEncryption())
     monkeypatch.setattr(
         sys.modules["sele_saisie_auto.main_menu"],
         "main_menu",
@@ -548,7 +585,7 @@ def test_main(monkeypatch):
 
     class DummyLoggerCtx:
         def __init__(self):
-            self.infos = []
+            self.infos: list[str] = []
             self.entered = False
             self.exited = False
 
@@ -564,14 +601,23 @@ def test_main(monkeypatch):
 
     dummy_logger = DummyLoggerCtx()
     monkeypatch.setattr(launcher, "get_logger", lambda lf: dummy_logger)
+    return launcher, init, dummy_logger
 
+
+def test_main_initializes(monkeypatch):
+    launcher, init, dummy_logger = _setup_main(monkeypatch)
     launcher.main([])
-
     assert init["lvl"] == "ERROR"
     assert init["freeze"]
+    assert dummy_logger.entered
+    assert dummy_logger.exited
+
+
+def test_main_calls_menu(monkeypatch):
+    launcher, init, dummy_logger = _setup_main(monkeypatch)
+    launcher.main([])
     assert init["menu"][1] == "log.html"
     assert init["kwargs"] == {"headless": True, "no_sandbox": True}
-    assert dummy_logger.entered and dummy_logger.exited
 
 
 def test_main_twice_cleanup(monkeypatch):
