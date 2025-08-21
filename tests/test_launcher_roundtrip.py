@@ -13,6 +13,23 @@ class DummyVar:
         return self.value
 
 
+def _assert_config(reread: configparser.ConfigParser) -> None:
+    expected = [
+        ("settings", "date_cible", "2024-07-01"),
+        ("project_information", "billing_action", "FACTURER"),
+        ("project_information", "project_code", "PC"),
+        ("work_location_am", "lundi", "Site"),
+        (
+            "additional_information_lunch_break_duration",
+            "lundi",
+            "OUI",
+        ),
+    ]
+    for section, key, value in expected:
+        assert reread.get(section, key) == value
+    assert reread.get("work_schedule", "lundi").startswith("remote")
+
+
 def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
     config_path = tmp_path / "config.ini"
     monkeypatch.setattr(
@@ -33,7 +50,13 @@ def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
             "lunch": DummyVar("OUI"),
         }
     }
-    billing_var = DummyVar("FACTURER")
+    mission_vars = {
+        "project_code": DummyVar("PC"),
+        "activity_code": DummyVar("ACT"),
+        "category_code": DummyVar("CAT"),
+        "sub_category_code": DummyVar("SUB"),
+        "billing_action": DummyVar("FACTURER"),
+    }
     location_vars = {"lundi": (DummyVar("Site"), DummyVar("Remote"))}
     log_file = str(tmp_path / "log.html")
 
@@ -45,14 +68,10 @@ def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
         debug_var,
         schedule_vars,
         cgi_vars,
-        billing_var,
+        mission_vars,
         location_vars,
     )
 
     reread = read_config_ini(log_file)
     assert isinstance(reread, configparser.ConfigParser)
-    assert reread.get("settings", "date_cible") == "2024-07-01"
-    assert reread.get("project_information", "billing_action") == "FACTURER"
-    assert reread.get("work_schedule", "lundi").startswith("remote")
-    assert reread.get("work_location_am", "lundi") == "Site"
-    assert reread.get("additional_information_lunch_break_duration", "lundi") == "OUI"
+    _assert_config(reread)
