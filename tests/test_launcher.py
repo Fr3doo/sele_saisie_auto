@@ -119,6 +119,14 @@ class DummyStyle:
         self.theme = theme
 
 
+class DummyLabelFrame:
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def grid(self, *args, **kwargs):
+        pass
+
+
 created_vars = []
 
 
@@ -458,6 +466,10 @@ def test_start_configuration_and_save(monkeypatch):
     monkeypatch.setattr(launcher, "create_modern_label_with_pack", lambda *a, **k: None)
     monkeypatch.setattr(launcher, "create_modern_entry_with_pack", lambda *a, **k: None)
     monkeypatch.setattr(launcher, "create_combobox_with_pack", lambda *a, **k: None)
+    monkeypatch.setattr(launcher, "create_modern_label_with_grid", lambda *a, **k: None)
+    monkeypatch.setattr(launcher, "create_modern_entry_with_grid", lambda *a, **k: None)
+    monkeypatch.setattr(launcher, "create_combobox", lambda *a, **k: None)
+    monkeypatch.setattr(launcher.ttk, "LabelFrame", DummyLabelFrame)
 
     def fake_button(frame, text, command):
         button["cmd"] = command
