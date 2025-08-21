@@ -71,11 +71,13 @@ def _remove_shared_memory(name: str) -> None:
         mem = shared_memory.SharedMemory(name=name)
     except FileNotFoundError:
         return
-    mem.close()
     try:
-        mem.unlink()
-    except FileNotFoundError:
-        pass
+        mem.close()
+    finally:
+        try:
+            mem.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def cleanup_memory_segments(memory_config: MemoryConfig | None = None) -> None:
@@ -387,6 +389,15 @@ def update_locations(
         loc_pm[day] = pm_var.get()
 
 
+def _dict_to_configparser(data: dict[str, dict[str, str]]) -> configparser.ConfigParser:
+    parser = configparser.ConfigParser()
+    for section, values in data.items():
+        parser.add_section(section)
+        for key, value in values.items():
+            parser.set(section, key, value)
+    return parser
+
+
 def ensure_sections(
     raw_cfg: configparser.ConfigParser, sections: Iterable[str]
 ) -> None:
@@ -474,7 +485,8 @@ def save_all(
             log_file,
         )
     else:
-        write_config_ini(cast(configparser.ConfigParser, config), log_file)
+        parser = _dict_to_configparser(config)
+        write_config_ini(parser, log_file)
 
 
 def save_and_close(
