@@ -33,7 +33,13 @@ def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
             "lunch": DummyVar("OUI"),
         }
     }
-    billing_var = DummyVar("FACTURER")
+    project_vars = {
+        "project_code": DummyVar("X"),
+        "activity_code": DummyVar("A"),
+        "category_code": DummyVar("C"),
+        "sub_category_code": DummyVar("S"),
+        "billing_action": DummyVar("FACTURER"),
+    }
     location_vars = {"lundi": (DummyVar("Site"), DummyVar("Remote"))}
     log_file = str(tmp_path / "log.html")
 
@@ -44,8 +50,8 @@ def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
         date_var,
         debug_var,
         schedule_vars,
+        project_vars,
         cgi_vars,
-        billing_var,
         location_vars,
     )
 
@@ -53,6 +59,7 @@ def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
     assert isinstance(reread, configparser.ConfigParser)
     assert reread.get("settings", "date_cible") == "2024-07-01"
     assert reread.get("project_information", "billing_action") == "FACTURER"
+    assert reread.get("project_information", "project_code") == "X"
     assert reread.get("work_schedule", "lundi").startswith("remote")
     assert reread.get("work_location_am", "lundi") == "Site"
     assert reread.get("additional_information_lunch_break_duration", "lundi") == "OUI"
