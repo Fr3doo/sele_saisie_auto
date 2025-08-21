@@ -264,12 +264,47 @@ def tab_settings(
     frame = create_tab(cast(ttk.Notebook, nb), title="Paramètres")
     date_var = tk.StringVar(value=config["settings"].get("date_cible", ""))
     debug_var = tk.StringVar(value=config["settings"].get("debug_mode", "INFO"))
-    date_row = create_a_frame(frame, padding=(10, 10, 10, 10))
-    create_modern_label_with_pack(date_row, "Date cible:", side="left")
-    create_modern_entry_with_pack(date_row, date_var, side="left")
-    debug_row = create_a_frame(frame, padding=(10, 10, 10, 10))
-    create_modern_label_with_pack(debug_row, "Log Level:", side="left")
-    create_combobox_with_pack(debug_row, debug_var, values=LOG_LEVEL_CHOICES)
+    if hasattr(frame, "tk"):
+        frame.columnconfigure(0, weight=1)
+        frame.columnconfigure(1, weight=1)
+        left = ttk.Frame(frame)
+        left.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        create_modern_label_with_grid(
+            left, "Date cible (jj/mm/aaaa):", row=0, col=0, sticky="w"
+        )
+        create_modern_entry_with_grid(left, date_var, row=0, col=1, width=15)
+        create_modern_label_with_grid(left, "Log Level :", row=1, col=0, sticky="w")
+        create_combobox(
+            left,
+            debug_var,
+            LOG_LEVEL_CHOICES,
+            row=1,
+            col=1,
+            width=12,
+            state="readonly",
+        )
+        notes_frame = ttk.LabelFrame(
+            frame, text="Notes", style="Parametres.TLabelframe"
+        )
+        notes_frame.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+        notes_text = (
+            "Gestion de la Date :\n"
+            "• La date peut être vide ou 'None'.\n"
+            "• Si c'est vide ou 'None', l’outil sélectionne le prochain samedi.\n"
+            "• Si nous sommes un samedi, il garde ce jour.\n\n"
+            "Gestion du fichier config.ini :\n"
+            "• Vous pouvez le modifier directement sans passer par la configuration.\n\n"
+            "Si vous êtes en mission :\n"
+            "• Dans l'onglet 'Planning de travail', sélectionnez 'En mission'.\n"
+            "  Un nouveau cadre apparaît afin de remplir les informations de la mission."
+        )
+        tk.Label(
+            notes_frame,
+            text=notes_text,
+            justify="left",
+            bg="#FFF8DC",
+            wraplength=250,
+        ).pack(anchor="nw", padx=8, pady=8, fill="both", expand=True)
     return frame, date_var, debug_var
 
 
