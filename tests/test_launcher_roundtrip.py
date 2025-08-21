@@ -33,7 +33,7 @@ def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
             "lunch": DummyVar("OUI"),
         }
     }
-    billing_var = DummyVar("FACTURER")
+    mission_vars = {"billing_action": DummyVar("FACTURER")}
     location_vars = {"lundi": (DummyVar("Site"), DummyVar("Remote"))}
     log_file = str(tmp_path / "log.html")
 
@@ -44,8 +44,8 @@ def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
         date_var,
         debug_var,
         schedule_vars,
+        mission_vars,
         cgi_vars,
-        billing_var,
         location_vars,
     )
 

@@ -453,11 +453,24 @@ def test_start_configuration_and_save(monkeypatch):
     monkeypatch.setattr(launcher.tk, "Tk", lambda: root)
     monkeypatch.setattr(launcher.tk, "StringVar", fake_stringvar)
     monkeypatch.setattr(launcher.ttk, "Style", DummyStyle)
+    monkeypatch.setattr(
+        launcher.ttk,
+        "LabelFrame",
+        lambda *a, **k: types.SimpleNamespace(grid=lambda *a, **k: None),
+    )
+    monkeypatch.setattr(
+        launcher.ttk,
+        "Label",
+        lambda *a, **k: types.SimpleNamespace(grid=lambda *a, **k: None),
+    )
     monkeypatch.setattr(launcher, "create_tab", lambda *a, **k: object())
     monkeypatch.setattr(launcher, "create_a_frame", lambda *a, **k: object())
     monkeypatch.setattr(launcher, "create_modern_label_with_pack", lambda *a, **k: None)
     monkeypatch.setattr(launcher, "create_modern_entry_with_pack", lambda *a, **k: None)
     monkeypatch.setattr(launcher, "create_combobox_with_pack", lambda *a, **k: None)
+    monkeypatch.setattr(launcher, "create_modern_label_with_grid", lambda *a, **k: None)
+    monkeypatch.setattr(launcher, "create_modern_entry_with_grid", lambda *a, **k: None)
+    monkeypatch.setattr(launcher, "create_combobox", lambda *a, **k: None)
 
     def fake_button(frame, text, command):
         button["cmd"] = command
