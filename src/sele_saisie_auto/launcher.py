@@ -5,7 +5,8 @@ from __future__ import annotations
 import configparser
 import multiprocessing
 import tkinter as tk
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
+from functools import partial
 from multiprocessing import shared_memory
 from tkinter import messagebox, ttk
 from typing import cast
@@ -48,6 +49,36 @@ __all__ = ["ResourceManager"]
 
 DEFAULT_SETTINGS = {"date_cible": "", "debug_mode": "INFO"}
 
+DAYS = (
+    "dimanche",
+    "lundi",
+    "mardi",
+    "mercredi",
+    "jeudi",
+    "vendredi",
+    "samedi",
+)
+
+WORK_SCHEDULE_LABELS = [o.label for o in work_schedule_options]
+CGI_LABELS = [o.label for o in cgi_options]
+CGI_DEJ_LABELS = [o.label for o in cgi_options_dejeuner]
+BILLING_LABELS = [o.label for o in cgi_options_billing_action]
+WORK_LOCATION_LABELS = [o.label for o in work_location_options]
+
+
+def _remove_shared_memory(name: str) -> None:
+    try:
+        mem = shared_memory.SharedMemory(name=name)
+    except FileNotFoundError:
+        return
+    try:
+        mem.close()
+    finally:
+        try:
+            mem.unlink()
+        except FileNotFoundError:
+            pass
+
 
 def cleanup_memory_segments(memory_config: MemoryConfig | None = None) -> None:
     """Remove leftover shared memory segments.
@@ -65,18 +96,7 @@ def cleanup_memory_segments(memory_config: MemoryConfig | None = None) -> None:
         cfg.login_name,
         cfg.password_name,
     ):
-        try:
-            mem = shared_memory.SharedMemory(name=name)
-        except FileNotFoundError:
-            continue
-        else:
-            try:
-                mem.close()
-            finally:
-                try:
-                    mem.unlink()
-                except FileNotFoundError:
-                    pass
+        _remove_shared_memory(name)
 
 
 def run_psatime(
@@ -203,68 +223,59 @@ def run_psatime_with_credentials(
     )
 
 
-def start_configuration(
-    cle_aes: bytes,
+def load_config_with_defaults(
     log_file: str,
-    encryption_service: EncryptionService,
-    *,
-    headless: bool = False,
-    no_sandbox: bool = False,
-) -> None:
-    """Minimal configuration window."""
-
+) -> tuple[
+    dict[str, dict[str, str]], configparser.ConfigParser | dict[str, dict[str, str]]
+]:
     raw_cfg = read_config_ini(log_file)
     if isinstance(raw_cfg, configparser.ConfigParser):
-        config: dict[str, dict[str, str]] = {
+        config = {
             section: dict(raw_cfg.items(section)) for section in raw_cfg.sections()
         }
     else:
         config = raw_cfg
     for key, val in DEFAULT_SETTINGS.items():
         config.setdefault("settings", {}).setdefault(key, val)
+    return config, raw_cfg
 
+
+def build_root() -> tuple[tk.Tk, ttk.Notebook | tk.Tk]:
     root = tk.Tk()
     root.title("Configuration")
     root.geometry("400x200")
-
     style = ttk.Style(root)
     style.theme_use("clam")
-
-    notebook: ttk.Notebook | tk.Tk
     if hasattr(root, "tk"):
         notebook = ttk.Notebook(root)
         notebook.pack(fill="both", expand=True)
-    else:  # fallback for DummyRoot in tests
-        notebook = root
-    frame = create_tab(cast(ttk.Notebook, notebook), title="Paramètres")
-    planning_tab = create_tab(cast(ttk.Notebook, notebook), title="Planning de travail")
-    cgi_tab = create_tab(cast(ttk.Notebook, notebook), title="Informations CGI")
-    location_tab = create_tab(cast(ttk.Notebook, notebook), title="Lieu de travail")
+        nb: ttk.Notebook | tk.Tk = notebook
+    else:  # pragma: no cover - fallback for tests
+        nb = root
+    return root, nb
 
+
+def tab_settings(
+    nb: ttk.Notebook | tk.Tk, config: dict[str, dict[str, str]]
+) -> tuple[ttk.Frame, tk.StringVar, tk.StringVar]:
+    frame = create_tab(cast(ttk.Notebook, nb), title="Paramètres")
     date_var = tk.StringVar(value=config["settings"].get("date_cible", ""))
     debug_var = tk.StringVar(value=config["settings"].get("debug_mode", "INFO"))
-
     date_row = create_a_frame(frame, padding=(10, 10, 10, 10))
     create_modern_label_with_pack(date_row, "Date cible:", side="left")
     create_modern_entry_with_pack(date_row, date_var, side="left")
-
     debug_row = create_a_frame(frame, padding=(10, 10, 10, 10))
     create_modern_label_with_pack(debug_row, "Log Level:", side="left")
     create_combobox_with_pack(debug_row, debug_var, values=LOG_LEVEL_CHOICES)
+    return frame, date_var, debug_var
 
-    days = [
-        "dimanche",
-        "lundi",
-        "mardi",
-        "mercredi",
-        "jeudi",
-        "vendredi",
-        "samedi",
-    ]
 
-    work_schedule_labels = [o.label for o in work_schedule_options]
+def tab_planning(
+    nb: ttk.Notebook | tk.Tk, config: dict[str, dict[str, str]]
+) -> dict[str, tuple[tk.StringVar, tk.StringVar]]:
+    planning_tab = create_tab(cast(ttk.Notebook, nb), title="Planning de travail")
     schedule_vars: dict[str, tuple[tk.StringVar, tk.StringVar]] = {}
-    for day in days:
+    for day in DAYS:
         row = create_a_frame(planning_tab, padding=(10, 10, 10, 10))
         create_modern_label_with_pack(row, f"{day.capitalize()}:", side="left")
         existing = config.get("work_schedule", {}).get(day, "")
@@ -272,26 +283,28 @@ def start_configuration(
         opt_var = tk.StringVar(value=opt)
         hours_var = tk.StringVar(value=hours)
         create_combobox_with_pack(
-            row, opt_var, values=work_schedule_labels, side="left"
+            row, opt_var, values=WORK_SCHEDULE_LABELS, side="left"
         )
         create_modern_entry_with_pack(row, hours_var, side="left", width=8)
         schedule_vars[day] = (opt_var, hours_var)
+    return schedule_vars
 
-    cgi_labels = [o.label for o in cgi_options]
-    cgi_dej_labels = [o.label for o in cgi_options_dejeuner]
-    billing_labels = [o.label for o in cgi_options_billing_action]
 
+def tab_cgi(
+    nb: ttk.Notebook | tk.Tk, config: dict[str, dict[str, str]]
+) -> tuple[dict[str, dict[str, tk.StringVar]], tk.StringVar]:
+    cgi_tab = create_tab(cast(ttk.Notebook, nb), title="Informations CGI")
     billing_var = tk.StringVar(
         value=config.get("project_information", {}).get("billing_action", "")
     )
     billing_row = create_a_frame(cgi_tab, padding=(10, 10, 10, 10))
     create_modern_label_with_pack(billing_row, "Billing action:", side="left")
     create_combobox_with_pack(
-        billing_row, billing_var, values=billing_labels, side="left"
+        billing_row, billing_var, values=BILLING_LABELS, side="left"
     )
 
     cgi_vars: dict[str, dict[str, tk.StringVar]] = {}
-    for day in days:
+    for day in DAYS:
         row = create_a_frame(cgi_tab, padding=(5, 5, 5, 5))
         create_modern_label_with_pack(row, f"{day.capitalize()}:", side="left")
         rest_var = tk.StringVar(
@@ -310,131 +323,250 @@ def start_configuration(
                 day, ""
             )
         )
-        create_combobox_with_pack(row, rest_var, values=cgi_labels, side="left")
-        create_combobox_with_pack(row, work_var, values=cgi_labels, side="left")
-        create_combobox_with_pack(row, half_var, values=cgi_labels, side="left")
-        create_combobox_with_pack(row, lunch_var, values=cgi_dej_labels, side="left")
+        create_combobox_with_pack(row, rest_var, values=CGI_LABELS, side="left")
+        create_combobox_with_pack(row, work_var, values=CGI_LABELS, side="left")
+        create_combobox_with_pack(row, half_var, values=CGI_LABELS, side="left")
+        create_combobox_with_pack(row, lunch_var, values=CGI_DEJ_LABELS, side="left")
         cgi_vars[day] = {
             "rest": rest_var,
             "work": work_var,
             "half": half_var,
             "lunch": lunch_var,
         }
+    return cgi_vars, billing_var
 
-    work_location_labels = [o.label for o in work_location_options]
+
+def tab_locations(
+    nb: ttk.Notebook | tk.Tk, config: dict[str, dict[str, str]]
+) -> dict[str, tuple[tk.StringVar, tk.StringVar]]:
+    location_tab = create_tab(cast(ttk.Notebook, nb), title="Lieu de travail")
     location_vars: dict[str, tuple[tk.StringVar, tk.StringVar]] = {}
-    for day in days:
+    for day in DAYS:
         row = create_a_frame(location_tab, padding=(10, 10, 10, 10))
         create_modern_label_with_pack(row, f"{day.capitalize()}:", side="left")
         am_var = tk.StringVar(value=config.get("work_location_am", {}).get(day, ""))
         pm_var = tk.StringVar(value=config.get("work_location_pm", {}).get(day, ""))
-        create_combobox_with_pack(row, am_var, values=work_location_labels, side="left")
-        create_combobox_with_pack(row, pm_var, values=work_location_labels, side="left")
+        create_combobox_with_pack(row, am_var, values=WORK_LOCATION_LABELS, side="left")
+        create_combobox_with_pack(row, pm_var, values=WORK_LOCATION_LABELS, side="left")
         location_vars[day] = (am_var, pm_var)
+    return location_vars
 
-    def save() -> None:
-        """Enregistre la configuration saisie."""
-        config["settings"]["date_cible"] = date_var.get()
-        debug_val: str | LogLevel = debug_var.get()
-        if isinstance(debug_val, LogLevel):
-            debug_val = debug_val.value
-        config["settings"]["debug_mode"] = debug_val
 
-        ws_section = config.setdefault("work_schedule", {})
-        for day, (opt_var, hours_var) in schedule_vars.items():
-            ws_section[day] = f"{opt_var.get()},{hours_var.get()}"
+def update_schedule(
+    config: dict[str, dict[str, str]],
+    schedule_vars: dict[str, tuple[tk.StringVar, tk.StringVar]],
+) -> None:
+    section = config.setdefault("work_schedule", {})
+    for day, (opt_var, hours_var) in schedule_vars.items():
+        section[day] = f"{opt_var.get()},{hours_var.get()}"
 
-        proj_section = config.setdefault("project_information", {})
-        proj_section["billing_action"] = billing_var.get()
 
-        rest_section = config.setdefault(
-            "additional_information_rest_period_respected", {}
+def update_cgi_info(
+    config: dict[str, dict[str, str]],
+    cgi_vars: dict[str, dict[str, tk.StringVar]],
+    billing_var: tk.StringVar,
+) -> None:
+    config.setdefault("project_information", {})["billing_action"] = billing_var.get()
+    rest = config.setdefault("additional_information_rest_period_respected", {})
+    work = config.setdefault("additional_information_work_time_range", {})
+    half = config.setdefault("additional_information_half_day_worked", {})
+    lunch = config.setdefault("additional_information_lunch_break_duration", {})
+    for day, vars_dict in cgi_vars.items():
+        rest[day] = vars_dict["rest"].get()
+        work[day] = vars_dict["work"].get()
+        half[day] = vars_dict["half"].get()
+        lunch[day] = vars_dict["lunch"].get()
+
+
+def update_locations(
+    config: dict[str, dict[str, str]],
+    location_vars: dict[str, tuple[tk.StringVar, tk.StringVar]],
+) -> None:
+    loc_am = config.setdefault("work_location_am", {})
+    loc_pm = config.setdefault("work_location_pm", {})
+    for day, (am_var, pm_var) in location_vars.items():
+        loc_am[day] = am_var.get()
+        loc_pm[day] = pm_var.get()
+
+
+def _dict_to_configparser(data: dict[str, dict[str, str]]) -> configparser.ConfigParser:
+    parser = configparser.ConfigParser()
+    for section, values in data.items():
+        parser.add_section(section)
+        for key, value in values.items():
+            parser.set(section, key, value)
+    return parser
+
+
+def ensure_sections(
+    raw_cfg: configparser.ConfigParser, sections: Iterable[str]
+) -> None:
+    for section in sections:
+        if not raw_cfg.has_section(section):
+            raw_cfg.add_section(section)
+
+
+def write_raw_cfg(
+    raw_cfg: configparser.ConfigParser,
+    config: dict[str, dict[str, str]],
+    schedule_vars: dict[str, tuple[tk.StringVar, tk.StringVar]],
+    cgi_vars: dict[str, dict[str, tk.StringVar]],
+    billing_var: tk.StringVar,
+    location_vars: dict[str, tuple[tk.StringVar, tk.StringVar]],
+    debug_val: str,
+    log_file: str,
+) -> None:
+    ensure_sections(
+        raw_cfg,
+        [
+            "settings",
+            "work_schedule",
+            "project_information",
+            "additional_information_rest_period_respected",
+            "additional_information_work_time_range",
+            "additional_information_half_day_worked",
+            "additional_information_lunch_break_duration",
+            "work_location_am",
+            "work_location_pm",
+        ],
+    )
+    raw_cfg.set("settings", "date_cible", config["settings"]["date_cible"])
+    raw_cfg.set("settings", "debug_mode", debug_val)
+    for day, (opt_var, hours_var) in schedule_vars.items():
+        raw_cfg.set("work_schedule", day, f"{opt_var.get()},{hours_var.get()}")
+    raw_cfg.set("project_information", "billing_action", billing_var.get())
+    for day, vars_dict in cgi_vars.items():
+        raw_cfg.set(
+            "additional_information_rest_period_respected", day, vars_dict["rest"].get()
         )
-        work_section = config.setdefault("additional_information_work_time_range", {})
-        half_section = config.setdefault("additional_information_half_day_worked", {})
-        lunch_section = config.setdefault(
-            "additional_information_lunch_break_duration", {}
+        raw_cfg.set(
+            "additional_information_work_time_range", day, vars_dict["work"].get()
         )
-        for day, vars_dict in cgi_vars.items():
-            rest_section[day] = vars_dict["rest"].get()
-            work_section[day] = vars_dict["work"].get()
-            half_section[day] = vars_dict["half"].get()
-            lunch_section[day] = vars_dict["lunch"].get()
+        raw_cfg.set(
+            "additional_information_half_day_worked", day, vars_dict["half"].get()
+        )
+        raw_cfg.set(
+            "additional_information_lunch_break_duration", day, vars_dict["lunch"].get()
+        )
+    for day, (am_var, pm_var) in location_vars.items():
+        raw_cfg.set("work_location_am", day, am_var.get())
+        raw_cfg.set("work_location_pm", day, pm_var.get())
+    write_config_ini(raw_cfg, log_file)
 
-        loc_am_section = config.setdefault("work_location_am", {})
-        loc_pm_section = config.setdefault("work_location_pm", {})
-        for day, (am_var, pm_var) in location_vars.items():
-            loc_am_section[day] = am_var.get()
-            loc_pm_section[day] = pm_var.get()
 
-        if isinstance(raw_cfg, configparser.ConfigParser):
-
-            def ensure(section: str) -> None:
-                if not raw_cfg.has_section(section):
-                    raw_cfg.add_section(section)
-
-            ensure("settings")
-            ensure("work_schedule")
-            ensure("project_information")
-            ensure("additional_information_rest_period_respected")
-            ensure("additional_information_work_time_range")
-            ensure("additional_information_half_day_worked")
-            ensure("additional_information_lunch_break_duration")
-            ensure("work_location_am")
-            ensure("work_location_pm")
-
-            raw_cfg.set("settings", "date_cible", config["settings"]["date_cible"])
-            raw_cfg.set("settings", "debug_mode", debug_val)
-
-            for day, (opt_var, hours_var) in schedule_vars.items():
-                raw_cfg.set("work_schedule", day, f"{opt_var.get()},{hours_var.get()}")
-
-            raw_cfg.set("project_information", "billing_action", billing_var.get())
-
-            for day, vars_dict in cgi_vars.items():
-                raw_cfg.set(
-                    "additional_information_rest_period_respected",
-                    day,
-                    vars_dict["rest"].get(),
-                )
-                raw_cfg.set(
-                    "additional_information_work_time_range",
-                    day,
-                    vars_dict["work"].get(),
-                )
-                raw_cfg.set(
-                    "additional_information_half_day_worked",
-                    day,
-                    vars_dict["half"].get(),
-                )
-                raw_cfg.set(
-                    "additional_information_lunch_break_duration",
-                    day,
-                    vars_dict["lunch"].get(),
-                )
-
-            for day, (am_var, pm_var) in location_vars.items():
-                raw_cfg.set("work_location_am", day, am_var.get())
-                raw_cfg.set("work_location_pm", day, pm_var.get())
-
-            write_config_ini(raw_cfg, log_file)
-        else:
-            write_config_ini(config, log_file)
-        messagebox.showinfo("Info", messages.CONFIGURATION_SAVED)
-        root.destroy()
-        from sele_saisie_auto.main_menu import main_menu
-
-        main_menu(
-            cle_aes,
+def save_all(
+    config: dict[str, dict[str, str]],
+    raw_cfg: configparser.ConfigParser | dict[str, dict[str, str]],
+    log_file: str,
+    date_var: tk.StringVar,
+    debug_var: tk.StringVar,
+    schedule_vars: dict[str, tuple[tk.StringVar, tk.StringVar]],
+    cgi_vars: dict[str, dict[str, tk.StringVar]],
+    billing_var: tk.StringVar,
+    location_vars: dict[str, tuple[tk.StringVar, tk.StringVar]],
+) -> None:
+    config["settings"]["date_cible"] = date_var.get()
+    debug_val: str | LogLevel = debug_var.get()
+    if isinstance(debug_val, LogLevel):
+        debug_val = debug_val.value
+    config["settings"]["debug_mode"] = debug_val
+    update_schedule(config, schedule_vars)
+    update_cgi_info(config, cgi_vars, billing_var)
+    update_locations(config, location_vars)
+    if isinstance(raw_cfg, configparser.ConfigParser):
+        write_raw_cfg(
+            raw_cfg,
+            config,
+            schedule_vars,
+            cgi_vars,
+            billing_var,
+            location_vars,
+            debug_val,
             log_file,
-            encryption_service,
-            headless=headless,
-            no_sandbox=no_sandbox,
         )
+    else:
+        parser = _dict_to_configparser(config)
+        write_config_ini(parser, log_file)
 
+
+def save_and_close(
+    config: dict[str, dict[str, str]],
+    raw_cfg: configparser.ConfigParser | dict[str, dict[str, str]],
+    log_file: str,
+    date_var: tk.StringVar,
+    debug_var: tk.StringVar,
+    schedule_vars: dict[str, tuple[tk.StringVar, tk.StringVar]],
+    cgi_vars: dict[str, dict[str, tk.StringVar]],
+    billing_var: tk.StringVar,
+    location_vars: dict[str, tuple[tk.StringVar, tk.StringVar]],
+    cle_aes: bytes,
+    root: tk.Tk,
+    encryption_service: EncryptionService,
+    headless: bool,
+    no_sandbox: bool,
+) -> None:
+    save_all(
+        config,
+        raw_cfg,
+        log_file,
+        date_var,
+        debug_var,
+        schedule_vars,
+        cgi_vars,
+        billing_var,
+        location_vars,
+    )
+    messagebox.showinfo("Info", messages.CONFIGURATION_SAVED)
+    root.destroy()
+    from sele_saisie_auto.main_menu import main_menu
+
+    main_menu(
+        cle_aes,
+        log_file,
+        encryption_service,
+        headless=headless,
+        no_sandbox=no_sandbox,
+    )
+
+
+def start_configuration(
+    cle_aes: bytes,
+    log_file: str,
+    encryption_service: EncryptionService,
+    *,
+    headless: bool = False,
+    no_sandbox: bool = False,
+) -> None:
+    """Minimal configuration window."""
+
+    config, raw_cfg = load_config_with_defaults(log_file)
+    root, notebook = build_root()
+    frame, date_var, debug_var = tab_settings(notebook, config)
+    schedule_vars = tab_planning(notebook, config)
+    cgi_vars, billing_var = tab_cgi(notebook, config)
+    location_vars = tab_locations(notebook, config)
     btn_row = create_a_frame(frame, padding=(10, 10, 10, 10))
-    create_button_with_style(btn_row, "Sauvegarder", command=save)
-
+    create_button_with_style(
+        btn_row,
+        "Sauvegarder",
+        command=partial(
+            save_and_close,
+            config,
+            raw_cfg,
+            log_file,
+            date_var,
+            debug_var,
+            schedule_vars,
+            cgi_vars,
+            billing_var,
+            location_vars,
+            cle_aes,
+            root,
+            encryption_service,
+            headless,
+            no_sandbox,
+        ),
+    )
     root.mainloop()
 
 
