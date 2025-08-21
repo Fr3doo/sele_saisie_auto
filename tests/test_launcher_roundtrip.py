@@ -13,7 +13,46 @@ class DummyVar:
         return self.value
 
 
-def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
+def _sample_schedule() -> dict[str, tuple[DummyVar, DummyVar, DummyVar]]:
+    return {"lundi": (DummyVar("remote"), DummyVar("desc"), DummyVar("08-12"))}
+
+
+def _sample_cgi() -> dict[str, dict[str, DummyVar]]:
+    return {
+        "lundi": {
+            "rest": DummyVar("OUI"),
+            "work": DummyVar("NON"),
+            "half": DummyVar("NON"),
+            "lunch": DummyVar("OUI"),
+        }
+    }
+
+
+def _sample_mission() -> dict[str, DummyVar]:
+    return {
+        "project_code": DummyVar("P1"),
+        "activity_code": DummyVar("A1"),
+        "category_code": DummyVar("C1"),
+        "sub_category_code": DummyVar("S1"),
+        "billing_action": DummyVar("FACTURER"),
+    }
+
+
+def _sample_location() -> dict[str, tuple[DummyVar, DummyVar]]:
+    return {"lundi": (DummyVar("Site"), DummyVar("Remote"))}
+
+
+def _prepare(tmp_path: Path, monkeypatch) -> tuple[
+    dict[str, dict[str, str]],
+    configparser.ConfigParser,
+    DummyVar,
+    DummyVar,
+    dict[str, tuple[DummyVar, DummyVar, DummyVar]],
+    dict[str, dict[str, DummyVar]],
+    dict[str, DummyVar],
+    dict[str, tuple[DummyVar, DummyVar]],
+    str,
+]:
     config_path = tmp_path / "config.ini"
     monkeypatch.setattr(
         "sele_saisie_auto.read_or_write_file_config_ini_utils.get_runtime_config_path",
@@ -24,19 +63,52 @@ def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
     raw_cfg = configparser.ConfigParser()
     date_var = DummyVar("2024-07-01")
     debug_var = DummyVar("WARNING")
-    schedule_vars = {"lundi": (DummyVar("remote"), DummyVar("08-12"))}
-    cgi_vars = {
-        "lundi": {
-            "rest": DummyVar("OUI"),
-            "work": DummyVar("NON"),
-            "half": DummyVar("NON"),
-            "lunch": DummyVar("OUI"),
-        }
-    }
-    billing_var = DummyVar("FACTURER")
-    location_vars = {"lundi": (DummyVar("Site"), DummyVar("Remote"))}
+    schedule_vars = _sample_schedule()
+    cgi_vars = _sample_cgi()
+    mission_vars = _sample_mission()
+    location_vars = _sample_location()
     log_file = str(tmp_path / "log.html")
+    return (
+        config,
+        raw_cfg,
+        date_var,
+        debug_var,
+        schedule_vars,
+        cgi_vars,
+        mission_vars,
+        location_vars,
+        log_file,
+    )
 
+
+def _assert_roundtrip(log_file: str) -> None:
+    reread = read_config_ini(log_file)
+    assert isinstance(reread, configparser.ConfigParser)
+    expected = [
+        (("settings", "date_cible"), "2024-07-01"),
+        (("project_information", "billing_action"), "FACTURER"),
+        (("project_information", "project_code"), "P1"),
+        (("work_description", "lundi"), "desc"),
+        (("work_location_am", "lundi"), "Site"),
+        (("additional_information_lunch_break_duration", "lundi"), "OUI"),
+    ]
+    for (section, key), value in expected:
+        assert reread.get(section, key) == value
+    assert reread.get("work_schedule", "lundi").startswith("remote")
+
+
+def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
+    (
+        config,
+        raw_cfg,
+        date_var,
+        debug_var,
+        schedule_vars,
+        cgi_vars,
+        mission_vars,
+        location_vars,
+        log_file,
+    ) = _prepare(tmp_path, monkeypatch)
     save_all(
         config,
         raw_cfg,
@@ -45,14 +117,7 @@ def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
         debug_var,
         schedule_vars,
         cgi_vars,
-        billing_var,
+        mission_vars,
         location_vars,
     )
-
-    reread = read_config_ini(log_file)
-    assert isinstance(reread, configparser.ConfigParser)
-    assert reread.get("settings", "date_cible") == "2024-07-01"
-    assert reread.get("project_information", "billing_action") == "FACTURER"
-    assert reread.get("work_schedule", "lundi").startswith("remote")
-    assert reread.get("work_location_am", "lundi") == "Site"
-    assert reread.get("additional_information_lunch_break_duration", "lundi") == "OUI"
+    _assert_roundtrip(log_file)

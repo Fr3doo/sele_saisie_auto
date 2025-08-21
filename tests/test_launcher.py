@@ -3,6 +3,7 @@ import sys
 import types
 from multiprocessing import shared_memory
 from pathlib import Path
+from typing import Any, Callable
 
 import pytest
 
@@ -128,19 +129,27 @@ def fake_stringvar(value=""):
     return var
 
 
-def test_parse_args_basic(monkeypatch):
+def _assert_cli(
+    mod,
+    argv: list[str],
+    *,
+    level: str | None = None,
+    headless: bool = False,
+    sandbox: bool = False,
+    cleanup: bool = False,
+) -> None:
+    args = mod.parse_args(argv)
+    assert args.log_level == level
+    assert args.headless is headless
+    assert args.no_sandbox is sandbox
+    assert args.cleanup_mem is cleanup
+
+
+def test_parse_args_basic(monkeypatch) -> None:
     mod = importlib.reload(importlib.import_module("sele_saisie_auto.cli"))
-    args = mod.parse_args([])
-    assert args.log_level is None
-    assert args.headless is False
-    assert args.no_sandbox is False
-    assert args.cleanup_mem is False
-
-    args = mod.parse_args(["-l", "DEBUG"])
-    assert args.log_level == "DEBUG"
-
-    args = mod.parse_args(["--cleanup-mem"])
-    assert args.cleanup_mem is True
+    _assert_cli(mod, [])
+    _assert_cli(mod, ["-l", "DEBUG"], level="DEBUG")
+    _assert_cli(mod, ["--cleanup-mem"], cleanup=True)
 
 
 def test_run_psatime(monkeypatch, dummy_logger, sample_config):
@@ -443,18 +452,18 @@ def test_run_psatime_with_credentials_no_key(monkeypatch):
     assert not enc.stored
 
 
-def test_start_configuration_and_save(monkeypatch):
+def _setup_start_config(monkeypatch):
     launcher = import_launcher(monkeypatch)
     created_vars.clear()
     root = DummyRoot()
     cfg = {"settings": {}}
-    button = {}
-
+    button: dict[str, Callable[[], None]] = {}
     monkeypatch.setattr(launcher.tk, "Tk", lambda: root)
     monkeypatch.setattr(launcher.tk, "StringVar", fake_stringvar)
     monkeypatch.setattr(launcher.ttk, "Style", DummyStyle)
     monkeypatch.setattr(launcher, "create_tab", lambda *a, **k: object())
     monkeypatch.setattr(launcher, "create_a_frame", lambda *a, **k: object())
+    monkeypatch.setattr(launcher, "create_labeled_frame", lambda *a, **k: object())
     monkeypatch.setattr(launcher, "create_modern_label_with_pack", lambda *a, **k: None)
     monkeypatch.setattr(launcher, "create_modern_entry_with_pack", lambda *a, **k: None)
     monkeypatch.setattr(launcher, "create_combobox_with_pack", lambda *a, **k: None)
@@ -465,7 +474,7 @@ def test_start_configuration_and_save(monkeypatch):
 
     monkeypatch.setattr(launcher, "create_button_with_style", fake_button)
     monkeypatch.setattr(launcher, "read_config_ini", lambda lf: cfg)
-    saved = {}
+    saved: dict[str, Any] = {}
     monkeypatch.setattr(
         launcher, "write_config_ini", lambda c, lf: saved.setdefault("cfg", c)
     )
@@ -480,7 +489,38 @@ def test_start_configuration_and_save(monkeypatch):
             saved.setdefault("kwargs", k),
         ),
     )
+    return launcher, root, cfg, button, saved
 
+
+def _update_fields(button):
+    created_vars[0].set("2024-07-01")
+    created_vars[1].set("WARNING")
+    button["cmd"]()
+
+
+def _check_cfg(cfg):
+    assert cfg["settings"] == {
+        "date_cible": "2024-07-01",
+        "debug_mode": "WARNING",
+    }
+
+
+def _check_saved(saved):
+    assert saved["menu"] is True
+    assert saved["kwargs"] == {"headless": True, "no_sandbox": True}
+    assert "cfg" in saved and "info" in saved
+
+
+def _assert_saved(cfg, root, button, saved):
+    assert root.mainloop_called
+    _update_fields(button)
+    _check_cfg(cfg)
+    _check_saved(saved)
+    assert root.destroy_called
+
+
+def test_start_configuration_and_save(monkeypatch):
+    launcher, root, cfg, button, saved = _setup_start_config(monkeypatch)
     launcher.start_configuration(
         b"k",
         "log",
@@ -488,20 +528,10 @@ def test_start_configuration_and_save(monkeypatch):
         headless=True,
         no_sandbox=True,
     )
-
-    assert root.mainloop_called
-    created_vars[0].set("2024-07-01")
-    created_vars[1].set("WARNING")
-    button["cmd"]()
-
-    assert cfg["settings"]["date_cible"] == "2024-07-01"
-    assert cfg["settings"]["debug_mode"] == "WARNING"
-    assert root.destroy_called
-    assert saved["menu"] is True
-    assert saved["kwargs"] == {"headless": True, "no_sandbox": True}
+    _assert_saved(cfg, root, button, saved)
 
 
-def test_main(monkeypatch):
+def _prepare_main(monkeypatch):
     launcher = import_launcher(monkeypatch)
     dummy_args = types.SimpleNamespace(
         log_level="ERROR",
@@ -512,7 +542,7 @@ def test_main(monkeypatch):
     monkeypatch.setattr(launcher, "get_log_file", lambda: "log.html")
     cfg = {"settings": {}}
     monkeypatch.setattr(launcher, "read_config_ini", lambda lf: cfg)
-    init = {}
+    init: dict[str, Any] = {}
     monkeypatch.setattr(
         launcher.LoggingConfigurator,
         "setup",
@@ -536,7 +566,7 @@ def test_main(monkeypatch):
 
     class DummyLoggerCtx:
         def __init__(self):
-            self.infos = []
+            self.infos: list[str] = []
             self.entered = False
             self.exited = False
 
@@ -552,14 +582,25 @@ def test_main(monkeypatch):
 
     dummy_logger = DummyLoggerCtx()
     monkeypatch.setattr(launcher, "get_logger", lambda lf: dummy_logger)
+    return launcher, init, dummy_logger
 
-    launcher.main([])
 
-    assert init["lvl"] == "ERROR"
-    assert init["freeze"]
+def _assert_main(init, dummy_logger):
+    expected = [
+        ("lvl", "ERROR"),
+        ("freeze", True),
+        ("kwargs", {"headless": True, "no_sandbox": True}),
+    ]
+    for key, val in expected:
+        assert init[key] == val
     assert init["menu"][1] == "log.html"
-    assert init["kwargs"] == {"headless": True, "no_sandbox": True}
     assert dummy_logger.entered and dummy_logger.exited
+
+
+def test_main(monkeypatch) -> None:
+    launcher, init, dummy_logger = _prepare_main(monkeypatch)
+    launcher.main([])
+    _assert_main(init, dummy_logger)
 
 
 def test_main_twice_cleanup(monkeypatch):
