@@ -33,7 +33,13 @@ def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
             "lunch": DummyVar("OUI"),
         }
     }
-    billing_var = DummyVar("FACTURER")
+    mission_vars = {
+        "project_code": DummyVar("P1"),
+        "activity_code": DummyVar("A1"),
+        "category_code": DummyVar("C1"),
+        "sub_category_code": DummyVar("S1"),
+        "billing_action": DummyVar("FACTURER"),
+    }
     location_vars = {"lundi": (DummyVar("Site"), DummyVar("Remote"))}
     log_file = str(tmp_path / "log.html")
 
@@ -45,14 +51,19 @@ def test_save_all_roundtrip(tmp_path: Path, monkeypatch) -> None:
         debug_var,
         schedule_vars,
         cgi_vars,
-        billing_var,
+        mission_vars,
         location_vars,
     )
 
     reread = read_config_ini(log_file)
     assert isinstance(reread, configparser.ConfigParser)
-    assert reread.get("settings", "date_cible") == "2024-07-01"
-    assert reread.get("project_information", "billing_action") == "FACTURER"
+    expectations = {
+        ("settings", "date_cible"): "2024-07-01",
+        ("project_information", "billing_action"): "FACTURER",
+        ("project_information", "project_code"): "P1",
+        ("work_location_am", "lundi"): "Site",
+        ("additional_information_lunch_break_duration", "lundi"): "OUI",
+    }
+    for (section, key), value in expectations.items():
+        assert reread.get(section, key) == value
     assert reread.get("work_schedule", "lundi").startswith("remote")
-    assert reread.get("work_location_am", "lundi") == "Site"
-    assert reread.get("additional_information_lunch_break_duration", "lundi") == "OUI"
