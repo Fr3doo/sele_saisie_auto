@@ -44,6 +44,7 @@ from sele_saisie_auto.read_or_write_file_config_ini_utils import (
 )
 from sele_saisie_auto.resources.resource_manager import ResourceManager  # noqa: F401
 from sele_saisie_auto.shared_utils import get_log_file
+from sele_saisie_auto.styles import COLORS, setup_modern_style
 
 __all__ = ["ResourceManager"]
 
@@ -244,10 +245,9 @@ def build_root() -> tuple[tk.Tk, ttk.Notebook | tk.Tk]:
     root = tk.Tk()
     root.title("Configuration")
     root.geometry("400x200")
-    style = ttk.Style(root)
-    style.theme_use("clam")
+    setup_modern_style(root, COLORS)
     if hasattr(root, "tk"):
-        notebook = ttk.Notebook(root)
+        notebook = ttk.Notebook(root, style="Modern.TNotebook")
         notebook.pack(fill="both", expand=True)
         nb: ttk.Notebook | tk.Tk = notebook
     else:  # pragma: no cover - fallback for tests
