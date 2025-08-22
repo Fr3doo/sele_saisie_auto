@@ -15,6 +15,7 @@ from sele_saisie_auto.gui_builder import (
     create_modern_label_with_grid,
 )
 from sele_saisie_auto.launcher import run_psatime_with_credentials, start_configuration
+from sele_saisie_auto.styles import COLORS, setup_modern_style
 
 
 def main_menu(
@@ -30,6 +31,7 @@ def main_menu(
     menu.title("Program PSATime Auto")
     menu.resizable(False, False)
     menu.geometry("400x300")
+    setup_modern_style(menu, COLORS)
 
     # Conteneur ttk pour satisfaire les helpers typés « ttk.Widget »
     root_frame: ttk.Frame | Any
