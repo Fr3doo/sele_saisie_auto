@@ -639,7 +639,12 @@ def start_configuration(
     schedule_vars, project_vars = tab_planning(notebook, config)
     cgi_vars = tab_cgi(notebook, config)
     location_vars = tab_locations(notebook, config)
-    btn_row = create_a_frame(frame, padding=(10, 10, 10, 10))
+    # IMPORTANT : ne pas utiliser `pack` directement dans `frame` qui est géré par `grid`
+    if hasattr(frame, "grid"):
+        btn_row = ttk.Frame(frame)
+        btn_row.grid(row=1, column=0, columnspan=2, pady=(0, 10), sticky="e")
+    else:  # pragma: no cover - compat tests
+        btn_row = create_a_frame(frame, padding=(10, 10, 10, 10))
     create_button_with_style(
         btn_row,
         "Sauvegarder",

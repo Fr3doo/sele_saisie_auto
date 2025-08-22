@@ -484,11 +484,17 @@ def _setup_start_configuration(monkeypatch):
     root = DummyRoot()
     cfg = {"settings": {}}
     button: dict[str, Any] = {}
+    create_calls: list[None] = []
     monkeypatch.setattr(launcher.tk, "Tk", lambda: root)
     monkeypatch.setattr(launcher.tk, "StringVar", fake_stringvar)
     monkeypatch.setattr(launcher.ttk, "Style", DummyStyle)
     monkeypatch.setattr(launcher, "create_tab", lambda *a, **k: DummyFrame())
-    monkeypatch.setattr(launcher, "create_a_frame", lambda *a, **k: DummyFrame())
+
+    def fake_create_a_frame(*a, **k):
+        create_calls.append(None)
+        return DummyFrame()
+
+    monkeypatch.setattr(launcher, "create_a_frame", fake_create_a_frame)
     monkeypatch.setattr(launcher, "create_modern_label_with_grid", lambda *a, **k: None)
     monkeypatch.setattr(launcher, "create_modern_entry_with_grid", lambda *a, **k: None)
     monkeypatch.setattr(launcher, "create_combobox", lambda *a, **k: None)
@@ -517,11 +523,13 @@ def _setup_start_configuration(monkeypatch):
             saved.setdefault("kwargs", k),
         ),
     )
-    return launcher, root, cfg, button, saved
+    return launcher, root, cfg, button, saved, create_calls
 
 
 def test_start_configuration_saves_config(monkeypatch):
-    launcher, root, cfg, button, _ = _setup_start_configuration(monkeypatch)
+    launcher, root, cfg, button, _, create_calls = _setup_start_configuration(
+        monkeypatch
+    )
     launcher.start_configuration(
         b"k",
         "log",
@@ -533,13 +541,23 @@ def test_start_configuration_saves_config(monkeypatch):
     created_vars[0].set("2024-07-01")
     created_vars[1].set("WARNING")
     button["cmd"]()
-    assert cfg["settings"]["date_cible"] == "2024-07-01"
-    assert cfg["settings"]["debug_mode"] == "WARNING"
-    assert root.destroy_called
+    assert {
+        "date": cfg["settings"]["date_cible"],
+        "debug": cfg["settings"]["debug_mode"],
+        "destroy": root.destroy_called,
+        "calls": create_calls,
+    } == {
+        "date": "2024-07-01",
+        "debug": "WARNING",
+        "destroy": True,
+        "calls": [],
+    }
 
 
 def test_start_configuration_calls_menu(monkeypatch):
-    launcher, root, cfg, button, saved = _setup_start_configuration(monkeypatch)
+    launcher, root, cfg, button, saved, create_calls = _setup_start_configuration(
+        monkeypatch
+    )
     launcher.start_configuration(
         b"k",
         "log",
@@ -550,6 +568,7 @@ def test_start_configuration_calls_menu(monkeypatch):
     button["cmd"]()
     assert saved["menu"] is True
     assert saved["kwargs"] == {"headless": True, "no_sandbox": True}
+    assert not create_calls
 
 
 def _setup_main(monkeypatch):
