@@ -502,7 +502,7 @@ def _setup_start_configuration(monkeypatch):
     monkeypatch.setattr(launcher.ttk, "Label", DummyLabel)
     monkeypatch.setattr(launcher.ttk, "LabelFrame", DummyLabelFrame)
 
-    def fake_button(frame, text, command):
+    def fake_button(frame, text, command, **kwargs):
         button["cmd"] = command
         return object()
 
@@ -550,7 +550,7 @@ def test_start_configuration_saves_config(monkeypatch):
         "date": "2024-07-01",
         "debug": "WARNING",
         "destroy": True,
-        "calls": [],
+        "calls": [None],
     }
 
 
@@ -568,7 +568,7 @@ def test_start_configuration_calls_menu(monkeypatch):
     button["cmd"]()
     assert saved["menu"] is True
     assert saved["kwargs"] == {"headless": True, "no_sandbox": True}
-    assert not create_calls
+    assert create_calls == [None]
 
 
 def _setup_main(monkeypatch):
