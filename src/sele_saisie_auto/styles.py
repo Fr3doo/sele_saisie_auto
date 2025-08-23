@@ -14,6 +14,7 @@ COLORS: dict[str, str] = {
     "text": "#1E2A38",
     "danger": "#E43F5A",
     "success": "#2BB57B",
+    "on_primary": "#FFFFFF",
 }
 
 
@@ -58,7 +59,7 @@ def setup_modern_style(root: tk.Misc, colors: dict[str, str] = COLORS) -> None:
         style.map(
             "Modern.TNotebook.Tab",
             background=[("selected", colors["primary"]), ("active", colors["hover"])],
-            foreground=[("selected", colors["background"]), ("active", colors["text"])],
+            foreground=[("selected", colors["on_primary"]), ("active", colors["text"])],
         )
 
     # Zones de saisie et combobox
@@ -73,15 +74,16 @@ def setup_modern_style(root: tk.Misc, colors: dict[str, str] = COLORS) -> None:
     )
 
     # Boutons
-    style.configure(
-        "Modern.TButton",
-        padding=[20, 10],
-        background=colors["primary"],
-        foreground=colors["background"],
-        font=("Segoe UI", 10, "bold"),
-    )
+    button_opts = {
+        "padding": [20, 10],
+        "foreground": colors["on_primary"],
+        "font": ("Segoe UI", 10, "bold"),
+    }
+    style.configure("Modern.TButton", background=colors["primary"], **button_opts)
+    style.configure("Danger.TButton", background=colors["danger"], **button_opts)
     if hasattr(style, "map"):
         style.map("Modern.TButton", background=[("active", colors["hover"])])
+        style.map("Danger.TButton", background=[("active", colors["hover"])])
 
     # Cadres paramétrage
     style.configure(

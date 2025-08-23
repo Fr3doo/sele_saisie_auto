@@ -638,11 +638,6 @@ def start_configuration(
 
     config, raw_cfg = load_config_with_defaults(log_file)
     root, notebook = build_root()
-    frame, date_var, debug_var = tab_settings(notebook, config)
-    schedule_vars, project_vars = tab_planning(notebook, config)
-    cgi_vars = tab_cgi(notebook, config)
-    location_vars = tab_locations(notebook, config)
-
     btn_row = create_a_frame(
         cast(ttk.Widget, root),
         side="bottom",
@@ -651,6 +646,11 @@ def start_configuration(
         pady=10,
         padding=(10, 0, 10, 0),
     )
+    frame, date_var, debug_var = tab_settings(notebook, config)
+    schedule_vars, project_vars = tab_planning(notebook, config)
+    cgi_vars = tab_cgi(notebook, config)
+    location_vars = tab_locations(notebook, config)
+
     create_button_with_style(
         btn_row,
         "Sauvegarder",
