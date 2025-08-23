@@ -244,7 +244,8 @@ def load_config_with_defaults(
 def build_root() -> tuple[tk.Tk, ttk.Notebook | tk.Tk]:
     root = tk.Tk()
     root.title("Configuration")
-    root.minsize(700, 530)
+    if hasattr(root, "minsize"):
+        root.minsize(700, 530)
     setup_modern_style(root, COLORS)
     if hasattr(root, "tk"):
         notebook = ttk.Notebook(root, style="Modern.TNotebook")
@@ -337,7 +338,9 @@ def tab_planning(
         )
         schedule_vars[day] = (opt_var, hours_var)
 
-    mission_frame = ttk.LabelFrame(planning_tab, text="Informations de mission")
+    mission_frame = ttk.LabelFrame(
+        planning_tab, text="Informations de mission", style="Parametres.TLabelframe"
+    )
     mission_frame.grid(row=1, column=3, rowspan=len(DAYS), padx=15, pady=5, sticky="n")
     labels = (
         "Project Code:",
