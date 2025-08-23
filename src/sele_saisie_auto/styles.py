@@ -4,11 +4,13 @@ import tkinter as tk
 from tkinter import ttk
 
 COLORS: dict[str, str] = {
-    "background": "#f5f5f5",
-    "secondary": "#e6e6e6",
-    "primary": "#1976D2",
-    "hover": "#1565C0",
-    "text": "#333333",
+    "background": "#F5F6FA",
+    "secondary": "#E8ECF5",
+    "primary": "#2F54EB",
+    "hover": "#4D70F0",
+    "text": "#1E2A38",
+    "danger": "#E43F5A",
+    "success": "#2BB57B",
 }
 
 
