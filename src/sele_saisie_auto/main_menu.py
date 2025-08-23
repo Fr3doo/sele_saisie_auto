@@ -46,7 +46,12 @@ def main_menu(
     login_var = tk.StringVar()
     mdp_var = tk.StringVar()
 
-    tk.Label(menu, text="Program PSATime Auto", font=("Segoe UI", 14)).pack(pady=10)
+    try:
+        ttk.Label(menu, text="Program PSATime Auto", style="Title.TLabel").pack(pady=10)
+    except AttributeError:  # pragma: no cover - fallback for dummy widgets in tests
+        tk.Label(menu, text="Program PSATime Auto", font=("Segoe UI", 11, "bold")).pack(
+            pady=10
+        )
     credentials = create_labeled_frame(
         cast(ttk.Widget, root_frame),
         text="Identifiants",
