@@ -100,7 +100,7 @@ def fake_stringvar(value=""):
     return var
 
 
-def fake_create_button_without_style(frame, text, command, **kwargs):
+def fake_create_button_with_style(frame, text, command, **kwargs):
     btn = DummyButton(command)
     btn.text = text
     created_buttons.append(btn)
@@ -117,14 +117,10 @@ def fake_create_entry(*args, **kwargs):
     return entry
 
 
-# Tests
-
-
-def test_main_menu_builds_and_commands(monkeypatch):
+def prepare_main_menu(monkeypatch):
     created_vars.clear()
     created_entries.clear()
     created_buttons.clear()
-
     dummy_launcher = types.SimpleNamespace(
         run_psatime_with_credentials=lambda *a, **k: None,
         start_configuration=lambda *a, **k: None,
@@ -133,14 +129,13 @@ def test_main_menu_builds_and_commands(monkeypatch):
     import importlib
 
     main_menu = importlib.import_module("sele_saisie_auto.main_menu")
-
     monkeypatch.setattr(
         main_menu,
         "tk",
         types.SimpleNamespace(Tk=DummyTk, StringVar=fake_stringvar, Label=DummyLabel),
     )
     monkeypatch.setattr(
-        main_menu, "create_button_without_style", fake_create_button_without_style
+        main_menu, "create_button_with_style", fake_create_button_with_style
     )
     monkeypatch.setattr(main_menu, "create_labeled_frame", fake_create_labeled_frame)
     monkeypatch.setattr(main_menu, "create_modern_entry_with_grid", fake_create_entry)
@@ -150,8 +145,7 @@ def test_main_menu_builds_and_commands(monkeypatch):
     monkeypatch.setattr(
         main_menu, "create_modern_label_with_grid", lambda *a, **k: DummyLabel()
     )
-
-    run_calls = {}
+    run_calls: dict[str, str | bool] = {}
 
     def fake_run_psa(enc_service, login_var, pwd_var, log_file, menu, **kw):
         run_calls["login"] = login_var.get()
@@ -159,23 +153,30 @@ def test_main_menu_builds_and_commands(monkeypatch):
         run_calls["destroyed"] = menu.destroy_called
 
     monkeypatch.setattr(main_menu, "run_psatime_with_credentials", fake_run_psa)
-
-    config_calls = {}
+    config_calls: dict[str, bool] = {}
 
     def fake_start_config(key, log, enc, **kw):
         config_calls["called"] = True
 
     monkeypatch.setattr(main_menu, "start_configuration", fake_start_config)
+    return main_menu, run_calls, config_calls
 
+
+def test_main_menu_builds(monkeypatch):
+    main_menu, _, _ = prepare_main_menu(monkeypatch)
     main_menu.main_menu(b"k", "log.html", object())
-
     assert created_entries[0].focus_called
-    assert created_buttons[0].text == "Lancer votre PSATime"
-    assert created_buttons[1].text == "Configurer le lancement"
+    assert [btn.text for btn in created_buttons] == [
+        "Lancer votre PSATime",
+        "Configurer le lancement",
+    ]
 
+
+def test_main_menu_commands(monkeypatch):
+    main_menu, run_calls, config_calls = prepare_main_menu(monkeypatch)
+    main_menu.main_menu(b"k", "log.html", object())
     created_buttons[0].invoke()
     assert run_calls == {"login": "", "pwd": "", "destroyed": False}
-
     created_buttons[1].invoke()
     assert config_calls == {"called": True}
     assert created_buttons[1].command is not None

@@ -4,11 +4,13 @@ import tkinter as tk
 from tkinter import ttk
 
 COLORS: dict[str, str] = {
-    "background": "#f5f5f5",
-    "secondary": "#e6e6e6",
-    "primary": "#1976D2",
-    "hover": "#1565C0",
-    "text": "#333333",
+    "background": "#F5F6FA",
+    "secondary": "#E8ECF5",
+    "primary": "#2F54EB",
+    "hover": "#4D70F0",
+    "text": "#1E2A38",
+    "danger": "#E43F5A",
+    "success": "#2BB57B",
 }
 
 
@@ -53,15 +55,16 @@ def setup_modern_style(root: tk.Misc, colors: dict[str, str] = COLORS) -> None:
         fieldbackground=colors["secondary"],
         padding=[5, 5],
     )
-    style.configure(
-        "Modern.TButton",
-        padding=[20, 10],
-        background=colors["primary"],
-        foreground=colors["background"],
-        font=("Segoe UI", 10, "bold"),
-    )
+    button_opts = {
+        "padding": [20, 10],
+        "foreground": colors["background"],
+        "font": ("Segoe UI", 10, "bold"),
+    }
+    style.configure("Modern.TButton", background=colors["primary"], **button_opts)
+    style.configure("Danger.TButton", background=colors["danger"], **button_opts)
     if hasattr(style, "map"):
         style.map("Modern.TButton", background=[("active", colors["hover"])])
+        style.map("Danger.TButton", background=[("active", colors["hover"])])
     style.configure(
         "Parametres.TLabelframe",
         background=colors["background"],

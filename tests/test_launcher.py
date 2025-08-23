@@ -98,6 +98,7 @@ class DummyRoot:
         self.geometry_value = None
         self.destroy_called = False
         self.mainloop_called = False
+        self.minsize_value: tuple[int, int] | None = None
 
     def title(self, val):
         self.title_value = val
@@ -110,6 +111,9 @@ class DummyRoot:
 
     def mainloop(self):
         self.mainloop_called = True
+
+    def minsize(self, w, h):
+        self.minsize_value = (w, h)
 
 
 class DummyStyle:

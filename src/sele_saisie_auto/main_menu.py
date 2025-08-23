@@ -8,7 +8,7 @@ from typing import Any, cast
 
 from sele_saisie_auto.encryption_utils import EncryptionService
 from sele_saisie_auto.gui_builder import (
-    create_button_without_style,
+    create_button_with_style,
     create_labeled_frame,
     create_modern_entry_with_grid,
     create_modern_entry_with_grid_for_password,
@@ -46,7 +46,10 @@ def main_menu(
     login_var = tk.StringVar()
     mdp_var = tk.StringVar()
 
-    tk.Label(menu, text="Program PSATime Auto", font=("Segoe UI", 14)).pack(pady=10)
+    try:
+        ttk.Label(menu, text="Program PSATime Auto", style="Title.TLabel").pack(pady=10)
+    except AttributeError:  # pragma: no cover - fallback for tests
+        tk.Label(menu, text="Program PSATime Auto", font=("Segoe UI", 14)).pack(pady=10)
     credentials = create_labeled_frame(
         cast(ttk.Widget, root_frame),
         text="Identifiants",
@@ -76,10 +79,14 @@ def main_menu(
             no_sandbox=no_sandbox,
         )
 
-    launch = create_button_without_style(
+    launch = create_button_with_style(
         cast(ttk.Widget, root_frame),
         text="Lancer votre PSATime",
         command=launch_psatime,
+        fill="x",
+        padx=20,
+        pady=5,
+        ipady=5,
     )
     launch.bind("<Return>", lambda _: launch.invoke())
 
@@ -94,10 +101,15 @@ def main_menu(
             no_sandbox=no_sandbox,
         )
 
-    config_btn = create_button_without_style(
+    config_btn = create_button_with_style(
         cast(ttk.Widget, root_frame),
         text="Configurer le lancement",
         command=open_config,
+        fill="x",
+        padx=20,
+        pady=5,
+        ipady=5,
+        style="Danger.TButton",
     )
     config_btn.bind("<Return>", lambda _: config_btn.invoke())
 
