@@ -44,12 +44,9 @@ def setup_modern_style(root: tk.Misc, colors: dict[str, str] = COLORS) -> None:
             background=[("selected", colors["primary"]), ("active", colors["hover"])],
             foreground=[("selected", colors["background"]), ("active", colors["text"])],
         )
-    style.configure(
-        "Modern.TEntry", fieldbackground=colors["secondary"], padding=[5, 5]
-    )
-    style.configure(
-        "Settings.TEntry", fieldbackground=colors["secondary"], padding=[5, 5]
-    )
+    entry_opts = {"fieldbackground": colors["secondary"], "padding": [5, 5]}
+    style.configure("Modern.TEntry", **entry_opts)
+    style.configure("Settings.TEntry", **entry_opts)  # alias de fait pour compatibilité
     style.configure(
         "Modern.TCombobox",
         background=colors["secondary"],

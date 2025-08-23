@@ -247,7 +247,7 @@ def build_root() -> tuple[tk.Tk, ttk.Notebook | tk.Tk]:
     root.geometry("400x200")
     setup_modern_style(root, COLORS)
     if hasattr(root, "tk"):
-        notebook = ttk.Notebook(root)
+        notebook = ttk.Notebook(root, style="Modern.TNotebook")
         notebook.pack(fill="both", expand=True)
         nb: ttk.Notebook | tk.Tk = notebook
     else:  # pragma: no cover - fallback for tests
@@ -354,7 +354,7 @@ def tab_planning(
         "billing_action",
     )
     project_vars: dict[str, tk.StringVar] = {}
-    for i, (label, key) in enumerate(zip(labels, keys)):
+    for i, (label, key) in enumerate(zip(labels, keys, strict=False)):
         create_modern_label_with_grid(mission_frame, label, row=i, col=0)
         value = config.get("project_information", {}).get(key, "")
         var = tk.StringVar(value=value)
