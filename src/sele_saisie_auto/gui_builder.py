@@ -9,6 +9,8 @@ from collections.abc import Callable
 from tkinter import ttk
 from typing import Any, Literal, Protocol
 
+from sele_saisie_auto.styles import COLORS
+
 # Types lisibles -----------------------------------------------------------
 Orient = Literal["horizontal", "vertical"]
 PackFill = Literal["none", "x", "y", "both"]
@@ -317,7 +319,16 @@ def create_button_without_style(
     ipady: int = 5,
 ) -> tk.Button:
     """Créer un ``tk.Button`` sans style et positionné avec ``pack``."""
-    kwargs: dict[str, Any] = {"text": text}
+    kwargs: dict[str, Any] = {
+        "text": text,
+        "bg": COLORS["primary"],
+        "fg": COLORS["on_primary"],
+        "activebackground": COLORS["hover"],
+        "activeforeground": COLORS["on_primary"],
+        "font": ("Segoe UI", 10, "bold"),
+        "bd": 0,
+        "highlightthickness": 0,
+    }
     if command is not None:
         kwargs["command"] = command
     button = tk.Button(frame, **kwargs)

@@ -2,13 +2,17 @@ from __future__ import annotations
 
 import tkinter as tk
 from tkinter import ttk
+from typing import Any, cast
 
 COLORS: dict[str, str] = {
-    "background": "#f5f5f5",
-    "secondary": "#e6e6e6",
-    "primary": "#1976D2",
-    "hover": "#1565C0",
-    "text": "#333333",
+    "background": "#F5F6FA",
+    "secondary": "#E8ECF5",
+    "primary": "#2F54EB",
+    "hover": "#4D70F0",
+    "text": "#1E2A38",
+    "danger": "#E43F5A",
+    "success": "#2BB57B",
+    "on_primary": "#FFFFFF",
 }
 
 
@@ -16,6 +20,7 @@ def setup_modern_style(root: tk.Misc, colors: dict[str, str] = COLORS) -> None:
     """Configure ttk styles used throughout the application."""
     if not hasattr(root, "tk"):
         return
+    cast(Any, root).configure(bg=colors["background"])
     style = ttk.Style(root)
     style.theme_use("clam")
     style.configure("Modern.TFrame", background=colors["background"])
@@ -42,7 +47,7 @@ def setup_modern_style(root: tk.Misc, colors: dict[str, str] = COLORS) -> None:
         style.map(
             "Modern.TNotebook.Tab",
             background=[("selected", colors["primary"]), ("active", colors["hover"])],
-            foreground=[("selected", colors["background"]), ("active", colors["text"])],
+            foreground=[("selected", colors["on_primary"]), ("active", colors["text"])],
         )
     entry_opts = {"fieldbackground": colors["secondary"], "padding": [5, 5]}
     style.configure("Modern.TEntry", **entry_opts)
@@ -57,11 +62,15 @@ def setup_modern_style(root: tk.Misc, colors: dict[str, str] = COLORS) -> None:
         "Modern.TButton",
         padding=[20, 10],
         background=colors["primary"],
-        foreground=colors["background"],
+        foreground=colors["on_primary"],
         font=("Segoe UI", 10, "bold"),
     )
     if hasattr(style, "map"):
-        style.map("Modern.TButton", background=[("active", colors["hover"])])
+        style.map(
+            "Modern.TButton",
+            background=[("active", colors["hover"])],
+            foreground=[("active", colors["on_primary"])],
+        )
     style.configure(
         "Parametres.TLabelframe",
         background=colors["background"],
