@@ -244,7 +244,7 @@ def load_config_with_defaults(
 def build_root() -> tuple[tk.Tk, ttk.Notebook | tk.Tk]:
     root = tk.Tk()
     root.title("Configuration")
-    root.geometry("400x200")
+    root.minsize(700, 530)
     setup_modern_style(root, COLORS)
     if hasattr(root, "tk"):
         notebook = ttk.Notebook(root, style="Modern.TNotebook")
