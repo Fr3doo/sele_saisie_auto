@@ -80,7 +80,7 @@ def test_fill_days_skips(monkeypatch):
         driver=None,
         id_value_days="days",
         row_index=0,
-        values_to_fill={"mardi": "1"},
+        day_values={"mardi": "1"},
         filled_days=["lundi"],
         type_element="input",
         log_file="log",
@@ -112,7 +112,7 @@ def test_fill_days_uses_strategy(monkeypatch):
         driver=None,
         id_value_days="days",
         row_index=0,
-        values_to_fill={"lundi": "1", "mardi": "2"},
+        day_values={"lundi": "1", "mardi": "2"},
         filled_days=[],
         type_element="input",
         log_file="log",
@@ -120,3 +120,28 @@ def test_fill_days_uses_strategy(monkeypatch):
     )
     dp._fill_days(params)
     assert recorded == [(dummy, "1"), (dummy, "2")]
+
+
+def test_fill_days_does_not_mutate_inputs(monkeypatch):
+    class DummyElement:
+        pass
+
+    monkeypatch.setattr(dp, "_get_element", lambda *a, **k: DummyElement())
+    ctx = ElementFillingContext(InputFillingStrategy())
+    monkeypatch.setattr(ctx, "fill", lambda *a, **k: None)
+
+    day_values = {"mardi": "1"}
+    filled_days = ["lundi"]
+    params = dp.FillDaysParams(
+        driver=None,
+        id_value_days="days",
+        row_index=0,
+        day_values=day_values,
+        filled_days=filled_days,
+        type_element="input",
+        log_file="log",
+        filling_context=ctx,
+    )
+    dp._fill_days(params)
+    assert day_values == {"mardi": "1"}
+    assert filled_days == ["lundi"]
