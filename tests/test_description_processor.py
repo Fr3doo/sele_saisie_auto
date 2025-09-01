@@ -23,8 +23,8 @@ def test_process_description_main(monkeypatch):
     monkeypatch.setattr(dp, "_find_description_row", lambda *a, **k: 0)
     monkeypatch.setattr(dp, "_collect_filled_days", lambda *a, **k: [])
 
-    def fake_fill(*args, **kwargs):
-        captured["strategy"] = kwargs.get("filling_context").strategy.__class__
+    def fake_fill(params):
+        captured["strategy"] = params.filling_context.strategy.__class__
 
     monkeypatch.setattr(dp, "_fill_days", fake_fill)
     ctx = ElementFillingContext(InputFillingStrategy())
@@ -76,17 +76,17 @@ def test_fill_days_skips(monkeypatch):
     ctx = ElementFillingContext(InputFillingStrategy())
     monkeypatch.setattr(ctx, "fill", lambda *a, **k: called.append("filled"))
 
-    dp._fill_days(
-        None,
-        None,
-        "days",
-        0,
-        {"mardi": "1"},
-        ["lundi"],
-        "input",
-        "log",
+    params = dp.FillDaysParams(
+        driver=None,
+        id_value_days="days",
+        row_index=0,
+        values_to_fill={"mardi": "1"},
+        filled_days=["lundi"],
+        type_element="input",
+        log_file="log",
         filling_context=ctx,
     )
+    dp._fill_days(params)
     assert called == ["filled"]
 
 
@@ -108,15 +108,15 @@ def test_fill_days_uses_strategy(monkeypatch):
     ctx = ElementFillingContext(InputFillingStrategy())
     monkeypatch.setattr(ctx, "fill", lambda e, v, logger=None: recorded.append((e, v)))
 
-    dp._fill_days(
-        None,
-        None,
-        "days",
-        0,
-        {"lundi": "1", "mardi": "2"},
-        [],
-        "input",
-        "log",
+    params = dp.FillDaysParams(
+        driver=None,
+        id_value_days="days",
+        row_index=0,
+        values_to_fill={"lundi": "1", "mardi": "2"},
+        filled_days=[],
+        type_element="input",
+        log_file="log",
         filling_context=ctx,
     )
+    dp._fill_days(params)
     assert recorded == [(dummy, "1"), (dummy, "2")]

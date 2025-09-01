@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from selenium.webdriver.common.by import By
@@ -90,6 +90,24 @@ def _resolve_element_for_day(
     return DayField(day_name, element, input_id)
 
 
+@dataclass
+class FillDaysParams:
+    """Parameters required to populate empty day fields."""
+
+    driver: WebDriver
+    id_value_days: str
+    row_index: int
+    values_to_fill: dict[str, str]
+    filled_days: list[str]
+    type_element: str
+    log_file: str
+    waiter: Waiter | None = None
+    week_days: Mapping[int, str] = field(default_factory=lambda: JOURS_SEMAINE)
+    filling_context: ElementFillingContext | None = None
+    logger: Logger | None = None
+    day_range: range = range(1, 8)
+
+
 def _apply_value(
     element: Any,
     *,
@@ -156,63 +174,50 @@ def _collect_filled_days(
     return filled_days
 
 
-def _fill_days(
-    driver: WebDriver,
-    waiter: Waiter | None,
-    id_value_days: str,
-    row_index: int,
-    values_to_fill: dict[str, str],
-    filled_days: list[str],
-    type_element: str,
-    log_file: str,
-    week_days: Mapping[int, str] = JOURS_SEMAINE,
-    filling_context: ElementFillingContext | None = None,
-    logger: Logger | None = None,
-    day_range: range = range(1, 8),
-) -> None:
+def _fill_days(params: FillDaysParams) -> None:
     """Fill remaining empty days for the row."""
-    for day_index in day_range:
+    for day_index in params.day_range:
         day = _resolve_element_for_day(
-            driver,
-            waiter,
-            id_value_days,
-            row_index,
+            params.driver,
+            params.waiter,
+            params.id_value_days,
+            params.row_index,
             day_index,
-            week_days,
-            log_file,
+            params.week_days,
+            params.log_file,
         )
         if not day.element:
             continue
 
-        if day.name in filled_days:
+        if day.name in params.filled_days:
             write_log(
                 messages.DAY_ALREADY_FILLED_NO_CHANGE.format(jour=day.name),
-                log_file,
+                params.log_file,
                 "DEBUG",
             )
             continue
 
-        value = values_to_fill.get(day.name)
+        value = params.values_to_fill.get(day.name)
         if not value:
             write_log(
                 f"⚠️ {messages.AUCUNE_VALEUR} définie pour le jour '{day.name}' dans 'valeurs_a_remplir'.",
-                log_file,
+                params.log_file,
                 "DEBUG",
             )
             continue
 
         write_log(
             f"✏️ {messages.REMPLISSAGE} de '{day.name}' avec la valeur '{value}'.",
-            log_file,
+            params.log_file,
             "DEBUG",
         )
         _apply_value(
             day.element,
-            type_element=type_element,
+            type_element=params.type_element,
             day_name=day.name,
             value=value,
-            filling_context=filling_context,
-            logger=logger,
+            filling_context=params.filling_context,
+            logger=params.logger,
         )
 
 
@@ -244,15 +249,16 @@ def process_description(
         messages.FILL_EMPTY_DAYS.format(description=description), log_file, "DEBUG"
     )
 
-    _fill_days(
-        driver,
-        waiter,
-        id_value_days,
-        row_index,
-        values_to_fill,
-        filled_days,
-        type_element,
-        log_file,
+    params = FillDaysParams(
+        driver=driver,
+        id_value_days=id_value_days,
+        row_index=row_index,
+        values_to_fill=values_to_fill,
+        filled_days=filled_days,
+        type_element=type_element,
+        log_file=log_file,
+        waiter=waiter,
         filling_context=filling_context,
         logger=logger,
     )
+    _fill_days(params)
