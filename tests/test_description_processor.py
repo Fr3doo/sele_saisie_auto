@@ -145,3 +145,36 @@ def test_fill_days_does_not_mutate_inputs(monkeypatch):
     dp._fill_days(params)
     assert day_values == {"mardi": "1"}
     assert filled_days == ["lundi"]
+
++
+
+def test_day_values_sanitation_uses_week_days_and_logs(monkeypatch):
+    # Capture logs
+    logs = []
+    monkeypatch.setattr(dp, "write_log", lambda msg, log_file, level: logs.append(msg))
+
+    # Custom week_days becomes the source of truth
+    custom_week = {
+        1: "xday",
+        2: "yday",
+        3: "zday",
+        4: "a",
+        5: "b",
+        6: "c",
+        7: "d",
+    }
+
+    params = dp.FillDaysParams(
+        driver=None,
+        id_value_days="days",
+        row_index=0,
+        day_values={"xday": "1", "unknown": "9"},
+        filled_days=[],
+        type_element="input",
+        log_file="log",
+        week_days=custom_week,
+    )
+    # "xday" is retained (present in custom week), "unknown" is filtered out
+    assert params.day_values == {"xday": "1"}
+    # A log entry must be emitted for the unknown key
+    assert any("Unknown day names provided" in m for m in logs)

@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Literal, cast
+from typing import Any, Literal, TypeAlias, cast
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -25,7 +25,7 @@ from sele_saisie_auto.selenium_utils import (
 )
 from sele_saisie_auto.strategies import ElementFillingContext
 
-DayName = str
+DayName: TypeAlias = str
 
 
 def _get_element(
@@ -93,9 +93,15 @@ def _resolve_element_for_day(
 
 
 def _validate_day_values(
-    day_values: dict[DayName, str], log_file: str
+    day_values: dict[DayName, str],
+    known_days: set[DayName],
+    log_file: str,
 ) -> dict[DayName, str]:
-    known_days = set(JOURS_SEMAINE.values())
+    """
+    Sanitize provided day_values against the *effective* allowed day names.
+    Source of truth is the passed `known_days`, typically derived from `week_days.values()`
+    (not hard-coded JOURS_SEMAINE), to support custom calendars in tests/usages.
+    """
     invalid = set(day_values) - known_days
     if invalid:
         write_log(
@@ -106,7 +112,13 @@ def _validate_day_values(
 
 @dataclass(frozen=True)
 class FillDaysParams:
-    """Parameters required to populate empty day fields."""
+    """Parameters required to populate empty day fields.
+
+    Notes
+    -----
+    - Input validation uses `week_days.values()` as the source of truth for allowed keys.
+    - The dataclass is frozen to guarantee immutability while `_fill_days` executes.
+    """
 
     driver: WebDriver
     id_value_days: str
@@ -122,9 +134,11 @@ class FillDaysParams:
     day_range: range = range(1, 8)
 
     def __post_init__(self) -> None:
-        object.__setattr__(
-            self, "day_values", _validate_day_values(self.day_values, self.log_file)
-        )
+        # Use week_days.values() as the allowed set (not the global constant),
+        # so callers overriding week_days control the allowed keys.
+        allowed = set(self.week_days.values())
+        sanitized = _validate_day_values(self.day_values, allowed, self.log_file)
+        object.__setattr__(self, "day_values", sanitized)
 
 
 def _apply_value(
