@@ -146,7 +146,6 @@ def test_fill_days_does_not_mutate_inputs(monkeypatch):
     assert day_values == {"mardi": "1"}
     assert filled_days == ["lundi"]
 
-+
 
 def test_day_values_sanitation_uses_week_days_and_logs(monkeypatch):
     # Capture logs
