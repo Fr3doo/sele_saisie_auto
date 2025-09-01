@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Literal, cast
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -24,6 +24,8 @@ from sele_saisie_auto.selenium_utils import (
     wait_for_element,
 )
 from sele_saisie_auto.strategies import ElementFillingContext
+
+DayName = str
 
 
 def _get_element(
@@ -66,7 +68,7 @@ def _find_description_row(
 class DayField:
     """Container holding information about a resolved day field."""
 
-    name: str
+    name: DayName
     element: Any | None
     input_id: str
 
@@ -77,7 +79,7 @@ def _resolve_element_for_day(
     id_value_days: str,
     row_index: int,
     day_index: int,
-    week_days: Mapping[int, str],
+    week_days: Mapping[int, DayName],
     log_file: str,
 ) -> DayField:
     """Build the day field ID, fetch the element and log if absent."""
@@ -90,11 +92,46 @@ def _resolve_element_for_day(
     return DayField(day_name, element, input_id)
 
 
+def _validate_day_values(
+    day_values: dict[DayName, str], log_file: str
+) -> dict[DayName, str]:
+    known_days = set(JOURS_SEMAINE.values())
+    invalid = set(day_values) - known_days
+    if invalid:
+        write_log(
+            f"🚫 Unknown day names provided: {sorted(invalid)}", log_file, "DEBUG"
+        )
+    return {k: v for k, v in day_values.items() if k in known_days}
+
+
+@dataclass(frozen=True)
+class FillDaysParams:
+    """Parameters required to populate empty day fields."""
+
+    driver: WebDriver
+    id_value_days: str
+    row_index: int
+    day_values: dict[DayName, str]
+    filled_days: list[DayName]
+    type_element: Literal["input", "select"]
+    log_file: str
+    waiter: Waiter | None = None
+    week_days: Mapping[int, DayName] = field(default_factory=lambda: JOURS_SEMAINE)
+    filling_context: ElementFillingContext | None = None
+    logger: Logger | None = None
+    day_range: range = range(1, 8)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "day_values", _validate_day_values(self.day_values, self.log_file)
+        )
+
+
 def _apply_value(
     element: Any,
     *,
-    type_element: str,
-    day_name: str,
+    type_element: Literal["input", "select"],
+    day_name: DayName,
     value: str,
     filling_context: ElementFillingContext | None,
     logger: Logger | None,
@@ -116,11 +153,11 @@ def _collect_filled_days(
     id_value_days: str,
     row_index: int,
     log_file: str,
-    week_days: Mapping[int, str] = JOURS_SEMAINE,
+    week_days: Mapping[int, DayName] = JOURS_SEMAINE,
     day_range: range = range(1, 8),
-) -> list[str]:
+) -> list[DayName]:
     """Return a list of already filled days for ``row_index``."""
-    filled_days: list[str] = []
+    filled_days: list[DayName] = []
     write_log(messages.CHECK_FILLED_DAYS, log_file, "DEBUG")
     for day_index in day_range:
         day = _resolve_element_for_day(
@@ -156,63 +193,50 @@ def _collect_filled_days(
     return filled_days
 
 
-def _fill_days(
-    driver: WebDriver,
-    waiter: Waiter | None,
-    id_value_days: str,
-    row_index: int,
-    values_to_fill: dict[str, str],
-    filled_days: list[str],
-    type_element: str,
-    log_file: str,
-    week_days: Mapping[int, str] = JOURS_SEMAINE,
-    filling_context: ElementFillingContext | None = None,
-    logger: Logger | None = None,
-    day_range: range = range(1, 8),
-) -> None:
+def _fill_days(params: FillDaysParams) -> None:
     """Fill remaining empty days for the row."""
-    for day_index in day_range:
+    for day_index in params.day_range:
         day = _resolve_element_for_day(
-            driver,
-            waiter,
-            id_value_days,
-            row_index,
+            params.driver,
+            params.waiter,
+            params.id_value_days,
+            params.row_index,
             day_index,
-            week_days,
-            log_file,
+            params.week_days,
+            params.log_file,
         )
         if not day.element:
             continue
 
-        if day.name in filled_days:
+        if day.name in params.filled_days:
             write_log(
                 messages.DAY_ALREADY_FILLED_NO_CHANGE.format(jour=day.name),
-                log_file,
+                params.log_file,
                 "DEBUG",
             )
             continue
 
-        value = values_to_fill.get(day.name)
+        value = params.day_values.get(day.name)
         if not value:
             write_log(
                 f"⚠️ {messages.AUCUNE_VALEUR} définie pour le jour '{day.name}' dans 'valeurs_a_remplir'.",
-                log_file,
+                params.log_file,
                 "DEBUG",
             )
             continue
 
         write_log(
             f"✏️ {messages.REMPLISSAGE} de '{day.name}' avec la valeur '{value}'.",
-            log_file,
+            params.log_file,
             "DEBUG",
         )
         _apply_value(
             day.element,
-            type_element=type_element,
+            type_element=params.type_element,
             day_name=day.name,
             value=value,
-            filling_context=filling_context,
-            logger=logger,
+            filling_context=params.filling_context,
+            logger=params.logger,
         )
 
 
@@ -229,8 +253,8 @@ def process_description(
     description = config["description_cible"]
     id_value_row = config["id_value_ligne"]
     id_value_days = config["id_value_jours"]
-    type_element = config["type_element"]
-    values_to_fill = config["valeurs_a_remplir"]
+    type_element = cast(Literal["input", "select"], config["type_element"])
+    day_values: dict[DayName, str] = config["valeurs_a_remplir"]
 
     row_index = _find_description_row(driver, description, id_value_row, log_file)
     if row_index is None:
@@ -244,15 +268,16 @@ def process_description(
         messages.FILL_EMPTY_DAYS.format(description=description), log_file, "DEBUG"
     )
 
-    _fill_days(
-        driver,
-        waiter,
-        id_value_days,
-        row_index,
-        values_to_fill,
-        filled_days,
-        type_element,
-        log_file,
+    params = FillDaysParams(
+        driver=driver,
+        id_value_days=id_value_days,
+        row_index=row_index,
+        day_values=day_values,
+        filled_days=filled_days,
+        type_element=type_element,
+        log_file=log_file,
+        waiter=waiter,
         filling_context=filling_context,
         logger=logger,
     )
+    _fill_days(params)
