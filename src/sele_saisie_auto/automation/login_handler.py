@@ -47,12 +47,10 @@ class LoginHandler:
             self.log_file,
             "DEBUG",
         )
-        username = self.encryption_service.dechiffrer_donnees(
-            credentials.login, credentials.aes_key
-        )
-        password = self.encryption_service.dechiffrer_donnees(
-            credentials.password, credentials.aes_key
-        )
+        aes_key, enc_login, enc_pwd = credentials.get_auth_tuple()
+        username = self.encryption_service.dechiffrer_donnees(enc_login, aes_key)
+        password = self.encryption_service.dechiffrer_donnees(enc_pwd, aes_key)
+        
         write_log(format_message("SEND_CREDENTIALS", {}), self.log_file, "DEBUG")
         send_keys_to_element(
             driver,

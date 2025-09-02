@@ -1,3 +1,5 @@
+# tests\test_login_handler.py
+
 import sys
 from pathlib import Path
 
@@ -8,30 +10,33 @@ from sele_saisie_auto.locators import Locators  # noqa: E402
 
 
 class DummyEnc:
-    def __init__(self):
+    def __init__(self) -> None:
         self.calls = []
 
-    def dechiffrer_donnees(self, data, key):
+    def dechiffrer_donnees(self, data, key) -> str | None:
         self.calls.append((data, key))
         return data.decode() if isinstance(data, bytes) else data
 
 
 class DummyCreds:
-    def __init__(self):
+    def __init__(self) -> None:
         self.login = b"user"
         self.password = b"pass"
         self.aes_key = b"key"
 
+    def get_auth_tuple(self) -> tuple[bytes, bytes, bytes]:
+        return self.aes_key, self.login, self.password
+
 
 class DummySession:
-    def __init__(self):
+    def __init__(self) -> None:
         self.wait_calls = []
 
-    def wait_for_dom(self, driver, max_attempts: int = 3):
+    def wait_for_dom(self, driver, max_attempts: int = 3) -> None:
         self.wait_calls.append(driver)
 
 
-def test_login_calls_send_keys(monkeypatch):
+def test_login_calls_send_keys(monkeypatch) -> None:
     actions = []
     monkeypatch.setattr(
         "sele_saisie_auto.automation.login_handler.send_keys_to_element",
@@ -47,7 +52,7 @@ def test_login_calls_send_keys(monkeypatch):
     assert enc.calls[1] == (b"pass", b"key")
 
 
-def test_login_presses_return(monkeypatch):
+def test_login_presses_return(monkeypatch) -> None:
     actions = []
     monkeypatch.setattr(
         "sele_saisie_auto.automation.login_handler.send_keys_to_element",

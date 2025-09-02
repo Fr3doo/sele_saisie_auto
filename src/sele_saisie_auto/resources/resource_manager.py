@@ -1,4 +1,4 @@
-# resource_manager.py
+# src\sele_saisie_auto\resources\resource_manager.py
 """Gestionnaire centralisé du navigateur et de la mémoire partagée."""
 
 from __future__ import annotations
@@ -82,23 +82,23 @@ class ResourceManager:
     ) -> None:
         """Nettoie toutes les ressources ouvertes."""
 
-        if self._driver is not None and self._session is not None:
-            self._session.close()
+        session = self._session
+        if session is not None:
+            if self._driver is not None:
+                session.close()
 
-        if hasattr(self._resource_context, "__exit__"):
-            self._resource_context.__exit__(
-                exc_type,
-                exc if isinstance(exc, Exception) else None,
-                tb,
-            )
-        if self._credentials is not None:
-            self._cleanup_shared_memory(
-                [
-                    self._credentials.mem_key,
-                    self._credentials.mem_login,
-                    self._credentials.mem_password,
-                ]
-            )
+        exit_ctx = getattr(self._resource_context, "__exit__", None)
+        if exit_ctx is not None:
+            handled_exc = exc if isinstance(exc, Exception) else None
+            exit_ctx(exc_type, handled_exc, tb)
+
+        self._cleanup_shared_memory(
+            [
+                getattr(self._credentials, "mem_key", None),
+                getattr(self._credentials, "mem_login", None),
+                getattr(self._credentials, "mem_password", None),
+            ]
+        )
         self._credentials = None
         self._driver = None
         self._session = None
@@ -157,10 +157,9 @@ class ResourceManager:
         """Return decrypted credentials using the encryption service."""
 
         creds = self.get_credentials()
-        login = self._encryption_service.dechiffrer_donnees(creds.login, creds.aes_key)
-        password = self._encryption_service.dechiffrer_donnees(
-            creds.password, creds.aes_key
-        )
+        aes_key, enc_login, enc_pwd = creds.get_auth_tuple()
+        login = self._encryption_service.dechiffrer_donnees(enc_login, aes_key)
+        password = self._encryption_service.dechiffrer_donnees(enc_pwd, aes_key)
         return login, password
 
     def initialize_shared_memory(self, logger: Logger | None = None) -> Credentials:
