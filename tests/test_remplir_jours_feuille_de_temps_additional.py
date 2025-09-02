@@ -89,9 +89,7 @@ def test_traiter_jour_failure(monkeypatch):
             __import__("selenium").common.exceptions.StaleElementReferenceException()
         ),
     )
-    monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1
-    )
+    monkeypatch.setattr("sele_saisie_auto.day_filler.MAX_ATTEMPTS", 1)
     logs = []
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
@@ -111,11 +109,11 @@ def test_remplir_mission_dispatch(monkeypatch):
         return jr
 
     monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.traiter_jour",
+        "sele_saisie_auto.day_filler.DayFiller.traiter_jour",
         fake_traiter,
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.remplir_mission_specifique",
+        "sele_saisie_auto.day_filler.DayFiller.remplir_mission_specifique",
         lambda *a, **k: called.setdefault("spec", True),
     )
     ctx = TimeSheetContext("log", [], {}, {})
@@ -147,9 +145,7 @@ def test_remplir_mission_specifique_failure(monkeypatch):
             __import__("selenium").common.exceptions.StaleElementReferenceException()
         ),
     )
-    monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1
-    )
+    monkeypatch.setattr("sele_saisie_auto.day_filler.MAX_ATTEMPTS", 1)
     logs = []
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
@@ -185,9 +181,7 @@ def test_remplir_mission_specifique_insertion_fail(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.controle_insertion",
         lambda *a, **k: False,
     )
-    monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1
-    )
+    monkeypatch.setattr("sele_saisie_auto.day_filler.MAX_ATTEMPTS", 1)
     logs = []
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
@@ -293,9 +287,7 @@ def test_traiter_jour_controle_insertion_fail(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.controle_insertion",
         lambda *a, **k: False,
     )
-    monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 2
-    )
+    monkeypatch.setattr("sele_saisie_auto.day_filler.MAX_ATTEMPTS", 2)
     logs = []
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
@@ -363,9 +355,7 @@ def test_traiter_champs_mission_insertion_fail(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.controle_insertion",
         lambda *a, **k: False,
     )
-    monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1
-    )
+    monkeypatch.setattr("sele_saisie_auto.day_filler.MAX_ATTEMPTS", 1)
     logs = []
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
@@ -382,7 +372,7 @@ def test_main_handles_other_exceptions(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.initialize", lambda lf: None
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.remplir_jours",
+        "sele_saisie_auto.day_filler.remplir_jours",
         lambda *a, **k: (_ for _ in ()).throw(
             __import__("selenium").common.exceptions.NoSuchElementException()
         ),
@@ -401,7 +391,7 @@ def test_main_webdriver_exception(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.initialize", lambda lf: None
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.remplir_jours",
+        "sele_saisie_auto.day_filler.remplir_jours",
         lambda *a, **k: (_ for _ in ()).throw(
             __import__("selenium").common.exceptions.WebDriverException()
         ),
@@ -420,7 +410,7 @@ def test_main_stale_exception(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.initialize", lambda lf: None
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.remplir_jours",
+        "sele_saisie_auto.day_filler.remplir_jours",
         lambda *a, **k: (_ for _ in ()).throw(
             __import__("selenium").common.exceptions.StaleElementReferenceException()
         ),
@@ -439,7 +429,7 @@ def test_main_generic_exception(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.initialize", lambda lf: None
     )
     monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.remplir_jours",
+        "sele_saisie_auto.day_filler.remplir_jours",
         lambda *a, **k: (_ for _ in ()).throw(Exception("boom")),
     )
     monkeypatch.setattr(

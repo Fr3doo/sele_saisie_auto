@@ -4,10 +4,9 @@
 # Import des bibliothèques nécessaires
 from __future__ import annotations
 
-from collections.abc import Callable
 from configparser import ConfigParser
 from dataclasses import dataclass
-from typing import Any, Protocol, cast, runtime_checkable
+from typing import Protocol, cast, runtime_checkable
 
 from selenium.common.exceptions import (
     NoSuchElementException,
@@ -15,7 +14,6 @@ from selenium.common.exceptions import (
     TimeoutException,
     WebDriverException,
 )
-from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto import messages
@@ -24,6 +22,17 @@ from sele_saisie_auto.constants import (
     ID_TO_KEY_MAPPING,
     JOURS_SEMAINE,
     LISTES_ID_INFORMATIONS_MISSION,
+)
+from sele_saisie_auto.day_filler import (
+    DayFiller,
+    ajouter_jour_a_jours_remplis,
+    est_en_mission_presente,
+    insert_with_retries,
+    remplir_jours,
+    remplir_mission,
+    remplir_mission_specifique,
+    traiter_champs_mission,
+    traiter_jour,
 )
 from sele_saisie_auto.dropdown_options import (
     cgi_options_billing_action as default_cgi_options_billing_action,
@@ -42,18 +51,36 @@ from sele_saisie_auto.selenium_utils import (
     controle_insertion,
     detecter_et_verifier_contenu,
     effacer_et_entrer_valeur,
+)
+from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
+from sele_saisie_auto.selenium_utils import (
     trouver_ligne_par_description,
     verifier_champ_jour_rempli,
     wait_for_dom_ready,
     wait_for_element,
     wait_until_dom_is_stable,
 )
-from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
 from sele_saisie_auto.selenium_utils.wait_helpers import Waiter
 from sele_saisie_auto.selenium_utils.waiter_factory import create_waiter
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT, LONG_TIMEOUT
 from sele_saisie_auto.utils.misc import program_break_time
-from sele_saisie_auto.utils.mission import est_en_mission
+
+__all__ = [
+    "TimeSheetContext",
+    "TimeSheetHelper",
+    "context_from_app_config",
+    "initialize",
+    "wait_for_dom",
+    # Compatibility wrappers
+    "est_en_mission_presente",
+    "ajouter_jour_a_jours_remplis",
+    "remplir_jours",
+    "traiter_jour",
+    "remplir_mission",
+    "remplir_mission_specifique",
+    "insert_with_retries",
+    "traiter_champs_mission",
+]
 
 
 @dataclass
@@ -98,10 +125,7 @@ def context_from_app_config(app_config: AppConfig, log_file: str) -> TimeSheetCo
 # ----------------------------------- CONSTANTE --------------------------------------------- #
 # ------------------------------------------------------------------------------------------- #
 # Variables initialisées lors de l'``initialize``
-LOG_FILE: str = ""
-
-MAX_ATTEMPTS = 5
-JOUR_TO_INDEX: dict[str, int] = {v: k for k, v in JOURS_SEMAINE.items()}
+MAX_ATTEMPTS = DayFiller.MAX_ATTEMPTS
 
 
 # ------------------------------- Helpers "initialize" ------------------------------- #
@@ -166,276 +190,7 @@ def wait_for_dom(driver: WebDriver, waiter: WaiterProtocol | None = None) -> Non
         waiter.wait_for_dom_ready(driver, LONG_TIMEOUT)
 
 
-def est_en_mission_presente(work_days: dict[str, tuple[str, str]]) -> bool:
-    """Vérifie si un jour de travail est marqué comme 'En mission'."""
-    return any(value[0] == "En mission" for value in work_days.values())
-
-
-def ajouter_jour_a_jours_remplis(jour: str, filled_days: list[str]) -> list[str]:
-    """Ajoute un jour à la liste jours_remplis si ce n'est pas déjà fait."""
-    if jour not in filled_days:
-        filled_days.append(jour)
-    return filled_days
-
-
-def _collect_filled_days_for_row(
-    driver: WebDriver, row_index: int, week_days: dict[int, str]
-) -> list[str]:
-    """Retourne les jours déjà remplis pour une ligne donnée."""
-
-    collected: list[str] = []
-    for jour_index, jour_name in week_days.items():
-        input_id = f"POL_TIME{jour_index}${row_index}"
-
-        element = cast(Any, wait_for_element)(
-            driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
-        )
-        if element:
-            jour_rempli = verifier_champ_jour_rempli(element, jour_name)
-            if jour_rempli:
-                collected.append(jour_rempli)
-    return collected
-
-
-def _get_day_element(
-    driver: WebDriver, jour: str, description_cible: str
-) -> tuple[str, Any | None]:
-    """Retourne l'ID et l'élément du jour cible."""
-    row_index = trouver_ligne_par_description(driver, description_cible, "POL_DESCR$")
-    if row_index is None:
-        return "", None
-    input_id = f"POL_TIME{JOUR_TO_INDEX[jour]}${row_index}"
-    element = cast(Any, wait_for_element)(
-        driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
-    )
-    return input_id, element
-
-
-# ------------------------------------------------------------------------------------------- #
-# ----------------------------------- FONCTIONS --------------------------------------------- #
-# ------------------------------------------------------------------------------------------- #
-
-
-def remplir_jours(
-    driver: WebDriver,
-    item_descriptions: list[str],
-    week_days: dict[int, str],
-    filled_days: list[str],
-    context: TimeSheetContext,
-) -> list[str]:
-    """Remplir les jours dans l'application web."""
-    if not item_descriptions:
-        return filled_days
-
-    # Parcourir chaque description dans item_descriptions
-    for description_cible in item_descriptions:
-        # Recherche de la ligne avec la description spécifiée pour le jour
-        id_value = "POL_DESCR$"
-        row_index = trouver_ligne_par_description(driver, description_cible, id_value)
-
-        # Si la ligne est trouvée, collecter les jours remplis pour cette ligne
-        if row_index is not None:
-            filled_days.extend(
-                _collect_filled_days_for_row(driver, row_index, week_days)
-            )
-
-    return filled_days
-
-
-def traiter_jour(
-    driver: WebDriver,
-    jour: str,
-    description_cible: str,
-    value_to_fill: str,
-    filled_days: list[str],
-    context: TimeSheetContext,
-) -> list[str]:
-    """Traiter un jour spécifique pour le remplissage (flux épuré, garde-fous précoces)."""
-    if jour in filled_days or not description_cible:
-        return filled_days
-    input_id, element = _get_day_element(driver, jour, description_cible)
-    if element is None or not insert_with_retries(
-        driver, input_id, value_to_fill, None
-    ):
-        return filled_days
-    filled_days = ajouter_jour_a_jours_remplis(jour, filled_days)
-    afficher_message_insertion(jour, value_to_fill, 0, "après insertion", LOG_FILE)
-    return filled_days
-
-
-def remplir_mission(
-    driver: WebDriver,
-    work_days: dict[str, tuple[str, str]],
-    filled_days: list[str],
-    context: TimeSheetContext,
-) -> list[str]:
-    """Remplir les jours de travail pour les missions."""
-    for jour, (description_cible, value_to_fill) in work_days.items():
-        if jour in filled_days:
-            continue
-        if not description_cible:
-            continue
-        if est_en_mission(description_cible):
-            remplir_mission_specifique(
-                driver, jour, value_to_fill, filled_days, context
-            )
-        else:
-            traiter_jour(
-                driver,
-                jour,
-                description_cible,
-                value_to_fill,
-                filled_days,
-                context,
-            )
-    return filled_days
-
-
-def remplir_mission_specifique(
-    driver: WebDriver,
-    jour: str,
-    value_to_fill: str,
-    filled_days: list[str],
-    context: TimeSheetContext,
-) -> None:
-    """Cas spécifique pour les jours en mission.
-    Cas où description_cible est "En mission", on écrit directement dans les IDs spécifiques sans utiliser `description_cible`
-    """
-    input_id = f"TIME{JOUR_TO_INDEX[jour]}$0"
-    element = cast(Any, wait_for_element)(
-        driver, By.ID, input_id, timeout=DEFAULT_TIMEOUT
-    )
-    if element and insert_with_retries(driver, input_id, value_to_fill, None):
-        filled_days = ajouter_jour_a_jours_remplis(jour, filled_days)
-        afficher_message_insertion(
-            jour,
-            value_to_fill,
-            0,
-            "après insertion",
-            LOG_FILE,
-        )
-
-
-def _wait_and_get_element(
-    driver: WebDriver, field_id: str, waiter: WaiterProtocol | None
-) -> Any | None:
-    """Attendre le DOM puis récupérer l'élément."""
-    if waiter is not None:
-        wait_for_dom(driver, waiter=waiter)
-    else:
-        wait_for_dom(driver)
-    getter: Callable[..., Any] = (
-        waiter.wait_for_element if waiter else cast(Any, wait_for_element)
-    )
-    return getter(driver, By.ID, field_id, timeout=DEFAULT_TIMEOUT)
-
-
-def _try_fill_once(driver: WebDriver, field_id: str, value: str) -> bool:
-    """Une tentative d'insertion (succès si déjà correct ou insertion ok)."""
-    input_field, is_correct_value = detecter_et_verifier_contenu(
-        driver, field_id, value
-    )
-    if input_field is None:
-        raise RuntimeError("detecter_et_verifier_contenu returned None")
-    if is_correct_value:
-        write_log(
-            f"Valeur correcte déjà présente pour '{field_id}'.", LOG_FILE, "DEBUG"
-        )
-        return True
-    effacer_et_entrer_valeur(input_field, value)
-    program_break_time(1, "Stabilisation du DOM après insertion.")
-    write_log(messages.DOM_STABLE, LOG_FILE, "DEBUG")
-    if cast(Callable[[Any, str], bool], controle_insertion)(input_field, value):
-        write_log(
-            f"Valeur '{value}' insérée avec succès pour '{field_id}'.",
-            LOG_FILE,
-            "DEBUG",
-        )
-        return True
-    return False
-
-
-def _log_insert_failure(field_id: str, max_attempts: int) -> None:
-    write_log(
-        f"{messages.ECHEC_INSERTION} pour '{field_id}' après {max_attempts} tentatives.",
-        LOG_FILE,
-        "ERROR",
-    )
-
-
-def _insert_value_with_retries(
-    driver: WebDriver,
-    field_id: str,
-    value: str,
-    max_attempts: int,
-    waiter: WaiterProtocol | None,
-) -> bool:
-    """Essaye d'insérer la valeur plusieurs fois si nécessaire (boucle compacte)."""
-    if not _wait_and_get_element(driver, field_id, waiter):
-        return False
-    for attempt in range(max_attempts):
-        try:
-            if _try_fill_once(driver, field_id, value):
-                return True
-        except StaleElementReferenceException:
-            write_log(
-                f"{messages.REFERENCE_OBSOLETE} pour '{field_id}', tentative {attempt + 1}.",
-                LOG_FILE,
-                "ERROR",
-            )
-    _log_insert_failure(field_id, max_attempts)
-    return False
-
-
-def insert_with_retries(
-    driver: WebDriver,
-    field_id: str,
-    value: str,
-    waiter: WaiterProtocol | None = None,
-) -> bool:
-    """Generic helper using :func:`_insert_value_with_retries` with default attempts."""
-
-    return _insert_value_with_retries(driver, field_id, value, MAX_ATTEMPTS, waiter)
-
-
-def traiter_champs_mission(
-    driver: WebDriver,
-    listes_id_informations_mission: list[str],
-    id_to_key_mapping: dict[str, str],
-    project_mission_info: dict[str, str],
-    context: TimeSheetContext,
-    max_attempts: int = 5,
-    waiter: WaiterProtocol | None = None,
-) -> None:
-    """Traite les champs associés aux missions ('En mission') en insérant les valeurs nécessaires."""
-    for id in listes_id_informations_mission:
-        key = id_to_key_mapping.get(id)
-        if (
-            key is None or key == "sub_category_code"
-        ):  # Exclure les champs non concernés
-            continue
-
-        value_to_fill = project_mission_info.get(key)
-        if not value_to_fill:
-            write_log(
-                f"Aucune valeur trouvée pour le champ '{key}' (ID: {id}).",
-                context.log_file,
-                "DEBUG",
-            )
-            continue
-
-        write_log(
-            f"Traitement de l'élément : {key} avec ID : {id} et valeur : {value_to_fill}.",
-            context.log_file,
-            "DEBUG",
-        )
-        _insert_value_with_retries(
-            driver,
-            id,
-            value_to_fill,
-            max_attempts,
-            waiter,
-        )
+# Compatibility wrappers delegating to :class:`DayFiller`.
 
 
 # ----------------------------------------------------------------------------- #
@@ -456,7 +211,7 @@ class TimeSheetHelper:
         """Initialise l'assistant avec un ``Logger`` et un ``Waiter``."""
         self.context = context
         self.logger = logger
-        self.log_file = logger.log_file
+        self.log_file: str = logger.log_file or ""
         self.waiter: WaiterProtocol
         if waiter is None:
             cfg = context.config
@@ -473,8 +228,7 @@ class TimeSheetHelper:
             self.waiter = waiter
         self.additional_info_page = additional_info_page
         self.browser_session = browser_session
-        global LOG_FILE
-        LOG_FILE = self.log_file  # type: ignore[assignment]
+        self.day_filler = DayFiller(context, self.logger, self.waiter)
 
     def wait_for_dom(self, driver: WebDriver) -> None:
         """Attend que le DOM soit prêt via ``Waiter``."""
@@ -490,35 +244,18 @@ class TimeSheetHelper:
     ) -> list[str]:
         """Remplit les jours hors mission."""
         self.logger.debug("Début du remplissage des jours hors mission...")
-        liste = [] if self.context is None else self.context.item_descriptions
-        ctx = self.context or TimeSheetContext(self.log_file or "", [], {}, {})
-        return remplir_jours(driver, liste, JOURS_SEMAINE, filled_days, ctx)
+        return self.day_filler.fill_standard_days(driver, filled_days)
 
     def fill_work_missions(
         self, driver: WebDriver, filled_days: list[str]
     ) -> list[str]:
         """Traite les jours en mission."""
         self.logger.debug("Début du traitement des jours de travail et des missions...")
-        work_days = {} if self.context is None else self.context.work_days
-        ctx = self.context or TimeSheetContext(self.log_file or "", [], {}, {})
-        return remplir_mission(driver, work_days, filled_days, ctx)
+        return self.day_filler.fill_work_missions(driver, filled_days)
 
     def handle_additional_fields(self, driver: WebDriver) -> None:
         """Insère les champs complémentaires liés aux missions."""
-        if self.context and est_en_mission_presente(self.context.work_days):
-            self.logger.debug(
-                "Jour 'En mission' détecté. Traitement des champs associés..."
-            )
-            traiter_champs_mission(
-                driver,
-                LISTES_ID_INFORMATIONS_MISSION,
-                ID_TO_KEY_MAPPING,
-                self.context.project_mission_info,
-                self.context,
-                waiter=self.waiter,
-            )
-        else:
-            self.logger.debug("Aucun Jour 'En mission' détecté.")
+        self.day_filler.handle_additional_fields(driver)
 
     def run(self, driver: WebDriver | None) -> None:
         """Orchestre toutes les étapes de remplissage."""
@@ -536,7 +273,7 @@ class TimeSheetHelper:
         ) as exc:
             self._log_selenium_error(exc)
         except Exception as exc:  # pragma: no cover - sauvegarde générale
-            log_error(f"{messages.ERREUR_INATTENDUE} : {exc}.", LOG_FILE)
+            log_error(f"{messages.ERREUR_INATTENDUE} : {exc}.", self.log_file)
 
     def _run_steps(self, driver: WebDriver) -> None:
         """Exécute les étapes principales de remplissage."""
@@ -573,7 +310,7 @@ class TimeSheetHelper:
             WebDriverException: f"Erreur {messages.WEBDRIVER}",
         }
         message = mapping.get(type(error), messages.ERREUR_INATTENDUE)
-        log_error(f"{message} : {error}.", LOG_FILE)
+        log_error(f"{message} : {error}.", self.log_file)
 
 
 def main(driver: WebDriver | None, log_file: str) -> None:
