@@ -4,7 +4,7 @@ import os
 from contextlib import suppress
 from dataclasses import dataclass
 from multiprocessing import shared_memory
-from typing import Protocol, runtime_checkable
+from typing import Protocol, TypeAlias, runtime_checkable
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.padding import PKCS7
@@ -15,6 +15,7 @@ from sele_saisie_auto.memory_config import MemoryConfig
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.shared_utils import get_log_file
 
+AuthTuple: TypeAlias = tuple[bytes, bytes, bytes]
 
 @runtime_checkable
 class EncryptionBackend(Protocol):
@@ -48,14 +49,14 @@ class DefaultEncryptionBackend:
         self, donnees: str, cle: bytes, taille_bloc: int = 128
     ) -> bytes:
         try:
-            chiffre = Cipher(algorithms.AES(cle), modes.CBC(os.urandom(16)))
+            iv = os.urandom(16)
+            chiffre = Cipher(algorithms.AES(cle), modes.CBC(iv))
             chiffreur = chiffre.encryptor()
             padder = PKCS7(taille_bloc).padder()
             donnees_pad = padder.update(donnees.encode()) + padder.finalize()
             donnees_chiffrees = chiffreur.update(donnees_pad) + chiffreur.finalize()
-            iv_bytes: bytes = bytes(chiffre.mode.initialization_vector)
             self.logger.debug("Données chiffrées avec succès")
-            return bytes(iv_bytes + donnees_chiffrees)
+            return iv + donnees_chiffrees
         except Exception as e:
             self.logger.error(f"❌ Erreur lors du chiffrement des données : {e}")
             raise
@@ -90,8 +91,14 @@ class Credentials:
     password: bytes
     mem_password: shared_memory.SharedMemory
 
-    def get_auth_tuple(self) -> tuple[bytes, bytes, bytes]:
-        """Return the AES key, encrypted login and password."""
+    def get_auth_tuple(self) -> AuthTuple:
+        """Return credentials as a tuple in the **exact** order:
+
+        ``(aes_key, login, password)``
+
+        L'ordre est **contractuel** et utilisé par les appelants (navigation & orchestration).
+        Garder cet ordre **strictement stable**.
+        """
         return self.aes_key, self.login, self.password
 
 

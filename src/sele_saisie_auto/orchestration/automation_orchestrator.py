@@ -4,7 +4,7 @@ from __future__ import annotations
 import types
 from collections.abc import Callable
 from multiprocessing import shared_memory
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, cast
 
 from selenium.webdriver.common.by import By
 
@@ -35,6 +35,7 @@ from sele_saisie_auto.selenium_utils import (  # noqa: F401  # re-export
 )
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 
+AuthTuple: TypeAlias = tuple[bytes, bytes, bytes]
 
 class CredsProtocol(Protocol):
     aes_key: bytes
@@ -44,9 +45,13 @@ class CredsProtocol(Protocol):
     mem_login: shared_memory.SharedMemory
     mem_password: shared_memory.SharedMemory
 
-    def get_auth_tuple(self) -> tuple[bytes, bytes, bytes]:
-        """Return the AES key, login and password."""
-        ...
+    def get_auth_tuple(self) -> AuthTuple:
+        """Return credentials in the **exact** order ``(aes_key, login, password)``."""
+        return (
+            self.aes_key,
+            self.login,
+            self.password,
+        )
 
 
 __all__ = ["AutomationOrchestrator", "detecter_doublons_jours"]
