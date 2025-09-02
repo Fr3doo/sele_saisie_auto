@@ -116,8 +116,8 @@ def test_handle_additional_fields_dispatch(monkeypatch):
     )
     captured = {}
 
-    def fake_traiter(driver, ids, mapping, info, c, waiter=None):
-        captured["args"] = (ids, mapping, info, c, waiter)
+    def fake_traiter(driver, fields, info, c, waiter=None):
+        captured["args"] = (fields, info, c, waiter)
 
     monkeypatch.setattr(
         "sele_saisie_auto.day_filler.traiter_champs_mission",
@@ -126,14 +126,10 @@ def test_handle_additional_fields_dispatch(monkeypatch):
 
     helper.handle_additional_fields("drv")
 
-    from sele_saisie_auto.constants import (
-        ID_TO_KEY_MAPPING,
-        LISTES_ID_INFORMATIONS_MISSION,
-    )
+    from sele_saisie_auto.enums import MissionField
 
     assert captured["args"] == (
-        LISTES_ID_INFORMATIONS_MISSION,
-        ID_TO_KEY_MAPPING,
+        list(MissionField),
         ctx.project_mission_info,
         ctx,
         helper.waiter,

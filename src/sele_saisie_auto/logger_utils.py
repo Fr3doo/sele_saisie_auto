@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Literal
 
 from sele_saisie_auto import messages
-from sele_saisie_auto.enums import LogLevel
+from sele_saisie_auto.enums import AlertMessage, LogLevel
 from sele_saisie_auto.exceptions import InvalidConfigError
 
 # ----------------------------------------------------------------------------- #
@@ -185,12 +185,15 @@ def is_log_level_allowed(
     return LOG_LEVELS[cur] >= LOG_LEVELS[conf]
 
 
-def format_message(code: str, details: dict[str, str] | None = None) -> str:
+def format_message(
+    code: AlertMessage | str, details: dict[str, str] | None = None
+) -> str:
     """Return the message associated with ``code`` formatted with ``details``."""
 
-    template = MESSAGE_TEMPLATES.get(code)
+    key = code.value if isinstance(code, AlertMessage) else code
+    template = MESSAGE_TEMPLATES.get(key)
     if template is None:
-        raise KeyError(f"Unknown message code: {code}")
+        raise KeyError(f"Unknown message code: {key}")
     if details is None:
         details = {}
     return template.format(**details)

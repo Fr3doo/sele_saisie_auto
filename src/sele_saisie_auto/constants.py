@@ -1,5 +1,7 @@
 """Module contenant les constantes partagées."""
 
+from sele_saisie_auto.enums import MissionField
+
 # Mapping numerique -> nom du jour
 JOURS_SEMAINE = {
     1: "dimanche",
@@ -11,21 +13,8 @@ JOURS_SEMAINE = {
     7: "samedi",
 }
 
-
 # Liste des IDs associés aux informations du projet
-LISTES_ID_INFORMATIONS_MISSION = [
-    "PROJECT_CODE$0",
-    "ACTIVITY_CODE$0",
-    "CATEGORY_CODE$0",
-    "SUB_CATEGORY_CODE$0",
-    "BILLING_ACTION$0",
-]
+LISTES_ID_INFORMATIONS_MISSION = [field.value for field in MissionField]
 
 # Correspondance entre l'ID d'un champ et la clé de configuration associée
-ID_TO_KEY_MAPPING = {
-    "PROJECT_CODE$0": "project_code",
-    "ACTIVITY_CODE$0": "activity_code",
-    "CATEGORY_CODE$0": "category_code",
-    "SUB_CATEGORY_CODE$0": "sub_category_code",
-    "BILLING_ACTION$0": "billing_action",
-}
+ID_TO_KEY_MAPPING = {field.value: field.config_key for field in MissionField}
