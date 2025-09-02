@@ -1,11 +1,10 @@
 # src\sele_saisie_auto\navigation\page_navigator.py
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from sele_saisie_auto.encryption_utils import Credentials
 from sele_saisie_auto.interfaces import (
     AdditionalInfoPageProtocol,
     BrowserSessionProtocol,
@@ -14,6 +13,17 @@ from sele_saisie_auto.interfaces import (
     TimeSheetHelperProtocol,
 )
 from sele_saisie_auto.selenium_utils import detecter_doublons_jours
+
+AuthTuple: TypeAlias = tuple[bytes, bytes, bytes]
+
+
+class CredsProtocol(Protocol):
+    """Minimal protocol for retrieving encrypted credentials."""
+
+    def get_auth_tuple(self) -> AuthTuple:
+        """Return ``(aes_key, login, password)`` in this order."""
+        ...
+
 
 if TYPE_CHECKING:
     pass
@@ -46,10 +56,10 @@ class PageNavigator:
             self.timesheet_helper.additional_info_page = additional_info_page
         if hasattr(self.timesheet_helper, "browser_session"):
             self.timesheet_helper.browser_session = browser_session
-        self.credentials: Credentials | None = None
+        self.credentials: CredsProtocol | None = None
         self.date_cible: str | None = None
 
-    def prepare(self, credentials: Credentials, date_cible: str) -> None:
+    def prepare(self, credentials: CredsProtocol, date_cible: str) -> None:
         """Store ``credentials`` and ``date_cible`` for later use."""
 
         self.credentials = credentials
@@ -58,14 +68,10 @@ class PageNavigator:
     # ------------------------------------------------------------------
     # Delegated actions
     # ------------------------------------------------------------------
-    def login(
-        self,
-        driver: WebDriver,
-        aes_key: bytes,
-        encrypted_login: bytes,
-        encrypted_password: bytes,
-    ) -> None:
+    def login(self, driver: WebDriver, credentials: CredsProtocol) -> None:
         """Connecte l'utilisateur à PSA Time via :class:`LoginHandler`."""
+
+        aes_key, encrypted_login, encrypted_password = credentials.get_auth_tuple()
         self.login_handler.connect_to_psatime(
             driver, aes_key, encrypted_login, encrypted_password
         )
@@ -110,8 +116,7 @@ class PageNavigator:
         if self.credentials is None or self.date_cible is None:
             raise RuntimeError("PageNavigator not prepared")
 
-        aes_key, login, password = self.credentials.get_auth_tuple()
-        self.login(driver, aes_key, login, password)
+        self.login(driver, self.credentials)
         self.navigate_to_date_entry(driver, self.date_cible)
         self.fill_timesheet(driver)
         self.finalize_timesheet(driver)
