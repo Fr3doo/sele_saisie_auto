@@ -241,6 +241,13 @@ class EncryptionService:
             self.logger.error(msg)
             with suppress(Exception):  # nosec B110
                 self.remove_shared_memory(mem_key)
+                # Ensure the AES key segment is fully removed even if another
+                # handle is still open.  This avoids leaving a stale shared
+                # memory block accessible under ``cle_name`` when retrieving
+                # credentials fails partway through.
+                self.shared_memory_service.ensure_clean_segment(
+                    self.memory_config.cle_name, self.memory_config.key_size
+                )
             raise AutomationExitError(msg) from exc
 
         return Credentials(
