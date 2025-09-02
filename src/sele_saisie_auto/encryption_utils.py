@@ -239,8 +239,7 @@ class EncryptionService:
         except FileNotFoundError as exc:
             msg = "identifiants non trouvés : lancez d'abord psatime-launcher"
             self.logger.error(msg)
-            with suppress(Exception):  # nosec B110
-                self.remove_shared_memory(mem_key)
+            self._cleanup_failed_retrieval(mem_key)
             raise AutomationExitError(msg) from exc
 
         return Credentials(
@@ -251,6 +250,21 @@ class EncryptionService:
             password=password,
             mem_password=mem_pwd,
         )
+
+    def _cleanup_failed_retrieval(self, mem_key: shared_memory.SharedMemory) -> None:
+        """Best-effort cleanup when credential segments are missing."""
+
+        with suppress(Exception):  # nosec B110
+            self.remove_shared_memory(mem_key)
+        with suppress(Exception):  # nosec B110
+            key_handle = self._memoires[0] if self._memoires else None
+            for mem in self._memoires[1:]:
+                self.remove_shared_memory(mem)
+            if key_handle is not None:
+                close = getattr(key_handle, "close", None)
+                if callable(close):
+                    close()
+            self._memoires.clear()
 
     def close_credentials(self, creds: Credentials) -> None:
         """Release shared memory segments obtained via ``retrieve_credentials``."""
