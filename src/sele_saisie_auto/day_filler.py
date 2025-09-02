@@ -53,7 +53,7 @@ def remplir_jours(
     item_descriptions: list[str],
     week_days: dict[int, str],
     filled_days: list[str],
-    context: "TimeSheetContext",
+    context: TimeSheetContext,
 ) -> list[str]:
     return DayFiller(context, logger=None).remplir_jours(
         driver, item_descriptions, week_days, filled_days
@@ -66,7 +66,7 @@ def traiter_jour(
     description_cible: str,
     value_to_fill: str,
     filled_days: list[str],
-    context: "TimeSheetContext",
+    context: TimeSheetContext,
 ) -> list[str]:
     return DayFiller(context, logger=None).traiter_jour(
         driver, jour, description_cible, value_to_fill, filled_days
@@ -78,7 +78,7 @@ def remplir_mission_specifique(
     jour: str,
     value_to_fill: str,
     filled_days: list[str],
-    context: "TimeSheetContext",
+    context: TimeSheetContext,
 ) -> None:
     DayFiller(context, logger=None).remplir_mission_specifique(
         driver, jour, value_to_fill, filled_days
@@ -89,7 +89,7 @@ def remplir_mission(
     driver: WebDriver,
     work_days: dict[str, tuple[str, str]],
     filled_days: list[str],
-    context: "TimeSheetContext",
+    context: TimeSheetContext,
 ) -> list[str]:
     return DayFiller(context, logger=None).remplir_mission(
         driver, work_days, filled_days
@@ -100,7 +100,7 @@ def insert_with_retries(
     driver: WebDriver,
     field_id: str,
     value: str,
-    context: "TimeSheetContext",
+    context: TimeSheetContext,
     waiter: WaiterProtocol | None = None,
 ) -> bool:
     return DayFiller(context, logger=None, waiter=waiter).insert_with_retries(
@@ -113,7 +113,7 @@ def traiter_champs_mission(
     listes_id_informations_mission: list[str],
     id_to_key_mapping: dict[str, str],
     project_mission_info: dict[str, str],
-    context: "TimeSheetContext",
+    context: TimeSheetContext,
     max_attempts: int = MAX_ATTEMPTS,
     waiter: WaiterProtocol | None = None,
 ) -> None:
@@ -134,7 +134,7 @@ class DayFiller:
 
     def __init__(
         self,
-        context: "TimeSheetContext",
+        context: TimeSheetContext,
         logger: LoggerProtocol | None,
         waiter: WaiterProtocol | None = None,
     ) -> None:
