@@ -278,10 +278,16 @@ class AutomationOrchestrator:
     # Run helpers (réduction CC)
     # ----------------------------
     def _date_cible_str(self) -> str:
+        """Return the target date as a non-empty string or '' if absent.
+        Une date vide ou 'None' déclenche la sélection automatique du prochain samedi."""
         dc = getattr(self.config, "date_cible", None)
-        if not isinstance(dc, str) or not dc.strip():
-            raise ValueError("date_cible manquante ou invalide")
-        return dc
+        if dc is None:
+            return ""  # aucune date => mode auto
+        dc_str = str(dc).strip()
+        # Gérer les chaînes 'None' ou vides (ex. valeur saisie dans config.ini)
+        if not dc_str or dc_str.lower() == "none":
+            return ""
+        return dc_str
 
     def _ensure_config(self) -> None:
         """Charge la config si nécessaire (early guard)."""
