@@ -49,9 +49,11 @@ from sele_saisie_auto.selenium_utils import (  # noqa: F401  # re-export  # noqa
     detecter_doublons_jours,
     modifier_date_input,
     send_keys_to_element,
-    wait_for_dom_after,
 )
 from sele_saisie_auto.selenium_utils import set_log_file as set_log_file_selenium
+from sele_saisie_auto.selenium_utils import (  # noqa: F401  # re-export  # noqa: F401  # re-export  # noqa: F401  # re-export  # noqa: F401  # re-export
+    wait_for_dom_after,
+)
 from sele_saisie_auto.shared_memory_service import SharedMemoryService
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.date_utils import get_next_saturday_if_not_saturday
@@ -73,6 +75,10 @@ class Credentials:
     mem_login: shared_memory.SharedMemory
     password: bytes
     mem_password: shared_memory.SharedMemory
+
+    def get_auth_tuple(self) -> tuple[bytes, bytes, bytes]:
+        """Return the AES key, encrypted login and password."""
+        return self.aes_key, self.login, self.password
 
 
 __all__ = [

@@ -110,12 +110,8 @@ class PageNavigator:
         if self.credentials is None or self.date_cible is None:
             raise RuntimeError("PageNavigator not prepared")
 
-        self.login(
-            driver,
-            self.credentials.aes_key,
-            self.credentials.login,
-            self.credentials.password,
-        )
+        aes_key, login, password = self.credentials.get_auth_tuple()
+        self.login(driver, aes_key, login, password)
         self.navigate_to_date_entry(driver, self.date_cible)
         self.fill_timesheet(driver)
         self.finalize_timesheet(driver)
