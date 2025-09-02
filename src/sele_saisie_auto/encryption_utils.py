@@ -122,9 +122,11 @@ class EncryptionService:
         return service or SharedMemoryService(self.logger)
 
     def remove_shared_memory(self, memoire: shared_memory.SharedMemory) -> None:
-        """Delegate secure removal of ``memoire`` to the underlying service."""
+        """Securely remove ``memoire`` and discard it from the internal list."""
 
         self.shared_memory_service.supprimer_memoire_partagee_securisee(memoire)
+        with suppress(ValueError):
+            self._memoires.remove(memoire)
 
     def _creer_segment_si_besoin(
         self, nom: str, donnees: bytes
@@ -215,7 +217,7 @@ class EncryptionService:
         tb: object | None,
     ) -> None:
         """Securely remove all allocated shared memories."""
-        for mem in self._memoires:
+        for mem in list(self._memoires):
             with suppress(Exception):  # nosec B110
                 self.remove_shared_memory(mem)
         self._memoires.clear()
@@ -241,6 +243,8 @@ class EncryptionService:
             self.logger.error(msg)
             with suppress(Exception):  # nosec B110
                 self.remove_shared_memory(mem_key)
+                if "mem_login" in locals():
+                    self.remove_shared_memory(mem_login)
             raise AutomationExitError(msg) from exc
 
         return Credentials(
