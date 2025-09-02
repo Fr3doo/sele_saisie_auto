@@ -2,6 +2,18 @@
 
 
 # Import des bibliothèques nécessaires
+"""Orchestrateur de saisie de feuille de temps.
+
+Résumé interne (rôles & règles) :
+- :class:`TimeSheetHelper` orchestre et délègue au :class:`DayFiller` (unique instance).
+- Les *wrappers* exposés ici sont de minces passe-plats vers le ``DayFiller`` pour
+  préserver la compatibilité — aucune logique métier dans ces wrappers.
+- Pas de variable globale de log ; on passe toujours par ``self.log_file``.
+- Les insertions utilisent ``insert_with_retries`` pour maintenir une cc faible (≤ 5).
+- La surface publique est maîtrisée via ``__all__`` : les helpers internes du
+  ``DayFiller`` ne sont pas exportés.
+"""
+
 from __future__ import annotations
 
 from configparser import ConfigParser

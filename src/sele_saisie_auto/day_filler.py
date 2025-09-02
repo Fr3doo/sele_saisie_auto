@@ -1,7 +1,19 @@
+# src\sele_saisie_auto\day_filler.py
+
+
+# Import des bibliothèques nécessaires
 """Helpers to fill the timesheet grid.
 
-``DayFiller`` centralises the insertion logic while the thin module-level
-functions preserve the historic functional API for compatibility.
+Résumé interne (architecture & discipline) :
+- DayFiller centralise toute la logique DOM (attentes, réessais, insertion).
+- TimeSheetHelper orchestre et délègue à une seule instance de DayFiller (DI explicite).
+- Les wrappers de compatibilité sont des passe-plats minces ; l’API publique est
+  maîtrisée ici via ``__all__ = ["DayFiller"]`` (les helpers internes ne sont pas exportés).
+- Aucune variable globale de log : toujours ``self.log_file`` (issu du logger/contexte).
+- Les réessais d’insertion passent par ``insert_with_retries`` (cc ≤ 5 via helpers privés).
+
+Les fonctions module-level ne servent qu’à la compatibilité de l’ancien API et
+redirigent vers :class:`DayFiller`.
 """
 
 from __future__ import annotations
@@ -157,6 +169,22 @@ class DayFiller:
     def _should_skip_field(key: str | None) -> bool:
         return key is None or key == "sub_category_code"
 
+    def _resolve_value(
+        self,
+        field_id: str,
+        id_to_key_mapping: dict[str, str],
+        project_mission_info: dict[str, str],
+    ) -> tuple[str, str] | None:
+        """Retourne (key, value) si le champ est pertinent et renseigné, sinon None."""
+        key = id_to_key_mapping.get(field_id)
+        if self._should_skip_field(key):
+            return None
+        key = cast(str, key)
+        value = project_mission_info.get(key)
+        if not value:
+            return None
+        return key, value
+
     def _collect_filled_days_for_row(
         self, driver: WebDriver, row_index: int, week_days: dict[int, str]
     ) -> list[str]:
@@ -276,16 +304,16 @@ class DayFiller:
                 )
         return filled_days
 
-    def _wait_and_get_element(
+    def _ensure_element_ready(
         self, driver: WebDriver, field_id: str, waiter: WaiterProtocol | None
-    ) -> Any | None:
+    ) -> bool:
+        """Attend le DOM et vérifie la présence de l’élément (précondition des réessais)."""
         rjf = _rjf()
-
         self.wait_for_dom(driver, waiter)
         getter: Callable[..., Any] = (
             waiter.wait_for_element if waiter else cast(Any, rjf.wait_for_element)
         )
-        return getter(driver, By.ID, field_id, timeout=DEFAULT_TIMEOUT)
+        return getter(driver, By.ID, field_id, timeout=DEFAULT_TIMEOUT) is not None
 
     def _try_fill_once(self, driver: WebDriver, field_id: str, value: str) -> bool:
         rjf = _rjf()
@@ -314,6 +342,24 @@ class DayFiller:
             return True
         return False
 
+
+    def _log_stale(self, field_id: str, attempt_index: int) -> None:
+        rjf = _rjf()
+        rjf.write_log(
+            f"{messages.REFERENCE_OBSOLETE} pour '{field_id}', tentative {attempt_index + 1}.",
+            self.log_file,
+            "ERROR",
+        )
+
+    def _attempt_insert(
+        self, driver: WebDriver, field_id: str, value: str, attempt_index: int
+    ) -> bool:
+        try:
+            return self._try_fill_once(driver, field_id, value)
+        except StaleElementReferenceException:
+            self._log_stale(field_id, attempt_index)
+            return False
+
     def _log_insert_failure(self, field_id: str, max_attempts: int) -> None:
         rjf = _rjf()
 
@@ -331,20 +377,11 @@ class DayFiller:
         max_attempts: int,
         waiter: WaiterProtocol | None,
     ) -> bool:
-        if not self._wait_and_get_element(driver, field_id, waiter):
+        if not self._ensure_element_ready(driver, field_id, waiter):
             return False
         for attempt in range(max_attempts):
-            try:
-                if self._try_fill_once(driver, field_id, value):
-                    return True
-            except StaleElementReferenceException:
-                rjf = _rjf()
-
-                rjf.write_log(
-                    f"{messages.REFERENCE_OBSOLETE} pour '{field_id}', tentative {attempt + 1}.",
-                    self.log_file,
-                    "ERROR",
-                )
+            if self._attempt_insert(driver, field_id, value, attempt):
+                return True            
         self._log_insert_failure(field_id, max_attempts)
         return False
 
@@ -357,7 +394,7 @@ class DayFiller:
     ) -> bool:
         waiter_to_use = waiter or self.waiter
         return self._insert_value_with_retries(
-            driver, field_id, value, MAX_ATTEMPTS, waiter_to_use
+            driver, field_id, value, self.MAX_ATTEMPTS, waiter_to_use
         )
 
     # ------------------------------------------------------------------
@@ -404,25 +441,18 @@ class DayFiller:
     ) -> None:
         rjf = _rjf()
 
-        for id in listes_id_informations_mission:
-            key = id_to_key_mapping.get(id)
-            if self._should_skip_field(key):
+        for field_id in listes_id_informations_mission:
+            resolved = self._resolve_value(field_id, id_to_key_mapping, project_mission_info)
+            if not resolved:
+                # key absente, champ à ignorer, ou valeur manquante → on saute tôt
                 continue
-            key = cast(str, key)
-            value_to_fill = project_mission_info.get(key)
-            if not value_to_fill:
-                rjf.write_log(
-                    f"Aucune valeur trouvée pour le champ '{key}' (ID: {id}).",
-                    self.log_file,
-                    "DEBUG",
-                )
-                continue
+            key, value_to_fill = resolved
             rjf.write_log(
-                f"Traitement de l'élément : {key} avec ID : {id} et valeur : {value_to_fill}.",
+                f"Traitement de l'élément : {key} avec ID : {field_id} et valeur : {value_to_fill}.",
                 self.log_file,
                 "DEBUG",
             )
             waiter_to_use = waiter or self.waiter
             self._insert_value_with_retries(
-                driver, id, value_to_fill, max_attempts, waiter_to_use
+                driver, field_id, value_to_fill, max_attempts, waiter_to_use
             )
