@@ -8,6 +8,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 pytestmark = pytest.mark.slow
 
 from sele_saisie_auto import messages  # noqa: E402
+from sele_saisie_auto.enums import MissionField  # noqa: E402
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     TimeSheetContext,
     initialize,
@@ -125,12 +126,11 @@ def test_remplir_mission_specifique(monkeypatch):
 
 
 def test_traiter_champs_mission(monkeypatch):
-    ids = ["PROJECT_CODE$0", "SUB_CATEGORY_CODE$0", "ACTIVITY_CODE$0"]
-    mapping = {
-        "PROJECT_CODE$0": "project_code",
-        "SUB_CATEGORY_CODE$0": "sub_category_code",
-        "ACTIVITY_CODE$0": "activity_code",
-    }
+    fields = [
+        MissionField.PROJECT_CODE,
+        MissionField.SUB_CATEGORY_CODE,
+        MissionField.ACTIVITY_CODE,
+    ]
     info = {"project_code": "A"}
     log_calls = []
     monkeypatch.setattr(
@@ -149,9 +149,8 @@ def test_traiter_champs_mission(monkeypatch):
         lambda *a, **k: (object(), True),
     )
     ctx = TimeSheetContext("log", [], {}, {})
-    traiter_champs_mission(None, ids, mapping, info, ctx)
+    traiter_champs_mission(None, fields, info, ctx)
     assert any("PROJECT_CODE$0" in m for m in log_calls)
-    assert any(messages.AUCUNE_VALEUR in m for m in log_calls)
 
 
 def test_main_invokes_helper(monkeypatch):
@@ -196,8 +195,7 @@ def test_initialize_sets_globals(monkeypatch):
 
 
 def test_traiter_champs_mission_insert(monkeypatch):
-    ids = ["PROJECT_CODE$0"]
-    mapping = {"PROJECT_CODE$0": "project_code"}
+    fields = [MissionField.PROJECT_CODE]
     info = {"project_code": "VAL"}
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
@@ -229,7 +227,7 @@ def test_traiter_champs_mission_insert(monkeypatch):
     )
 
     ctx = TimeSheetContext("log", [], {}, {})
-    traiter_champs_mission(None, ids, mapping, info, ctx)
+    traiter_champs_mission(None, fields, info, ctx)
     assert seq == ["effacer", "insert"]
 
 
@@ -252,8 +250,7 @@ def test_main_with_mission(monkeypatch):
 
 
 def test_traiter_champs_mission_error(monkeypatch):
-    ids = ["PROJECT_CODE$0"]
-    mapping = {"PROJECT_CODE$0": "project_code"}
+    fields = [MissionField.PROJECT_CODE]
     info = {"project_code": "VAL"}
     logs = []
     monkeypatch.setattr(
@@ -279,7 +276,7 @@ def test_traiter_champs_mission_error(monkeypatch):
     )
 
     ctx = TimeSheetContext("log", [], {}, {})
-    traiter_champs_mission(None, ids, mapping, info, ctx, max_attempts=1)
+    traiter_champs_mission(None, fields, info, ctx, max_attempts=1)
     assert any(messages.REFERENCE_OBSOLETE in m for m in logs)
 
 

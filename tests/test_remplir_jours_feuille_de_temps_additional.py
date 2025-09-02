@@ -7,6 +7,7 @@ import pytest
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto import messages  # noqa: E402
+from sele_saisie_auto.enums import MissionField  # noqa: E402
 from sele_saisie_auto.logger_utils import afficher_message_insertion  # noqa: E402
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
     TimeSheetContext,
@@ -308,8 +309,7 @@ def test_remplir_mission_specifique_element_none(monkeypatch):
 
 
 def test_traiter_champs_mission_element_none(monkeypatch):
-    ids = ["PROJECT_CODE$0"]
-    mapping = {"PROJECT_CODE$0": "project_code"}
+    fields = [MissionField.PROJECT_CODE]
     info = {"project_code": "A"}
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom",
@@ -324,12 +324,11 @@ def test_traiter_champs_mission_element_none(monkeypatch):
         lambda *a, **k: None,
     )
     ctx = TimeSheetContext("log", [], {}, {})
-    traiter_champs_mission(None, ids, mapping, info, ctx)
+    traiter_champs_mission(None, fields, info, ctx)
 
 
 def test_traiter_champs_mission_insertion_fail(monkeypatch):
-    ids = ["PROJECT_CODE$0"]
-    mapping = {"PROJECT_CODE$0": "project_code"}
+    fields = [MissionField.PROJECT_CODE]
     info = {"project_code": "VAL"}
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom",
@@ -362,7 +361,7 @@ def test_traiter_champs_mission_insertion_fail(monkeypatch):
         lambda msg, *_: logs.append(msg),
     )
     ctx = TimeSheetContext("log", [], {}, {})
-    traiter_champs_mission(None, ids, mapping, info, ctx, max_attempts=1)
+    traiter_champs_mission(None, fields, info, ctx, max_attempts=1)
     assert any(messages.ECHEC_INSERTION in m for m in logs)
 
 

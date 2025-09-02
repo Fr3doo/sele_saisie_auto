@@ -26,11 +26,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto import messages
-from sele_saisie_auto.constants import (
-    ID_TO_KEY_MAPPING,
-    JOURS_SEMAINE,
-    LISTES_ID_INFORMATIONS_MISSION,
-)
+from sele_saisie_auto.constants import JOURS_SEMAINE
+from sele_saisie_auto.enums import MissionField
 from sele_saisie_auto.interfaces import LoggerProtocol, WaiterProtocol
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 from sele_saisie_auto.utils.mission import est_en_mission
@@ -122,8 +119,7 @@ def insert_with_retries(
 
 def traiter_champs_mission(
     driver: WebDriver,
-    listes_id_informations_mission: list[str],
-    id_to_key_mapping: dict[str, str],
+    fields: list[MissionField],
     project_mission_info: dict[str, str],
     context: TimeSheetContext,
     max_attempts: int = MAX_ATTEMPTS,
@@ -131,8 +127,7 @@ def traiter_champs_mission(
 ) -> None:
     DayFiller(context, logger=None, waiter=waiter).traiter_champs_mission(
         driver,
-        listes_id_informations_mission,
-        id_to_key_mapping,
+        fields,
         project_mission_info,
         max_attempts=max_attempts,
         waiter=waiter,
@@ -170,16 +165,12 @@ class DayFiller:
         return key is None or key == "sub_category_code"
 
     def _resolve_value(
-        self,
-        field_id: str,
-        id_to_key_mapping: dict[str, str],
-        project_mission_info: dict[str, str],
+        self, field: MissionField, project_mission_info: dict[str, str]
     ) -> tuple[str, str] | None:
         """Retourne (key, value) si le champ est pertinent et renseigné, sinon None."""
-        key = id_to_key_mapping.get(field_id)
+        key = field.config_key
         if self._should_skip_field(key):
             return None
-        key = cast(str, key)
         value = project_mission_info.get(key)
         if not value:
             return None
@@ -342,7 +333,6 @@ class DayFiller:
             return True
         return False
 
-
     def _log_stale(self, field_id: str, attempt_index: int) -> None:
         rjf = _rjf()
         rjf.write_log(
@@ -381,7 +371,7 @@ class DayFiller:
             return False
         for attempt in range(max_attempts):
             if self._attempt_insert(driver, field_id, value, attempt):
-                return True            
+                return True
         self._log_insert_failure(field_id, max_attempts)
         return False
 
@@ -423,8 +413,7 @@ class DayFiller:
         if est_en_mission_presente(self.context.work_days):
             traiter_champs_mission(
                 driver,
-                LISTES_ID_INFORMATIONS_MISSION,
-                ID_TO_KEY_MAPPING,
+                list(MissionField),
                 self.context.project_mission_info,
                 self.context,
                 waiter=self.waiter,
@@ -433,26 +422,25 @@ class DayFiller:
     def traiter_champs_mission(
         self,
         driver: WebDriver,
-        listes_id_informations_mission: list[str],
-        id_to_key_mapping: dict[str, str],
+        fields: list[MissionField],
         project_mission_info: dict[str, str],
         max_attempts: int = MAX_ATTEMPTS,
         waiter: WaiterProtocol | None = None,
     ) -> None:
         rjf = _rjf()
 
-        for field_id in listes_id_informations_mission:
-            resolved = self._resolve_value(field_id, id_to_key_mapping, project_mission_info)
+        for field in fields:
+            resolved = self._resolve_value(field, project_mission_info)
             if not resolved:
                 # key absente, champ à ignorer, ou valeur manquante → on saute tôt
                 continue
             key, value_to_fill = resolved
             rjf.write_log(
-                f"Traitement de l'élément : {key} avec ID : {field_id} et valeur : {value_to_fill}.",
+                f"Traitement de l'élément : {key} avec ID : {field.value} et valeur : {value_to_fill}.",
                 self.log_file,
                 "DEBUG",
             )
             waiter_to_use = waiter or self.waiter
             self._insert_value_with_retries(
-                driver, field_id, value_to_fill, max_attempts, waiter_to_use
+                driver, field.value, value_to_fill, max_attempts, waiter_to_use
             )

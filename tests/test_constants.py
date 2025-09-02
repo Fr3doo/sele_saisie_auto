@@ -7,23 +7,12 @@ from sele_saisie_auto.constants import (  # noqa: E402
     ID_TO_KEY_MAPPING,
     LISTES_ID_INFORMATIONS_MISSION,
 )
+from sele_saisie_auto.enums import MissionField  # noqa: E402
 
 
 def test_project_information_constants():
-    expected_ids = [
-        "PROJECT_CODE$0",
-        "ACTIVITY_CODE$0",
-        "CATEGORY_CODE$0",
-        "SUB_CATEGORY_CODE$0",
-        "BILLING_ACTION$0",
-    ]
+    expected_ids = [field.value for field in MissionField]
     assert LISTES_ID_INFORMATIONS_MISSION == expected_ids
 
-    expected_mapping = {
-        "PROJECT_CODE$0": "project_code",
-        "ACTIVITY_CODE$0": "activity_code",
-        "CATEGORY_CODE$0": "category_code",
-        "SUB_CATEGORY_CODE$0": "sub_category_code",
-        "BILLING_ACTION$0": "billing_action",
-    }
+    expected_mapping = {field.value: field.config_key for field in MissionField}
     assert ID_TO_KEY_MAPPING == expected_mapping

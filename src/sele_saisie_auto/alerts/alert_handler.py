@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from sele_saisie_auto.app_config import AppConfig, AppConfigRaw, get_default_timeout
-from sele_saisie_auto.enums import AlertType, LogLevel
+from sele_saisie_auto.enums import AlertMessage, AlertType, LogLevel
 from sele_saisie_auto.exceptions import AutomationExitError
 from sele_saisie_auto.locators import Locators
 from sele_saisie_auto.logger_utils import format_message, write_log
@@ -96,16 +96,22 @@ class AlertHandler:
                     driver, cast(By, By.ID), Locators.CONFIRM_OK.value
                 )
                 log_info(
-                    format_message("TIME_SHEET_EXISTS_ERROR", {}),
+                    format_message(AlertMessage.TIME_SHEET_EXISTS_ERROR),
                     self.log_file,
                 )
                 log_info(
-                    format_message("MODIFY_DATE_MESSAGE", {}),
+                    format_message(AlertMessage.MODIFY_DATE_MESSAGE),
                     self.log_file,
                 )
-                raise AutomationExitError(format_message("TIME_SHEET_EXISTS_ERROR", {}))
+                raise AutomationExitError(
+                    format_message(AlertMessage.TIME_SHEET_EXISTS_ERROR)
+                )
 
-        write_log(format_message("DATE_VALIDATED", {}), self.log_file, LogLevel.DEBUG)
+        write_log(
+            format_message(AlertMessage.DATE_VALIDATED),
+            self.log_file,
+            LogLevel.DEBUG,
+        )
 
     def handle_save_alerts(self, driver: WebDriver) -> None:
         """Dismiss any alert shown after saving."""
@@ -120,7 +126,7 @@ class AlertHandler:
                     driver, cast(By, By.ID), Locators.CONFIRM_OK.value
                 )
                 log_info(
-                    format_message("SAVE_ALERT_WARNING", {}),
+                    format_message(AlertMessage.SAVE_ALERT_WARNING),
                     self.log_file,
                 )
                 break
