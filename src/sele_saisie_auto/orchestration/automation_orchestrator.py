@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import types
 from collections.abc import Callable
+from dataclasses import dataclass
 from multiprocessing import shared_memory
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, cast
 
@@ -49,6 +50,22 @@ class CredsProtocol(Protocol):
     def get_auth_tuple(self) -> AuthTuple:
         """Return credentials in the **exact** order ``(aes_key, login, password)``."""
         ...
+
+
+@dataclass
+class Credentials(CredsProtocol):
+    """Encrypted credentials and their shared memory handles."""
+
+    aes_key: bytes
+    mem_key: shared_memory.SharedMemory
+    login: bytes
+    mem_login: shared_memory.SharedMemory
+    password: bytes
+    mem_password: shared_memory.SharedMemory
+
+    def get_auth_tuple(self) -> AuthTuple:
+        """Return ``(aes_key, login, password)`` in this exact order."""
+        return self.aes_key, self.login, self.password
 
 
 __all__ = ["AutomationOrchestrator", "detecter_doublons_jours"]
@@ -295,14 +312,13 @@ class AutomationOrchestrator:
         self._debug("Flow=prepared")
         assert self.page_navigator is not None  # nosec B101
         # Le navigator peut typer 'Credentials' : on évite le couplage runtime
-        self.page_navigator.prepare(creds, self._date_cible_str())  # type: ignore[arg-type]
+        self.page_navigator.prepare(creds, self._date_cible_str())
         self.page_navigator.run(driver)
 
     def _run_legacy_flow(self, driver: Any, creds: CredsProtocol) -> None:
         self._debug("Flow=legacy")
         assert self.page_navigator is not None  # nosec B101
-        aes_key, login, password = creds.get_auth_tuple()
-        self.page_navigator.login(driver, aes_key, login, password)
+        self.page_navigator.login(driver, creds)
         result = self.page_navigator.navigate_to_date_entry(
             driver, self._date_cible_str()
         )

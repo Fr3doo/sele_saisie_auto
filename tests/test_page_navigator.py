@@ -40,7 +40,8 @@ def make_navigator():
 
 def test_login_delegates():
     _, login, _, _, _, nav = make_navigator()
-    nav.login("drv", b"k", b"u", b"p")
+    creds = Credentials(b"k", None, b"u", None, b"p", None)
+    nav.login("drv", creds)
     login.connect_to_psatime.assert_called_once_with("drv", b"k", b"u", b"p")
 
 
