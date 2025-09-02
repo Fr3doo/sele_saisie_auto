@@ -4,7 +4,7 @@ from __future__ import annotations
 import types
 from collections.abc import Callable
 from multiprocessing import shared_memory
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, cast
 
 from selenium.webdriver.common.by import By
 
@@ -35,6 +35,8 @@ from sele_saisie_auto.selenium_utils import (  # noqa: F401  # re-export
 )
 from sele_saisie_auto.timeouts import DEFAULT_TIMEOUT
 
+AuthTuple: TypeAlias = tuple[bytes, bytes, bytes]
+
 
 class CredsProtocol(Protocol):
     aes_key: bytes
@@ -44,8 +46,8 @@ class CredsProtocol(Protocol):
     mem_login: shared_memory.SharedMemory
     mem_password: shared_memory.SharedMemory
 
-    def get_auth_tuple(self) -> tuple[bytes, bytes, bytes]:
-        """Return the AES key, login and password."""
+    def get_auth_tuple(self) -> AuthTuple:
+        """Return credentials in the **exact** order ``(aes_key, login, password)``."""
         ...
 
 
@@ -333,11 +335,11 @@ class AutomationOrchestrator:
                 rm, headless=headless, no_sandbox=no_sandbox
             )
             try:
-                flow = (
-                    self._run_prepared_flow
-                    if self._supports_prepare_run()
-                    else self._run_legacy_flow
-                )
+                flow: Callable[[Any, CredsProtocol], None]
+                if self._supports_prepare_run():
+                    flow = self._run_prepared_flow
+                else:
+                    flow = self._run_legacy_flow
                 flow(driver, creds)
             finally:
                 self._cleanup_creds(creds)
