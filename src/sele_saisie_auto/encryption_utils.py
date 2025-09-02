@@ -90,6 +90,10 @@ class Credentials:
     password: bytes
     mem_password: shared_memory.SharedMemory
 
+    def get_auth_tuple(self) -> tuple[bytes, bytes, bytes]:
+        """Return the AES key, encrypted login and password."""
+        return self.aes_key, self.login, self.password
+
 
 class EncryptionService:
     """Service chargé de chiffrer et déchiffrer les données sensibles."""

@@ -44,6 +44,10 @@ class CredsProtocol(Protocol):
     mem_login: shared_memory.SharedMemory
     mem_password: shared_memory.SharedMemory
 
+    def get_auth_tuple(self) -> tuple[bytes, bytes, bytes]:
+        """Return the AES key, login and password."""
+        ...
+
 
 __all__ = ["AutomationOrchestrator", "detecter_doublons_jours"]
 
@@ -275,8 +279,11 @@ class AutomationOrchestrator:
 
     def _supports_prepare_run(self) -> bool:
         nav = self.page_navigator
-        return bool(nav) and callable(getattr(nav, "prepare", None)) and callable(getattr(nav, "run", None))
-
+        return (
+            bool(nav)
+            and callable(getattr(nav, "prepare", None))
+            and callable(getattr(nav, "run", None))
+        )
 
     def _debug(self, msg: str) -> None:
         fn = getattr(self.logger, "debug", None)
@@ -292,12 +299,8 @@ class AutomationOrchestrator:
     def _run_legacy_flow(self, driver: Any, creds: CredsProtocol) -> None:
         self._debug("Flow=legacy")
         assert self.page_navigator is not None  # nosec B101
-        self.page_navigator.login(
-            driver,
-            creds.aes_key,
-            creds.login,
-            creds.password,
-        )
+        aes_key, login, password = creds.get_auth_tuple()
+        self.page_navigator.login(driver, aes_key, login, password)
         result = self.page_navigator.navigate_to_date_entry(
             driver, self._date_cible_str()
         )
