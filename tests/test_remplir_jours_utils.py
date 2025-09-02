@@ -6,6 +6,7 @@ sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.logger_utils import afficher_message_insertion  # noqa: E402
 from sele_saisie_auto.remplir_jours_feuille_de_temps import (  # noqa: E402
+    TimeSheetContext,
     ajouter_jour_a_jours_remplis,
     est_en_mission_presente,
     insert_with_retries,
@@ -14,18 +15,24 @@ from sele_saisie_auto.utils.misc import clear_screen  # noqa: E402
 from sele_saisie_auto.utils.mission import est_en_mission  # noqa: E402
 
 
-def test_utilities(monkeypatch):
+def test_est_en_mission_utils() -> None:
     assert est_en_mission("En mission") is True
     assert est_en_mission("Autre") is False
 
+
+def test_est_en_mission_presente() -> None:
     jours = {"lun": ("En mission", "8")}
     assert est_en_mission_presente(jours) is True
 
-    filled_days = []
+
+def test_ajouter_jour_a_jours_remplis() -> None:
+    filled_days: list[str] = []
     assert ajouter_jour_a_jours_remplis("lun", filled_days) == ["lun"]
     assert ajouter_jour_a_jours_remplis("lun", filled_days) == ["lun"]
 
-    logs = []
+
+def test_logs_and_clear_screen(monkeypatch):
+    logs: list[str] = []
     monkeypatch.setattr(
         "sele_saisie_auto.logger_utils.write_log",
         lambda msg, file, level: logs.append(msg),
@@ -56,7 +63,8 @@ def test_insert_with_retries(monkeypatch):
         lambda *a, **k: (object(), True),
     )
 
-    assert insert_with_retries(None, "ID", "8", None) is True
+    ctx = TimeSheetContext("log", [], {}, {})
+    assert insert_with_retries(None, "ID", "8", ctx, None) is True
 
 
 def test_insert_with_retries_fail(monkeypatch):
@@ -68,7 +76,8 @@ def test_insert_with_retries_fail(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.wait_for_dom",
         lambda *a, **k: None,
     )
-    assert insert_with_retries(None, "ID", "8", None) is False
+    ctx = TimeSheetContext("log", [], {}, {})
+    assert insert_with_retries(None, "ID", "8", ctx, None) is False
 
 
 def test_insert_with_retries_insert(monkeypatch):
@@ -96,7 +105,8 @@ def test_insert_with_retries_insert(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.controle_insertion",
         lambda *a, **k: True,
     )
-    assert insert_with_retries(None, "ID", "8", None) is True
+    ctx = TimeSheetContext("log", [], {}, {})
+    assert insert_with_retries(None, "ID", "8", ctx, None) is True
 
 
 def test_insert_with_retries_stale(monkeypatch):
@@ -114,15 +124,14 @@ def test_insert_with_retries_stale(monkeypatch):
             __import__("selenium").common.exceptions.StaleElementReferenceException()
         ),
     )
-    monkeypatch.setattr(
-        "sele_saisie_auto.remplir_jours_feuille_de_temps.MAX_ATTEMPTS", 1
-    )
     logs = []
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.write_log",
         lambda msg, *_: logs.append(msg),
     )
-    assert insert_with_retries(None, "ID", "8", None) is False
+    ctx = TimeSheetContext("log", [], {}, {})
+    monkeypatch.setattr("sele_saisie_auto.day_filler.MAX_ATTEMPTS", 1)
+    assert insert_with_retries(None, "ID", "8", ctx, None) is False
     assert logs
 
 
@@ -140,7 +149,8 @@ def test_insert_with_retries_waiter(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (object(), True),
     )
-    assert insert_with_retries(None, "ID", "8", dummy) is True
+    ctx = TimeSheetContext("log", [], {}, {})
+    assert insert_with_retries(None, "ID", "8", ctx, dummy) is True
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.detecter_et_verifier_contenu",
         lambda *a, **k: (object(), False),
@@ -157,10 +167,10 @@ def test_insert_with_retries_waiter(monkeypatch):
         "sele_saisie_auto.remplir_jours_feuille_de_temps.controle_insertion",
         lambda *a, **k: False,
     )
-    assert insert_with_retries(None, "ID", "8", dummy) is False
+    assert insert_with_retries(None, "ID", "8", ctx, dummy) is False
 
     monkeypatch.setattr(
         "sele_saisie_auto.remplir_jours_feuille_de_temps.controle_insertion",
         lambda *a, **k: True,
     )
-    assert insert_with_retries(None, "ID", "8", dummy) is True
+    assert insert_with_retries(None, "ID", "8", ctx, dummy) is True
