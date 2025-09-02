@@ -241,6 +241,11 @@ class EncryptionService:
             self.logger.error(msg)
             with suppress(Exception):  # nosec B110
                 self.remove_shared_memory(mem_key)
+                for mem in list(self._memoires):
+                    if mem.name == self.memory_config.cle_name:
+                        self.remove_shared_memory(mem)
+                        self._memoires.remove(mem)
+                        break
             raise AutomationExitError(msg) from exc
 
         return Credentials(
