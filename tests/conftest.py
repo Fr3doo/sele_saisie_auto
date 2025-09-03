@@ -218,7 +218,7 @@ class DummyDateEntryPage:
     def process_date(self, driver, date):
         self.calls.append(("date", date))
 
-    def _click_action_button(self, driver):
+    def click_action_button(self, driver):
         self.calls.append("click")
 
     def submit_date_cible(self, driver):

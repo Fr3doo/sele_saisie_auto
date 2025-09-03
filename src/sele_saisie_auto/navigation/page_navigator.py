@@ -87,7 +87,8 @@ class PageNavigator:
         return None
 
     def fill_timesheet(self, driver: WebDriver) -> None:
-        """Delegate the entire filling process to :class:`TimeSheetHelper`."""
+        """Open the declaration and delegate filling to :class:`TimeSheetHelper`."""
+        self.date_entry_page.click_action_button(driver)
         self.timesheet_helper.run(driver)
 
     def submit_timesheet(self, driver: WebDriver) -> None:

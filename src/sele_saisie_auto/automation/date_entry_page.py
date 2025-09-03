@@ -192,7 +192,7 @@ class DateEntryPage:
         self.alert_handler.handle_date_alert(driver)
 
     @handle_selenium_errors(default_return=None)
-    def _click_action_button(self, driver: WebDriver) -> None:
+    def click_action_button(self, driver: WebDriver) -> None:
         """Click the default action button on the page."""
         elem_id = Locators.OK_BUTTON.value
         element_present = self.waiter.wait_for_element(
@@ -206,3 +206,6 @@ class DateEntryPage:
             session = getattr(self._automation, "browser_session", None)
             if session is not None:
                 session.click(elem_id)
+
+    # Backward compatibility with older private name
+    _click_action_button = click_action_button

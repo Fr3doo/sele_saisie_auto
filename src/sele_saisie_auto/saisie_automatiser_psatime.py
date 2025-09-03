@@ -495,7 +495,7 @@ class PSATimeAutomation:
 
     def _click_action_button(self, driver: WebDriver) -> None:
         """Clique sur le bouton d'action principal."""
-        self.date_entry_page._click_action_button(driver)
+        self.date_entry_page.click_action_button(driver)
 
     def _process_date_entry(self, driver: WebDriver) -> None:
         """Renseigne la date cible dans l'interface."""

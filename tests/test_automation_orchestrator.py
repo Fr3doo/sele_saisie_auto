@@ -105,7 +105,7 @@ def test_run_calls_services(monkeypatch, sample_config):
     orch.browser_session.waiter = types.SimpleNamespace(
         wait_for_element=lambda *a, **k: True
     )
-    orch.date_entry_page._click_action_button = lambda d: None
+    orch.date_entry_page.click_action_button = lambda d: None
     orch.additional_info_page._handle_save_alerts = lambda d: None
     from sele_saisie_auto.orchestration import automation_orchestrator as orch_mod
 
@@ -288,7 +288,7 @@ def test_run_uses_passed_cleanup_function(monkeypatch, sample_config):
     orch.browser_session.waiter = types.SimpleNamespace(
         wait_for_element=lambda *a, **k: True
     )
-    orch.date_entry_page._click_action_button = lambda d: None
+    orch.date_entry_page.click_action_button = lambda d: None
     orch.additional_info_page._handle_save_alerts = lambda d: None
     from sele_saisie_auto.orchestration import automation_orchestrator as orch_mod
 

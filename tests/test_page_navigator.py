@@ -19,7 +19,11 @@ def make_navigator():
     session = MagicMock(spec=["go_to_default_content"])
     login = MagicMock(spec=["connect_to_psatime"])
     date_page = MagicMock(
-        spec=["navigate_from_home_to_date_entry_page", "process_date"]
+        spec=[
+            "navigate_from_home_to_date_entry_page",
+            "process_date",
+            "click_action_button",
+        ]
     )
     info_page = MagicMock(
         spec=[
@@ -54,8 +58,9 @@ def test_navigate_to_date_entry():
 
 
 def test_fill_timesheet_calls_pages():
-    session, _, _, info_page, helper, nav = make_navigator()
+    session, _, date_page, info_page, helper, nav = make_navigator()
     nav.fill_timesheet("drv")
+    date_page.click_action_button.assert_called_once_with("drv")
     helper.run.assert_called_once_with("drv")
     info_page.navigate_from_work_schedule_to_additional_information_page.assert_not_called()
     info_page.submit_and_validate_additional_information.assert_not_called()
