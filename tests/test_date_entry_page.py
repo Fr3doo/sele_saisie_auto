@@ -9,6 +9,7 @@ from sele_saisie_auto.exceptions import AutomationExitError
 sys.path.append(str(Path(__file__).resolve().parents[1] / "src"))  # noqa: E402
 
 from sele_saisie_auto.automation.date_entry_page import DateEntryPage  # noqa: E402
+from sele_saisie_auto.locators import Locators  # noqa: E402
 
 
 class DummyAutomation:
@@ -155,28 +156,30 @@ def test_submit_date_cible_no_element(monkeypatch):
     assert page.submit_date_cible("drv") is False
 
 
-def test_click_action_button(monkeypatch):
+def test_click_creation_mode_ok(monkeypatch):
     dummy = DummyAutomation()
     page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
-    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
-    clicks = []
-    monkeypatch.setattr(
-        dummy.browser_session, "click", lambda *a, **k: clicks.append(True)
-    )
-    page._click_action_button("drv")
-    assert clicks
+    seq = iter([True])
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: next(seq))
+    clicks: list[str] = []
+    monkeypatch.setattr(dummy.browser_session, "click", lambda eid: clicks.append(eid))
+    monkeypatch.setattr(DateEntryPage, "wait_for_dom", lambda self, d: None)
+    monkeypatch.setattr(DateEntryPage, "switch_to_main_frame", lambda self, d: None)
+    page.click_creation_mode("drv")
+    assert clicks == [Locators.OK_BUTTON.value]
 
 
-def test_click_action_button_copy(monkeypatch):
+def test_click_creation_mode_copy(monkeypatch):
     dummy = DummyAutomation()
     page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
-    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
-    clicks = []
-    monkeypatch.setattr(
-        dummy.browser_session, "click", lambda *a, **k: clicks.append(True)
-    )
-    page._click_action_button("drv")
-    assert clicks
+    seq = iter([False, True])
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: next(seq))
+    clicks: list[str] = []
+    monkeypatch.setattr(dummy.browser_session, "click", lambda eid: clicks.append(eid))
+    monkeypatch.setattr(DateEntryPage, "wait_for_dom", lambda self, d: None)
+    monkeypatch.setattr(DateEntryPage, "switch_to_main_frame", lambda self, d: None)
+    page.click_creation_mode("drv")
+    assert clicks == [Locators.COPY_TIME_BUTTON.value]
 
 
 def test_handle_date_alert(monkeypatch):

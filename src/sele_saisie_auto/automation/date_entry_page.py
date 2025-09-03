@@ -191,10 +191,8 @@ class DateEntryPage:
 
         self.alert_handler.handle_date_alert(driver)
 
-    @handle_selenium_errors(default_return=None)
-    def _click_action_button(self, driver: WebDriver) -> None:
-        """Click the default action button on the page."""
-        elem_id = Locators.OK_BUTTON.value
+    def _click_if_present(self, driver: WebDriver, elem_id: str) -> bool:
+        """Click ``elem_id`` if present and return success."""
         element_present = self.waiter.wait_for_element(
             driver,
             By.ID,
@@ -206,3 +204,19 @@ class DateEntryPage:
             session = getattr(self._automation, "browser_session", None)
             if session is not None:
                 session.click(elem_id)
+            return True
+        return False
+
+    @handle_selenium_errors(default_return=None)
+    def _click_action_button(self, driver: WebDriver) -> None:
+        """Click the default action button on the page."""
+        self._click_if_present(driver, Locators.OK_BUTTON.value)
+
+    @handle_selenium_errors(default_return=None)
+    def click_creation_mode(self, driver: WebDriver) -> None:
+        """Clique 'Ouvrir déclaration vide' si présent (fallback: 'Copie feuille temps')."""
+        self.wait_for_dom(driver)
+        self.switch_to_main_frame(driver)
+        if self._click_if_present(driver, Locators.OK_BUTTON.value):
+            return
+        self._click_if_present(driver, Locators.COPY_TIME_BUTTON.value)
