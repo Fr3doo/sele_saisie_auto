@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -194,6 +194,7 @@ class DateEntryPage:
     @handle_selenium_errors(default_return=None)
     def click_action_button(self, driver: WebDriver) -> None:
         """Click the default action button on the page."""
+        driver = cast(WebDriver, self.switch_to_main_frame(driver))
         elem_id = Locators.OK_BUTTON.value
         element_present = self.waiter.wait_for_element(
             driver,
@@ -206,6 +207,7 @@ class DateEntryPage:
             session = getattr(self._automation, "browser_session", None)
             if session is not None:
                 session.click(elem_id)
+        self.wait_for_dom(driver)
 
     # Backward compatibility with older private name
     _click_action_button = click_action_button

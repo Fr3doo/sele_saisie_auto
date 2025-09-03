@@ -158,25 +158,29 @@ def test_submit_date_cible_no_element(monkeypatch):
 def test_click_action_button(monkeypatch):
     dummy = DummyAutomation()
     page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
+    calls: list[object] = []
+    monkeypatch.setattr(page, "switch_to_main_frame", lambda d: calls.append(d) or d)
     monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
-    clicks = []
+    clicks: list[bool] = []
     monkeypatch.setattr(
         dummy.browser_session, "click", lambda *a, **k: clicks.append(True)
     )
     page.click_action_button("drv")
-    assert clicks
+    assert calls and clicks
 
 
-def test_click_action_button_copy(monkeypatch):
+def test_click_action_button_no_element(monkeypatch):
     dummy = DummyAutomation()
     page = DateEntryPage(dummy, page_navigator=DummyNavigator(dummy.browser_session))
-    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: True)
-    clicks = []
+    calls: list[object] = []
+    monkeypatch.setattr(page, "switch_to_main_frame", lambda d: calls.append(d) or d)
+    monkeypatch.setattr(page.waiter, "wait_for_element", lambda *a, **k: False)
+    clicks: list[bool] = []
     monkeypatch.setattr(
         dummy.browser_session, "click", lambda *a, **k: clicks.append(True)
     )
     page.click_action_button("drv")
-    assert clicks
+    assert calls and not clicks
 
 
 def test_handle_date_alert(monkeypatch):
